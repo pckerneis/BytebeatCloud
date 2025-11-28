@@ -33,6 +33,9 @@ nav {
 main {
   flex: 1;
   padding: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .app-title {
@@ -62,4 +65,9 @@ a.nav {
 
 a.nav.active {
   color: var(--text-color);
+}
+
+main > section {
+  max-width: 600px;
+  width: 90%;
 }

@@ -23,36 +23,18 @@ export const getServerSideProps: GetServerSideProps<HomeProps> = async () => {
 
 export default function Home({ greeting }: HomeProps) {
   return (
-    <div className='root'>
-      <nav>
-        <div className='app-title'>
-            <h1>Bitebeats</h1>
-        </div>
-        <ul>
-          <li>
-            <a className='nav' href="/create">Create</a>
-          </li>
-          <li>
-            <a className='nav' href="/explore">Explore</a>
-          </li>
-          <li>
-            <a className='nav' href="/profile">Profile</a>
-          </li>
-        </ul>
-      </nav>
-      <main>
-        <section style={{ marginTop: '1rem' }}>
-          <h2>API status</h2>
-          {greeting ? (
-            <>
-              <p>{greeting.message}</p>
-              <p>Source: {greeting.source}</p>
-            </>
-          ) : (
-            <p>API not reachable at the moment.</p>
-          )}
-        </section>
-      </main>
-    </div>
+    <>
+      <section style={{ marginTop: '1rem' }}>
+        <h2>API status</h2>
+        {greeting ? (
+          <>
+            <p>{greeting.message}</p>
+            <p>Source: {greeting.source}</p>
+          </>
+        ) : (
+          <p>API not reachable at the moment.</p>
+        )}
+      </section>
+    </>
   );
 }
