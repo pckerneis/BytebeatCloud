@@ -155,12 +155,14 @@ export default function CreatePage() {
 
         <div className="chips">
           <button
+            type="button"
             className="option-chip"
             onClick={() => toggleMode()}
           >
             {mode}
           </button>
           <button
+            type="button"
             className="option-chip"
             onClick={() => rotateSampleRate()}
           >
