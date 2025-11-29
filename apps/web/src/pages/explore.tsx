@@ -70,16 +70,21 @@ export default function ExplorePage() {
         <ul className="post-list">
           {posts.map((post) => {
             const username = post.profiles?.username ?? 'unknown';
-            const created = new Date(post.created_at).toLocaleString();
+            const created = new Date(post.created_at).toLocaleDateString();
+            const createdTitle = new Date(post.created_at).toLocaleString();
 
             return (
               <li key={post.id} className="post-item">
                 <div className="post-header">
+                  <div className="post-meta">
+                    <span className="username">@{username}</span>
+                    <span className="created" title={createdTitle}>{created}</span>
+                  </div>
                   <h3>{post.title}</h3>
-                  <span className="post-meta">
-                    @{username} · {post.mode} · {post.sample_rate} ·{' '}
-                    {post.is_draft ? 'Draft' : 'Published'} · {created}
-                  </span>
+                  <div className="chips">
+                    <span className="chip mode">{post.mode}</span>
+                    <span className="chip sample-rate">{post.sample_rate}</span>
+                  </div>
                 </div>
                 <pre className="post-expression">
                   <code>{post.expression}</code>

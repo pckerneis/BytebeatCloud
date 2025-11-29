@@ -14,6 +14,8 @@ body {
 
   --chip-border-color: #bbb;
   --chip-background-color: #f5f5f5;
+
+  --post-expression-background-color: #ddd;
 }
 
 .root {
@@ -86,6 +88,8 @@ main > section {
   max-width: 600px;
   width: 90%;
 }
+
+/* Create page */
 
 .create-form {
   display: flex;
@@ -213,4 +217,61 @@ main > section {
   border: 1px solid var(--chip-border-color);
   background: var(--chip-background-color);
   cursor: pointer;
+}
+
+/* Explore page */
+
+.post-list {
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
+}
+
+.post-item {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  list-style: none;
+}
+
+.post-header {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.post-header h3 {
+  margin: 0;
+  padding: 0;
+}
+
+.post-item .post-meta {
+  display: flex;
+  font-size: 12px;
+}
+
+.post-item .post-meta .username {
+  flex: 1;
+}
+
+.post-item .chips {
+  display: flex;
+  gap: 10px;
+}
+
+.post-item .chips .chip {
+  font-family: inherit;
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  border: 1px solid var(--chip-border-color);
+  background: var(--chip-background-color);
+}
+
+.post-expression {
+  background: var(--post-expression-background-color);
+  padding: 8px 12px;
+  font-size: 12px;
+  margin: 0;
+  min-height: 50px;
 }
