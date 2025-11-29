@@ -1,5 +1,9 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { useRouter } from 'next/router';
+import dynamic from 'next/dynamic';
+import { javascript } from '@codemirror/lang-javascript';
+import CodeMirror from '@uiw/react-codemirror';
+import { tomorrowNightBlue } from '@uiw/codemirror-theme-tomorrow-night-blue';
 import { useBytebeatPlayer } from '../hooks/useBytebeatPlayer';
 import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
 import { supabase } from '../lib/supabaseClient';
@@ -8,12 +12,16 @@ import {
   ModeOption,
   SampleRateOption,
   validateExpression,
-  minimizeExpression,
   type ValidationIssue,
 } from 'shared';
 
 const TITLE_MAX = 64;
 const EXPRESSION_MAX = 1024;
+
+// const CodeMirror = dynamic<any>(
+//   () => import('@uiw/react-codemirror').then((mod) => mod.default),
+//   { ssr: false },
+// );
 
 export default function CreatePage() {
   const router = useRouter();
@@ -183,14 +191,20 @@ export default function CreatePage() {
           </button>
         </div>
 
-        <label className="field">
-          <textarea
-            className="expression-input"
-            value={expression}
-            onChange={(e) => handleExpressionChange(e.target.value)}
-            rows={8}
-            placeholder="Type your bytebeat expression here"
-          />
+          <div className="expression-input">
+            <CodeMirror
+              value={expression}
+              height="200px"
+              extensions={[javascript()]}
+              basicSetup={{
+                lineNumbers: false,
+                foldGutter: false,
+                highlightActiveLine: false
+              }}
+              theme={tomorrowNightBlue}
+              onChange={(value: string) => handleExpressionChange(value)}
+            />
+          </div>
           <div className="field-footer">
             <button
               type="button"
@@ -220,7 +234,6 @@ export default function CreatePage() {
             </div>
           )}
           {lastError ? <p className="error-message">{lastError}</p> : null}
-        </label>
 
         <div className="form-actions">
           <label className="checkbox">

@@ -133,18 +133,13 @@ main > section {
 .expression-input {
   font-family: inherit;
   font-size: 13px;
-  padding: 6px 8px;
-  border-radius: 4px;
-  border: 1px solid rgb(197, 197, 197);
-  resize: vertical;
-  min-height: 140px;
+  border: 1px solid var(--chip-border-color);
 }
 
 .expression-preview {
   padding: 12px 18px;
   font-family: inherit;
   font-size: 12px;
-  background: #fff6f6;
   border-radius: 4px;
   border: 1px solid #e8dada;
   white-space: pre-wrap;
