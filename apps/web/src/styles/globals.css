@@ -33,6 +33,11 @@ body {
   text-align: center;
 }
 
+a {
+  text-decoration: none;
+  color: var(--secondary-text-color);
+}
+
 nav {
   min-width: 200px;
   border-right: 1px solid rgb(197, 197, 197);
