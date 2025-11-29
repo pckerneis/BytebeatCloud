@@ -140,7 +140,10 @@ export function PostList({ posts, currentUserId }: PostListProps) {
         const canEdit = Boolean(currentUserId && post.profile_id && post.profile_id === currentUserId);
         const favorite = favoriteState[post.id];
         const favoriteCount = favorite ? favorite.count : post.favorites_count ?? 0;
-        const isFavorited = !!favorite?.favorited;
+        const isFavorited =
+          favorite?.favorited !== undefined
+            ? favorite.favorited
+            : !!post.favorited_by_current_user;
 
         return (
           <li key={post.id} className={`post-item ${isActive ? 'playing' : ''}`}>

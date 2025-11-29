@@ -15,6 +15,7 @@ export default function UserPage() {
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const [hasLoadedFirstPage, setHasLoadedFirstPage] = useState(false);
+  const [activeTab, setActiveTab] = useState<'posts' | 'favorites'>('posts');
   const loadingMoreRef = useRef(false);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
 
@@ -131,30 +132,51 @@ export default function UserPage() {
   return (
     <section>
       <h2>{typeof username === 'string' ? `@${username}` : 'User'}</h2>
-      <h3>Posts</h3>
-      {loading && <p>Loading…</p>}
-      {!loading && error && <p className="error-message">{error}</p>}
 
-      {hasLoadedFirstPage && !loading && !error && page === 0 && !hasMore && posts.length === 0 && (
-        <p>This user has no public posts yet.</p>
+      <div className="tab-header">
+        <span
+          className={activeTab === 'posts' ? 'tab-button active' : 'tab-button'}
+          onClick={() => setActiveTab('posts')}
+        >
+          Posts
+        </span>
+        <span
+          className={activeTab === 'favorites' ? 'tab-button active' : 'tab-button'}
+          onClick={() => setActiveTab('favorites')}
+        >
+          Favorites
+        </span>
+      </div>
+
+      {activeTab === 'posts' && (
+        <>
+          {loading && <p>Loading…</p>}
+          {!loading && error && <p className="error-message">{error}</p>}
+
+          {hasLoadedFirstPage && !loading && !error && page === 0 && !hasMore && posts.length === 0 && (
+            <p>This user has no public posts yet.</p>
+          )}
+
+          {!loading && !error && posts.length > 0 && (
+            <PostList
+              posts={posts}
+              currentUserId={user ? (user as any).id : undefined}
+            />
+          )}
+
+          <div ref={sentinelRef} style={{ height: 1 }} />
+          {hasMore && !loading && posts.length > 0 && (
+            <p className="text-centered">Loading more…</p>
+          )}
+
+          {!hasMore && !loading && posts.length > 0 && (
+            <p className="text-centered">You reached the end!</p>
+          )}
+        </>
       )}
 
-
-
-      {!loading && !error && posts.length > 0 && (
-        <PostList
-          posts={posts}
-          currentUserId={user ? (user as any).id : undefined}
-        />
-      )}
-
-      <div ref={sentinelRef} style={{ height: 1 }} />
-      {hasMore && !loading && posts.length > 0 && (
-        <p className="text-centered">Loading more…</p>
-      )}
-
-      {!hasMore && !loading && posts.length > 0 && (
-        <p className="text-centered">You reached the end!</p>
+      {activeTab === 'favorites' && (
+        <p className="text-centered">Favorites listing coming soon.</p>
       )}
     </section>
   );

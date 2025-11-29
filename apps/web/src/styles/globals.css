@@ -100,7 +100,7 @@ button.nav {
 
 main > section {
   max-width: 600px;
-  width: 90%;
+  width: 100%;
 }
 
 /* Create page */
@@ -411,4 +411,23 @@ main > section {
   text-decoration: none;
   font-size: 12px;
   margin-left: auto;
+}
+
+.tab-header {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+}
+
+.tab-button {
+  padding: 4px 8px;
+  color: var(--secondary-text-color);
+  cursor: pointer;
+}
+
+.tab-button.active {
+  font-weight: bold;
+  padding-bottom: 4px;
+  color: var(--text-color);
+  border-bottom: 3px solid var(--text-color);
 }
