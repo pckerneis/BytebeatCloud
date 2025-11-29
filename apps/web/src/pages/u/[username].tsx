@@ -15,10 +15,13 @@ export default function UserPage() {
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const [hasLoadedFirstPage, setHasLoadedFirstPage] = useState(false);
-  const [activeTab, setActiveTab] = useState<'posts' | 'favorites'>('posts');
+  const [activeTab, setActiveTab] = useState<'posts' | 'drafts' | 'favorites'>('posts');
   const [favoritePosts, setFavoritePosts] = useState<PostRow[]>([]);
   const [loadingFavorites, setLoadingFavorites] = useState(false);
   const [favoritesError, setFavoritesError] = useState('');
+  const [draftPosts, setDraftPosts] = useState<PostRow[]>([]);
+  const [loadingDrafts, setLoadingDrafts] = useState(false);
+  const [draftsError, setDraftsError] = useState('');
   const loadingMoreRef = useRef(false);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
 
@@ -132,6 +135,10 @@ export default function UserPage() {
     };
   }, [hasMore]);
 
+  const isOwnProfile = Boolean(
+    user && posts.some((p) => p.profile_id === (user as any).id),
+  );
+
   // Load favorites for this user (by username) when the Favorites tab is first activated.
   useEffect(() => {
     if (activeTab !== 'favorites') return;
@@ -235,7 +242,92 @@ export default function UserPage() {
     return () => {
       cancelled = true;
     };
-  }, [activeTab, username]);
+  }, [activeTab, username, user]);
+
+  // Load drafts for this user when the Drafts tab is activated, only on own profile.
+  useEffect(() => {
+    if (activeTab !== 'drafts') return;
+    if (!supabase) return;
+    if (!username || typeof username !== 'string') return;
+    if (!user) return;
+
+    let cancelled = false;
+
+    const loadDrafts = async () => {
+      setLoadingDrafts(true);
+      setDraftsError('');
+
+      // Look up the profile id for this username.
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('username', username)
+        .maybeSingle();
+
+      if (cancelled) return;
+
+      if (profileError || !profile) {
+        setDraftsError('Unable to load drafts.');
+        setDraftPosts([]);
+        setLoadingDrafts(false);
+        return;
+      }
+
+      // Load draft posts for this profile with favorites_count.
+      const { data: draftData, error: draftError } = await supabase
+        .from('posts')
+        .select(
+          'id,title,expression,is_draft,sample_rate,mode,created_at,profile_id,profiles(username),favorites(count)',
+        )
+        .eq('profile_id', profile.id)
+        .eq('is_draft', true)
+        .order('created_at', { ascending: false });
+
+      if (cancelled) return;
+
+      if (draftError) {
+        // eslint-disable-next-line no-console
+        console.warn('Error loading drafts', draftError.message);
+        setDraftsError('Unable to load drafts.');
+        setDraftPosts([]);
+        setLoadingDrafts(false);
+        return;
+      }
+
+      let rows = (draftData ?? []).map((row: any) => ({
+        ...row,
+        favorites_count: row.favorites?.[0]?.count ?? 0,
+      }));
+
+      // Mark which of these drafts the CURRENT viewer has favorited.
+      if (user && rows.length > 0) {
+        const viewerId = (user as any).id as string;
+        const draftIds = rows.map((r: any) => r.id);
+        const { data: viewerFavs, error: viewerFavError } = await supabase
+          .from('favorites')
+          .select('post_id')
+          .eq('profile_id', viewerId)
+          .in('post_id', draftIds);
+
+        if (!viewerFavError && viewerFavs) {
+          const favoritedSet = new Set((viewerFavs as any[]).map((f) => f.post_id as string));
+          rows = rows.map((r: any) => ({
+            ...r,
+            favorited_by_current_user: favoritedSet.has(r.id),
+          }));
+        }
+      }
+
+      setDraftPosts(rows as PostRow[]);
+      setLoadingDrafts(false);
+    };
+
+    void loadDrafts();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activeTab, username, user]);
 
   return (
     <section>
@@ -248,6 +340,14 @@ export default function UserPage() {
         >
           Posts
         </span>
+        {isOwnProfile && (
+          <span
+            className={activeTab === 'drafts' ? 'tab-button active' : 'tab-button'}
+            onClick={() => setActiveTab('drafts')}
+          >
+            Drafts
+          </span>
+        )}
         <span
           className={activeTab === 'favorites' ? 'tab-button active' : 'tab-button'}
           onClick={() => setActiveTab('favorites')}
@@ -258,7 +358,7 @@ export default function UserPage() {
 
       {activeTab === 'posts' && (
         <>
-          {loading && <p>Loading…</p>}
+          {loading && <p className="text-centered">Loading…</p>}
           {!loading && error && <p className="error-message">{error}</p>}
 
           {hasLoadedFirstPage && !loading && !error && page === 0 && !hasMore && posts.length === 0 && (
@@ -285,7 +385,7 @@ export default function UserPage() {
 
       {activeTab === 'favorites' && (
         <>
-          {loadingFavorites && <p>Loading favorites…</p>}
+          {loadingFavorites && <p className="text-centered">Loading favorites…</p>}
           {!loadingFavorites && favoritesError && (
             <p className="error-message">{favoritesError}</p>
           )}
@@ -295,6 +395,24 @@ export default function UserPage() {
           {!loadingFavorites && !favoritesError && favoritePosts.length > 0 && (
             <PostList
               posts={favoritePosts}
+              currentUserId={user ? (user as any).id : undefined}
+            />
+          )}
+        </>
+      )}
+
+      {activeTab === 'drafts' && isOwnProfile && (
+        <>
+          {loadingDrafts && <p className="text-centered">Loading drafts…</p>}
+          {!loadingDrafts && draftsError && (
+            <p className="error-message">{draftsError}</p>
+          )}
+          {!loadingDrafts && !draftsError && draftPosts.length === 0 && (
+            <p className="text-centered">You have no drafts yet.</p>
+          )}
+          {!loadingDrafts && !draftsError && draftPosts.length > 0 && (
+            <PostList
+              posts={draftPosts}
               currentUserId={user ? (user as any).id : undefined}
             />
           )}
