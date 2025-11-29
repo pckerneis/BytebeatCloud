@@ -3,7 +3,7 @@ import { useRouter } from 'next/router';
 import { useBytebeatPlayer } from '../hooks/useBytebeatPlayer';
 import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
 import { supabase } from '../lib/supabaseClient';
-import { ExpressionEditor, ExpressionErrorSnippet } from '../components/ExpressionEditor';
+import { PostEditorFormFields } from '../components/PostEditorFormFields';
 import {
   getSampleRateValue,
   ModeOption,
@@ -55,9 +55,13 @@ export default function CreatePage() {
   };
 
   const handlePlayClick = () => {
-    const result = validateExpression(expression);
+    const trimmed = expression.trim();
+    if (!trimmed) {
+      setValidationIssue(null);
+      return;
+    }
 
-    console.log(result);
+    const result = validateExpression(expression);
 
     if (!result.valid) {
       setValidationIssue(result.issues[0] ?? null);
@@ -155,84 +159,28 @@ export default function CreatePage() {
     <section>
       <h2>Create</h2>
       <form className="create-form" onSubmit={handleSubmit}>
-        <label className="field">
-          <input
-            type="text"
-            maxLength={TITLE_MAX}
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            className="post-title-input"
-            placeholder="Name your bytebeat expression"
-          />
-        </label>
-
-        <div className="chips">
-          <button
-            type="button"
-            className="option-chip"
-            onClick={() => toggleMode()}
-          >
-            {mode}
-          </button>
-          <button
-            type="button"
-            className="option-chip"
-            onClick={() => rotateSampleRate()}
-          >
-            {sampleRate}
-          </button>
-        </div>
-
-          <div className="expression-input">
-            <ExpressionEditor
-              value={expression}
-              onChange={handleExpressionChange}
-            />
-          </div>
-          <div className="field-footer">
-            <button
-              type="button"
-              className="button secondary"
-              disabled={!expression.trim() || !!validationIssue}
-              onClick={handlePlayClick}
-            >
-              {isPlaying ? 'Stop' : 'Play'}
-            </button>
-            <span className={isExpressionTooLong ? 'counter error' : 'counter'}>
-              {expressionLength} / {EXPRESSION_MAX}
-            </span>
-          </div>
-
-          {validationIssue && (
-            <div className="expression-preview">
-              {validationIssue.message}
-              <ExpressionErrorSnippet expression={expression} issue={validationIssue} />
-            </div>
-          )}
-          {lastError ? <p className="error-message">{lastError}</p> : null}
-
-        <div className="form-actions">
-          <label className="checkbox">
-            <input
-              type="checkbox"
-              checked={isDraft}
-              onChange={(e) => setIsDraft(e.target.checked)}
-            />
-            <span>Save as draft</span>
-          </label>
-
-          <button
-            type="submit"
-            className="button primary"
-            disabled={!expression.trim() || !!validationIssue || saveStatus === 'saving'}
-          >
-            {saveStatus === 'saving' ? 'Saving…' : 'Save'}
-          </button>
-        </div>
-        {saveError && <p className="error-message">{saveError}</p>}
-        {saveStatus === 'success' && !saveError && (
-          <p className="counter">Post saved.</p>
-        )}
+        <PostEditorFormFields
+          title={title}
+          onTitleChange={setTitle}
+          expression={expression}
+          onExpressionChange={handleExpressionChange}
+          mode={mode}
+          sampleRate={sampleRate}
+          onToggleMode={toggleMode}
+          onRotateSampleRate={rotateSampleRate}
+          isDraft={isDraft}
+          onDraftChange={setIsDraft}
+          isPlaying={isPlaying}
+          onPlayClick={handlePlayClick}
+          validationIssue={validationIssue}
+          lastError={lastError || null}
+          isExpressionTooLong={isExpressionTooLong}
+          expressionLength={expressionLength}
+          expressionMax={EXPRESSION_MAX}
+          saveStatus={saveStatus}
+          saveError={saveError}
+          submitLabel={saveStatus === 'saving' ? 'Saving…' : 'Save'}
+        />
       </form>
     </section>
   );

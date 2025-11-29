@@ -3,7 +3,7 @@ import { javascript } from '@codemirror/lang-javascript';
 import { EditorView } from '@codemirror/view';
 import { linter, type Diagnostic } from '@codemirror/lint';
 import { tomorrowNightBlue } from '@uiw/codemirror-theme-tomorrow-night-blue';
-import { validateExpression, type ValidationIssue } from 'shared';
+import { validateExpression, minimizeExpression, type ValidationIssue } from 'shared';
 
 const CodeMirror = dynamic(
   () => import('@uiw/react-codemirror').then((mod) => mod.default),
@@ -17,6 +17,11 @@ interface ExpressionEditorProps {
 
 const expressionLinter = linter((view): Diagnostic[] => {
   const text = view.state.doc.toString();
+  const trimmed = text.trim();
+  if (!trimmed) {
+    return [];
+  }
+
   const result = validateExpression(text);
 
   if (result.valid) return [];
@@ -47,6 +52,30 @@ export function ExpressionEditor({ value, onChange }: ExpressionEditorProps) {
       }}
       theme={tomorrowNightBlue}
       onChange={(nextValue: string) => onChange(nextValue)}
+    />
+  );
+}
+
+interface ReadonlyExpressionProps {
+  expression: string;
+}
+
+export function ReadonlyExpression({ expression }: ReadonlyExpressionProps) {
+  const minimized = minimizeExpression(expression);
+
+  return (
+    <CodeMirror
+      value={minimized}
+      height="auto"
+      editable={false}
+      extensions={[javascript(), EditorView.lineWrapping]}
+      basicSetup={{
+        lineNumbers: false,
+        foldGutter: false,
+        highlightActiveLine: false,
+      }}
+      theme={tomorrowNightBlue}
+      onChange={() => {}}
     />
   );
 }

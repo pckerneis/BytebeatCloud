@@ -1,12 +1,11 @@
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
-import hljs from 'highlight.js/lib/core';
-import javascript from 'highlight.js/lib/languages/javascript';
 import { useBytebeatPlayer } from '../hooks/useBytebeatPlayer';
 import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
 import { supabase } from '../lib/supabaseClient';
-import { ModeOption, minimizeExpression } from 'shared';
+import { ModeOption } from 'shared';
+import { ReadonlyExpression } from './ExpressionEditor';
 
 export interface PostRow {
   id: string;
@@ -27,18 +26,6 @@ export interface PostRow {
 interface PostListProps {
   posts: PostRow[];
   currentUserId?: string;
-}
-
-// Register JavaScript language once for highlight.js
-hljs.registerLanguage('javascript', javascript);
-
-function highlightExpression(expr: string): string {
-  const minimized = minimizeExpression(expr);
-  try {
-    return hljs.highlight(minimized, { language: 'javascript' }).value;
-  } catch {
-    return minimized;
-  }
 }
 
 export function PostList({ posts, currentUserId }: PostListProps) {
@@ -167,19 +154,12 @@ export function PostList({ posts, currentUserId }: PostListProps) {
                 <span className="created" title={createdTitle}>{created}</span>
               </div>
             </div>
-            <pre
+            <div
               className="post-expression"
               onClick={() => void handleExpressionClick(post)}
             >
-              <code
-                className="hljs"
-                // highlight.js returns HTML for tokens; highlightExpression wraps
-                // the call in a try/catch and falls back to plain text.
-                dangerouslySetInnerHTML={{
-                  __html: highlightExpression(post.expression),
-                }}
-              />
-            </pre>
+              <ReadonlyExpression expression={post.expression} />
+            </div>
             <div className="post-actions">
               <button
                 type="button"
