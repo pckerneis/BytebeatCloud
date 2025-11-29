@@ -158,30 +158,34 @@ export default function CreatePage() {
   return (
     <section>
       <h2>Create</h2>
-      <form className="create-form" onSubmit={handleSubmit}>
-        <PostEditorFormFields
-          title={title}
-          onTitleChange={setTitle}
-          expression={expression}
-          onExpressionChange={handleExpressionChange}
-          mode={mode}
-          sampleRate={sampleRate}
-          onToggleMode={toggleMode}
-          onRotateSampleRate={rotateSampleRate}
-          isDraft={isDraft}
-          onDraftChange={setIsDraft}
-          isPlaying={isPlaying}
-          onPlayClick={handlePlayClick}
-          validationIssue={validationIssue}
-          lastError={lastError || null}
-          isExpressionTooLong={isExpressionTooLong}
-          expressionLength={expressionLength}
-          expressionMax={EXPRESSION_MAX}
-          saveStatus={saveStatus}
-          saveError={saveError}
-          submitLabel={saveStatus === 'saving' ? 'Saving…' : 'Save'}
-        />
-      </form>
+      {!user ? (
+        <p className="text-centered">You must be logged in to create a post.</p>
+      ) : (
+        <form className="create-form" onSubmit={handleSubmit}>
+          <PostEditorFormFields
+            title={title}
+            onTitleChange={setTitle}
+            expression={expression}
+            onExpressionChange={handleExpressionChange}
+            mode={mode}
+            sampleRate={sampleRate}
+            onToggleMode={toggleMode}
+            onRotateSampleRate={rotateSampleRate}
+            isDraft={isDraft}
+            onDraftChange={setIsDraft}
+            isPlaying={isPlaying}
+            onPlayClick={handlePlayClick}
+            validationIssue={validationIssue}
+            lastError={lastError || null}
+            isExpressionTooLong={isExpressionTooLong}
+            expressionLength={expressionLength}
+            expressionMax={EXPRESSION_MAX}
+            saveStatus={saveStatus}
+            saveError={saveError}
+            submitLabel={saveStatus === 'saving' ? 'Saving…' : 'Save'}
+          />
+        </form>
+      )}
     </section>
   );
 }

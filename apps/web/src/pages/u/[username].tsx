@@ -50,10 +50,34 @@ export default function UserPage() {
       }
       setError('');
 
+      // Look up the profile id for this username to ensure we only load
+      // posts that actually belong to this user.
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('username', username)
+        .maybeSingle();
+
+      if (cancelled) return;
+
+      if (profileError || !profile) {
+        // eslint-disable-next-line no-console
+        console.warn('Error loading profile for user posts', profileError?.message);
+        setError('Unable to load posts.');
+        if (page === 0) {
+          setPosts([]);
+          setHasLoadedFirstPage(true);
+        }
+        setHasMore(false);
+        loadingMoreRef.current = false;
+        setLoading(false);
+        return;
+      }
+
       const { data, error } = await supabase
         .from('posts')
         .select('id,title,expression,is_draft,sample_rate,mode,created_at,profile_id,profiles(username),favorites(count)')
-        .eq('profiles.username', username)
+        .eq('profile_id', profile.id)
         .eq('is_draft', false)
         .order('created_at', { ascending: false })
         .range(from, to);
