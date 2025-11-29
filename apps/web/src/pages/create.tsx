@@ -24,6 +24,19 @@ export default function CreatePage() {
 
   const expressionLength = expression.length;
 
+  const handleExpressionChange = (value: string) => {
+    setExpression(value);
+
+    const trimmed = value.trim();
+    if (!trimmed) {
+      setValidationIssue(null);
+      return;
+    }
+
+    const result = validateExpression(value);
+    setValidationIssue(result.valid ? null : result.issues[0] ?? null);
+  };
+
   const handlePlayClick = () => {
     const result = validateExpression(expression);
 
@@ -101,7 +114,7 @@ export default function CreatePage() {
           <textarea
             className="expression-input"
             value={expression}
-            onChange={(e) => setExpression(e.target.value)}
+            onChange={(e) => handleExpressionChange(e.target.value)}
             rows={8}
             placeholder="Type your bytebeat expression here"
           />
@@ -109,6 +122,7 @@ export default function CreatePage() {
             <button
               type="button"
               className="button secondary"
+              disabled={!expression.trim() || !!validationIssue}
               onClick={handlePlayClick}
             >
               {isPlaying ? 'Stop' : 'Play'}

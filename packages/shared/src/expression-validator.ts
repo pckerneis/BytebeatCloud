@@ -71,6 +71,22 @@ class BytebeatValidator {
                 scope: [new Set(allowedGlobals)],
             });
 
+            // If there is trailing non-whitespace after the parsed expression,
+            // treat it as a syntax error at the first unexpected token.
+            const end = (ast as any).end ?? expr.length;
+            const rest = expr.slice(end);
+            const nonWsIndex = rest.search(/\S/);
+            if (nonWsIndex !== -1) {
+                const pos = end + nonWsIndex;
+                const message = 'Unexpected token';
+                errors.push(`Parse error: ${message}`);
+                issues.push({
+                    message,
+                    start: pos,
+                    end: pos + 1,
+                });
+            }
+
             return {
                 valid: errors.length === 0,
                 issues,
@@ -78,9 +94,16 @@ class BytebeatValidator {
         } catch (e: unknown) {
             const message = e instanceof Error ? e.message : String(e);
             let issues: ValidationIssue[] = [];
-            if (e && typeof e === 'object' && 'pos' in e) {
-                const err = e as { pos?: number };
-                const pos = typeof err.pos === 'number' ? err.pos : 0;
+
+            if (e && typeof e === 'object') {
+                const err = e as { pos?: number; raisedAt?: number };
+                const rawPos =
+                    typeof err.pos === 'number'
+                        ? err.pos
+                        : typeof err.raisedAt === 'number'
+                        ? err.raisedAt
+                        : 0;
+                const pos = Math.max(0, rawPos);
                 issues = [
                     {
                         message: `Parse error: ${message}`,
