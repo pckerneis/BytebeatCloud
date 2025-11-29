@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { ModeOption } from 'shared';
 
 interface BytebeatPlayer {
@@ -13,35 +13,36 @@ interface BytebeatPlayer {
   stop: () => Promise<void>;
 }
 
+// Module-level singletons so the audio engine is shared across the whole app.
+let audioContext: AudioContext | null = null;
+let workletNode: AudioWorkletNode | null = null;
+
 export function useBytebeatPlayer(): BytebeatPlayer {
   const [isPlaying, setIsPlaying] = useState(false);
   const [lastError, setLastError] = useState<string | null>(null);
 
-  const audioContextRef = useRef<AudioContext | null>(null);
-  const nodeRef = useRef<AudioWorkletNode | null>(null);
-
   const ensureContextAndNode = useCallback(async () => {
     if (typeof window === 'undefined') return null;
 
-    if (!audioContextRef.current) {
+    if (!audioContext) {
       const ctx = new AudioContext();
       await ctx.audioWorklet.addModule('/bytebeat-worklet.js');
-      audioContextRef.current = ctx;
+      audioContext = ctx;
     }
 
-    if (!nodeRef.current && audioContextRef.current) {
-      const node = new AudioWorkletNode(audioContextRef.current, 'bytebeat-processor');
+    if (!workletNode && audioContext) {
+      const node = new AudioWorkletNode(audioContext, 'bytebeat-processor');
       node.port.onmessage = (event) => {
         const { type, message } = event.data || {};
         if (type === 'compileError' || type === 'runtimeError') {
           setLastError(String(message || 'Unknown error'));
         }
       };
-      node.connect(audioContextRef.current.destination);
-      nodeRef.current = node;
+      node.connect(audioContext.destination);
+      workletNode = node;
     }
 
-    return { ctx: audioContextRef.current!, node: nodeRef.current! };
+    return { ctx: audioContext!, node: workletNode! };
   }, []);
 
   const toggle = useCallback(
@@ -94,7 +95,7 @@ export function useBytebeatPlayer(): BytebeatPlayer {
   );
 
   const stop = useCallback(async () => {
-    const ctx = audioContextRef.current;
+    const ctx = audioContext;
     if (ctx && ctx.state === 'running') {
       await ctx.suspend();
     }
