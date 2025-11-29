@@ -426,3 +426,11 @@ main > section {
   color: var(--text-color);
   border-bottom: 3px solid var(--text-color);
 }
+
+.expression-error-snippet {
+  margin-top: 6px;
+}
+
+.expression-preview {
+  background-color: #fee2e2;
+}

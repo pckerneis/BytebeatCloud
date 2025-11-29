@@ -3,7 +3,7 @@ import { useRouter } from 'next/router';
 import { useBytebeatPlayer } from '../../hooks/useBytebeatPlayer';
 import { useSupabaseAuth } from '../../hooks/useSupabaseAuth';
 import { supabase } from '../../lib/supabaseClient';
-import { ExpressionEditor } from '../../components/ExpressionEditor';
+import { ExpressionEditor, ExpressionErrorSnippet } from '../../components/ExpressionEditor';
 import {
   getSampleRateValue,
   ModeOption,
@@ -314,15 +314,7 @@ export default function EditPostPage() {
         {validationIssue && (
           <div className="expression-preview">
             {validationIssue.message}
-            <pre>
-              <code>
-                {expression.slice(0, validationIssue.start)}
-                <span className="expr-highlight">
-                  {expression.slice(validationIssue.start, validationIssue.end)}
-                </span>
-                {expression.slice(validationIssue.end)}
-              </code>
-            </pre>
+            <ExpressionErrorSnippet expression={expression} issue={validationIssue} />
           </div>
         )}
         {lastError ? <p className="error-message">{lastError}</p> : null}
