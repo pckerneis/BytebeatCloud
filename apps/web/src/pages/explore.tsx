@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
+import { useBytebeatPlayer } from '../hooks/useBytebeatPlayer';
+import { ModeOption } from 'shared';
 
 interface PostRow {
   id: string;
@@ -18,6 +20,9 @@ export default function ExplorePage() {
   const [posts, setPosts] = useState<PostRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+
+  const { toggle, stop, isPlaying } = useBytebeatPlayer();
+  const [activePostId, setActivePostId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!supabase) {
@@ -58,6 +63,32 @@ export default function ExplorePage() {
     };
   }, []);
 
+  useEffect(() => {
+    return () => {
+      void stop();
+    };
+  }, [stop]);
+
+  const handleExpressionClick = async (post: PostRow) => {
+    if (isPlaying && activePostId === post.id) {
+      await stop();
+      setActivePostId(null);
+      return;
+    }
+
+    if (isPlaying && activePostId && activePostId !== post.id) {
+      await stop();
+    }
+
+    const sr =
+      post.sample_rate === '8k' ? 8000 : post.sample_rate === '16k' ? 16000 : 44100;
+
+    const mode: ModeOption = post.mode === 'float' ? ModeOption.Float : ModeOption.Int;
+
+    await toggle(post.expression, mode, sr, true);
+    setActivePostId(post.id);
+  };
+
   return (
     <section>
       <h2>Explore</h2>
@@ -72,21 +103,27 @@ export default function ExplorePage() {
             const username = post.profiles?.username ?? 'unknown';
             const created = new Date(post.created_at).toLocaleDateString();
             const createdTitle = new Date(post.created_at).toLocaleString();
+            const isActive = isPlaying && activePostId === post.id;
 
             return (
-              <li key={post.id} className="post-item">
+              <li key={post.id} className={`post-item ${isActive ? 'playing' : ''}`}>
                 <div className="post-header">
                   <div className="post-meta">
                     <span className="username">@{username}</span>
                     <span className="created" title={createdTitle}>{created}</span>
                   </div>
-                  <h3>{post.title}</h3>
+                  <h3>
+                    {post.title}
+                  </h3>
                   <div className="chips">
                     <span className="chip mode">{post.mode}</span>
                     <span className="chip sample-rate">{post.sample_rate}</span>
                   </div>
                 </div>
-                <pre className="post-expression">
+                <pre
+                  className="post-expression"
+                  onClick={() => void handleExpressionClick(post)}
+                >
                   <code>{post.expression}</code>
                 </pre>
               </li>

@@ -53,7 +53,9 @@ export function useBytebeatPlayer(): BytebeatPlayer {
 
       const { ctx, node } = res;
 
-      if (!isPlaying) {
+      const isContextRunning = ctx.state === 'running';
+
+      if (!isContextRunning) {
         // Pre-validate expression by attempting to construct a Function on the main thread.
         // This prevents starting playback when there is a compile error.
         try {
@@ -88,7 +90,7 @@ export function useBytebeatPlayer(): BytebeatPlayer {
         setIsPlaying(false);
       }
     },
-    [ensureContextAndNode, isPlaying],
+    [ensureContextAndNode],
   );
 
   const stop = useCallback(async () => {
