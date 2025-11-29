@@ -9,71 +9,27 @@ export default function UserPage() {
   const { username } = router.query;
   const { user } = useSupabaseAuth();
 
-  const [displayName, setDisplayName] = useState<string | null>(null);
-  const [profileId, setProfileId] = useState<string | null>(null);
-
   const [posts, setPosts] = useState<PostRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
+  const [hasLoadedFirstPage, setHasLoadedFirstPage] = useState(false);
   const loadingMoreRef = useRef(false);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
 
-  // Load profile for the given username
+  // Reset pagination when username changes
+  useEffect(() => {
+    setPosts([]);
+    setPage(0);
+    setHasMore(true);
+    setHasLoadedFirstPage(false);
+  }, [username]);
+
+  // Paginated load of this user's public posts by username
   useEffect(() => {
     if (!supabase) return;
     if (!username || typeof username !== 'string') return;
-
-    let cancelled = false;
-
-    const loadProfile = async () => {
-      setLoading(true);
-      setError('');
-      setDisplayName(null);
-      setProfileId(null);
-      setPosts([]);
-      setPage(0);
-      setHasMore(true);
-
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('id,username')
-        .eq('username', username)
-        .maybeSingle();
-
-      if (cancelled) return;
-
-      if (profileError) {
-        // eslint-disable-next-line no-console
-        console.warn('Error loading user profile', profileError.message);
-        setError('Unable to load user.');
-        setLoading(false);
-        return;
-      }
-
-      if (!profile) {
-        setError('User not found.');
-        setLoading(false);
-        return;
-      }
-
-      setDisplayName(profile.username ?? null);
-      setProfileId(profile.id);
-      // Posts will be loaded by the pagination effect once profileId is set
-    };
-
-    void loadProfile();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [username]);
-
-  // Paginated load of this user's public posts
-  useEffect(() => {
-    if (!supabase) return;
-    if (!profileId) return;
 
     let cancelled = false;
     const pageSize = 20;
@@ -90,7 +46,7 @@ export default function UserPage() {
       const { data, error } = await supabase
         .from('posts')
         .select('id,title,expression,is_draft,sample_rate,mode,created_at,profile_id,profiles(username)')
-        .eq('profile_id', profileId)
+        .eq('profiles.username', username)
         .eq('is_draft', false)
         .order('created_at', { ascending: false })
         .range(from, to);
@@ -103,11 +59,15 @@ export default function UserPage() {
         setError('Unable to load posts.');
         if (page === 0) {
           setPosts([]);
+          setHasLoadedFirstPage(true);
         }
         setHasMore(false);
       } else {
         const rows = data ?? [];
         setPosts((prev) => (page === 0 ? rows : [...prev, ...rows]));
+        if (page === 0) {
+          setHasLoadedFirstPage(true);
+        }
         if (rows.length < pageSize) {
           setHasMore(false);
         }
@@ -122,7 +82,7 @@ export default function UserPage() {
     return () => {
       cancelled = true;
     };
-  }, [profileId, page]);
+  }, [username, page]);
 
   // IntersectionObserver for infinite scroll
   useEffect(() => {
@@ -149,14 +109,16 @@ export default function UserPage() {
 
   return (
     <section>
-      <h2>{displayName ? `@${displayName}` : 'User'}</h2>
-
+      <h2>{typeof username === 'string' ? `@${username}` : 'User'}</h2>
+      <h3>Posts</h3>
       {loading && <p>Loading…</p>}
       {!loading && error && <p className="error-message">{error}</p>}
 
-      {!loading && !error && !hasMore && posts.length === 0 && (
+      {hasLoadedFirstPage && !loading && !error && page === 0 && !hasMore && posts.length === 0 && (
         <p>This user has no public posts yet.</p>
       )}
+
+
 
       {!loading && !error && posts.length > 0 && (
         <PostList
