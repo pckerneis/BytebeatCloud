@@ -1,26 +1,34 @@
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/router';
 import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
 import { supabase } from '../lib/supabaseClient';
-import { PostList, type PostRow } from '../components/PostList';
 
 export default function ProfilePage() {
-  const { user } = useSupabaseAuth();
-  const [username, setUsername] = useState<string | null>(null);
-  const [loadingProfile, setLoadingProfile] = useState(false);
-  const [posts, setPosts] = useState<PostRow[]>([]);
-  const [loadingPosts, setLoadingPosts] = useState(false);
+  const router = useRouter();
+  const { user, loading } = useSupabaseAuth();
+  const [status, setStatus] = useState<'idle' | 'loading' | 'error' | 'no-user'>('idle');
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    if (!user || !supabase) {
-      setUsername(null);
+    if (!supabase) return;
+
+    // Wait for auth to finish loading before deciding where to redirect.
+    if (loading) {
+      return;
+    }
+
+    if (!user) {
+      setStatus('no-user');
+      void router.replace('/login');
       return;
     }
 
     let cancelled = false;
-    setLoadingProfile(true);
+    setStatus('loading');
+    setError('');
 
-    const loadProfile = async () => {
-      const { data, error } = await supabase
+    const go = async () => {
+      const { data, error: profileError } = await supabase
         .from('profiles')
         .select('username')
         .eq('id', (user as any).id)
@@ -28,102 +36,27 @@ export default function ProfilePage() {
 
       if (cancelled) return;
 
-      if (error) {
-        // eslint-disable-next-line no-console
-        console.warn('Error loading profile', error.message);
-        setUsername(null);
-      } else {
-        setUsername(data?.username ?? null);
+      if (profileError || !data?.username) {
+        setStatus('error');
+        setError('Unable to load your profile.');
+        return;
       }
 
-      setLoadingProfile(false);
+      setStatus('loading');
+      void router.replace(`/u/${data.username}`);
     };
 
-    void loadProfile();
+    void go();
 
     return () => {
       cancelled = true;
     };
-  }, [user]);
-
-  useEffect(() => {
-    if (!user || !supabase) {
-      setPosts([]);
-      return;
-    }
-
-    let cancelled = false;
-    setLoadingPosts(true);
-
-    const loadPosts = async () => {
-      const { data, error } = await supabase
-        .from('posts')
-        .select('id,title,expression,is_draft,sample_rate,mode,created_at,profile_id,profiles(username),favorites(count)')
-        .eq('profile_id', (user as any).id)
-        .order('created_at', { ascending: false });
-
-      if (cancelled) return;
-
-      if (error) {
-        // eslint-disable-next-line no-console
-        console.warn('Error loading user posts', error.message);
-        setPosts([]);
-      } else {
-        let rows = (data ?? []).map((row: any) => ({
-          ...row,
-          favorites_count: row.favorites?.[0]?.count ?? 0,
-        }));
-
-        if (user && rows.length > 0) {
-          const postIds = rows.map((r: any) => r.id);
-          const { data: favs, error: favError } = await supabase
-            .from('favorites')
-            .select('post_id')
-            .eq('profile_id', (user as any).id)
-            .in('post_id', postIds);
-
-          if (!favError && favs) {
-            const favoritedSet = new Set((favs as any[]).map((f) => f.post_id as string));
-            rows = rows.map((r: any) => ({
-              ...r,
-              favorited_by_current_user: favoritedSet.has(r.id),
-            }));
-          }
-        }
-
-        setPosts(rows);
-      }
-
-      setLoadingPosts(false);
-    };
-
-    void loadPosts();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [user]);
+  }, [user, loading, router]);
 
   return (
     <section>
-      {!user && <p>You are not logged in. Use the login page to sign in.</p>}
-      {user && loadingProfile && <p>Loading profile…</p>}
-      {user && !loadingProfile && username && (
-        <h2><strong>@{username}</strong></h2>
-      )}
-
-      {user && (
-        <>
-          <h3>Your posts</h3>
-          {loadingPosts && <p>Loading your posts…</p>}
-          {!loadingPosts && posts.length === 0 && (
-            <p>You have not created any posts yet.</p>
-          )}
-          {!loadingPosts && posts.length > 0 && (
-            <PostList posts={posts} currentUserId={(user as any).id} />
-          )}
-        </>
-      )}
+      {status === 'loading' && <p className="text-centered">Loading your profile…</p>}
+      {status === 'error' && <p className="error-message">{error}</p>}
     </section>
   );
 }
