@@ -235,7 +235,7 @@ main > section {
   flex-direction: column;
   gap: 12px;
   list-style: none;
-  padding: 5px;
+  padding: 10px;
   border: 2px solid transparent;
 }
 
@@ -285,6 +285,11 @@ main > section {
   margin: 0;
   min-height: 50px;
   cursor: pointer;
+  user-select: none;
+}
+
+.post-expression code {
+  white-space: break-spaces;
 }
 
 .post-item.playing .post-expression {

@@ -16,6 +16,11 @@ interface PostRow {
   } | null;
 }
 
+function minimize(expr: string): string {
+    // remove extraneous whitespaces
+    return expr.replace(/\s+/g, ' ');
+}
+
 export default function ExplorePage() {
   const [posts, setPosts] = useState<PostRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -70,15 +75,15 @@ export default function ExplorePage() {
   }, [stop]);
 
   const handleExpressionClick = async (post: PostRow) => {
+    // Clicking the active post stops playback
     if (isPlaying && activePostId === post.id) {
       await stop();
       setActivePostId(null);
       return;
     }
 
-    if (isPlaying && activePostId && activePostId !== post.id) {
-      await stop();
-    }
+    // Ensure any existing playback is fully stopped before starting a new one
+    await stop();
 
     const sr =
       post.sample_rate === '8k' ? 8000 : post.sample_rate === '16k' ? 16000 : 44100;
@@ -124,7 +129,7 @@ export default function ExplorePage() {
                   className="post-expression"
                   onClick={() => void handleExpressionClick(post)}
                 >
-                  <code>{post.expression}</code>
+                  <code>{minimize(post.expression)}</code>
                 </pre>
               </li>
             );
