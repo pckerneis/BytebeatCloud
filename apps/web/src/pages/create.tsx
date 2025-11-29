@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react';
+import { useRef, useState, type FormEvent } from 'react';
 import { useBytebeatPlayer } from '../hooks/useBytebeatPlayer';
 import {
   getSampleRateValue,
@@ -21,6 +21,7 @@ export default function CreatePage() {
   const sr = getSampleRateValue(sampleRate);
 
   const [validationIssue, setValidationIssue] = useState<ValidationIssue | null>(null);
+  const validationTimeoutRef = useRef<number | null>(null);
 
   const expressionLength = expression.length;
 
@@ -33,8 +34,14 @@ export default function CreatePage() {
       return;
     }
 
-    const result = validateExpression(value);
-    setValidationIssue(result.valid ? null : result.issues[0] ?? null);
+    if (validationTimeoutRef.current !== null) {
+      window.clearTimeout(validationTimeoutRef.current);
+    }
+
+    validationTimeoutRef.current = window.setTimeout(() => {
+      const result = validateExpression(value);
+      setValidationIssue(result.valid ? null : result.issues[0] ?? null);
+    }, 200);
   };
 
   const handlePlayClick = () => {
