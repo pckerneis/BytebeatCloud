@@ -1,6 +1,8 @@
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import type { PropsWithChildren } from 'react';
+import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
+import { supabase } from '../lib/supabaseClient';
 
 function NavLink({ href, children }: PropsWithChildren<{ href: string }>) {
   const router = useRouter();
@@ -16,6 +18,15 @@ function NavLink({ href, children }: PropsWithChildren<{ href: string }>) {
 }
 
 export function Layout({ children }: PropsWithChildren) {
+  const { user } = useSupabaseAuth();
+  const router = useRouter();
+
+  const handleSignOut = async () => {
+    if (!supabase) return;
+    await supabase.auth.signOut();
+    await router.push('/');
+  };
+
   return (
     <div className="root">
       <nav>
@@ -25,7 +36,16 @@ export function Layout({ children }: PropsWithChildren) {
         <ul>
           <NavLink href="/create">Create</NavLink>
           <NavLink href="/explore">Explore</NavLink>
-          <NavLink href="/profile">Profile</NavLink>
+          {user && <NavLink href="/profile">Profile</NavLink>}
+          {user ? (
+            <li>
+              <button type="button" className="nav" onClick={handleSignOut}>
+                Sign out
+              </button>
+            </li>
+          ) : (
+            <NavLink href="/login">Login</NavLink>
+          )}
         </ul>
       </nav>
       <main>{children}</main>

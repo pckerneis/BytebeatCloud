@@ -70,6 +70,18 @@ a.nav.active {
   color: var(--text-color);
 }
 
+button.nav {
+  color: var(--secondary-text-color);
+  appearance: none;
+  border: none;
+  background: none;
+  font-family: inherit;
+  padding: 0;
+  margin: 0;
+  font-size: inherit;
+  cursor: pointer;
+}
+
 main > section {
   max-width: 600px;
   width: 90%;
