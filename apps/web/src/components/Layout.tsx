@@ -8,6 +8,8 @@ import { usePlayerStore } from '../hooks/usePlayerStore';
 import { ModeOption } from 'shared';
 import { supabase } from '../lib/supabaseClient';
 
+const CURRENT_TOS_VERSION = '2025-11-30-v1';
+
 function NavLink({ href, children }: PropsWithChildren<{ href: string }>) {
   const router = useRouter();
   const isActive = router.pathname === href;
@@ -45,7 +47,7 @@ export function Layout({ children }: PropsWithChildren) {
 
       const { data, error } = await supabase
         .from('profiles')
-        .select('username')
+        .select('username, tos_version')
         .eq('id', (user as any).id)
         .maybeSingle();
 
@@ -58,9 +60,20 @@ export function Layout({ children }: PropsWithChildren) {
         return;
       }
 
-      if (!data?.username) {
-        if (router.pathname !== '/onboarding' && router.pathname !== '/terms') {
+      const hasUsername = !!data?.username;
+      const hasCurrentTos = data?.tos_version === CURRENT_TOS_VERSION;
+
+      if (!hasUsername) {
+        if (
+          router.pathname !== '/onboarding' &&
+          router.pathname !== '/tos-update' &&
+          router.pathname !== '/terms'
+        ) {
           void router.push('/onboarding');
+        }
+      } else if (!hasCurrentTos) {
+        if (router.pathname !== '/tos-update' && router.pathname !== '/terms') {
+          void router.push('/tos-update');
         }
       } else {
         setCheckedProfile(true);
