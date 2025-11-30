@@ -24,6 +24,10 @@ const ANALYSER_INTERVAL = 80;
 let globalIsPlaying = false;
 const isPlayingListeners = new Set<(value: boolean) => void>();
 
+// Guard to prevent overlapping toggle calls that can desynchronize
+// the audio context state from the global playing flag.
+let toggleInProgress = false;
+
 function setGlobalIsPlaying(value: boolean) {
   globalIsPlaying = value;
   isPlayingListeners.forEach((listener) => listener(value));
@@ -152,49 +156,59 @@ export function useBytebeatPlayer(): BytebeatPlayer {
     async (expression: string, mode: ModeOption, sampleRate: number) => {
       if (!expression.trim()) return;
 
+      if (toggleInProgress) {
+        return;
+      }
+
+      toggleInProgress = true;
+
       const res = await ensureContextAndNode();
       if (!res) return;
 
-      const { node } = res;
-      const ctx = (node.context as AudioContext) ?? audioContext!;
+      try {
+        const { node } = res;
+        const ctx = (node.context as AudioContext) ?? audioContext!;
 
-      const isContextRunning = ctx.state === 'running';
+        const shouldStart = !globalIsPlaying;
 
-      if (!isContextRunning) {
-        if (!workletConnected) {
-          node.connect(ctx.destination);
-          workletConnected = true;
-        }
-        // Pre-validate expression by attempting to construct a Function on the main thread.
-        // This prevents starting playback when there is a compile error.
-        try {
-          // eslint-disable-next-line no-new-func
-          // We only care that this compiles; the worklet does the actual evaluation.
-          void new Function('t', String(expression));
-        } catch (e) {
-          setLastError(String((e as Error).message || e));
-          return;
-        }
+        if (shouldStart) {
+          if (!workletConnected) {
+            node.connect(ctx.destination);
+            workletConnected = true;
+          }
+          // Pre-validate expression by attempting to construct a Function on the main thread.
+          // This prevents starting playback when there is a compile error.
+          try {
+            // eslint-disable-next-line no-new-func
+            // We only care that this compiles; the worklet does the actual evaluation.
+            void new Function('t', String(expression));
+          } catch (e) {
+            setLastError(String((e as Error).message || e));
+            return;
+          }
 
-        setLastError(null);
-        const isFloatMode = mode === 'float';
-        const sr = Number.isFinite(sampleRate) && sampleRate > 0 ? sampleRate : 8000;
-        node.port.postMessage({
-          type: 'setExpression',
-          expression,
-          sampleRate: sr,
-          float: isFloatMode,
-        });
-        node.port.postMessage({ type: 'reset' });
-        if (ctx.state === 'suspended') {
-          await ctx.resume();
+          setLastError(null);
+          const isFloatMode = mode === 'float';
+          const sr = Number.isFinite(sampleRate) && sampleRate > 0 ? sampleRate : 8000;
+          node.port.postMessage({
+            type: 'setExpression',
+            expression,
+            sampleRate: sr,
+            float: isFloatMode,
+          });
+          node.port.postMessage({ type: 'reset' });
+          if (ctx.state === 'suspended') {
+            await ctx.resume();
+          }
+          setGlobalIsPlaying(true);
+        } else {
+          if (ctx.state === 'running') {
+            await ctx.suspend();
+          }
+          setGlobalIsPlaying(false);
         }
-        setGlobalIsPlaying(true);
-      } else {
-        if (ctx.state === 'running') {
-          await ctx.suspend();
-        }
-        setGlobalIsPlaying(false);
+      } finally {
+        toggleInProgress = false;
       }
     },
     [ensureContextAndNode],
