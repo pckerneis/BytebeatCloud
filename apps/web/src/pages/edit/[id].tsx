@@ -296,6 +296,7 @@ export default function EditPostPage() {
           submitLabel={saveStatus === 'saving' ? 'Saving…' : 'Save changes'}
           showDeleteButton
           onDeleteClick={() => setShowDeleteConfirm(true)}
+          showActions={!!user}
         />
       </form>
 

@@ -1,5 +1,6 @@
+import { useState } from 'react';
 import { ExpressionEditor, ExpressionErrorSnippet } from './ExpressionEditor';
-import type { ModeOption, SampleRateOption, ValidationIssue } from 'shared';
+import { ModeOption, SampleRateOption, ValidationIssue } from 'shared';
 
 interface PostEditorFormFieldsProps {
   title: string;
@@ -64,7 +65,51 @@ export function PostEditorFormFields(props: PostEditorFormFieldsProps) {
     showActions
   } = props;
 
+  const [shareLinkCopied, setShareLinkCopied] = useState(false);
   const canSubmit = Boolean(expression.trim()) && !validationIssue && saveStatus !== 'saving';
+
+  const handleCopyShareLink = async () => {
+    const trimmedExpr = expression.trim();
+    if (!trimmedExpr) return;
+
+    if (typeof window === 'undefined') return;
+
+    const trimmedTitle = title.trim();
+
+    const sampleRateValue =
+      sampleRate === SampleRateOption._8k
+        ? '8k'
+        : sampleRate === SampleRateOption._16k
+          ? '16k'
+          : '44.1k';
+
+    const modeValue = mode === ModeOption.Float ? 'float' : 'int';
+
+    const payload = {
+      title: trimmedTitle || undefined,
+      expr: trimmedExpr,
+      mode: modeValue,
+      sr: sampleRateValue,
+    };
+
+    let encoded = '';
+    try {
+      encoded = btoa(JSON.stringify(payload));
+    } catch {
+      return;
+    }
+
+    const origin = window.location.origin;
+    const href = `${origin}/create?q=${encodeURIComponent(encoded)}`;
+
+    try {
+      await navigator.clipboard.writeText(href);
+      setShareLinkCopied(true);
+      window.setTimeout(() => setShareLinkCopied(false), 1500);
+    } catch {
+      // ignore clipboard errors
+    }
+  };
 
   return (
     <>
@@ -157,6 +202,17 @@ export function PostEditorFormFields(props: PostEditorFormFieldsProps) {
         </div>
       </div>
       }
+
+      <div className="form-actions-buttons" style={{ marginTop: '8px' }}>
+        <button
+          type="button"
+          className="button secondary"
+          disabled={!expression.trim()}
+          onClick={handleCopyShareLink}
+        >
+          {shareLinkCopied ? 'Link copied' : 'Copy share link'}
+        </button>
+      </div>
 
       {saveError && <p className="error-message">{saveError}</p>}
       {saveStatus === 'success' && !saveError && (
