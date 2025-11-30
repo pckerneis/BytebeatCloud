@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import type { PropsWithChildren } from 'react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
 import { warmUpBytebeatEngine, useBytebeatPlayer } from '../hooks/useBytebeatPlayer';
 import { usePlayerStore } from '../hooks/usePlayerStore';
@@ -27,6 +27,8 @@ export function Layout({ children }: PropsWithChildren) {
   const [checkedProfile, setCheckedProfile] = useState(false);
   const { isPlaying, toggle, stop } = useBytebeatPlayer();
   const { currentPost, next, prev, updateFavoriteStateForPost } = usePlayerStore();
+  const titleRef = useRef<HTMLDivElement | null>(null);
+  const [isTitleOverflowing, setIsTitleOverflowing] = useState(false);
 
   useEffect(() => {
     const devFakeAuth = process.env.NEXT_PUBLIC_DEV_FAKE_AUTH === '1';
@@ -96,6 +98,44 @@ export function Layout({ children }: PropsWithChildren) {
     await supabase.auth.signOut();
     await router.push('/');
   };
+
+  useEffect(() => {
+    const container = titleRef.current;
+    if (!container) {
+      setIsTitleOverflowing(false);
+      return;
+    }
+
+    const textEl = container.querySelector<HTMLElement>('.played-post-name-text');
+    if (!textEl) {
+      setIsTitleOverflowing(false);
+      return;
+    }
+
+    const update = () => {
+      const overflow = textEl.scrollWidth - container.clientWidth;
+      if (overflow > 1) {
+        setIsTitleOverflowing(true);
+        const distance = -overflow;
+        textEl.style.setProperty('--marquee-offset', `${distance}px`);
+
+        const pixelsPerSecond = 20;
+        const durationSeconds = Math.max(8, Math.abs(distance) / pixelsPerSecond);
+        textEl.style.setProperty('--marquee-duration', `${durationSeconds}s`);
+      } else {
+        setIsTitleOverflowing(false);
+        textEl.style.removeProperty('--marquee-offset');
+        textEl.style.removeProperty('--marquee-duration');
+      }
+    };
+
+    update();
+
+    window.addEventListener('resize', update);
+    return () => {
+      window.removeEventListener('resize', update);
+    };
+  }, [currentPost?.title]);
 
   const handleFooterPlayPause = async () => {
     if (!currentPost) return;
@@ -259,8 +299,14 @@ export function Layout({ children }: PropsWithChildren) {
               ? `@${currentPost.profiles.username}`
               : '@unknown'}
           </div>
-          <div className="played-post-name">
-            {currentPost?.title || '(untitled)'}
+          <div className="played-post-name" ref={titleRef}>
+            <span
+              className={`played-post-name-text${
+                isTitleOverflowing ? ' is-overflowing' : ''
+              }`}
+            >
+              {currentPost?.title || '(untitled)'}
+            </span>
           </div>
         </div>
         <button

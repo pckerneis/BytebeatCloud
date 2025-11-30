@@ -90,6 +90,30 @@ body {
 
 .played-post-name {
   font-size: 10px;
+  overflow: hidden;
+  position: relative;
+  white-space: nowrap;
+}
+
+.played-post-name-text {
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.played-post-name-text.is-overflowing {
+  animation: marquee-slide var(--marquee-duration, 10s) linear infinite;
+}
+
+@keyframes marquee-slide {
+  0% {
+    transform: translateX(0);
+  }
+  70% {
+    transform: translateX(var(--marquee-offset, 0px));
+  }
+  100% {
+    transform: translateX(var(--marquee-offset, 0px));
+  }
 }
 
 .visualizer {
