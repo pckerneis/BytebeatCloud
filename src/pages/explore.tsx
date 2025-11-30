@@ -68,7 +68,7 @@ export default function ExplorePage() {
         let rows = attachFavoritesCount(data ?? []);
 
         if (user && rows.length > 0) {
-          rows = await enrichWithViewerFavorites(supabase, (user as any).id as string, rows);
+          rows = await enrichWithViewerFavorites((user as any).id as string, rows);
         }
 
         setPosts((prev) => {

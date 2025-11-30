@@ -1,3 +1,5 @@
+import { supabase } from '../lib/supabaseClient';
+
 export function attachFavoritesCount(rows: any[]): any[] {
   return (rows ?? []).map((row: any) => ({
     ...row,
@@ -16,7 +18,6 @@ export function attachFavoritedByCurrentUser(rows: any[], favs: any[]): any[] {
 }
 
 export async function enrichWithViewerFavorites(
-  supabase: any,
   viewerId: string,
   rows: any[],
 ): Promise<any[]> {

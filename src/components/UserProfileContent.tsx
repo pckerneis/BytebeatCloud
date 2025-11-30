@@ -102,7 +102,7 @@ export function UserProfileContent({ username, extraHeader }: UserProfileContent
         let rows = attachFavoritesCount(data ?? []);
 
         if (user && rows.length > 0) {
-          rows = await enrichWithViewerFavorites(supabase, (user as any).id as string, rows);
+          rows = await enrichWithViewerFavorites((user as any).id as string, rows);
         }
 
         setPosts((prev) => (page === 0 ? rows : [...prev, ...rows]));
@@ -202,7 +202,7 @@ export function UserProfileContent({ username, extraHeader }: UserProfileContent
 
         // Mark which of these posts the CURRENT viewer has favorited.
         if (user && rows.length > 0) {
-          rows = await enrichWithViewerFavorites(supabase, (user as any).id as string, rows);
+          rows = await enrichWithViewerFavorites((user as any).id as string, rows);
         }
 
         setFavoritePosts(rows as PostRow[]);
@@ -270,7 +270,7 @@ export function UserProfileContent({ username, extraHeader }: UserProfileContent
 
         // Mark which of these drafts the CURRENT viewer has favorited.
         if (user && rows.length > 0) {
-          rows = await enrichWithViewerFavorites(supabase, (user as any).id as string, rows);
+          rows = await enrichWithViewerFavorites((user as any).id as string, rows);
         }
 
         setDraftPosts(rows as PostRow[]);
