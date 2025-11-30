@@ -12,6 +12,8 @@ body {
   --text-color: black;
   --secondary-text-color: #555;
 
+  --panel-border-color: #C8C8C8FF;
+
   --chip-border-color: #bbb;
   --chip-background-color: #f5f5f5;
 
@@ -22,11 +24,69 @@ body {
 
 .root {
   display: flex;
+  flex-direction: column;
   position: absolute;
   top: 0;
   bottom: 0;
   left: 0;
   right: 0;
+}
+
+.top-content {
+  display: flex;
+  overflow: hidden;
+  flex: 1;
+}
+
+.footer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 22px;
+  padding: 10px;
+  border-top: 1px solid var(--panel-border-color);
+  font-size: 0.8em;
+}
+
+.transport-buttons {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+}
+
+.transport-button {
+  border-radius: 50%;
+  border: 1px solid var(--chip-border-color);
+  background-color: var(--chip-background-color);
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.transport-button.play {
+  width: 25px;
+  height: 25px;
+  padding-right: 4px;
+}
+
+.played-post-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 120px;
+}
+
+.played-post-author {
+  color: var(--secondary-text-color);
+  font-size: 10px;
+}
+
+.vizualizer {
+  background: #eee;
 }
 
 .text-centered {
@@ -40,7 +100,7 @@ a {
 
 nav {
   min-width: 200px;
-  border-right: 1px solid rgb(197, 197, 197);
+  border-right: 1px solid var(--panel-border-color);
   display: flex;
   flex-direction: column;
   gap: 5px;

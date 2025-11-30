@@ -95,28 +95,45 @@ export function Layout({ children }: PropsWithChildren) {
 
   return (
     <div className="root">
-      <nav>
-        <div className="app-title">
-          <Link href="/explore">
-            <h1>Bitebeats</h1>
-          </Link>
+      <div className="top-content">
+        <nav>
+          <div className="app-title">
+            <Link href="/explore">
+              <h1>Bitebeats</h1>
+            </Link>
+          </div>
+          <ul>
+            {user && <NavLink href="/create">Create</NavLink>}
+            <NavLink href="/explore">Explore</NavLink>
+            {user && <NavLink href="/profile">Profile</NavLink>}
+            {user ? (
+              <li>
+                <button type="button" className="nav" onClick={handleSignOut}>
+                  Sign out
+                </button>
+              </li>
+            ) : (
+              <NavLink href="/login">Login</NavLink>
+            )}
+          </ul>
+        </nav>
+        <main>{children}</main>
+      </div>
+      <div className='footer'>
+        <div className='transport-buttons'>
+          <button className='transport-button'>«</button>
+          <button className='transport-button play'>▶</button>
+          <button className='transport-button'>»</button>
         </div>
-        <ul>
-          {user && <NavLink href="/create">Create</NavLink>}
-          <NavLink href="/explore">Explore</NavLink>
-          {user && <NavLink href="/profile">Profile</NavLink>}
-          {user ? (
-            <li>
-              <button type="button" className="nav" onClick={handleSignOut}>
-                Sign out
-              </button>
-            </li>
-          ) : (
-            <NavLink href="/login">Login</NavLink>
-          )}
-        </ul>
-      </nav>
-      <main>{children}</main>
+        <div className='vizualizer'>
+          <canvas width={150} height={26}></canvas>
+        </div>
+        <div className='played-post-info'>
+          <div className='played-post-author'>@foo</div>
+          <div className='played-post-name'>(untitled)</div>
+        </div>
+        <button className='favorite-button'>&lt;3</button>
+      </div>
     </div>
   );
 }
