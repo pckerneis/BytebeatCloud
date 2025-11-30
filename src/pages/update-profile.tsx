@@ -1,62 +1,24 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
-import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
 import { supabase } from '../lib/supabaseClient';
 import { validateUsername } from '../lib/validateUsername';
 import Head from 'next/head';
 import { APP_NAME } from '../constants';
+import { useCurrentUserProfile } from '../hooks/useCurrentUserProfile';
 
 export default function UpdateProfilePage() {
   const router = useRouter();
-  const { user, loading } = useSupabaseAuth();
-  const [status, setStatus] = useState<'idle' | 'loading' | 'error' | 'no-user'>('idle');
-  const [error, setError] = useState('');
+  const { user, status, error: profileError, username: loadedUsername } = useCurrentUserProfile();
   const [username, setUsername] = useState('');
+  const [error, setError] = useState('');
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving'>('idle');
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   useEffect(() => {
-    if (!supabase) return;
-
-    if (loading) {
-      return;
+    if (loadedUsername) {
+      setUsername(loadedUsername);
     }
-
-    if (!user) {
-      setStatus('no-user');
-      void router.replace('/login');
-      return;
-    }
-
-    let cancelled = false;
-    setStatus('loading');
-    setError('');
-
-    const go = async () => {
-      const { data, error: profileError } = await supabase
-        .from('profiles')
-        .select('username')
-        .eq('id', (user as any).id)
-        .maybeSingle();
-
-      if (cancelled) return;
-
-      if (profileError || !data?.username) {
-        setStatus('error');
-        setError('Unable to load your profile.');
-        return;
-      }
-
-      setUsername(data.username);
-      setStatus('idle');
-    };
-
-    void go();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [user, loading, router]);
+  }, [loadedUsername]);
 
   const handleSave = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -180,7 +142,7 @@ export default function UpdateProfilePage() {
       </Head>
       <section>
         {status === 'loading' && <p className="text-centered">Loading your profile…</p>}
-        {status === 'error' && <p className="error-message">{error}</p>}
+        {status === 'error' && <p className="error-message">{profileError}</p>}
 
         {status === 'idle' && (
           <form className="create-form" onSubmit={handleSave}>
