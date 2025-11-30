@@ -8,6 +8,7 @@ import { usePlayerStore } from '../hooks/usePlayerStore';
 import { supabase } from '../lib/supabaseClient';
 import { APP_NAME } from '../constants';
 import { ModeOption } from '../model/expression';
+import { PostRow } from './PostList';
 
 const CURRENT_TOS_VERSION = '2025-11-30-v1';
 
@@ -222,8 +223,7 @@ export function Layout({ children }: PropsWithChildren) {
     await toggle(currentPost.expression, mode, sr);
   };
 
-  const handleFooterPrev = async () => {
-    const post = prev();
+  const playPost = async (post: PostRow | null) => {
     if (!post) return;
 
     await stop();
@@ -232,18 +232,14 @@ export function Layout({ children }: PropsWithChildren) {
     const mode: ModeOption = post.mode === 'float' ? ModeOption.Float : ModeOption.Int;
 
     await toggle(post.expression, mode, sr);
+  }
+
+  const handleFooterPrev = async () => {
+    await playPost(prev());
   };
 
   const handleFooterNext = async () => {
-    const post = next();
-    if (!post) return;
-
-    await stop();
-
-    const sr = post.sample_rate === '8k' ? 8000 : post.sample_rate === '16k' ? 16000 : 44100;
-    const mode: ModeOption = post.mode === 'float' ? ModeOption.Float : ModeOption.Int;
-
-    await toggle(post.expression, mode, sr);
+    await playPost(next());
   };
 
   const handleFooterFavoriteClick = async () => {
