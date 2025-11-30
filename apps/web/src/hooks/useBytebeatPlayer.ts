@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ModeOption } from 'shared';
 
 interface BytebeatPlayer {
@@ -17,6 +17,15 @@ interface BytebeatPlayer {
 let audioContext: AudioContext | null = null;
 let workletNode: AudioWorkletNode | null = null;
 let workletConnected = false;
+
+// Global playback state so multiple hook instances stay in sync.
+let globalIsPlaying = false;
+const isPlayingListeners = new Set<(value: boolean) => void>();
+
+function setGlobalIsPlaying(value: boolean) {
+  globalIsPlaying = value;
+  isPlayingListeners.forEach((listener) => listener(value));
+}
 
 // Internal helper to lazily create the AudioContext and worklet node.
 async function ensureContextAndNodeBase() {
@@ -46,8 +55,18 @@ export async function warmUpBytebeatEngine(): Promise<void> {
 }
 
 export function useBytebeatPlayer(): BytebeatPlayer {
-  const [isPlaying, setIsPlaying] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(globalIsPlaying);
   const [lastError, setLastError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const listener = (value: boolean) => {
+      setIsPlaying(value);
+    };
+    isPlayingListeners.add(listener);
+    return () => {
+      isPlayingListeners.delete(listener);
+    };
+  }, []);
 
   const ensureContextAndNode = useCallback(async () => {
     const res = await ensureContextAndNodeBase();
@@ -107,12 +126,12 @@ export function useBytebeatPlayer(): BytebeatPlayer {
         if (ctx.state === 'suspended') {
           await ctx.resume();
         }
-        setIsPlaying(true);
+        setGlobalIsPlaying(true);
       } else {
         if (ctx.state === 'running') {
           await ctx.suspend();
         }
-        setIsPlaying(false);
+        setGlobalIsPlaying(false);
       }
     },
     [ensureContextAndNode],
@@ -123,7 +142,7 @@ export function useBytebeatPlayer(): BytebeatPlayer {
     if (ctx && ctx.state === 'running') {
       await ctx.suspend();
     }
-    setIsPlaying(false);
+    setGlobalIsPlaying(false);
   }, []);
 
   return useMemo(
