@@ -16,7 +16,6 @@ export default {
   ignorePatterns: [
     "node_modules/",
     ".next/",
-    "dist/",
-    ".turbo/"
+    "dist/"
   ],
 };
