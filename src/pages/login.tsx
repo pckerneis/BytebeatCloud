@@ -15,7 +15,10 @@ export default function LoginPage() {
     setStatus('loading');
     setErrorMessage('');
 
-    const redirectTo = `${window.location.origin}/`; // redirect back to home after magic link
+    const basePath = process.env.NEXT_PUBLIC_BASE_PATH
+      ? `/${process.env.NEXT_PUBLIC_BASE_PATH}`
+      : '';
+    const redirectTo = `${window.location.origin}${basePath}/`; // redirect back to home after magic link
 
     const { error } = await supabase.auth.signInWithOtp({
       email: email.trim(),
