@@ -3,12 +3,15 @@ import { useRouter } from 'next/router';
 import { supabase } from '../lib/supabaseClient';
 import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
 
+const CURRENT_TOS_VERSION = '2025-11-30-v1';
+
 export default function OnboardingPage() {
   const { user, loading } = useSupabaseAuth();
   const router = useRouter();
   const [username, setUsername] = useState('');
   const [status, setStatus] = useState<'idle' | 'saving'>('idle');
   const [error, setError] = useState('');
+  const [acceptTos, setAcceptTos] = useState(false);
 
   useEffect(() => {
     if (loading) return;
@@ -20,8 +23,6 @@ export default function OnboardingPage() {
   useEffect(() => {
     const checkExisting = async () => {
       if (!user || !supabase) return;
-
-      console.log('user', user);
 
       const { data, error: fetchError } = await supabase
         .from('profiles')
@@ -65,13 +66,23 @@ export default function OnboardingPage() {
       return;
     }
 
+    if (!acceptTos) {
+      setError('You must accept the Terms of Service to continue.');
+      return;
+    }
+
     setStatus('saving');
     setError('');
 
     const { error: upsertError } = await supabase
       .from('profiles')
       .upsert(
-        { id: (user as any).id, username: username.trim() },
+        {
+          id: (user as any).id,
+          username: username.trim(),
+          tos_version: CURRENT_TOS_VERSION,
+          tos_accepted_at: new Date().toISOString(),
+        },
         { onConflict: 'id' },
       );
 
@@ -103,6 +114,21 @@ export default function OnboardingPage() {
             maxLength={32}
           />
         </label>
+
+        <label className="checkbox">
+          <input
+            type="checkbox"
+            checked={acceptTos}
+            onChange={(e) => setAcceptTos(e.target.checked)}
+          />
+          <span>
+            I accept the{' '}
+            <a href="/terms" target="_blank" rel="noreferrer">
+              Terms of Service
+            </a>
+          </span>
+        </label>
+
         <div className="form-actions">
           <button
             type="submit"

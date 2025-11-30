@@ -58,8 +58,10 @@ export function Layout({ children }: PropsWithChildren) {
         return;
       }
 
-      if (!data?.username && router.pathname !== '/onboarding') {
-        void router.push('/onboarding');
+      if (!data?.username) {
+        if (router.pathname !== '/onboarding' && router.pathname !== '/terms') {
+          void router.push('/onboarding');
+        }
       } else {
         setCheckedProfile(true);
       }
@@ -70,7 +72,7 @@ export function Layout({ children }: PropsWithChildren) {
     return () => {
       cancelled = true;
     };
-  }, [user, checkedProfile, router]);
+  }, [user, checkedProfile, router.pathname]);
 
   // Warm up the audio engine on the very first user interaction anywhere
   // in the app, so the initial AudioContext/worklet cost is paid upfront.
