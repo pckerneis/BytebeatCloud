@@ -2,6 +2,7 @@ import { useState, type FormEvent, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { supabase } from '../lib/supabaseClient';
 import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
+import { validateUsername } from '../lib/validateUsername';
 
 const CURRENT_TOS_VERSION = '2025-11-30-v1';
 
@@ -43,17 +44,6 @@ export default function OnboardingPage() {
 
     void checkExisting();
   }, [user, router]);
-
-  const validateUsername = (value: string) => {
-    const trimmed = value.trim();
-    if (!trimmed) return 'Username is required';
-    if (trimmed.length < 3) return 'Username must be at least 3 characters';
-    if (trimmed.length > 32) return 'Username must be at most 32 characters';
-    if (!/^[A-Za-z0-9_]+$/.test(trimmed)) {
-      return 'Only letters, digits, and underscores are allowed';
-    }
-    return '';
-  };
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();

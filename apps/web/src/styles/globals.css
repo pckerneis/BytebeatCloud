@@ -194,6 +194,17 @@ main > section {
   width: 100%;
 }
 
+/* Profile page */
+
+.profile-title-row {
+  display: flex;
+  align-items: center;
+}
+
+.profile-title-row h2 {
+  flex: 1;
+}
+
 /* Create page */
 
 .login-to-publish-message {
