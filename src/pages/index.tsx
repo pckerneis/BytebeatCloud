@@ -10,6 +10,9 @@ export default function Home() {
           tiny musical expressions.
         </p>
 
+        <p>This app is still in development. Expect bugs and incomplete features.
+          Contributions welcome on <Link href="https://github.com/pckerneis/ByteJam" target="_blank">GitHub</Link>!</p>
+
         <fieldset>
           <legend>What is bytebeat?</legend>
           <p>
