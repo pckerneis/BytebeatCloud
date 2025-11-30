@@ -51,7 +51,10 @@ async function ensureContextAndNodeBase() {
 
   if (!audioContext) {
     const ctx = new AudioContext();
-    await ctx.audioWorklet.addModule('/bytebeat-worklet.js');
+    const basePath = process.env.NEXT_PUBLIC_BASE_PATH
+      ? `/${process.env.NEXT_PUBLIC_BASE_PATH}`
+      : '';
+    await ctx.audioWorklet.addModule(`${basePath}/bytebeat-worklet.js`);
     audioContext = ctx;
   }
 
