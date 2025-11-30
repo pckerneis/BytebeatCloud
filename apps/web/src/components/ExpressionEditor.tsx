@@ -49,6 +49,7 @@ export function ExpressionEditor({ value, onChange }: ExpressionEditorProps) {
         lineNumbers: false,
         foldGutter: false,
         highlightActiveLine: false,
+        autocompletion: false,
       }}
       theme={tomorrowNightBlue}
       onChange={(nextValue: string) => onChange(nextValue)}

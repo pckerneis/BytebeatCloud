@@ -196,6 +196,14 @@ main > section {
 
 /* Create page */
 
+.login-to-publish-message {
+  border: 1px solid var(--panel-border-color);
+  padding: 6px;
+  margin: 8px;
+  border-radius: 4px;
+  background: var(--chip-background-color);
+}
+
 .create-form {
   display: flex;
   flex-direction: column;
@@ -213,6 +221,7 @@ main > section {
   font-size: 16px;
   padding: 4px 0;
   border: none;
+  border-bottom: 1px solid transparent;
 }
 
 .post-title-input:focus {
@@ -329,6 +338,10 @@ main > section {
   background: var(--chip-background-color);
 }
 
+button.chip {
+  cursor: pointer;
+}
+
 .chips .created {
   font-size: 10px;
   color: var(--secondary-text-color);
@@ -372,16 +385,6 @@ main > section {
 
 .favorite-count {
   min-width: 1ch;
-}
-
-.option-chip {
-  font-family: inherit;
-  font-size: 12px;
-  padding: 2px 8px;
-  border-radius: 4px;
-  border: 1px solid var(--chip-border-color);
-  background: var(--chip-background-color);
-  cursor: pointer;
 }
 
 /* Explore page */

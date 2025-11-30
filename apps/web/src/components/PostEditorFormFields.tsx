@@ -33,6 +33,8 @@ interface PostEditorFormFieldsProps {
 
   showDeleteButton?: boolean;
   onDeleteClick?: () => void;
+
+  showActions: boolean;
 }
 
 export function PostEditorFormFields(props: PostEditorFormFieldsProps) {
@@ -59,6 +61,7 @@ export function PostEditorFormFields(props: PostEditorFormFieldsProps) {
     submitLabel,
     showDeleteButton,
     onDeleteClick,
+    showActions
   } = props;
 
   const canSubmit = Boolean(expression.trim()) && !validationIssue && saveStatus !== 'saving';
@@ -79,14 +82,14 @@ export function PostEditorFormFields(props: PostEditorFormFieldsProps) {
       <div className="chips">
         <button
           type="button"
-          className="option-chip"
+          className="chip"
           onClick={() => onToggleMode()}
         >
           {mode}
         </button>
         <button
           type="button"
-          className="option-chip"
+          className="chip"
           onClick={() => onRotateSampleRate()}
         >
           {sampleRate}
@@ -121,6 +124,7 @@ export function PostEditorFormFields(props: PostEditorFormFieldsProps) {
       )}
       {lastError ? <p className="error-message">{lastError}</p> : null}
 
+      {showActions &&
       <div className="form-actions">
         <label className="checkbox">
           <input
@@ -152,6 +156,7 @@ export function PostEditorFormFields(props: PostEditorFormFieldsProps) {
           </button>
         </div>
       </div>
+      }
 
       {saveError && <p className="error-message">{saveError}</p>}
       {saveStatus === 'success' && !saveError && (

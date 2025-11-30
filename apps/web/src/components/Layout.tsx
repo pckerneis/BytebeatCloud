@@ -301,7 +301,7 @@ export function Layout({ children }: PropsWithChildren) {
             </Link>
           </div>
           <ul>
-            {user && <NavLink href="/create">Create</NavLink>}
+            <NavLink href="/create">Create</NavLink>
             <NavLink href="/explore">Explore</NavLink>
             {user && <NavLink href="/profile">Profile</NavLink>}
             {user ? (
