@@ -295,9 +295,11 @@ export function Layout({ children }: PropsWithChildren) {
         </div>
         <div className="played-post-info">
           <div className="played-post-author">
-            {currentPost?.profiles?.username
-              ? `@${currentPost.profiles.username}`
-              : '@unknown'}
+            {currentPost
+              ? currentPost.profiles?.username
+                ? `@${currentPost.profiles.username}`
+                : '@unknown'
+              : '-'}
           </div>
           <div className="played-post-name" ref={titleRef}>
             <span
@@ -305,7 +307,7 @@ export function Layout({ children }: PropsWithChildren) {
                 isTitleOverflowing ? ' is-overflowing' : ''
               }`}
             >
-              {currentPost?.title || '(untitled)'}
+              {currentPost ? currentPost.title || '(untitled)' : '-'}
             </span>
           </div>
         </div>
