@@ -378,7 +378,6 @@ button.chip {
   border: 1px solid var(--chip-border-color);
   background: var(--chip-background-color);
   font-size: 12px;
-  cursor: default;
   font-family: inherit;
   cursor: pointer;
 }

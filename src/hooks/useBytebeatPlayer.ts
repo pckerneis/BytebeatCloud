@@ -4,11 +4,7 @@ import { ModeOption } from '../model/expression';
 interface BytebeatPlayer {
   isPlaying: boolean;
   lastError: string | null;
-  toggle: (
-    expression: string,
-    mode: ModeOption,
-    sampleRate: number,
-  ) => Promise<void>;
+  toggle: (expression: string, mode: ModeOption, sampleRate: number) => Promise<void>;
   stop: () => Promise<void>;
   level: number;
   waveform: Float32Array | null;
@@ -42,7 +38,6 @@ function setGlobalLevel(value: number) {
   levelListeners.forEach((listener) => listener(value));
 }
 
-// Global waveform snapshot for visualizers (from AnalyserNode).
 let globalWaveform: Float32Array | null = null;
 const waveformListeners = new Set<(value: Float32Array | null) => void>();
 
@@ -51,7 +46,6 @@ function setGlobalWaveform(value: Float32Array | null) {
   waveformListeners.forEach((listener) => listener(value));
 }
 
-// Internal helper to lazily create the AudioContext and worklet node.
 async function ensureContextAndNodeBase() {
   if (typeof window === 'undefined') return null;
 
@@ -62,11 +56,7 @@ async function ensureContextAndNodeBase() {
   }
 
   if (!workletNode && audioContext) {
-    const node = new AudioWorkletNode(audioContext, 'bytebeat-processor');
-    // Do NOT connect to destination here; this is used by warm-up as well.
-    // We will connect the node only when starting actual playback to avoid
-    // any audible clicks during initialization.
-    workletNode = node;
+    workletNode = new AudioWorkletNode(audioContext, 'bytebeat-processor');
   }
 
   if (!analyserNode && audioContext && workletNode) {
@@ -74,7 +64,6 @@ async function ensureContextAndNodeBase() {
     analyser.fftSize = 256;
     analyserNode = analyser;
     analyserData = new Float32Array(analyser.fftSize);
-    // Tap the worklet output; keep primary audio routing as-is.
     workletNode.connect(analyserNode);
 
     const updateWaveform = () => {

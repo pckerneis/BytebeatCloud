@@ -4,6 +4,7 @@ import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
 import { PostList, type PostRow } from '../components/PostList';
 import Head from 'next/head';
 import { APP_NAME } from '../constants';
+import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
 
 export default function ExplorePage() {
   const { user } = useSupabaseAuth();
@@ -93,7 +94,7 @@ export default function ExplorePage() {
             return combined;
           }
 
-          const sorted = [...combined].sort((a, b) => {
+          return [...combined].sort((a, b) => {
             const fa = a.favorites_count ?? 0;
             const fb = b.favorites_count ?? 0;
             if (fb !== fa) return fb - fa;
@@ -102,8 +103,6 @@ export default function ExplorePage() {
             const db = new Date(b.created_at).getTime();
             return db - da;
           });
-
-          return sorted;
         });
         if (rows.length < pageSize) {
           setHasMore(false);
@@ -121,27 +120,7 @@ export default function ExplorePage() {
     };
   }, [page, user, activeTab]);
 
-  useEffect(() => {
-    if (!hasMore) return;
-
-    const sentinel = sentinelRef.current;
-    if (!sentinel) return;
-
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting && !loadingMoreRef.current && hasMore) {
-          loadingMoreRef.current = true;
-          setPage((p) => p + 1);
-        }
-      });
-    });
-
-    observer.observe(sentinel);
-
-    return () => {
-      observer.disconnect();
-    };
-  }, [hasMore]);
+  useInfiniteScroll({ hasMore, loadingMoreRef, sentinelRef, setPage });
 
   const handleTabClick = (tab: 'recent' | 'popular') => {
     if (tab === activeTab) return;

@@ -45,8 +45,7 @@ function setCurrentPostByIdInternal(postId: string | null) {
   if (!postId) {
     currentIndex = -1;
   } else {
-    const idx = playlist.findIndex((p) => p.id === postId);
-    currentIndex = idx;
+    currentIndex = playlist.findIndex((p) => p.id === postId);
   }
   emit();
 }

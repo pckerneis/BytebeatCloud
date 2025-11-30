@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
 import { PostList, type PostRow } from './PostList';
+import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
 
 interface UserProfileContentProps {
   username: string | null;
@@ -140,28 +141,7 @@ export function UserProfileContent({ username, extraHeader }: UserProfileContent
     };
   }, [username, page, user]);
 
-  // IntersectionObserver for infinite scroll
-  useEffect(() => {
-    if (!hasMore) return;
-
-    const sentinel = sentinelRef.current;
-    if (!sentinel) return;
-
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting && !loadingMoreRef.current && hasMore) {
-          loadingMoreRef.current = true;
-          setPage((p) => p + 1);
-        }
-      });
-    });
-
-    observer.observe(sentinel);
-
-    return () => {
-      observer.disconnect();
-    };
-  }, [hasMore]);
+  useInfiniteScroll({ hasMore, loadingMoreRef, sentinelRef, setPage });
 
   const isOwnProfile = Boolean(user && posts.some((p) => p.profile_id === (user as any).id));
 
