@@ -40,12 +40,6 @@ export function PostList({ posts, currentUserId }: PostListProps) {
   const { setPlaylist, setCurrentPostById, currentPost } = usePlayerStore();
 
   useEffect(() => {
-    return () => {
-      void stop();
-    };
-  }, [stop]);
-
-  useEffect(() => {
     if (currentPost && posts.some((p) => p.id === currentPost.id)) {
       setActivePostId(currentPost.id);
     } else if (!currentPost) {

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { useRouter } from 'next/router';
 import { useBytebeatPlayer } from '../../hooks/useBytebeatPlayer';
+import { usePlayerStore } from '../../hooks/usePlayerStore';
 import { useSupabaseAuth } from '../../hooks/useSupabaseAuth';
 import { supabase } from '../../lib/supabaseClient';
 import { PostEditorFormFields } from '../../components/PostEditorFormFields';
@@ -29,6 +30,7 @@ export default function EditPostPage() {
   );
 
   const { isPlaying, toggle, lastError, stop } = useBytebeatPlayer();
+  const { setCurrentPostById } = usePlayerStore();
   const sr = getSampleRateValue(sampleRate);
 
   const { user } = useSupabaseAuth();
@@ -136,6 +138,8 @@ export default function EditPostPage() {
     }
 
     setValidationIssue(null);
+    // Clear any globally selected post while previewing the edited expression.
+    setCurrentPostById(null);
     void toggle(expression, mode, sr, true);
   };
 
@@ -242,12 +246,6 @@ export default function EditPostPage() {
         break;
     }
   };
-
-  useEffect(() => {
-    return () => {
-      void stop();
-    };
-  }, [stop]);
 
   if (loading) {
     return (

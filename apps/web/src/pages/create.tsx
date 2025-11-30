@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { useRouter } from 'next/router';
 import { useBytebeatPlayer } from '../hooks/useBytebeatPlayer';
+import { usePlayerStore } from '../hooks/usePlayerStore';
 import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
 import { supabase } from '../lib/supabaseClient';
 import { PostEditorFormFields } from '../components/PostEditorFormFields';
@@ -24,6 +25,7 @@ export default function CreatePage() {
   const [mode, setMode] = useState<ModeOption>(ModeOption.Float);
   const [sampleRate, setSampleRate] = useState<SampleRateOption>(SampleRateOption._44_1k);
   const { isPlaying, toggle, lastError, stop } = useBytebeatPlayer();
+  const { setCurrentPostById } = usePlayerStore();
   const sr = getSampleRateValue(sampleRate);
 
   const { user } = useSupabaseAuth();
@@ -177,6 +179,8 @@ export default function CreatePage() {
     }
 
     setValidationIssue(null);
+    // Clear any globally selected post while previewing an ad-hoc expression.
+    setCurrentPostById(null);
     void toggle(expression, mode, sr, true);
   };
 
@@ -299,12 +303,6 @@ export default function CreatePage() {
       // ignore clipboard errors
     }
   };
-
-  useEffect(() => {
-    return () => {
-      void stop();
-    };
-  }, [stop]);
 
   return (
     <section>
