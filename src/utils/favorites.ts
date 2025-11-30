@@ -17,10 +17,7 @@ export function attachFavoritedByCurrentUser(rows: any[], favs: any[]): any[] {
   }));
 }
 
-export async function enrichWithViewerFavorites(
-  viewerId: string,
-  rows: any[],
-): Promise<any[]> {
+export async function enrichWithViewerFavorites(viewerId: string, rows: any[]): Promise<any[]> {
   if (!viewerId || !rows || rows.length === 0) return rows;
 
   const postIds = rows.map((r: any) => r.id);

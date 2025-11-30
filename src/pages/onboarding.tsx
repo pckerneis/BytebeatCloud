@@ -25,7 +25,7 @@ export default function OnboardingPage() {
 
   useEffect(() => {
     const checkExisting = async () => {
-      if (!user || !supabase) return;
+      if (!user) return;
 
       const { data, error: fetchError } = await supabase
         .from('profiles')
@@ -50,7 +50,7 @@ export default function OnboardingPage() {
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
 
-    if (!user || !supabase) return;
+    if (!user) return;
 
     const validationError = validateUsername(username);
     if (validationError) {

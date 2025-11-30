@@ -23,7 +23,7 @@ export default function TosUpdatePage() {
 
   useEffect(() => {
     const checkProfile = async () => {
-      if (!user || !supabase) return;
+      if (!user) return;
 
       const { data, error: fetchError } = await supabase
         .from('profiles')
@@ -56,7 +56,7 @@ export default function TosUpdatePage() {
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
 
-    if (!user || !supabase) return;
+    if (!user) return;
 
     if (!acceptTos) {
       setError('You must accept the Terms of Service to continue.');

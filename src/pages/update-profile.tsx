@@ -23,7 +23,7 @@ export default function UpdateProfilePage() {
   const handleSave = async (event: React.FormEvent) => {
     event.preventDefault();
 
-    if (!user || !supabase) return;
+    if (!user) return;
 
     const message = validateUsername(username);
     if (message) {
@@ -54,7 +54,7 @@ export default function UpdateProfilePage() {
   };
 
   const handleConfirmDeleteAccount = async () => {
-    if (!user || !supabase) return;
+    if (!user) return;
 
     setSaveStatus('saving');
     setError('');

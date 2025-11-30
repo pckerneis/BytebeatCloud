@@ -20,12 +20,6 @@ export default function ExplorePage() {
   const [activeTab, setActiveTab] = useState<'recent' | 'popular'>('recent');
 
   useEffect(() => {
-    if (!supabase) {
-      setLoading(false);
-      setError('Supabase client is not configured.');
-      return;
-    }
-
     let cancelled = false;
     const pageSize = 20;
     const from = page * pageSize;

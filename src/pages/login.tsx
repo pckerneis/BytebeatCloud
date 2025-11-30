@@ -11,7 +11,7 @@ export default function LoginPage() {
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
 
-    if (!email.trim() || !supabase) return;
+    if (!email.trim()) return;
 
     setStatus('loading');
     setErrorMessage('');

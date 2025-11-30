@@ -20,11 +20,6 @@ export function useSupabaseAuth() {
     }
 
     const init = async () => {
-      if (!supabase) {
-        setLoading(false);
-        return;
-      }
-
       const { data } = await supabase.auth.getSession();
       if (isMounted) {
         setSession(data.session ?? null);
