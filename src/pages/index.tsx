@@ -1,11 +1,10 @@
-import { APP_NAME } from '../constants';
 import Link from 'next/link';
 
 export default function Home() {
   return (
     <>
       <section className="home-section">
-        <h2>Welcome to {APP_NAME}!</h2>
+        <h2>Welcome to ByteJam!</h2>
         <p>
           A platform to <Link href="/explore">explore</Link> and <Link href="/create">share</Link>{' '}
           tiny musical expressions.

@@ -6,7 +6,6 @@ import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
 import { supabase } from '../lib/supabaseClient';
 import { PostEditorFormFields } from '../components/PostEditorFormFields';
 import Head from 'next/head';
-import { APP_NAME } from '../constants';
 import {
   getSampleRateValue,
   ModeOption,
@@ -205,7 +204,7 @@ export default function CreatePage() {
   return (
     <>
       <Head>
-        <title>{APP_NAME} - Create</title>
+        <title>ByteJam - Create</title>
       </Head>
       <section>
         <h2>Create</h2>

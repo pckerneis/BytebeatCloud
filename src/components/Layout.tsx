@@ -7,7 +7,6 @@ import { warmUpBytebeatEngine, useBytebeatPlayer } from '../hooks/useBytebeatPla
 import { usePlayerStore } from '../hooks/usePlayerStore';
 import { supabase } from '../lib/supabaseClient';
 import { favoritePost, unfavoritePost } from '../services/favoritesClient';
-import { APP_NAME } from '../constants';
 import { ModeOption } from '../model/expression';
 import { PostRow } from './PostList';
 
@@ -32,6 +31,7 @@ export function Layout({ children }: PropsWithChildren) {
   const [checkedProfile, setCheckedProfile] = useState(false);
   const { isPlaying, toggle, stop, waveform } = useBytebeatPlayer();
   const { currentPost, next, prev, updateFavoriteStateForPost } = usePlayerStore();
+  const [footerFavoritePending, setFooterFavoritePending] = useState(false);
   const titleRef = useRef<HTMLDivElement | null>(null);
   const visualizerRef = useRef<HTMLCanvasElement | null>(null);
   const visualizerAnimationRef = useRef<number | null>(null);
@@ -242,33 +242,43 @@ export function Layout({ children }: PropsWithChildren) {
       return;
     }
 
+    if (footerFavoritePending) {
+      return;
+    }
+
     const userId = (user as any).id as string;
 
     const baseCount = currentPost.favorites_count ?? 0;
     const isFavorited = !!currentPost.favorited_by_current_user;
 
-    if (!isFavorited) {
-      const { error } = await favoritePost(userId, currentPost.id);
+    setFooterFavoritePending(true);
 
-      if (error) {
-        // eslint-disable-next-line no-console
-        console.warn('Error favoriting post', error.message);
+    try {
+      if (!isFavorited) {
+        const { error } = await favoritePost(userId, currentPost.id);
+
+        if (error) {
+          // eslint-disable-next-line no-console
+          console.warn('Error favoriting post', error.message);
+          return;
+        }
+
+        updateFavoriteStateForPost(currentPost.id, true, baseCount + 1);
         return;
       }
 
-      updateFavoriteStateForPost(currentPost.id, true, baseCount + 1);
-      return;
+      const { error: deleteError } = await unfavoritePost(userId, currentPost.id);
+
+      if (deleteError) {
+        // eslint-disable-next-line no-console
+        console.warn('Error removing favorite', deleteError.message);
+        return;
+      }
+
+      updateFavoriteStateForPost(currentPost.id, false, Math.max(0, baseCount - 1));
+    } finally {
+      setFooterFavoritePending(false);
     }
-
-    const { error: deleteError } = await unfavoritePost(userId, currentPost.id);
-
-    if (deleteError) {
-      // eslint-disable-next-line no-console
-      console.warn('Error removing favorite', deleteError.message);
-      return;
-    }
-
-    updateFavoriteStateForPost(currentPost.id, false, Math.max(0, baseCount - 1));
   };
 
   const isFooterFavorited = currentPost ? !!currentPost.favorited_by_current_user : false;
@@ -284,7 +294,7 @@ export function Layout({ children }: PropsWithChildren) {
         <nav>
           <div className="app-title">
             <Link href="/">
-              <h1>{APP_NAME}</h1>
+              <h1>ByteJam</h1>
             </Link>
           </div>
           <ul>
@@ -350,9 +360,11 @@ export function Layout({ children }: PropsWithChildren) {
         </div>
         <button
           type="button"
-          className={`favorite-button${isFooterFavorited ? ' favorited' : ''}`}
+          className={`favorite-button${isFooterFavorited ? ' favorited' : ''}${
+            footerFavoritePending ? ' pending' : ''
+          }`}
           onClick={handleFooterFavoriteClick}
-          disabled={!currentPost}
+          disabled={!currentPost || footerFavoritePending}
         >
           &lt;3
         </button>

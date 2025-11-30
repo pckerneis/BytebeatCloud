@@ -4,7 +4,6 @@ import { supabase } from '../lib/supabaseClient';
 import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
 import { validateUsername } from '../lib/validateUsername';
 import Head from 'next/head';
-import { APP_NAME } from '../constants';
 
 const CURRENT_TOS_VERSION = '2025-11-30-v1';
 
@@ -92,7 +91,7 @@ export default function OnboardingPage() {
   return (
     <>
       <Head>
-        <title>{APP_NAME} - Onboarding</title>
+        <title>ByteJam - Onboarding</title>
       </Head>
       <section>
         <h2>Choose your username</h2>

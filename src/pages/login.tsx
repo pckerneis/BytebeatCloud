@@ -1,7 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import Head from 'next/head';
-import { APP_NAME } from '../constants';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -37,7 +36,7 @@ export default function LoginPage() {
   return (
     <>
       <Head>
-        <title>{APP_NAME} - Login</title>
+        <title>ByteJam - Login</title>
       </Head>
       <section>
         <h2>Login</h2>

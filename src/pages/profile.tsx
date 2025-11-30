@@ -1,7 +1,6 @@
 import { useRouter } from 'next/router';
 import { UserProfileContent } from '../components/UserProfileContent';
 import Head from 'next/head';
-import { APP_NAME } from '../constants';
 import { useCurrentUserProfile } from '../hooks/useCurrentUserProfile';
 
 export default function ProfilePage() {
@@ -15,7 +14,7 @@ export default function ProfilePage() {
   return (
     <>
       <Head>
-        <title>{APP_NAME} - Profile</title>
+        <title>ByteJam - Profile</title>
       </Head>
       <section>
         {status === 'loading' && <p className="text-centered">Loading your profile…</p>}

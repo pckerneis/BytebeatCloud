@@ -2,7 +2,6 @@ import { useState, type FormEvent, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { supabase } from '../lib/supabaseClient';
 import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
-import { APP_NAME } from '../constants';
 import Head from 'next/head';
 
 const CURRENT_TOS_VERSION = '2025-11-30-v1';
@@ -86,7 +85,7 @@ export default function TosUpdatePage() {
   return (
     <>
       <Head>
-        <title>{APP_NAME} - Updated Terms of Services</title>
+        <title>ByteJam - Updated Terms of Services</title>
       </Head>
       <section className="home-section">
         <h2>Updated Terms of Service</h2>
@@ -95,7 +94,7 @@ export default function TosUpdatePage() {
           <a href="/terms" target="_blank" rel="noreferrer">
             latest Terms of Service
           </a>{' '}
-          and confirm your acceptance to continue using {APP_NAME}.
+          and confirm your acceptance to continue using ByteJam.
         </p>
 
         <form className="create-form" onSubmit={handleSubmit}>

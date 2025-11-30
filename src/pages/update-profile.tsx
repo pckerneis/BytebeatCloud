@@ -3,7 +3,6 @@ import { useRouter } from 'next/router';
 import { supabase } from '../lib/supabaseClient';
 import { validateUsername } from '../lib/validateUsername';
 import Head from 'next/head';
-import { APP_NAME } from '../constants';
 import { useCurrentUserProfile } from '../hooks/useCurrentUserProfile';
 
 export default function UpdateProfilePage() {
@@ -138,7 +137,7 @@ export default function UpdateProfilePage() {
   return (
     <>
       <Head>
-        <title>{APP_NAME} - Update profile</title>
+        <title>ByteJam - Update profile</title>
       </Head>
       <section>
         {status === 'loading' && <p className="text-centered">Loading your profile…</p>}

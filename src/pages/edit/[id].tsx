@@ -6,7 +6,6 @@ import { useSupabaseAuth } from '../../hooks/useSupabaseAuth';
 import { supabase } from '../../lib/supabaseClient';
 import { PostEditorFormFields } from '../../components/PostEditorFormFields';
 import Head from 'next/head';
-import { APP_NAME } from '../../constants';
 import {
   getSampleRateValue,
   ModeOption,
@@ -206,7 +205,7 @@ export default function EditPostPage() {
   return (
     <>
       <Head>
-        <title>{APP_NAME} - Edit post</title>
+        <title>ByteJam - Edit post</title>
       </Head>
       <section>
         <button type="button" className="button ghost" onClick={() => router.back()}>

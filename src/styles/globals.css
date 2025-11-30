@@ -401,6 +401,10 @@ button.chip {
   min-width: 1ch;
 }
 
+.favorite-button.pending {
+  opacity: 0.4;
+}
+
 /* Explore page */
 
 .post-list {

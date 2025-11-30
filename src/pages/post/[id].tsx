@@ -3,7 +3,6 @@ import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 import { useSupabaseAuth } from '../../hooks/useSupabaseAuth';
 import { PostList, type PostRow } from '../../components/PostList';
-import { APP_NAME } from '../../constants';
 import Head from 'next/head';
 
 export default function PostDetailPage() {
@@ -84,7 +83,7 @@ export default function PostDetailPage() {
   return (
     <>
       <Head>
-        <title>{APP_NAME} - Post detail</title>
+        <title>ByteJam - Post detail</title>
       </Head>
       <section>
         <button type="button" className="button ghost" onClick={() => router.back()}>

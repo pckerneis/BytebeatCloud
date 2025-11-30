@@ -1,16 +1,15 @@
-import { APP_NAME } from '../constants';
 import Head from 'next/head';
 
 export default function Terms() {
   return (
     <>
       <Head>
-        <title>{APP_NAME} - Terms of Services</title>
+        <title>ByteJam - Terms of Services</title>
       </Head>
       <section className="home-section">
         <h2>Terms of Service</h2>
         <p>
-          Welcome to {APP_NAME}, an experimental platform for creating and sharing bytebeat
+          Welcome to ByteJam, an experimental platform for creating and sharing bytebeat
           expressions. By using this service, you agree to the following terms.
         </p>
 

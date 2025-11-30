@@ -1,7 +1,6 @@
 import { useRouter } from 'next/router';
 import { UserProfileContent } from '../../components/UserProfileContent';
 import Head from 'next/head';
-import { APP_NAME } from '../../constants';
 
 export default function UserPage() {
   const router = useRouter();
@@ -12,7 +11,7 @@ export default function UserPage() {
     <>
       <Head>
         <title>
-          {APP_NAME} - {uname ?? 'User'}
+          ByteJam - {uname ?? 'User'}
         </title>
       </Head>
       <UserProfileContent username={uname} />

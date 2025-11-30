@@ -3,7 +3,6 @@ import { supabase } from '../lib/supabaseClient';
 import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
 import { PostList, type PostRow } from '../components/PostList';
 import Head from 'next/head';
-import { APP_NAME } from '../constants';
 import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
 import { attachFavoritesCount, enrichWithViewerFavorites } from '../utils/favorites';
 
@@ -113,7 +112,7 @@ export default function ExplorePage() {
   return (
     <>
       <Head>
-        <title>{APP_NAME} - Explore</title>
+        <title>ByteJam - Explore</title>
       </Head>
       <section>
         <h2>Explore</h2>

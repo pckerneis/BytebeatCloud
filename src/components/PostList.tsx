@@ -37,7 +37,9 @@ export function PostList({ posts, currentUserId }: PostListProps) {
   >({});
   const { user } = useSupabaseAuth();
   const router = useRouter();
-  const { setPlaylist, setCurrentPostById, currentPost } = usePlayerStore();
+  const { setPlaylist, setCurrentPostById, currentPost, updateFavoriteStateForPost } =
+    usePlayerStore();
+  const [favoritePending, setFavoritePending] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     if (currentPost && posts.some((p) => p.id === currentPost.id)) {
@@ -45,6 +47,29 @@ export function PostList({ posts, currentUserId }: PostListProps) {
     } else if (!currentPost) {
       setActivePostId(null);
     }
+  }, [currentPost, posts]);
+
+  // Keep the visible row for the currently playing post in sync with
+  // the global player store's favorite state (used by the footer).
+  useEffect(() => {
+    if (!currentPost) return;
+
+    const matchingPost = posts.find((p) => p.id === currentPost.id);
+    if (!matchingPost) return;
+
+    setFavoriteState((prev) => {
+      const prevEntry = prev[currentPost.id];
+      const count =
+        currentPost.favorites_count ?? prevEntry?.count ?? matchingPost.favorites_count ?? 0;
+
+      return {
+        ...prev,
+        [currentPost.id]: {
+          count,
+          favorited: !!currentPost.favorited_by_current_user,
+        },
+      };
+    });
   }, [currentPost, posts]);
 
   const handleExpressionClick = async (post: PostRow) => {
@@ -69,6 +94,10 @@ export function PostList({ posts, currentUserId }: PostListProps) {
   };
 
   const handleFavoriteClick = async (post: PostRow) => {
+    if (favoritePending[post.id]) {
+      return;
+    }
+
     if (!user) {
       await router.push('/login');
       return;
@@ -81,28 +110,47 @@ export function PostList({ posts, currentUserId }: PostListProps) {
     const isCurrentlyFavorited =
       current?.favorited !== undefined ? current.favorited : !!post.favorited_by_current_user;
 
-    if (!isCurrentlyFavorited) {
-      const { error } = await favoritePost(userId, post.id);
+    setFavoritePending((prev) => ({ ...prev, [post.id]: true }));
 
-      if (error) {
-        console.warn('Error favoriting post', error.message);
+    try {
+      if (!isCurrentlyFavorited) {
+        const { error } = await favoritePost(userId, post.id);
+
+        if (error) {
+          console.warn('Error favoriting post', error.message);
+          return;
+        }
+
+        const nextCount = currentCount + 1;
+
+        setFavoriteState((prev) => ({
+          ...prev,
+          [post.id]: { count: nextCount, favorited: true },
+        }));
+
+        // Also update the global player store so the footer stays in sync
+        // when this post is the one currently being played.
+        updateFavoriteStateForPost(post.id, true, nextCount);
+      } else {
+        const { error: deleteError } = await unfavoritePost(userId, post.id);
+
+        if (deleteError) {
+          console.warn('Error removing favorite', deleteError.message);
+          return;
+        }
+
+        const nextCount = Math.max(0, currentCount - 1);
+
+        setFavoriteState((prev) => ({
+          ...prev,
+          [post.id]: { count: nextCount, favorited: false },
+        }));
+
+        // Mirror the change into the global player store.
+        updateFavoriteStateForPost(post.id, false, nextCount);
       }
-
-      setFavoriteState((prev) => ({
-        ...prev,
-        [post.id]: { count: currentCount + 1, favorited: true },
-      }));
-    } else {
-      const { error: deleteError } = await unfavoritePost(userId, post.id);
-
-      if (deleteError) {
-        console.warn('Error removing favorite', deleteError.message);
-      }
-
-      setFavoriteState((prev) => ({
-        ...prev,
-        [post.id]: { count: Math.max(0, currentCount - 1), favorited: false },
-      }));
+    } finally {
+      setFavoritePending((prev) => ({ ...prev, [post.id]: false }));
     }
   };
 
@@ -120,6 +168,7 @@ export function PostList({ posts, currentUserId }: PostListProps) {
         const favoriteCount = favorite ? favorite.count : post.favorites_count ?? 0;
         const isFavorited =
           favorite?.favorited !== undefined ? favorite.favorited : !!post.favorited_by_current_user;
+        const isFavoritePending = favoritePending[post.id];
 
         return (
           <li key={post.id} className={`post-item ${isActive ? 'playing' : ''}`}>
@@ -149,8 +198,11 @@ export function PostList({ posts, currentUserId }: PostListProps) {
             <div className="post-actions">
               <button
                 type="button"
-                className={`favorite-button ${isFavorited ? ' favorited' : ''}`}
+                className={`favorite-button${isFavorited ? ' favorited' : ''}${
+                  isFavoritePending ? ' pending' : ''
+                }`}
                 onClick={() => void handleFavoriteClick(post)}
+                disabled={isFavoritePending}
                 aria-label="Favorite"
               >
                 <span className="heart">&lt;3</span>
