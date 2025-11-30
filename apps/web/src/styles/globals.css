@@ -70,6 +70,9 @@ body {
 .transport-button.play {
   width: 25px;
   height: 25px;
+}
+
+.transport-button.play:not(.playing) {
   padding-right: 4px;
 }
 
@@ -85,7 +88,11 @@ body {
   font-size: 10px;
 }
 
-.vizualizer {
+.played-post-name {
+  font-size: 10px;
+}
+
+.visualizer {
   background: #eee;
 }
 

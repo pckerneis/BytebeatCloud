@@ -6,6 +6,7 @@ import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
 import { supabase } from '../lib/supabaseClient';
 import { ModeOption } from 'shared';
 import { ReadonlyExpression } from './ExpressionEditor';
+import { usePlayerStore } from '../hooks/usePlayerStore';
 
 export interface PostRow {
   id: string;
@@ -36,6 +37,7 @@ export function PostList({ posts, currentUserId }: PostListProps) {
   >({});
   const { user } = useSupabaseAuth();
   const router = useRouter();
+  const { setPlaylist, setCurrentPostById, currentPost } = usePlayerStore();
 
   useEffect(() => {
     return () => {
@@ -43,11 +45,20 @@ export function PostList({ posts, currentUserId }: PostListProps) {
     };
   }, [stop]);
 
+  useEffect(() => {
+    if (currentPost && posts.some((p) => p.id === currentPost.id)) {
+      setActivePostId(currentPost.id);
+    } else if (!currentPost) {
+      setActivePostId(null);
+    }
+  }, [currentPost, posts]);
+
   const handleExpressionClick = async (post: PostRow) => {
     // Clicking the active post stops playback
     if (isPlaying && activePostId === post.id) {
       await stop();
       setActivePostId(null);
+      setCurrentPostById(null);
       return;
     }
 
@@ -61,6 +72,8 @@ export function PostList({ posts, currentUserId }: PostListProps) {
 
     await toggle(post.expression, mode, sr, true);
     setActivePostId(post.id);
+    setPlaylist(posts, post.id);
+    setCurrentPostById(post.id);
   };
 
   const handleFavoriteClick = async (post: PostRow) => {

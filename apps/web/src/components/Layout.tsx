@@ -3,7 +3,9 @@ import { useRouter } from 'next/router';
 import type { PropsWithChildren } from 'react';
 import { useEffect, useState } from 'react';
 import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
-import { warmUpBytebeatEngine } from '../hooks/useBytebeatPlayer';
+import { warmUpBytebeatEngine, useBytebeatPlayer } from '../hooks/useBytebeatPlayer';
+import { usePlayerStore } from '../hooks/usePlayerStore';
+import { ModeOption } from 'shared';
 import { supabase } from '../lib/supabaseClient';
 
 function NavLink({ href, children }: PropsWithChildren<{ href: string }>) {
@@ -23,6 +25,8 @@ export function Layout({ children }: PropsWithChildren) {
   const { user } = useSupabaseAuth();
   const router = useRouter();
   const [checkedProfile, setCheckedProfile] = useState(false);
+  const { isPlaying, toggle, stop } = useBytebeatPlayer();
+  const { currentPost, next, prev, updateFavoriteStateForPost } = usePlayerStore();
 
   useEffect(() => {
     const devFakeAuth = process.env.NEXT_PUBLIC_DEV_FAKE_AUTH === '1';
@@ -93,6 +97,106 @@ export function Layout({ children }: PropsWithChildren) {
     await router.push('/');
   };
 
+  const handleFooterPlayPause = async () => {
+    if (!currentPost) return;
+
+    if (isPlaying) {
+      await stop();
+      return;
+    }
+
+    const sr =
+      currentPost.sample_rate === '8k'
+        ? 8000
+        : currentPost.sample_rate === '16k'
+        ? 16000
+        : 44100;
+
+    const mode: ModeOption =
+      currentPost.mode === 'float' ? ModeOption.Float : ModeOption.Int;
+
+    await toggle(currentPost.expression, mode, sr, true);
+  };
+
+  const handleFooterPrev = async () => {
+    const post = prev();
+    if (!post) return;
+
+    await stop();
+
+    const sr = post.sample_rate === '8k' ? 8000 : post.sample_rate === '16k' ? 16000 : 44100;
+    const mode: ModeOption = post.mode === 'float' ? ModeOption.Float : ModeOption.Int;
+
+    await toggle(post.expression, mode, sr, true);
+  };
+
+  const handleFooterNext = async () => {
+    const post = next();
+    if (!post) return;
+
+    await stop();
+
+    const sr = post.sample_rate === '8k' ? 8000 : post.sample_rate === '16k' ? 16000 : 44100;
+    const mode: ModeOption = post.mode === 'float' ? ModeOption.Float : ModeOption.Int;
+
+    await toggle(post.expression, mode, sr, true);
+  };
+
+  const handleFooterFavoriteClick = async () => {
+    if (!supabase) return;
+    if (!currentPost) return;
+
+    if (!user) {
+      await router.push('/login');
+      return;
+    }
+
+    const userId = (user as any).id as string;
+
+    const baseCount = currentPost.favorites_count ?? 0;
+    const isFavorited = !!currentPost.favorited_by_current_user;
+
+    if (!isFavorited) {
+      const { error } = await supabase
+        .from('favorites')
+        .insert({ profile_id: userId, post_id: currentPost.id });
+
+      if (error) {
+        const code = (error as any).code as string | undefined;
+        if (code !== '23505') {
+          // eslint-disable-next-line no-console
+          console.warn('Error favoriting post', error.message);
+          return;
+        }
+      }
+
+      updateFavoriteStateForPost(currentPost.id, true, baseCount + 1);
+      return;
+    }
+
+    const { error: deleteError } = await supabase
+      .from('favorites')
+      .delete()
+      .eq('profile_id', userId)
+      .eq('post_id', currentPost.id);
+
+    if (deleteError) {
+      // eslint-disable-next-line no-console
+      console.warn('Error removing favorite', deleteError.message);
+      return;
+    }
+
+    updateFavoriteStateForPost(
+      currentPost.id,
+      false,
+      Math.max(0, baseCount - 1),
+    );
+  };
+
+  const isFooterFavorited = currentPost
+    ? !!currentPost.favorited_by_current_user
+    : false;
+
   return (
     <div className="root">
       <div className="top-content">
@@ -119,20 +223,54 @@ export function Layout({ children }: PropsWithChildren) {
         </nav>
         <main>{children}</main>
       </div>
-      <div className='footer'>
-        <div className='transport-buttons'>
-          <button className='transport-button'>«</button>
-          <button className='transport-button play'>▶</button>
-          <button className='transport-button'>»</button>
+      <div className="footer">
+        <div className="transport-buttons">
+          <button
+            type="button"
+            className="transport-button"
+            onClick={handleFooterPrev}
+            disabled={!currentPost}
+          >
+            «
+          </button>
+          <button
+            type="button"
+            className={`transport-button play ${isPlaying ? 'playing' : 'pause'}`}
+            onClick={handleFooterPlayPause}
+            disabled={!currentPost}
+          >
+            {isPlaying ? '❚❚' : '▶'}
+          </button>
+          <button
+            type="button"
+            className="transport-button"
+            onClick={handleFooterNext}
+            disabled={!currentPost}
+          >
+            »
+          </button>
         </div>
-        <div className='vizualizer'>
+        <div className="vizualizer">
           <canvas width={150} height={26}></canvas>
         </div>
-        <div className='played-post-info'>
-          <div className='played-post-author'>@foo</div>
-          <div className='played-post-name'>(untitled)</div>
+        <div className="played-post-info">
+          <div className="played-post-author">
+            {currentPost?.profiles?.username
+              ? `@${currentPost.profiles.username}`
+              : '@unknown'}
+          </div>
+          <div className="played-post-name">
+            {currentPost?.title || '(untitled)'}
+          </div>
         </div>
-        <button className='favorite-button'>&lt;3</button>
+        <button
+          type="button"
+          className={`favorite-button${isFooterFavorited ? ' favorited' : ''}`}
+          onClick={handleFooterFavoriteClick}
+          disabled={!currentPost}
+        >
+          &lt;3
+        </button>
       </div>
     </div>
   );
