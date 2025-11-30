@@ -13,7 +13,6 @@ import {
   type ValidationIssue,
 } from 'shared';
 
-const TITLE_MAX = 64;
 const EXPRESSION_MAX = 1024;
 const CREATE_DRAFT_STORAGE_KEY = 'bitebeats-create-draft-v1';
 
@@ -39,6 +38,12 @@ export default function CreatePage() {
   const validationTimeoutRef = useRef<number | null>(null);
 
   const expressionLength = expression.length;
+
+  useEffect(() => {
+    return () => {
+      void stop();
+    };
+  }, [stop]);
 
   // On first load, prefill from URL (if present) or from localStorage draft.
   useEffect(() => {

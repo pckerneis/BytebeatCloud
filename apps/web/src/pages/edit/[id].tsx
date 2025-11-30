@@ -13,7 +13,6 @@ import {
   type ValidationIssue,
 } from 'shared';
 
-const TITLE_MAX = 64;
 const EXPRESSION_MAX = 1024;
 
 export default function EditPostPage() {
@@ -43,6 +42,13 @@ export default function EditPostPage() {
   const validationTimeoutRef = useRef<number | null>(null);
 
   const expressionLength = expression.length;
+
+  useEffect(() => {
+    return () => {
+      void stop();
+    };
+  }, [stop]);
+
 
   useEffect(() => {
     if (!supabase) return;
