@@ -207,22 +207,6 @@ export function Layout({ children }: PropsWithChildren) {
     };
   }, [isPlaying, currentPost?.id, waveform]);
 
-  const handleFooterPlayPause = async () => {
-    if (!currentPost) return;
-
-    if (isPlaying) {
-      await stop();
-      return;
-    }
-
-    const sr =
-      currentPost.sample_rate === '8k' ? 8000 : currentPost.sample_rate === '16k' ? 16000 : 44100;
-
-    const mode: ModeOption = currentPost.mode === 'float' ? ModeOption.Float : ModeOption.Int;
-
-    await toggle(currentPost.expression, mode, sr);
-  };
-
   const playPost = async (post: PostRow | null) => {
     if (!post) return;
 
@@ -232,6 +216,16 @@ export function Layout({ children }: PropsWithChildren) {
     const mode: ModeOption = post.mode === 'float' ? ModeOption.Float : ModeOption.Int;
 
     await toggle(post.expression, mode, sr);
+  };
+
+  const handleFooterPlayPause = async () => {
+    if (!currentPost) return;
+
+    if (isPlaying) {
+      await stop();
+    } else {
+      await playPost(currentPost);
+    }
   };
 
   const handleFooterPrev = async () => {
