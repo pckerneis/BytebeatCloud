@@ -2,10 +2,11 @@ import dynamic from 'next/dynamic';
 import { javascript } from '@codemirror/lang-javascript';
 import { EditorView } from '@codemirror/view';
 import { linter, type Diagnostic } from '@codemirror/lint';
-import { tomorrowNightBlue } from '@uiw/codemirror-theme-tomorrow-night-blue';
 import { validateExpression, ValidationIssue } from '../utils/expression-validator';
 import { minimizeExpression } from '../model/expression';
 import { memo, useMemo } from 'react';
+import { getUiTheme } from '../theme/themes';
+import { useThemeId } from '../theme/ThemeContext';
 
 const CodeMirror = dynamic(() => import('@uiw/react-codemirror').then((mod) => mod.default), {
   ssr: false,
@@ -50,13 +51,16 @@ const editorBasicSetup = {
 } as const;
 
 export function ExpressionEditor({ value, onChange }: ExpressionEditorProps) {
+  const uiThemeId = useThemeId();
+  const codeMirrorTheme = getUiTheme(uiThemeId).codeMirrorTheme;
+
   return (
     <CodeMirror
       value={value}
       height="200px"
       extensions={editorExtensions}
       basicSetup={editorBasicSetup}
-      theme={tomorrowNightBlue}
+      theme={codeMirrorTheme}
       onChange={(nextValue: string) => onChange(nextValue)}
     />
   );
@@ -79,6 +83,9 @@ export const ReadonlyExpression = memo(function ReadonlyExpression({
 }: ReadonlyExpressionProps) {
   const minimized = useMemo(() => minimizeExpression(expression), [expression]);
 
+  const uiThemeId = useThemeId();
+  const codeMirrorTheme = getUiTheme(uiThemeId).codeMirrorTheme;
+
   return (
     <CodeMirror
       value={minimized}
@@ -86,7 +93,7 @@ export const ReadonlyExpression = memo(function ReadonlyExpression({
       editable={false}
       extensions={readonlyExtensions}
       basicSetup={readonlyBasicSetup}
-      theme={tomorrowNightBlue}
+      theme={codeMirrorTheme}
       onChange={() => {}}
     />
   );
@@ -142,6 +149,8 @@ export function ExpressionErrorSnippet({ expression, issue }: ExpressionErrorSni
       },
     ];
   });
+  const uiThemeId = useThemeId();
+  const codeMirrorTheme = getUiTheme(uiThemeId).codeMirrorTheme;
 
   return (
     <CodeMirror
@@ -155,7 +164,7 @@ export function ExpressionErrorSnippet({ expression, issue }: ExpressionErrorSni
         foldGutter: false,
         highlightActiveLine: false,
       }}
-      theme={tomorrowNightBlue}
+      theme={codeMirrorTheme}
       onChange={() => {}}
     />
   );

@@ -32,8 +32,7 @@ body {
   --chip-border-color: var(--border-color);
   --chip-background-color: var(--card-bg-color);
   --post-expression-background-color: var(--card-bg-color);
-  --post-expression-playing-background-color: #f5f5f5;
-  --post-playing-border-color: #cfcfcf;
+  --post-expression-playing-background-color: #faf7ff;
 
   background-color: var(--bg-color);
   color: var(--text-color);
@@ -63,8 +62,7 @@ body {
   --chip-border-color: var(--border-color);
   --chip-background-color: var(--card-bg-color);
   --post-expression-background-color: var(--card-bg-color);
-  --post-expression-playing-background-color: #f5f5f5;
-  --post-playing-border-color: #cfcfcf;
+  --post-expression-playing-background-color: #faf7ff;
 }
 
 /* Mint Terminal Theme */
@@ -101,7 +99,6 @@ body {
 
   --post-expression-background-color: var(--card-bg-color);
   --post-expression-playing-background-color: #f2fff9;
-  --post-playing-border-color: #b2f4d6;
 }
 
 /* Indigo Theme */
@@ -139,7 +136,6 @@ body {
 
   --post-expression-background-color: var(--card-bg-color);
   --post-expression-playing-background-color: #f3f4ff;
-  --post-playing-border-color: #d6d9ff;
 }
 
 /* Minimal Mono + Red Theme */
@@ -176,8 +172,7 @@ body {
   --chip-background-color: var(--card-bg-color);
 
   --post-expression-background-color: var(--card-bg-color);
-  --post-expression-playing-background-color: #f8f8f8;
-  --post-playing-border-color: #dcdcdc;
+  --post-expression-playing-background-color: #f7f1f1;
 }
 
 
@@ -216,7 +211,6 @@ body {
 
   --post-expression-background-color: #1c1d1f;
   --post-expression-playing-background-color: #222326;
-  --post-playing-border-color: #3a3a3a;
 }
 
 /* Dark Cyber Theme */
@@ -254,7 +248,6 @@ body {
 
   --post-expression-background-color: #13131a;
   --post-expression-playing-background-color: #1a1a22;
-  --post-playing-border-color: #31313d;
 }
 
 /* Dark Graphite Theme */
@@ -292,14 +285,13 @@ body {
 
   --post-expression-background-color: #232326;
   --post-expression-playing-background-color: #2a2a2d;
-  --post-playing-border-color: #3c3c40;
 }
 
 /* OLED Absolute Black Theme */
 .theme-oled {
   --bg-color: #000000;
   --sidebar-bg-color: rgba(255, 255, 255, 0.02); /* barely there */
-  --card-bg-color: rgba(255, 255, 255, 0.03);     /* light glassy panel */
+  --card-bg-color: #0d0d0d;     /* light glassy panel */
   --border-color: rgba(255, 255, 255, 0.08);
 
   --text-color: #e4e4e4;
@@ -330,7 +322,6 @@ body {
 
   --post-expression-background-color: rgba(255, 255, 255, 0.03);
   --post-expression-playing-background-color: rgba(255, 255, 255, 0.05);
-  --post-playing-border-color: rgba(255, 255, 255, 0.10);
 }
 
 .root {
@@ -743,8 +734,8 @@ button.chip {
 }
 
 .favorite-button.favorited {
-  background: var(--danger-color);
-  color: #ffffff;
+  background: var(--accent-color);
+  color: var(--button-primary-text-color);
   font-weight: bold;
 }
 
@@ -754,7 +745,7 @@ button.chip {
 }
 
 .favorite-button.favorited .heart {
-  color: #ffe5e7;
+  color: var(--button-primary-text-color);
 }
 
 .favorite-count {
@@ -781,7 +772,8 @@ button.chip {
   gap: 8px;
   list-style: none;
   padding: 8px;
-  border: 1px solid transparent;
+  border-left: 6px solid var(--border-color);
+  padding-left: 16px;
 }
 
 .post-item .post-title {
@@ -790,8 +782,11 @@ button.chip {
 
 .post-item.playing {
   background: var(--post-expression-playing-background-color);
-  border-color: var(--post-playing-border-color);
-  box-shadow: 0 0 15px 0 var(--shadow-soft-color);
+  border-color: var(--accent-color);
+}
+
+.post-item .cm-editor {
+  min-height: 56px;
 }
 
 .post-header {

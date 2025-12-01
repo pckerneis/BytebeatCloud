@@ -9,6 +9,8 @@ import { supabase } from '../lib/supabaseClient';
 import { favoritePost, unfavoritePost } from '../services/favoritesClient';
 import { ModeOption } from '../model/expression';
 import { PostRow } from './PostList';
+import { DEFAULT_THEME_ID, UI_THEMES, type ThemeId, getUiTheme } from '../theme/themes';
+import { ThemeContext } from '../theme/ThemeContext';
 
 const CURRENT_TOS_VERSION = '2025-11-30-v1';
 
@@ -25,19 +27,6 @@ function NavLink({ href, children }: PropsWithChildren<{ href: string }>) {
   );
 }
 
-const AVAILABLE_THEMES = [
-  'default',
-  'mint',
-  'indigo',
-  'mono-red',
-  'dark-graphite',
-  'dark-minimal',
-  'dark-cyber',
-  'oled',
-] as const;
-
-type ThemeId = (typeof AVAILABLE_THEMES)[number];
-
 export function Layout({ children }: PropsWithChildren) {
   const { user } = useSupabaseAuth();
   const router = useRouter();
@@ -53,10 +42,10 @@ export function Layout({ children }: PropsWithChildren) {
     if (typeof window === 'undefined') return;
 
     const stored = window.localStorage.getItem('ui-theme') as ThemeId | null;
-    if (stored && AVAILABLE_THEMES.includes(stored)) {
+    if (stored && UI_THEMES.some((t) => t.id === stored)) {
       setTheme(stored);
     } else {
-      setTheme('default');
+      setTheme(DEFAULT_THEME_ID);
     }
   }, []);
 
@@ -66,8 +55,8 @@ export function Layout({ children }: PropsWithChildren) {
 
     const root = document.body;
 
-    AVAILABLE_THEMES.forEach((t) => {
-      root.classList.remove(`theme-${t}`);
+    UI_THEMES.forEach((t) => {
+      root.classList.remove(`theme-${t.id}`);
     });
 
     root.classList.add(`theme-${theme}`);
@@ -76,13 +65,13 @@ export function Layout({ children }: PropsWithChildren) {
 
   const handleCycleTheme = () => {
     if (!theme) {
-      setTheme('default');
+      setTheme(DEFAULT_THEME_ID);
       return;
     }
 
-    const idx = AVAILABLE_THEMES.indexOf(theme);
-    const next = AVAILABLE_THEMES[(idx + 1) % AVAILABLE_THEMES.length];
-    setTheme(next);
+    const idx = UI_THEMES.findIndex((t) => t.id === theme);
+    const next = UI_THEMES[(idx + 1 + UI_THEMES.length) % UI_THEMES.length];
+    setTheme(next.id);
   };
 
   useEffect(() => {
@@ -160,9 +149,10 @@ export function Layout({ children }: PropsWithChildren) {
   }, []);
 
   return (
-    <div className="root">
-      <div className="top-content">
-        <nav>
+    <ThemeContext.Provider value={theme ?? DEFAULT_THEME_ID}>
+      <div className="root">
+        <div className="top-content">
+          <nav>
           <div className="app-title">
             <Link href="/">
               <h1>BytebeatCloud</h1>
@@ -187,7 +177,7 @@ export function Layout({ children }: PropsWithChildren) {
               className="theme-toggle-button"
               onClick={handleCycleTheme}
             >
-              {theme ?? 'default'}
+              {getUiTheme(theme ?? DEFAULT_THEME_ID).label}
             </button>
           </div>
         </nav>
@@ -195,6 +185,7 @@ export function Layout({ children }: PropsWithChildren) {
       </div>
       <FooterPlayer />
     </div>
+    </ThemeContext.Provider>
   );
 }
 
