@@ -27,7 +27,7 @@ export default function CreatePage() {
   const [isDraft, setIsDraft] = useState(false);
   const [mode, setMode] = useState<ModeOption>(ModeOption.Float);
   const [sampleRate, setSampleRate] = useState<SampleRateOption>(SampleRateOption._44_1k);
-  const { isPlaying, toggle, lastError, stop } = useBytebeatPlayer();
+  const { isPlaying, toggle, lastError, stop } = useBytebeatPlayer({ enableVisualizer: false });
   const { setCurrentPostById } = usePlayerStore();
   const sr = getSampleRateValue(sampleRate);
 

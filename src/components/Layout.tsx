@@ -29,13 +29,6 @@ export function Layout({ children }: PropsWithChildren) {
   const { user } = useSupabaseAuth();
   const router = useRouter();
   const [checkedProfile, setCheckedProfile] = useState(false);
-  const { isPlaying, toggle, stop, waveform } = useBytebeatPlayer();
-  const { currentPost, next, prev, updateFavoriteStateForPost } = usePlayerStore();
-  const [footerFavoritePending, setFooterFavoritePending] = useState(false);
-  const titleRef = useRef<HTMLDivElement | null>(null);
-  const visualizerRef = useRef<HTMLCanvasElement | null>(null);
-  const visualizerAnimationRef = useRef<number | null>(null);
-  const [isTitleOverflowing, setIsTitleOverflowing] = useState(false);
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -115,6 +108,47 @@ export function Layout({ children }: PropsWithChildren) {
       window.removeEventListener('keydown', handleFirstInteraction);
     };
   }, []);
+
+  return (
+    <div className="root">
+      <div className="top-content">
+        <nav>
+          <div className="app-title">
+            <Link href="/">
+              <h1>BytebeatCloud</h1>
+            </Link>
+          </div>
+          <ul>
+            <NavLink href="/create">Create</NavLink>
+            <NavLink href="/explore">Explore</NavLink>
+            {user && <NavLink href="/profile">Profile</NavLink>}
+            {user && (
+              <li className="nav-signout">
+                <button type="button" className="nav" onClick={handleSignOut}>
+                  Sign out
+                </button>
+              </li>
+            )}
+            {!user && <NavLink href="/login">Login</NavLink>}
+          </ul>
+        </nav>
+        <main>{children}</main>
+      </div>
+      <FooterPlayer />
+    </div>
+  );
+}
+
+function FooterPlayer() {
+  const { user } = useSupabaseAuth();
+  const router = useRouter();
+  const { isPlaying, toggle, stop, waveform } = useBytebeatPlayer();
+  const { currentPost, next, prev, updateFavoriteStateForPost } = usePlayerStore();
+  const [footerFavoritePending, setFooterFavoritePending] = useState(false);
+  const titleRef = useRef<HTMLDivElement | null>(null);
+  const visualizerRef = useRef<HTMLCanvasElement | null>(null);
+  const visualizerAnimationRef = useRef<number | null>(null);
+  const [isTitleOverflowing, setIsTitleOverflowing] = useState(false);
 
   useEffect(() => {
     const container = titleRef.current;
@@ -289,85 +323,60 @@ export function Layout({ children }: PropsWithChildren) {
   };
 
   return (
-    <div className="root">
-      <div className="top-content">
-        <nav>
-          <div className="app-title">
-            <Link href="/">
-              <h1>BytebeatCloud</h1>
-            </Link>
-          </div>
-          <ul>
-            <NavLink href="/create">Create</NavLink>
-            <NavLink href="/explore">Explore</NavLink>
-            {user && <NavLink href="/profile">Profile</NavLink>}
-            {user && (
-              <li className="nav-signout">
-                <button type="button" className="nav" onClick={handleSignOut}>
-                  Sign out
-                </button>
-              </li>
-            )}
-            {!user && <NavLink href="/login">Login</NavLink>}
-          </ul>
-        </nav>
-        <main>{children}</main>
-      </div>
-      <div className="footer">
-        <div className="transport-buttons">
-          <button
-            type="button"
-            className="transport-button"
-            onClick={handleFooterPrev}
-            disabled={!currentPost}
-          >
-            «
-          </button>
-          <button
-            type="button"
-            className={`transport-button play ${isPlaying ? 'playing' : 'pause'}`}
-            onClick={handleFooterPlayPause}
-            disabled={!currentPost}
-          >
-            {isPlaying ? '❚❚' : '▶'}
-          </button>
-          <button
-            type="button"
-            className="transport-button"
-            onClick={handleFooterNext}
-            disabled={!currentPost}
-          >
-            »
-          </button>
-        </div>
-        <div className="vizualizer">
-          <canvas ref={visualizerRef} width={150} height={26}></canvas>
-        </div>
-        <div className="played-post-info" onClick={handlePlayedPostInfoClick}>
-          <div className="played-post-author">
-            {currentPost
-              ? currentPost.profiles?.username
-                ? `@${currentPost.profiles.username}`
-                : '@unknown'
-              : '-'}
-          </div>
-          <div className="played-post-name" ref={titleRef}>
-            <span className={`played-post-name-text${isTitleOverflowing ? ' is-overflowing' : ''}`}>
-              {currentPost ? currentPost.title || '(untitled)' : '-'}
-            </span>
-          </div>
-        </div>
+    <div className="footer">
+      <div className="transport-buttons">
         <button
           type="button"
-          className={`favorite-button${isFooterFavorited ? ' favorited' : ''}${
-            footerFavoritePending ? ' pending' : ''
-          }`}
-          onClick={handleFooterFavoriteClick}
-          disabled={!currentPost || footerFavoritePending}
+          className="transport-button"
+          onClick={handleFooterPrev}
+          disabled={!currentPost}
         >
-          &lt;3
+          «
+        </button>
+        <button
+          type="button"
+          className={`transport-button play ${isPlaying ? 'playing' : 'pause'}`}
+          onClick={handleFooterPlayPause}
+          disabled={!currentPost}
+        >
+          {isPlaying ? '❚❚' : '▶'}
+        </button>
+        <button
+          type="button"
+          className="transport-button"
+          onClick={handleFooterNext}
+          disabled={!currentPost}
+        >
+          »
         </button>
       </div>
+      <div className="vizualizer">
+        <canvas ref={visualizerRef} width={150} height={26}></canvas>
+      </div>
+      <div className="played-post-info" onClick={handlePlayedPostInfoClick}>
+        <div className="played-post-author">
+          {currentPost
+            ? currentPost.profiles?.username
+              ? `@${currentPost.profiles.username}`
+              : '@unknown'
+            : '-'}
+        </div>
+        <div className="played-post-name" ref={titleRef}>
+          <span className={`played-post-name-text${isTitleOverflowing ? ' is-overflowing' : ''}`}>
+            {currentPost ? currentPost.title || '(untitled)' : '-'}
+          </span>
+        </div>
+      </div>
+      <button
+        type="button"
+        className={`favorite-button${isFooterFavorited ? ' favorited' : ''}${
+          footerFavoritePending ? ' pending' : ''
+        }`}
+        onClick={handleFooterFavoriteClick}
+        disabled={!currentPost || footerFavoritePending}
+      >
+        &lt;3
+      </button>
     </div>
   );
 }

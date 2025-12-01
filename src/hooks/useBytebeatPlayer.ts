@@ -74,7 +74,10 @@ async function ensureContextAndNodeBase() {
     workletNode.connect(analyserNode);
 
     const updateWaveform = () => {
-      if (!analyserNode || !analyserData) {
+      if (!analyserNode || !analyserData || !globalIsPlaying) {
+        // When not playing, propagate a single null once; repeated
+        // calls with null will be ignored by React state since the
+        // value is stable, avoiding unnecessary re-renders.
         setGlobalWaveform(null);
       } else {
         analyserNode.getFloatTimeDomainData(analyserData as any);
@@ -97,7 +100,8 @@ export async function warmUpBytebeatEngine(): Promise<void> {
   await ensureContextAndNodeBase();
 }
 
-export function useBytebeatPlayer(): BytebeatPlayer {
+export function useBytebeatPlayer(options?: { enableVisualizer?: boolean }): BytebeatPlayer {
+  const enableVisualizer = options?.enableVisualizer ?? true;
   const [isPlaying, setIsPlaying] = useState(globalIsPlaying);
   const [lastError, setLastError] = useState<string | null>(null);
   const [level, setLevel] = useState(globalLevel);
@@ -114,6 +118,9 @@ export function useBytebeatPlayer(): BytebeatPlayer {
   }, []);
 
   useEffect(() => {
+    if (!enableVisualizer) {
+      return;
+    }
     const listener = (value: number) => {
       setLevel(value);
     };
@@ -121,9 +128,12 @@ export function useBytebeatPlayer(): BytebeatPlayer {
     return () => {
       levelListeners.delete(listener);
     };
-  }, []);
+  }, [enableVisualizer]);
 
   useEffect(() => {
+    if (!enableVisualizer) {
+      return;
+    }
     const listener = (value: Float32Array | null) => {
       setWaveform(value);
     };
@@ -131,7 +141,7 @@ export function useBytebeatPlayer(): BytebeatPlayer {
     return () => {
       waveformListeners.delete(listener);
     };
-  }, []);
+  }, [enableVisualizer]);
 
   const ensureContextAndNode = useCallback(async () => {
     const res = await ensureContextAndNodeBase();
