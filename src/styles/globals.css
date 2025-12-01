@@ -343,6 +343,15 @@ body {
   right: 0;
 }
 
+input {
+  color: var(--text-color);
+  background: transparent;
+}
+
+button {
+  color: var(--text-color);
+}
+
 .top-content {
   display: flex;
   overflow: hidden;
@@ -376,6 +385,7 @@ body {
   justify-content: center;
   cursor: pointer;
   font-size: 12px;
+  color: var(--text-color);
 }
 
 .transport-button.play {
@@ -577,12 +587,13 @@ main > section {
   padding: 4px 0;
   border: none;
   border-bottom: 1px solid transparent;
+  background: transparent;
 }
 
 .post-title-input:focus {
   outline: none;
   border-radius: 0;
-  border-bottom: 1px solid var(--secondary-text-color);
+  border-bottom: 1px solid var(--accent-color);
 }
 
 .forked-from {
@@ -622,6 +633,7 @@ main > section {
 
 .button.secondary {
   background: var(--button-secondary-bg-color);
+  color: var(--text-color);
 }
 
 .button.primary {
@@ -695,6 +707,7 @@ main > section {
   border-radius: 4px;
   border: 1px solid var(--chip-border-color);
   background: var(--chip-background-color);
+  color: var(--text-color);
 }
 
 button.chip {
@@ -723,6 +736,7 @@ button.chip {
   font-size: 12px;
   font-family: inherit;
   cursor: pointer;
+  color: var(--text-color);
 }
 
 .favorite-button.favorited {
@@ -978,6 +992,31 @@ button.chip {
     font-size: 9px;
     padding-inline: 6px;
   }
+
+  /* Mobile theme toggle: compact round swatch */
+  .theme-switcher {
+    padding: 5px;
+  }
+
+  .theme-toggle-button {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    padding: 0;
+    position: relative;
+    font-size: 0; /* hide text */
+  }
+
+  .theme-toggle-button::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    border: 1px solid var(--panel-border-color);
+    background:
+      linear-gradient(90deg, var(--bg-color), var(--bg-color)) left / 50% 100% no-repeat,
+      linear-gradient(90deg, var(--accent-color), var(--accent-color)) right / 50% 100% no-repeat;
+  }
 }
 
 /* Desktop scaling: slightly larger UI on wide screens */
@@ -1021,6 +1060,7 @@ button.chip {
   .post-title-input {
     font-size: 19px;
     padding: 5px 0;
+    background: var(--bg-color);
   }
 
   .expression-input {
