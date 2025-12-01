@@ -213,6 +213,20 @@ export function PostList({ posts, currentUserId }: PostListProps) {
             </div>
             <div className="post-expression" onClick={() => void handleExpressionClick(post)}>
               <ReadonlyExpression expression={post.expression} />
+              {!isActive && (
+                <div className="post-expression-overlay" aria-hidden="true">
+                  <button
+                    type="button"
+                    className="post-expression-play-button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      void handleExpressionClick(post);
+                    }}
+                  >
+                    ▶
+                  </button>
+                </div>
+              )}
             </div>
             <div className="post-actions">
               <button
