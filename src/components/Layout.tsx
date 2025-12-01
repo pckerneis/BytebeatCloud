@@ -30,9 +30,9 @@ const AVAILABLE_THEMES = [
   'mint',
   'indigo',
   'mono-red',
+  'dark-graphite',
   'dark-minimal',
   'dark-cyber',
-  'dark-graphite',
   'oled',
 ] as const;
 
@@ -257,13 +257,29 @@ function FooterPlayer() {
     const width = canvas.width;
     const height = canvas.height;
 
+    // Read the current theme accent color from CSS variables, with a safe fallback.
+    let accentColor: string = '#000';
+    let backgroundColor: string = '#fff';
+    if (typeof window !== 'undefined') {
+      const style = window.getComputedStyle(canvas);
+      const fromVar = style.getPropertyValue('--accent-color');
+      if (fromVar && fromVar.trim()) {
+        accentColor = fromVar.trim();
+      }
+
+      const fromVar2 = style.getPropertyValue('--card-bg-color');
+      if (fromVar2 && fromVar2.trim()) {
+        backgroundColor = fromVar2.trim();
+      }
+    }
+
     const render = () => {
-      ctx.fillStyle = '#eee';
+      ctx.fillStyle = backgroundColor;
       ctx.fillRect(0, 0, width, height);
 
       if (isPlaying && waveform && waveform.length > 0) {
         const len = waveform.length;
-        ctx.strokeStyle = '#000';
+        ctx.strokeStyle = accentColor;
         ctx.lineWidth = 1;
         ctx.beginPath();
 
@@ -409,7 +425,7 @@ function FooterPlayer() {
           »
         </button>
       </div>
-      <div className="vizualizer">
+      <div className="visualizer">
         <canvas ref={visualizerRef} width={150} height={26}></canvas>
       </div>
       <div className="played-post-info" onClick={handlePlayedPostInfoClick}>
