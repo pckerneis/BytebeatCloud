@@ -187,6 +187,11 @@ export default function ForkPostPage() {
           ← Back
         </button>
         <h2>Fork post</h2>
+        {!user && (
+          <p className="text-centered login-to-publish-message">
+            <a href={'/login'}>Log in</a> to publish a post, or use a share link.
+          </p>
+        )}
         <p className="text-centered">
           Fork from {originalTitle || '(untitled)'} by @{originalAuthor || 'unknown'}
         </p>
