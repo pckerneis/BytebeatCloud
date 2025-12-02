@@ -49,4 +49,5 @@ There are a few differences with other web implementations:
 - [ ] Follow users
 - [ ] Report posts or users
 - [ ] Personalized feed
+- [ ] Pin posts on profile
 - [ ] Search posts by name and tags
