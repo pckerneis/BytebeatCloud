@@ -36,7 +36,7 @@ export default function LegalMentions() {
           <p>
             Les données applicatives peuvent être traitées et stockées par :<br />
             <strong>Supabase</strong> (Supabase) — voir leur documentation pour les régions
-            d'hébergement.
+            d’hébergement.
             <br />
             Site : https://supabase.com
           </p>
@@ -61,7 +61,7 @@ export default function LegalMentions() {
           </p>
           <p>
             Les données sont hébergées par Supabase, agissant en tant que sous-traitant. Vous
-            disposez des droits d'accès, rectification, suppression, opposition et portabilité. Pour
+            disposez des droits d’accès, rectification, suppression, opposition et portabilité. Pour
             exercer vos droits, contactez : {process.env.LEGAL_CONTACT_EMAIL}
           </p>
 
