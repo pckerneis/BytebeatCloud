@@ -145,6 +145,9 @@ export default function UpdateProfilePage() {
         <title>BytebeatCloud - Update profile</title>
       </Head>
       <section>
+        <button type="button" className="button ghost" onClick={() => router.back()}>
+          ← Back
+        </button>
         {status === 'loading' && <p className="text-centered">Loading your profile…</p>}
         {status === 'error' && <p className="error-message">{profileError}</p>}
 
@@ -153,7 +156,7 @@ export default function UpdateProfilePage() {
             <h2>Update profile</h2>
             <p>Logged in as {user?.email ?? ''}</p>
 
-            <button type="button" className="button" onClick={handleSignOut}>
+            <button type="button" className="button secondary" onClick={handleSignOut}>
               Sign out
             </button>
 
@@ -168,7 +171,7 @@ export default function UpdateProfilePage() {
                 maxLength={32}
               />
             </label>
-            <button type="submit" className="button primary" disabled={saveStatus === 'saving'}>
+            <button type="submit" className="button secondary" disabled={saveStatus === 'saving'}>
               {saveStatus === 'saving' ? 'Saving…' : 'Save username'}
             </button>
 
