@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build && next export",
+    "build": "next build",
     "start": "npx serve out",
     "lint": "next lint",
     "format": "prettier \"**/*.{js,jsx,ts,tsx,json,md,css,scss}\" --write",
