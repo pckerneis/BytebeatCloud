@@ -155,7 +155,10 @@ export function Layout({ children }: PropsWithChildren) {
           <nav>
             <div className="app-title">
               <Link href="/">
-                <h1>BytebeatCloud</h1>
+                <h1>
+                  <span className="app-title-text">BytebeatCloud</span>
+                  <span className="app-title-icon" aria-hidden="true" />
+                </h1>
               </Link>
             </div>
             <ul>

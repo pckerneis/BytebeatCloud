@@ -489,10 +489,29 @@ main {
   justify-content: center;
 }
 
+.app-title a {
+  margin: 0;
+  padding: 0;
+}
+
 h1 {
   font-size: 16px;
   margin: 0;
   padding: 0;
+  display: flex;
+}
+
+.app-title-text {
+  display: inline;
+}
+
+.app-title-icon {
+  display: none;
+  width: 22px;
+  height: 22px;
+  background-image: url('/icons/icon-192.png');
+  background-size: cover;
+  background-position: center;
 }
 
 .home-section {
@@ -986,6 +1005,22 @@ button.chip {
 
   h1 {
     font-size: 16px;
+  }
+
+  .app-title-text {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .app-title-icon {
+    display: inline-block;
   }
 
   nav ul {
