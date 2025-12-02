@@ -43,6 +43,8 @@ There are a few differences with other web implementations:
 - [x] Dark mode
 - [x] Responsive design for all screen sizes
 - [ ] On-the-fly update of edited expressions
+- [ ] Offline mode
+- [ ] Progressive Web App
 - [ ] Tags
 - [ ] Length categories
 - [ ] Master gain
