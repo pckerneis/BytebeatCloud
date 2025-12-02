@@ -1,1 +1,1 @@
-export const EXPRESSION_MAX = 1024;
+export const EXPRESSION_MAX = 4096;
