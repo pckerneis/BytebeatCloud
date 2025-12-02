@@ -96,8 +96,8 @@ export default function OnboardingPage() {
       <section>
         <h2>Choose your username</h2>
         <p>
-          Your username must be unique, 3–32 characters long, and use only letters, digits and
-          underscores.
+          Your username must be unique, 3–32 characters long, and use only letters, digits,
+          dots, hyphens and underscores.
         </p>
         <form className="create-form" onSubmit={handleSubmit}>
           <label className="field">
