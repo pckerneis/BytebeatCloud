@@ -24,6 +24,7 @@ export default function CreatePage() {
   const [isDraft, setIsDraft] = useState(false);
   const [mode, setMode] = useState<ModeOption>(ModeOption.Float);
   const [sampleRate, setSampleRate] = useState<number>(DEFAULT_SAMPLE_RATE);
+  const [draftLoaded, setDraftLoaded] = useState(false);
   const { isPlaying, toggle, lastError, stop, updateExpression } = useBytebeatPlayer({ enableVisualizer: false });
   const { setCurrentPostById } = usePlayerStore();
 
@@ -128,12 +129,15 @@ export default function CreatePage() {
     } catch(e) {
       console.error(e);
     }
+
+    setDraftLoaded(true);
   }, [router.isReady, router.query]);
 
   // Persist current editor state to localStorage so unauthenticated users
   // don't lose their work.
   useEffect(() => {
     if (typeof window === 'undefined') return;
+    if (!draftLoaded) return;
 
     try {
       const modeValue = encodeMode(mode);
@@ -151,7 +155,7 @@ export default function CreatePage() {
     } catch(e) {
       console.error(e);
     }
-  }, [title, expression, isDraft, mode, sampleRate]);
+  }, [title, expression, isDraft, mode, sampleRate, draftLoaded]);
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
