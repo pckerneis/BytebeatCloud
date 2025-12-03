@@ -12,6 +12,19 @@ export default function App({ Component, pageProps }: AppProps) {
 
     navigator.serviceWorker
       .register('/sw.js')
+      .then((registration) => {
+        const version = process.env.NEXT_PUBLIC_APP_VERSION ?? 'dev';
+        const sendVersion = () => {
+          if (!registration.active) return;
+          registration.active.postMessage({ type: 'SET_VERSION', version });
+        };
+
+        sendVersion();
+
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+          sendVersion();
+        });
+      })
       .catch(() => {
         // optional: ignore registration errors
       });
