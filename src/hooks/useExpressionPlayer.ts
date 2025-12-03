@@ -15,6 +15,9 @@ interface UseExpressionPlayerOptions {
   ) => void | Promise<void>;
   setCurrentPostById: (id: string | null) => void;
   loopPreview?: boolean;
+  isPlaying: boolean;
+  liveUpdateEnabled: boolean;
+  updateExpression: (expression: string, mode: ModeOption, sampleRate: number) => void | Promise<void>;
 }
 
 export function useExpressionPlayer({
@@ -25,6 +28,9 @@ export function useExpressionPlayer({
   toggle,
   setCurrentPostById,
   loopPreview,
+  isPlaying,
+  liveUpdateEnabled,
+  updateExpression,
 }: UseExpressionPlayerOptions) {
   const [validationIssue, setValidationIssue] = useState<ValidationIssue | null>(null);
   const validationTimeoutRef = useRef<number | null>(null);
@@ -45,6 +51,10 @@ export function useExpressionPlayer({
     validationTimeoutRef.current = window.setTimeout(() => {
       const result = validateExpression(value);
       setValidationIssue(result.valid ? null : result.issues[0] ?? null);
+
+      if (result.valid && liveUpdateEnabled && isPlaying) {
+        void updateExpression(value, mode, sampleRateValue);
+      }
     }, 200);
   };
 

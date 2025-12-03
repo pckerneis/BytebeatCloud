@@ -15,7 +15,7 @@ import { validateExpression } from '../utils/expression-validator';
 import { useExpressionPlayer } from '../hooks/useExpressionPlayer';
 import { PostMetadataModel } from '../model/postEditor';
 
-const CREATE_DRAFT_STORAGE_KEY = 'bitejam-create-draft-v1';
+const CREATE_DRAFT_STORAGE_KEY = 'bytebeat-cloud-create-draft-v1';
 
 export default function CreatePage() {
   const router = useRouter();
@@ -24,13 +24,14 @@ export default function CreatePage() {
   const [isDraft, setIsDraft] = useState(false);
   const [mode, setMode] = useState<ModeOption>(ModeOption.Float);
   const [sampleRate, setSampleRate] = useState<number>(DEFAULT_SAMPLE_RATE);
-  const { isPlaying, toggle, lastError, stop } = useBytebeatPlayer({ enableVisualizer: false });
+  const { isPlaying, toggle, lastError, stop, updateExpression } = useBytebeatPlayer({ enableVisualizer: false });
   const { setCurrentPostById } = usePlayerStore();
 
   const { user } = useSupabaseAuth();
 
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'success'>('idle');
   const [saveError, setSaveError] = useState('');
+  const [liveUpdateEnabled, setLiveUpdateEnabled] = useState(false);
 
   const { validationIssue, handleExpressionChange, handlePlayClick, setValidationIssue } =
     useExpressionPlayer({
@@ -41,6 +42,9 @@ export default function CreatePage() {
       toggle,
       setCurrentPostById,
       loopPreview: true,
+      isPlaying,
+      liveUpdateEnabled,
+      updateExpression,
     });
 
   useEffect(() => {
@@ -48,6 +52,18 @@ export default function CreatePage() {
       void stop();
     };
   }, [stop]);
+
+  useEffect(() => {
+    if (!liveUpdateEnabled || !isPlaying) return;
+
+    const trimmed = expression.trim();
+    if (!trimmed) return;
+
+    const result = validateExpression(trimmed);
+    if (!result.valid) return;
+
+    void updateExpression(trimmed, mode, sampleRate);
+  }, [mode, sampleRate, liveUpdateEnabled, isPlaying, expression, updateExpression]);
 
   // On first load, prefill from URL (if present) or from localStorage draft.
   useEffect(() => {
@@ -109,8 +125,8 @@ export default function CreatePage() {
 
       if (parsed.mode) setMode(decodeMode(parsed.mode));
       if (parsed.sampleRate) setSampleRate(parsed.sampleRate);
-    } catch {
-      // ignore malformed localStorage
+    } catch(e) {
+      console.error(e);
     }
   }, [router.isReady, router.query]);
 
@@ -132,8 +148,8 @@ export default function CreatePage() {
           sampleRate,
         }),
       );
-    } catch {
-      // ignore storage errors
+    } catch(e) {
+      console.error(e);
     }
   }, [title, expression, isDraft, mode, sampleRate]);
 
@@ -223,6 +239,8 @@ export default function CreatePage() {
             submitLabel={saveStatus === 'saving' ? 'Saving…' : 'Save'}
             showActions={!!user}
             isFork={false}
+            liveUpdateEnabled={liveUpdateEnabled}
+            onLiveUpdateChange={setLiveUpdateEnabled}
           />
         </form>
       </section>

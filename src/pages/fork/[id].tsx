@@ -24,7 +24,7 @@ export default function ForkPostPage() {
   const [isDraft, setIsDraft] = useState(false);
   const [mode, setMode] = useState<ModeOption>(ModeOption.Float);
   const [sampleRate, setSampleRate] = useState<number>(DEFAULT_SAMPLE_RATE);
-  const { isPlaying, toggle, lastError, stop } = useBytebeatPlayer({ enableVisualizer: false });
+  const { isPlaying, toggle, lastError, stop, updateExpression } = useBytebeatPlayer({ enableVisualizer: false });
   const { setCurrentPostById } = usePlayerStore();
 
   const { user } = useSupabaseAuth();
@@ -33,6 +33,7 @@ export default function ForkPostPage() {
   const [saveError, setSaveError] = useState('');
   const [originalTitle, setOriginalTitle] = useState<string>('');
   const [originalAuthor, setOriginalAuthor] = useState<string | null>(null);
+  const [liveUpdateEnabled, setLiveUpdateEnabled] = useState(false);
 
   const { validationIssue, handleExpressionChange, handlePlayClick, setValidationIssue } =
     useExpressionPlayer({
@@ -42,6 +43,9 @@ export default function ForkPostPage() {
       sampleRateValue: sampleRate,
       toggle,
       setCurrentPostById,
+      isPlaying,
+      liveUpdateEnabled,
+      updateExpression,
     });
 
   useEffect(() => {
@@ -49,6 +53,18 @@ export default function ForkPostPage() {
       void stop();
     };
   }, [stop]);
+
+  useEffect(() => {
+    if (!liveUpdateEnabled || !isPlaying) return;
+
+    const trimmed = expression.trim();
+    if (!trimmed) return;
+
+    const result = validateExpression(trimmed);
+    if (!result.valid) return;
+
+    void updateExpression(trimmed, mode, sampleRate);
+  }, [mode, sampleRate, liveUpdateEnabled, isPlaying, expression, updateExpression]);
 
   useEffect(() => {
     if (!id || typeof id !== 'string') return;
@@ -212,6 +228,8 @@ export default function ForkPostPage() {
             submitLabel={saveStatus === 'saving' ? 'Saving…' : 'Save fork'}
             showActions={!!user}
             isFork={true}
+            liveUpdateEnabled={liveUpdateEnabled}
+            onLiveUpdateChange={setLiveUpdateEnabled}
           />
         </form>
       </section>

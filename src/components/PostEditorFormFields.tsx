@@ -35,6 +35,9 @@ interface PostEditorFormFieldsProps {
 
   showActions: boolean;
   isFork: boolean;
+
+  liveUpdateEnabled: boolean;
+  onLiveUpdateChange: (enabled: boolean) => void;
 }
 
 function findNextPresetSampleRate(sampleRate: number): number {
@@ -67,6 +70,8 @@ export function PostEditorFormFields(props: PostEditorFormFieldsProps) {
     onDeleteClick,
     showActions,
     isFork,
+    liveUpdateEnabled,
+    onLiveUpdateChange,
   } = props;
 
   const expressionLength = expression.length;
@@ -216,7 +221,11 @@ export function PostEditorFormFields(props: PostEditorFormFieldsProps) {
           {isPlaying ? 'Stop' : 'Play'}
         </button>
         <label className="checkbox">
-          <input type="checkbox" />
+          <input
+            type="checkbox"
+            checked={liveUpdateEnabled}
+            onChange={(e) => onLiveUpdateChange(e.target.checked)}
+          />
           Live update
         </label>
         <span className={isExpressionTooLong ? 'counter error' : 'counter'}>

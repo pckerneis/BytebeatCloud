@@ -8,6 +8,7 @@ interface BytebeatPlayer {
   stop: () => Promise<void>;
   level: number;
   waveform: Float32Array | null;
+  updateExpression: (expression: string, mode: ModeOption, sampleRate: number) => Promise<void>;
 }
 
 // Module-level singletons so the audio engine is shared across the whole app.
@@ -224,6 +225,37 @@ export function useBytebeatPlayer(options?: { enableVisualizer?: boolean }): Byt
     [ensureContextAndNode],
   );
 
+  const updateExpression = useCallback(
+    async (expression: string, mode: ModeOption, sampleRate: number) => {
+      if (!expression.trim()) return;
+
+      const res = await ensureContextAndNode();
+      if (!res) return;
+
+      const { node } = res;
+
+      // Pre-validate expression similarly to toggle, but without touching playback state.
+      try {
+        // eslint-disable-next-line no-new-func
+        void new Function('t', String(expression));
+      } catch (e) {
+        setLastError(String((e as Error).message || e));
+        return;
+      }
+
+      setLastError(null);
+      const isFloatMode = mode === 'float';
+      const sr = Number.isFinite(sampleRate) && sampleRate > 0 ? sampleRate : 8000;
+      node.port.postMessage({
+        type: 'setExpression',
+        expression,
+        sampleRate: sr,
+        float: isFloatMode,
+      });
+    },
+    [ensureContextAndNode],
+  );
+
   const stop = useCallback(async () => {
     try {
       const ctx = audioContext;
@@ -267,7 +299,8 @@ export function useBytebeatPlayer(options?: { enableVisualizer?: boolean }): Byt
       stop,
       level,
       waveform,
+      updateExpression,
     }),
-    [isPlaying, lastError, toggle, stop, level, waveform],
+    [isPlaying, lastError, toggle, stop, level, waveform, updateExpression],
   );
 }
