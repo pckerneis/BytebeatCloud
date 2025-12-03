@@ -16,8 +16,7 @@ export default function ExplorePage() {
   const loadingMoreRef = useRef(false);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
 
-  const [activeTab, setActiveTab] = useState<'personalized' | 'recent' | 'popular'>('recent');
-  const [hasInitializedTab, setHasInitializedTab] = useState(false);
+  const [activeTab, setActiveTab] = useState<'feed' | 'recent' | 'trending'>('feed');
 
   useEffect(() => {
     let cancelled = false;
@@ -35,37 +34,40 @@ export default function ExplorePage() {
       let data: PostRow[] | null = null;
       let error: any = null;
 
-      if (activeTab === 'personalized') {
-        if (!user) {
-          data = [];
-        } else {
+      if (activeTab === 'feed') {
+        if (user) {
           const rpcResult = await supabase.rpc('get_personalized_feed', {
             viewer_id: (user as any).id,
             page,
           });
           data = (rpcResult.data ?? []) as PostRow[];
           error = rpcResult.error;
+        } else {
+          const rpcResult = await supabase.rpc('get_global_feed', {
+            page,
+          });
+          data = (rpcResult.data ?? []) as PostRow[];
+          error = rpcResult.error;
         }
-      } else {
-        let query = supabase
+      } else if (activeTab === 'recent') {
+        const result = await supabase
           .from('posts_with_meta')
           .select(
             'id,title,expression,sample_rate,mode,created_at,profile_id,is_draft,fork_of_post_id,is_fork,author_username,origin_title,origin_username,favorites_count',
           )
-          .eq('is_draft', false);
+          .eq('is_draft', false)
+          .order('created_at', { ascending: false })
+          .range(from, to);
 
-        if (activeTab === 'recent') {
-          query = query.order('created_at', { ascending: false });
-        } else {
-          // Order by favorites_count from posts_with_meta first, then recency.
-          query = query
-            .order('favorites_count', { ascending: false })
-            .order('created_at', { ascending: false });
-        }
-
-        const result = await query.range(from, to);
         data = (result.data ?? []) as PostRow[];
         error = result.error;
+      } else {
+        // trending
+        const rpcResult = await supabase.rpc('get_trending_feed', {
+          page,
+        });
+        data = (rpcResult.data ?? []) as PostRow[];
+        error = rpcResult.error;
       }
 
       if (cancelled) return;
@@ -83,23 +85,7 @@ export default function ExplorePage() {
           rows = (await enrichWithViewerFavorites((user as any).id as string, rows)) as PostRow[];
         }
 
-        setPosts((prev) => {
-          const combined = page === 0 ? rows : [...prev, ...rows];
-
-          if (activeTab === 'personalized' || activeTab === 'recent') {
-            return combined;
-          }
-
-          return [...combined].sort((a, b) => {
-            const fa = a.favorites_count ?? 0;
-            const fb = b.favorites_count ?? 0;
-            if (fb !== fa) return fb - fa;
-
-            const da = new Date(a.created_at).getTime();
-            const db = new Date(b.created_at).getTime();
-            return db - da;
-          });
-        });
+        setPosts((prev) => (page === 0 ? rows : [...prev, ...rows]));
         if (rows.length < pageSize) {
           setHasMore(false);
         }
@@ -116,23 +102,9 @@ export default function ExplorePage() {
     };
   }, [page, user, activeTab]);
 
-  // When a user first becomes authenticated, default to the personalized tab once.
-  useEffect(() => {
-    if (!user) return;
-    if (hasInitializedTab) return;
-
-    setActiveTab('personalized');
-    setPage(0);
-    setPosts([]);
-    setHasMore(true);
-    setError('');
-    loadingMoreRef.current = false;
-    setHasInitializedTab(true);
-  }, [user, hasInitializedTab]);
-
   useInfiniteScroll({ hasMore, loadingMoreRef, sentinelRef, setPage });
 
-  const handleTabClick = (tab: 'personalized' | 'recent' | 'popular') => {
+  const handleTabClick = (tab: 'feed' | 'recent' | 'trending') => {
     if (tab === activeTab) return;
     setActiveTab(tab);
     setPage(0);
@@ -150,14 +122,12 @@ export default function ExplorePage() {
       <section>
         <h2>Explore</h2>
         <div className="tab-header">
-          {user && (
-            <span
-              className={`tab-button ${activeTab === 'personalized' ? 'active' : ''}`}
-              onClick={() => handleTabClick('personalized')}
-            >
-              Feed
-            </span>
-          )}
+          <span
+            className={`tab-button ${activeTab === 'feed' ? 'active' : ''}`}
+            onClick={() => handleTabClick('feed')}
+          >
+            Feed
+          </span>
           <span
             className={`tab-button ${activeTab === 'recent' ? 'active' : ''}`}
             onClick={() => handleTabClick('recent')}
@@ -165,10 +135,10 @@ export default function ExplorePage() {
             Recent
           </span>
           <span
-            className={`tab-button ${activeTab === 'popular' ? 'active' : ''}`}
-            onClick={() => handleTabClick('popular')}
+            className={`tab-button ${activeTab === 'trending' ? 'active' : ''}`}
+            onClick={() => handleTabClick('trending')}
           >
-            Popular
+            Trending
           </span>
         </div>
         {loading && <p className="text-centered">Loading posts…</p>}
