@@ -46,11 +46,20 @@ There are a few differences with other web implementations:
 - [x] Offline mode
 - [x] Length categories
 - [x] Arbitrary sample rate
-- [ ] On-the-fly update of edited expressions
+- [x] On-the-fly update of edited expressions
+- [x] Follow users
+
+**Coming soon**
+
+- [ ] Personalized feed
 - [ ] Tags
 - [ ] Master gain
-- [ ] Follow users
+
+**Coming later**
+
 - [ ] Report posts or users
-- [ ] Personalized feed
+- [ ] Moderator tools
+- [ ] Block/unblock users
+- [ ] Post description
 - [ ] Pin posts on profile
 - [ ] Search posts by name and tags
