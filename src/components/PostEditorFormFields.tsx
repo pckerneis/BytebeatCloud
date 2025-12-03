@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { ExpressionEditor, ExpressionErrorSnippet } from './ExpressionEditor';
 import {
   ModeOption,
@@ -71,10 +71,51 @@ export function PostEditorFormFields(props: PostEditorFormFieldsProps) {
 
   const expressionLength = expression.length;
   const isExpressionTooLong = expressionLength > EXPRESSION_MAX;
-  const [shareLinkCopied, setShareLinkCopied] = useState(false);
   const canSubmit = Boolean(expression.trim()) && !validationIssue && saveStatus !== 'saving';
 
   const { title, mode, sampleRate, isDraft } = meta;
+  const [shareLinkCopied, setShareLinkCopied] = useState(false);
+  const [sampleRateModalOpen, setSampleRateModalOpen] = useState(false);
+  const [sampleRateInput, setSampleRateInput] = useState(sampleRate.toString());
+  const longPressTimeoutRef = useRef<number | null>(null);
+  const longPressTriggeredRef = useRef(false);
+
+  const openSampleRateModal = () => {
+    setSampleRateInput(sampleRate.toString());
+    setSampleRateModalOpen(true);
+  };
+
+  const closeSampleRateModal = () => {
+    setSampleRateModalOpen(false);
+  };
+
+  const commitSampleRateFromInput = () => {
+    const parsed = parseInt(sampleRateInput, 10);
+    if (Number.isNaN(parsed)) return;
+
+    const rounded = Math.round(parsed / 10) * 10;
+    const clamped = Math.min(MAX_SAMPLE_RATE, Math.max(MIN_SAMPLE_RATE, rounded));
+    onMetaChange({ ...meta, sampleRate: clamped });
+    setSampleRateModalOpen(false);
+  };
+
+  const startSampleRateLongPress = () => {
+    if (longPressTimeoutRef.current !== null) {
+      window.clearTimeout(longPressTimeoutRef.current);
+    }
+    longPressTriggeredRef.current = false;
+    longPressTimeoutRef.current = window.setTimeout(() => {
+      longPressTriggeredRef.current = true;
+      openSampleRateModal();
+    }, 500);
+  };
+
+  const cancelSampleRateLongPress = () => {
+    if (longPressTimeoutRef.current !== null) {
+      window.clearTimeout(longPressTimeoutRef.current);
+      longPressTimeoutRef.current = null;
+    }
+  };
 
   const toggleMode = () => {
     if (mode === ModeOption.Int) {
@@ -141,7 +182,23 @@ export function PostEditorFormFields(props: PostEditorFormFieldsProps) {
         <button type="button" className="chip" onClick={toggleMode}>
           {mode}
         </button>
-        <button type="button" className="chip" onClick={rotateSampleRate}>
+        <button
+          type="button"
+          className="chip"
+          onClick={() => {
+            if (longPressTriggeredRef.current) {
+              longPressTriggeredRef.current = false;
+              return;
+            }
+            rotateSampleRate();
+          }}
+          onMouseDown={startSampleRateLongPress}
+          onMouseUp={cancelSampleRateLongPress}
+          onMouseLeave={cancelSampleRateLongPress}
+          onTouchStart={startSampleRateLongPress}
+          onTouchEnd={cancelSampleRateLongPress}
+          onTouchCancel={cancelSampleRateLongPress}
+        >
           {formatSampleRate(sampleRate)}
         </button>
       </div>
@@ -220,6 +277,49 @@ export function PostEditorFormFields(props: PostEditorFormFieldsProps) {
       {saveError && <p className="error-message">{saveError}</p>}
       {saveStatus === 'success' && !saveError && (
         <p className="counter">Post {submitLabel.toLowerCase()}.</p>
+      )}
+      {sampleRateModalOpen && (
+        <div
+          className="modal-backdrop"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.4)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+          }}
+        >
+          <div className="modal">
+            <h2 style={{ marginTop: 0, marginBottom: '8px', fontSize: '16px' }}>Sample rate</h2>
+            <p style={{ marginTop: 0, marginBottom: '8px', fontSize: '12px', opacity: 0.8 }}>
+              Enter a value between {MIN_SAMPLE_RATE} and {MAX_SAMPLE_RATE}.
+            </p>
+            <input
+              type="number"
+              min={MIN_SAMPLE_RATE}
+              max={MAX_SAMPLE_RATE}
+              value={sampleRateInput}
+              step={10}
+              onChange={(e) => setSampleRateInput(e.target.value.replace(/[^0-9]/g, ''))}
+              style={{ width: '100%', padding: '6px 8px', marginBottom: '12px' }}
+            />
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+              <button type="button" className="button secondary" onClick={closeSampleRateModal}>
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="button primary"
+                onClick={commitSampleRateFromInput}
+                disabled={Number.isNaN(parseInt(sampleRateInput, 10))}
+             >
+                Apply
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </>
   );

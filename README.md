@@ -45,6 +45,7 @@ There are a few differences with other web implementations:
 - [x] Progressive Web App
 - [x] Offline mode
 - [x] Length categories
+- [x] Arbitrary sample rate
 - [ ] On-the-fly update of edited expressions
 - [ ] Tags
 - [ ] Master gain

@@ -355,6 +355,10 @@ input {
   background: transparent;
 }
 
+input[type="number"] {
+  border: 1px solid var(--chip-border-color);
+}
+
 button {
   color: var(--text-color);
 }
