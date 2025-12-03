@@ -16,7 +16,8 @@ export default function ExplorePage() {
   const loadingMoreRef = useRef(false);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
 
-  const [activeTab, setActiveTab] = useState<'recent' | 'popular'>('recent');
+  const [activeTab, setActiveTab] = useState<'personalized' | 'recent' | 'popular'>('recent');
+  const [hasInitializedTab, setHasInitializedTab] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -31,28 +32,46 @@ export default function ExplorePage() {
       }
       setError('');
 
-      let query = supabase
-        .from('posts_with_meta')
-        .select(
-          'id,title,expression,sample_rate,mode,created_at,profile_id,is_draft,fork_of_post_id,is_fork,author_username,origin_title,origin_username,favorites_count',
-        )
-        .eq('is_draft', false);
+      let data: PostRow[] | null = null;
+      let error: any = null;
 
-      if (activeTab === 'recent') {
-        query = query.order('created_at', { ascending: false });
+      if (activeTab === 'personalized') {
+        if (!user) {
+          data = [];
+        } else {
+          const rpcResult = await supabase.rpc('get_personalized_feed', {
+            viewer_id: (user as any).id,
+            page,
+          });
+          data = (rpcResult.data ?? []) as PostRow[];
+          error = rpcResult.error;
+        }
       } else {
-        // Order by favorites_count from posts_with_meta first, then recency.
-        query = query
-          .order('favorites_count', { ascending: false })
-          .order('created_at', { ascending: false });
-      }
+        let query = supabase
+          .from('posts_with_meta')
+          .select(
+            'id,title,expression,sample_rate,mode,created_at,profile_id,is_draft,fork_of_post_id,is_fork,author_username,origin_title,origin_username,favorites_count',
+          )
+          .eq('is_draft', false);
 
-      const { data, error } = await query.range(from, to);
+        if (activeTab === 'recent') {
+          query = query.order('created_at', { ascending: false });
+        } else {
+          // Order by favorites_count from posts_with_meta first, then recency.
+          query = query
+            .order('favorites_count', { ascending: false })
+            .order('created_at', { ascending: false });
+        }
+
+        const result = await query.range(from, to);
+        data = (result.data ?? []) as PostRow[];
+        error = result.error;
+      }
 
       if (cancelled) return;
 
       if (error) {
-        setError(error.message);
+        setError(error.message ?? String(error));
         if (page === 0) {
           setPosts([]);
         }
@@ -67,7 +86,7 @@ export default function ExplorePage() {
         setPosts((prev) => {
           const combined = page === 0 ? rows : [...prev, ...rows];
 
-          if (activeTab !== 'popular') {
+          if (activeTab === 'personalized' || activeTab === 'recent') {
             return combined;
           }
 
@@ -97,9 +116,23 @@ export default function ExplorePage() {
     };
   }, [page, user, activeTab]);
 
+  // When a user first becomes authenticated, default to the personalized tab once.
+  useEffect(() => {
+    if (!user) return;
+    if (hasInitializedTab) return;
+
+    setActiveTab('personalized');
+    setPage(0);
+    setPosts([]);
+    setHasMore(true);
+    setError('');
+    loadingMoreRef.current = false;
+    setHasInitializedTab(true);
+  }, [user, hasInitializedTab]);
+
   useInfiniteScroll({ hasMore, loadingMoreRef, sentinelRef, setPage });
 
-  const handleTabClick = (tab: 'recent' | 'popular') => {
+  const handleTabClick = (tab: 'personalized' | 'recent' | 'popular') => {
     if (tab === activeTab) return;
     setActiveTab(tab);
     setPage(0);
@@ -117,6 +150,14 @@ export default function ExplorePage() {
       <section>
         <h2>Explore</h2>
         <div className="tab-header">
+          {user && (
+            <span
+              className={`tab-button ${activeTab === 'personalized' ? 'active' : ''}`}
+              onClick={() => handleTabClick('personalized')}
+            >
+              Feed
+            </span>
+          )}
           <span
             className={`tab-button ${activeTab === 'recent' ? 'active' : ''}`}
             onClick={() => handleTabClick('recent')}
