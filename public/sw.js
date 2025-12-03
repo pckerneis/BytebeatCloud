@@ -12,6 +12,10 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   if (request.method !== 'GET') return;
 
+   // Only handle same-origin requests; let external APIs (e.g. Supabase) bypass the SW.
+   const requestUrl = new URL(request.url);
+   if (requestUrl.origin !== self.location.origin) return;
+
   event.respondWith(
     caches.match(request).then((cached) => {
       if (cached) return cached;

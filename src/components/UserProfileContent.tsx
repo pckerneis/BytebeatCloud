@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useRouter } from 'next/router';
 import { supabase } from '../lib/supabaseClient';
 import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
 import { PostList, type PostRow } from './PostList';
@@ -8,9 +9,11 @@ import { enrichWithViewerFavorites } from '../utils/favorites';
 interface UserProfileContentProps {
   username: string | null;
   extraHeader?: ReactNode;
+  hideFollowButton?: boolean;
 }
 
-export function UserProfileContent({ username, extraHeader }: UserProfileContentProps) {
+export function UserProfileContent({ username, extraHeader, hideFollowButton }: UserProfileContentProps) {
+  const router = useRouter();
   const { user } = useSupabaseAuth();
 
   const [posts, setPosts] = useState<PostRow[]>([]);
@@ -26,6 +29,10 @@ export function UserProfileContent({ username, extraHeader }: UserProfileContent
   const [draftPosts, setDraftPosts] = useState<PostRow[]>([]);
   const [loadingDrafts, setLoadingDrafts] = useState(false);
   const [draftsError, setDraftsError] = useState('');
+  const [viewedProfileId, setViewedProfileId] = useState<string | null>(null);
+  const [isFollowed, setIsFollowed] = useState(false);
+  const [loadingFollow, setLoadingFollow] = useState(false);
+  const [followError, setFollowError] = useState('');
   const loadingMoreRef = useRef(false);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
 
@@ -51,6 +58,7 @@ export function UserProfileContent({ username, extraHeader }: UserProfileContent
       if (page === 0) {
         setLoading(true);
       }
+
       setError('');
 
       // Look up the profile id for this username to ensure we only load
@@ -75,6 +83,13 @@ export function UserProfileContent({ username, extraHeader }: UserProfileContent
         loadingMoreRef.current = false;
         setLoading(false);
         return;
+      }
+
+      setViewedProfileId(profile.id as string);
+      if (user && (user as any).id === profile.id) {
+        setIsOwnProfile(true);
+      } else {
+        setIsOwnProfile(false);
       }
 
       const { data, error } = await supabase
@@ -127,7 +142,88 @@ export function UserProfileContent({ username, extraHeader }: UserProfileContent
 
   useInfiniteScroll({ hasMore, loadingMoreRef, sentinelRef, setPage });
 
-  const isOwnProfile = Boolean(user && posts.some((p) => p.profile_id === (user as any).id));
+  const [isOwnProfile, setIsOwnProfile] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+    if (!viewedProfileId) return;
+    if (isOwnProfile) return;
+
+    let cancelled = false;
+
+    const checkFollow = async () => {
+      const { data, error } = await supabase
+        .from('follows')
+        .select('id')
+        .eq('follower_id', (user as any).id)
+        .eq('followed_id', viewedProfileId)
+        .maybeSingle();
+
+      if (cancelled) return;
+
+      if (error) {
+        // eslint-disable-next-line no-console
+        console.warn('Error checking follow state', error.message);
+        setIsFollowed(false);
+        return;
+      }
+
+      setIsFollowed(Boolean(data));
+    };
+
+    void checkFollow();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user, viewedProfileId, isOwnProfile]);
+
+  const handleToggleFollow = async () => {
+    if (!username) return;
+
+    if (!user) {
+      void router.push('/login');
+      return;
+    }
+
+    if (!viewedProfileId) return;
+
+    if (loadingFollow) return;
+
+    setLoadingFollow(true);
+    setFollowError('');
+
+    if (isFollowed) {
+      const { error } = await supabase
+        .from('follows')
+        .delete()
+        .eq('follower_id', (user as any).id)
+        .eq('followed_id', viewedProfileId);
+
+      if (error) {
+        // eslint-disable-next-line no-console
+        console.warn('Error unfollowing user', error.message);
+        setFollowError('Unable to unfollow user.');
+      } else {
+        setIsFollowed(false);
+      }
+    } else {
+      const { error } = await supabase.from('follows').insert({
+        follower_id: (user as any).id,
+        followed_id: viewedProfileId,
+      });
+
+      if (error) {
+        // eslint-disable-next-line no-console
+        console.warn('Error following user', error.message);
+        setFollowError('Unable to follow user.');
+      } else {
+        setIsFollowed(true);
+      }
+    }
+
+    setLoadingFollow(false);
+  };
 
   // Load favorites for this user (by username) when the Favorites tab is first activated.
   useEffect(() => {
@@ -289,7 +385,19 @@ export function UserProfileContent({ username, extraHeader }: UserProfileContent
     <section>
       <div className="profile-title-row">
         <h2>{username ? `@${username}` : 'User'}</h2>
-        {extraHeader}
+        <div className="profile-title-actions">
+          {!hideFollowButton && !isOwnProfile && (
+            <button
+              type="button"
+              className={isFollowed ? 'button primary' : 'button secondary'}
+              disabled={loadingFollow}
+              onClick={() => void handleToggleFollow()}
+            >
+              {isFollowed ? 'Followed' : 'Follow'}
+            </button>
+          )}
+          {extraHeader}
+        </div>
       </div>
 
       <div className="tab-header">
@@ -319,6 +427,7 @@ export function UserProfileContent({ username, extraHeader }: UserProfileContent
         <>
           {loading && <p className="text-centered">Loading…</p>}
           {!loading && error && <p className="error-message">{error}</p>}
+          {!loading && !error && followError && <p className="error-message">{followError}</p>}
 
           {hasLoadedFirstPage &&
             !loading &&
