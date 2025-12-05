@@ -177,6 +177,11 @@ export function PostEditorFormFields(props: PostEditorFormFieldsProps) {
           maxLength={64}
           value={title}
           onChange={(e) => onMetaChange({ ...meta, title: e.target.value })}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+            }
+          }}
           className="post-title-input"
           placeholder="Name your bytebeat expression"
         />
