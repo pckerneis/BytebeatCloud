@@ -597,6 +597,19 @@ nav ul {
   padding: 0 20px;
 }
 
+.notifications-count {
+  background: var(--accent-color);
+  color: var(--button-primary-text-color);
+  width: 20px;
+  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-size: 11px;
+  margin-left: 8px;
+}
+
 .theme-switcher {
   margin-top: auto;
   padding: 16px 20px 20px;

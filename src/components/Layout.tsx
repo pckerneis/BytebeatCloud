@@ -32,11 +32,48 @@ export function Layout({ children }: PropsWithChildren) {
   const router = useRouter();
   const [checkedProfile, setCheckedProfile] = useState(false);
   const [theme, setTheme] = useState<ThemeId | null>(null);
+  const [notificationsCount, setNotificationsCount] = useState<number | null>(null);
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
     await router.push('/');
   };
+
+  useEffect(() => {
+    if (!user) {
+      setNotificationsCount(null);
+      return;
+    }
+
+    let cancelled = false;
+
+    const loadCount = async () => {
+      const { count, error } = await supabase
+        .from('notifications')
+        .select('id', { count: 'exact', head: true })
+        .eq('read', false);
+
+      if (cancelled) return;
+
+      if (error) {
+        setNotificationsCount(null);
+        return;
+      }
+
+      setNotificationsCount(typeof count === 'number' ? count : null);
+    };
+
+    void loadCount();
+
+    const interval = window.setInterval(() => {
+      void loadCount();
+    }, 30000);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(interval);
+    };
+  }, [user]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -148,6 +185,14 @@ export function Layout({ children }: PropsWithChildren) {
     };
   }, []);
 
+  const formatNotificationsCount = (count: number) => {
+      if (count > 99) {
+          return '99+';
+      }
+
+      return count.toString();
+  }
+
   return (
     <ThemeContext.Provider value={theme ?? DEFAULT_THEME_ID}>
       <div className="root">
@@ -165,6 +210,16 @@ export function Layout({ children }: PropsWithChildren) {
               <NavLink href="/create">Create</NavLink>
               <NavLink href="/explore">Explore</NavLink>
               {user && <NavLink href="/profile">Profile</NavLink>}
+              {user && (
+                <NavLink href="/notifications">
+                  Notifications
+                  {notificationsCount && notificationsCount > 0 && (
+                    <span className={'notifications-count'}>
+                      {formatNotificationsCount(notificationsCount)}
+                    </span>
+                  )}
+                </NavLink>
+              )}
               {user && (
                 <li className="nav-signout">
                   <button type="button" className="nav" onClick={handleSignOut}>
