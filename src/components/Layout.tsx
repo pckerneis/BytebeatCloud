@@ -63,6 +63,14 @@ export function Layout({ children }: PropsWithChildren) {
       setNotificationsCount(typeof count === 'number' ? count : null);
     };
 
+    const handleRefresh = () => {
+      void loadCount();
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('notifications:refresh', handleRefresh);
+    }
+
     void loadCount();
 
     const interval = window.setInterval(() => {
@@ -72,6 +80,9 @@ export function Layout({ children }: PropsWithChildren) {
     return () => {
       cancelled = true;
       window.clearInterval(interval);
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('notifications:refresh', handleRefresh);
+      }
     };
   }, [user]);
 

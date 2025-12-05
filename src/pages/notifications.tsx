@@ -69,6 +69,7 @@ export default function NotificationsPage() {
   const [hasMore, setHasMore] = useState(true);
   const [page, setPage] = useState(0);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
+  const [markingAll, setMarkingAll] = useState(false);
 
   const markNotificationReadLocally = (id: number) => {
     setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
@@ -84,6 +85,9 @@ export default function NotificationsPage() {
     if (!n.read) {
       markNotificationReadLocally(n.id);
       await markNotificationReadOnServer(n.id);
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new Event('notifications:refresh'));
+      }
     }
 
     const isPlainLeftClick =
@@ -95,6 +99,25 @@ export default function NotificationsPage() {
 
     e.preventDefault();
     await router.push(href);
+  };
+
+  const handleMarkAllAsRead = async () => {
+    if (markingAll) return;
+
+    const hasUnread = notifications.some((n) => !n.read);
+    if (!hasUnread) return;
+
+    setMarkingAll(true);
+    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+
+    try {
+      await supabase.from('notifications').update({ read: true }).eq('read', false);
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new Event('notifications:refresh'));
+      }
+    } finally {
+      setMarkingAll(false);
+    }
   };
 
   useEffect(() => {
@@ -221,7 +244,19 @@ export default function NotificationsPage() {
         <title>BytebeatCloud - Notifications</title>
       </Head>
       <section>
-        <h2>Notifications</h2>
+        <div className="notifications-header">
+          <h2>Notifications</h2>
+          {notifications.some((n) => !n.read) && (
+            <button
+              type="button"
+              className="button secondary mark-all-read-button"
+              onClick={() => void handleMarkAllAsRead()}
+              disabled={markingAll}
+            >
+              Mark all as read
+            </button>
+          )}
+        </div>
         {loadingInitial && <p>Loading…</p>}
         {!loadingInitial && error && <p className="error-message">{error}</p>}
         {!loadingInitial && !error && notifications.length === 0 && <p>No notifications yet.</p>}
