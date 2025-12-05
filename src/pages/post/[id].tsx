@@ -22,9 +22,12 @@ export default function PostDetailPage() {
 
   const renderDescriptionWithTags = (description: string) => {
     const nodes: JSX.Element[] = [];
-    // Match #tags where the tag body is 1–30 valid chars and is NOT followed
-    // by another valid tag char, so sequences longer than 30 are ignored.
-    const regex = /#([A-Za-z0-9_-]{1,30})(?![A-Za-z0-9_-])/g;
+    // Match #tags where:
+    // - the # is NOT immediately preceded by another tag character, so
+    //   sequences like "#one#two" only yield "#one"; and
+    // - the tag body is 1–30 valid chars and is NOT followed by another
+    //   valid tag char, so overlong sequences are ignored.
+    const regex = /(?<![A-Za-z0-9_-])#([A-Za-z0-9_-]{1,30})(?![A-Za-z0-9_-])/g;
     let lastIndex = 0;
     let match: RegExpExecArray | null;
     let i = 0;

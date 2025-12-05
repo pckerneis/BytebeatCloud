@@ -71,7 +71,7 @@ begin
     -- Extract tags
     for raw_tag in
         select distinct (match_arr)[1]
-        from regexp_matches(p_description, '#([A-Za-z0-9_-]+)', 'g') as match_arr
+        from regexp_matches(p_description, '(?<![A-Za-z0-9_-])#([A-Za-z0-9_-]+)', 'g') as match_arr
         loop
             clean_tag := lower(raw_tag);
 
