@@ -160,43 +160,6 @@ limit page_size offset page * page_size;
 
 ALTER FUNCTION "public"."get_trending_feed"("page" integer, "page_size" integer, "period_days" integer) OWNER TO "postgres";
 
-
-CREATE OR REPLACE FUNCTION "public"."notify_favorite"() RETURNS "trigger"
-    LANGUAGE "plpgsql"
-    AS $$
-declare
-  post_owner uuid;
-begin
-  select user_id into post_owner from posts where id = NEW.post_id;
-
-  if post_owner is null or post_owner = NEW.user_id then
-    return new; -- do not notify on self-favorite
-  end if;
-
-  insert into notifications (user_id, actor_id, event_type, post_id)
-  values (post_owner, NEW.user_id, 'favorite', NEW.post_id);
-
-  return new;
-end;
-$$;
-
-
-ALTER FUNCTION "public"."notify_favorite"() OWNER TO "postgres";
-
-
-CREATE OR REPLACE FUNCTION "public"."notify_follow"() RETURNS "trigger"
-    LANGUAGE "plpgsql"
-    AS $$
-begin
-  insert into notifications (user_id, actor_id, event_type)
-  values (NEW.following_id, NEW.follower_id, 'follow');
-  return new;
-end;
-$$;
-
-
-ALTER FUNCTION "public"."notify_follow"() OWNER TO "postgres";
-
 SET default_tablespace = '';
 
 SET default_table_access_method = "heap";
@@ -223,31 +186,6 @@ CREATE TABLE IF NOT EXISTS "public"."follows" (
 
 
 ALTER TABLE "public"."follows" OWNER TO "postgres";
-
-
-CREATE TABLE IF NOT EXISTS "public"."notifications" (
-    "id" bigint NOT NULL,
-    "user_id" "uuid" NOT NULL,
-    "event_type" "text" NOT NULL,
-    "actor_id" "uuid" NOT NULL,
-    "post_id" "uuid",
-    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
-    "read" boolean DEFAULT false NOT NULL
-);
-
-
-ALTER TABLE "public"."notifications" OWNER TO "postgres";
-
-
-ALTER TABLE "public"."notifications" ALTER COLUMN "id" ADD GENERATED ALWAYS AS IDENTITY (
-    SEQUENCE NAME "public"."notifications_id_seq"
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1
-);
-
 
 
 CREATE TABLE IF NOT EXISTS "public"."posts" (
@@ -326,11 +264,6 @@ ALTER TABLE ONLY "public"."follows"
 
 
 
-ALTER TABLE ONLY "public"."notifications"
-    ADD CONSTRAINT "notifications_pkey" PRIMARY KEY ("id");
-
-
-
 ALTER TABLE ONLY "public"."posts"
     ADD CONSTRAINT "posts_pkey" PRIMARY KEY ("id");
 
@@ -374,18 +307,6 @@ CREATE UNIQUE INDEX "profiles_username_unique_ci" ON "public"."profiles" USING "
 
 
 
-CREATE OR REPLACE TRIGGER "trg_notify_favorite" AFTER INSERT ON "public"."favorites" FOR EACH ROW EXECUTE FUNCTION "public"."notify_favorite"();
-
-ALTER TABLE "public"."favorites" DISABLE TRIGGER "trg_notify_favorite";
-
-
-
-CREATE OR REPLACE TRIGGER "trg_notify_follow" AFTER INSERT ON "public"."follows" FOR EACH ROW EXECUTE FUNCTION "public"."notify_follow"();
-
-ALTER TABLE "public"."follows" DISABLE TRIGGER "trg_notify_follow";
-
-
-
 ALTER TABLE ONLY "public"."favorites"
     ADD CONSTRAINT "favorites_post_id_fkey" FOREIGN KEY ("post_id") REFERENCES "public"."posts"("id") ON DELETE CASCADE;
 
@@ -403,21 +324,6 @@ ALTER TABLE ONLY "public"."follows"
 
 ALTER TABLE ONLY "public"."follows"
     ADD CONSTRAINT "follows_follower_id_fkey" FOREIGN KEY ("follower_id") REFERENCES "public"."profiles"("id") ON DELETE CASCADE;
-
-
-
-ALTER TABLE ONLY "public"."notifications"
-    ADD CONSTRAINT "notifications_actor_id_fkey" FOREIGN KEY ("actor_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
-
-
-
-ALTER TABLE ONLY "public"."notifications"
-    ADD CONSTRAINT "notifications_post_id_fkey" FOREIGN KEY ("post_id") REFERENCES "public"."posts"("id") ON DELETE CASCADE;
-
-
-
-ALTER TABLE ONLY "public"."notifications"
-    ADD CONSTRAINT "notifications_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
 
 
 
@@ -488,21 +394,10 @@ CREATE POLICY "Users can update their own posts" ON "public"."posts" FOR UPDATE 
 ALTER TABLE "public"."favorites" ENABLE ROW LEVEL SECURITY;
 
 
-CREATE POLICY "no inserting from client" ON "public"."notifications" FOR INSERT WITH CHECK (false);
-
-
-
-ALTER TABLE "public"."notifications" ENABLE ROW LEVEL SECURITY;
-
-
 ALTER TABLE "public"."posts" ENABLE ROW LEVEL SECURITY;
 
 
 ALTER TABLE "public"."profiles" ENABLE ROW LEVEL SECURITY;
-
-
-CREATE POLICY "users see their own notifications" ON "public"."notifications" FOR SELECT USING (("auth"."uid"() = "user_id"));
-
 
 
 GRANT USAGE ON SCHEMA "public" TO "postgres";
@@ -529,19 +424,6 @@ GRANT ALL ON FUNCTION "public"."get_trending_feed"("page" integer, "page_size" i
 GRANT ALL ON FUNCTION "public"."get_trending_feed"("page" integer, "page_size" integer, "period_days" integer) TO "service_role";
 
 
-
-GRANT ALL ON FUNCTION "public"."notify_favorite"() TO "anon";
-GRANT ALL ON FUNCTION "public"."notify_favorite"() TO "authenticated";
-GRANT ALL ON FUNCTION "public"."notify_favorite"() TO "service_role";
-
-
-
-GRANT ALL ON FUNCTION "public"."notify_follow"() TO "anon";
-GRANT ALL ON FUNCTION "public"."notify_follow"() TO "authenticated";
-GRANT ALL ON FUNCTION "public"."notify_follow"() TO "service_role";
-
-
-
 GRANT ALL ON TABLE "public"."favorites" TO "anon";
 GRANT ALL ON TABLE "public"."favorites" TO "authenticated";
 GRANT ALL ON TABLE "public"."favorites" TO "service_role";
@@ -551,18 +433,6 @@ GRANT ALL ON TABLE "public"."favorites" TO "service_role";
 GRANT ALL ON TABLE "public"."follows" TO "anon";
 GRANT ALL ON TABLE "public"."follows" TO "authenticated";
 GRANT ALL ON TABLE "public"."follows" TO "service_role";
-
-
-
-GRANT ALL ON TABLE "public"."notifications" TO "anon";
-GRANT ALL ON TABLE "public"."notifications" TO "authenticated";
-GRANT ALL ON TABLE "public"."notifications" TO "service_role";
-
-
-
-GRANT ALL ON SEQUENCE "public"."notifications_id_seq" TO "anon";
-GRANT ALL ON SEQUENCE "public"."notifications_id_seq" TO "authenticated";
-GRANT ALL ON SEQUENCE "public"."notifications_id_seq" TO "service_role";
 
 
 
