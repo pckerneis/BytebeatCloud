@@ -55,6 +55,13 @@ function setGlobalMasterGain(value: number) {
   if (globalGainNode) {
     globalGainNode.gain.value = clamped;
   }
+  if (typeof window !== 'undefined') {
+    try {
+      window.localStorage.setItem('bytebeat-master-gain', String(clamped));
+    } catch {
+      // Ignore storage errors.
+    }
+  }
   masterGainListeners.forEach((listener) => listener(clamped));
 }
 
@@ -129,6 +136,22 @@ export function useBytebeatPlayer(options?: { enableVisualizer?: boolean }): Byt
   const [level, setLevel] = useState(globalLevel);
   const [waveform, setWaveform] = useState<Float32Array | null>(globalWaveform);
   const [masterGain, setMasterGainState] = useState(globalMasterGain);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    try {
+      const stored = window.localStorage.getItem('bytebeat-master-gain');
+      if (stored == null) return;
+
+      const parsed = Number(stored);
+      if (!Number.isNaN(parsed) && parsed >= 0 && parsed <= 1) {
+        setGlobalMasterGain(parsed);
+      }
+    } catch {
+      // Ignore storage errors.
+    }
+  }, []);
 
   useEffect(() => {
     const listener = (value: boolean) => {

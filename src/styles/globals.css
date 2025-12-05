@@ -507,9 +507,9 @@ button {
 }
 
 .volume-slider-backdrop {
-  height: 60px;
+  height: 96px;
   position: absolute;
-  bottom: 20px;
+  bottom: 0;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
@@ -534,7 +534,7 @@ button {
 }
 
 .volume-slider {
-  width: 80px;
+  width: 120px;
 }
 
 :root {
@@ -546,7 +546,6 @@ button {
 input[type="range"] {
   appearance: none;
   background: transparent;
-  width: 15rem;
   cursor: pointer;
   border-radius: 3px;
 }
@@ -555,14 +554,14 @@ input[type="range"] {
 
 /* Chrome, Safari, Edge (Chromium) */
 input[type="range"]::-webkit-slider-runnable-track {
-  background: var(--chip-background-color);
+  background: var(--chip-border-color);
   height: var(--track-height);
   border-radius: 3px;
 }
   
 /* Firefox */
 input[type="range"]::-moz-range-track {
-  background: var(--chip-background-color);
+  background: var(--chip-border-color);
   height: var(--track-height);
   border-radius: 3px;
 }
