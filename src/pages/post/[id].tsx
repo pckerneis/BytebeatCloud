@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabaseClient';
 import { useSupabaseAuth } from '../../hooks/useSupabaseAuth';
 import { PostList, type PostRow } from '../../components/PostList';
 import Head from 'next/head';
+import { enrichWithViewerFavorites } from '../../utils/favorites';
 
 export default function PostDetailPage() {
   const router = useRouter();
@@ -12,6 +13,8 @@ export default function PostDetailPage() {
   const [posts, setPosts] = useState<PostRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [forks, setForks] = useState<PostRow[]>([]);
+  const [forksError, setForksError] = useState('');
 
   const { user } = useSupabaseAuth();
 
@@ -24,6 +27,8 @@ export default function PostDetailPage() {
       setLoading(true);
       setError('');
       setPosts([]);
+      setForks([]);
+      setForksError('');
 
       const { data, error } = await supabase
         .from('posts_with_meta')
@@ -67,6 +72,31 @@ export default function PostDetailPage() {
       }
 
       setPosts([rowWithCount]);
+
+      // Load published forks of this post
+      const { data: forkRows, error: forkError } = await supabase
+        .from('posts_with_meta')
+        .select(
+          'id,title,expression,is_draft,sample_rate,mode,created_at,profile_id,fork_of_post_id,is_fork,author_username,origin_title,origin_username,favorites_count',
+        )
+        .eq('fork_of_post_id', id)
+        .eq('is_draft', false)
+        .order('created_at', { ascending: false });
+
+      if (forkError) {
+        // eslint-disable-next-line no-console
+        console.warn('Error loading forks for post', forkError.message);
+        setForksError('Unable to load forks.');
+      } else {
+        let rows = (forkRows ?? []) as PostRow[];
+
+        if (user && rows.length > 0) {
+          rows = (await enrichWithViewerFavorites((user as any).id as string, rows)) as PostRow[];
+        }
+
+        setForks(rows);
+      }
+
       setLoading(false);
     };
 
@@ -92,7 +122,16 @@ export default function PostDetailPage() {
         {!loading && error && <p className="error-message">{error}</p>}
 
         {!loading && !error && posts.length > 0 && (
-          <PostList posts={posts} currentUserId={user ? (user as any).id : undefined} />
+          <>
+            <PostList posts={posts} currentUserId={user ? (user as any).id : undefined} />
+
+            <h3>Forks</h3>
+            {forksError && <p className="error-message">{forksError}</p>}
+            {!forksError && forks.length === 0 && <p>No forks yet.</p>}
+            {!forksError && forks.length > 0 && (
+              <PostList posts={forks} currentUserId={user ? (user as any).id : undefined} />
+            )}
+          </>
         )}
       </section>
     </>
