@@ -7,6 +7,7 @@ import { favoritePost, unfavoritePost } from '../services/favoritesClient';
 import { ReadonlyExpression } from './ExpressionEditor';
 import { usePlayerStore } from '../hooks/usePlayerStore';
 import { formatSampleRate, ModeOption } from '../model/expression';
+import { formatRelativeTime } from '../utils/time';
 
 export interface PostRow {
   id: string;
@@ -167,7 +168,7 @@ export function PostList({ posts, currentUserId }: PostListProps) {
     <ul className="post-list">
       {posts.map((post) => {
         const username = post.author_username ?? null;
-        const created = new Date(post.created_at).toLocaleDateString();
+        const created = formatRelativeTime(post.created_at);
         const createdTitle = new Date(post.created_at).toLocaleString();
         const isActive = isPlaying && activePostId === post.id;
         const canEdit = Boolean(

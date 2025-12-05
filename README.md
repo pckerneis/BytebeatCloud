@@ -51,14 +51,14 @@ There are a few differences with other web implementations:
 - [x] Feed (global and personalized)
 - [x] Recent posts
 - [x] Trending posts on last 7 days
+- [x] In-app notifications
+- [x] Master gain
+- [x] Support SR up to 48kHz
 
 **Coming soon**
 
 - [ ] Tags
-- [ ] In-app notifications
-- [ ] Master gain
 - [ ] Filter by tags
-- [ ] Support SR up to 48kHz
 
 **Coming later**
 

@@ -5,6 +5,7 @@ import { PostList, type PostRow } from '../components/PostList';
 import Head from 'next/head';
 import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
 import { enrichWithViewerFavorites } from '../utils/favorites';
+import Link from 'next/link';
 
 export default function ExplorePage() {
   const { user } = useSupabaseAuth();
@@ -144,7 +145,7 @@ export default function ExplorePage() {
         {loading && <p className="text-centered">Loading posts…</p>}
         {error && !loading && <p className="error-message">{error}</p>}
         {!loading && !error && posts.length === 0 && (
-          <p className="text-centered">No posts yet. Create something on the Create page!</p>
+          <p className="text-centered">No posts yet. Create something on the <Link href={'/create'}>Create</Link> page!</p>
         )}
         {!loading && !error && posts.length > 0 && (
           <PostList posts={posts} currentUserId={user ? (user as any).id : undefined} />

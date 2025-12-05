@@ -46,7 +46,6 @@ class BytebeatProcessor extends AudioWorkletProcessor {
         try {
           const fnBody = `
 ${expressionApi}
-function plot(x) { return x; }
 return Number((${expression})) || 0;
 `;
           // Install the newly compiled function; it will be promoted to

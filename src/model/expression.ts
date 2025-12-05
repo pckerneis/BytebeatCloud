@@ -4,7 +4,7 @@ export enum ModeOption {
 }
 
 export const MIN_SAMPLE_RATE = 8000;
-export const MAX_SAMPLE_RATE = 44100;
+export const MAX_SAMPLE_RATE = 48000;
 export const DEFAULT_SAMPLE_RATE = 44100;
 
 export const SAMPLE_RATE_PRESETS = [8000, 11025, 16000, 22050, 32000, 44100];
