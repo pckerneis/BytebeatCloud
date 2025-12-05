@@ -146,7 +146,7 @@ export default function ForkPostPage() {
       .insert({
         profile_id: (user as any).id,
         title: trimmedTitle,
-        description: trimmedDescription || null,
+        description: trimmedDescription || '',
         expression: trimmedExpr,
         is_draft: isDraft,
         sample_rate: sampleRate,
@@ -163,7 +163,11 @@ export default function ForkPostPage() {
       return;
     }
 
-    await router.push(`/post/${data.id}`);
+    setSaveStatus('success');
+
+    if (!isDraft) {
+      await router.push(`/post/${data.id}`);
+    }
   };
 
   const meta = {
@@ -206,13 +210,13 @@ export default function ForkPostPage() {
             <a href={'/login'}>Log in</a> to publish a post, or use a share link.
           </p>
         )}
-        {originalTitle && originalAuthor && (
+        {originalAuthor && (
           <p>
             Fork from <a href={`/post/${id}`}>{originalTitle || '(untitled)'}</a> by{' '}
             <a href={`/u/${originalAuthor}`}>@{originalAuthor}</a>
           </p>
         )}
-        {(!originalTitle || !originalAuthor) && <p>Fork from unknown post</p>}
+        {(!originalAuthor) && <p>Fork from unknown post</p>}
         <form className="create-form" onSubmit={handleSubmit}>
           <PostEditorFormFields
             meta={meta}

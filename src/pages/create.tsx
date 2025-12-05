@@ -209,7 +209,12 @@ export default function CreatePage() {
       return;
     }
 
-    await router.push(`/post/${data.id}`);
+    setSaveStatus('success');
+
+    if (!isDraft) {
+      window.localStorage.removeItem(CREATE_DRAFT_STORAGE_KEY);
+      await router.push(`/post/${data.id}`);
+    }
   };
 
   const meta: PostMetadataModel = {

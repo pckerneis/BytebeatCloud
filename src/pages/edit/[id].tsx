@@ -164,6 +164,10 @@ export default function EditPostPage() {
     }
 
     setSaveStatus('success');
+
+    if (!isDraft) {
+      await router.push(`/post/${id}`);
+    }
   };
 
   const handleDelete = async () => {
