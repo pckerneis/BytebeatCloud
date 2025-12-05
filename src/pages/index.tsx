@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabaseClient';
 import { PostList, type PostRow } from '../components/PostList';
 import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
 import { enrichWithViewerFavorites } from '../utils/favorites';
+import { enrichWithTags } from '../utils/tags';
 
 export default function Home() {
   const { user } = useSupabaseAuth();
@@ -33,6 +34,10 @@ export default function Home() {
 
       if (user && rows.length > 0) {
         rows = (await enrichWithViewerFavorites((user as any).id as string, rows)) as PostRow[];
+      }
+
+      if (rows.length > 0) {
+        rows = (await enrichWithTags(rows)) as PostRow[];
       }
 
       setTrendingPosts(rows);

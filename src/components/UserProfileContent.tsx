@@ -5,6 +5,7 @@ import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
 import { PostList, type PostRow } from './PostList';
 import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
 import { enrichWithViewerFavorites } from '../utils/favorites';
+import { enrichWithTags } from '../utils/tags';
 
 interface UserProfileContentProps {
   username: string | null;
@@ -122,6 +123,10 @@ export function UserProfileContent({
 
         if (user && rows.length > 0) {
           rows = (await enrichWithViewerFavorites((user as any).id as string, rows)) as PostRow[];
+        }
+
+        if (rows.length > 0) {
+          rows = (await enrichWithTags(rows)) as PostRow[];
         }
 
         setPosts((prev) => (page === 0 ? rows : [...prev, ...rows]));
@@ -305,6 +310,10 @@ export function UserProfileContent({
           rows = (await enrichWithViewerFavorites((user as any).id as string, rows)) as PostRow[];
         }
 
+        if (rows.length > 0) {
+          rows = (await enrichWithTags(rows)) as PostRow[];
+        }
+
         setFavoritePosts(rows as PostRow[]);
       }
 
@@ -371,6 +380,10 @@ export function UserProfileContent({
         // Mark which of these drafts the CURRENT viewer has favorited.
         if (user && rows.length > 0) {
           rows = (await enrichWithViewerFavorites((user as any).id as string, rows)) as PostRow[];
+        }
+
+        if (rows.length > 0) {
+          rows = (await enrichWithTags(rows)) as PostRow[];
         }
 
         setDraftPosts(rows as PostRow[]);

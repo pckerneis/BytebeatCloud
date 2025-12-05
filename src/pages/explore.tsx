@@ -5,6 +5,7 @@ import { PostList, type PostRow } from '../components/PostList';
 import Head from 'next/head';
 import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
 import { enrichWithViewerFavorites } from '../utils/favorites';
+import { enrichWithTags } from '../utils/tags';
 import Link from 'next/link';
 
 export default function ExplorePage() {
@@ -84,6 +85,10 @@ export default function ExplorePage() {
 
         if (user && rows.length > 0) {
           rows = (await enrichWithViewerFavorites((user as any).id as string, rows)) as PostRow[];
+        }
+
+        if (rows.length > 0) {
+          rows = (await enrichWithTags(rows)) as PostRow[];
         }
 
         setPosts((prev) => (page === 0 ? rows : [...prev, ...rows]));

@@ -26,6 +26,7 @@ export interface PostRow {
   favorited_by_current_user?: boolean;
   fork_of_post_id?: string | null;
   is_fork?: boolean;
+  tags?: string[];
 }
 
 interface PostListProps {
@@ -217,6 +218,12 @@ export function PostList({ posts, currentUserId }: PostListProps) {
                 <span className="chip mode">{post.mode}</span>
                 <span className="chip sample-rate">{formatSampleRate(post.sample_rate)}</span>
                 {lengthCategory && <span className="chip length-chip">{lengthCategory}</span>}
+                {post.tags && post.tags.length > 0 &&
+                  post.tags.map((tag) => (
+                    <Link key={tag} href={`/tags/${tag}`} className="chip tag-chip">
+                      #{tag}
+                    </Link>
+                  ))}
                 <span className="created" title={createdTitle}>
                   {created}
                 </span>
