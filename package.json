@@ -9,6 +9,7 @@
     "lint": "next lint",
     "format": "prettier \"**/*.{js,jsx,ts,tsx,json,md,css,scss}\" --write",
     "test": "vitest",
+    "supabase:start": "supabase start",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui"
   },
