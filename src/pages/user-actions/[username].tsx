@@ -180,8 +180,8 @@ export default function UserActionPage() {
             </h2>
             <p style={{ marginTop: 0, marginBottom: '12px', fontSize: '13px', opacity: 0.9 }}>
               {confirmMode === 'block'
-                ? 'Blocking will hide this user’s posts from feeds and prevent notifications from them. You can unblock later from this page.'
-                : 'Unblocking will allow this user’s posts and notifications to appear again.'}
+                ? 'Blocking is mutual: you and this user will no longer see each other’s profile or posts, and you will not receive notifications from each other. You can still see their username here to unblock later.'
+                : 'Unblocking will restore mutual visibility: profiles and posts will be visible again, and notifications can resume.'}
             </p>
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
               <button type="button" className="button secondary" onClick={closeConfirm} disabled={pending}>
