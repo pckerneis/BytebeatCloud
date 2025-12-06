@@ -19,6 +19,8 @@ const allowedGlobals = new Set([
   'PI',
   'tanh',
   'exp',
+  'parseInt',
+  'charCodeAt'
 ]);
 
 const disallowedNodes = new Set<string>([

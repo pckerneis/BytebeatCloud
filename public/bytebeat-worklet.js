@@ -33,7 +33,6 @@ class BytebeatProcessor extends AudioWorkletProcessor {
     this._targetRate = 8000;
     this._phase = 0;
     this._lastRaw = 0;
-    this._gain = 0.5;
 
     // For lightweight RMS metering
     this._levelSumSquares = 0;
@@ -88,7 +87,6 @@ return Number((${expression})) || 0;
 
     const channel = output[0];
     const fn = this._fn;
-    const gain = this._gain;
     try {
       let t = this._t | 0;
       let phase = this._phase;
@@ -108,7 +106,7 @@ return Number((${expression})) || 0;
             lastRaw = Math.max(-1, Math.min(1, v));
           }
 
-          const sample = lastRaw * gain;
+          const sample = lastRaw;
           channel[i] = sample;
           this._levelSumSquares += sample * sample;
           this._levelSampleCount += 1;
@@ -124,7 +122,7 @@ return Number((${expression})) || 0;
           }
 
           const byteValue = lastRaw & 0xff;
-          const sample = ((byteValue - 128) / 128) * gain;
+          const sample = ((byteValue - 128) / 128);
           channel[i] = sample;
           this._levelSumSquares += sample * sample;
           this._levelSampleCount += 1;
