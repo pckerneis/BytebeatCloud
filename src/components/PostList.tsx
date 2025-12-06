@@ -6,7 +6,7 @@ import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
 import { favoritePost, unfavoritePost } from '../services/favoritesClient';
 import { ReadonlyExpression } from './ExpressionEditor';
 import { usePlayerStore } from '../hooks/usePlayerStore';
-import { EncodedMode, formatSampleRate, ModeOption } from '../model/expression';
+import { formatSampleRate, ModeOption } from '../model/expression';
 import { formatRelativeTime } from '../utils/time';
 import { validateExpression } from '../utils/expression-validator';
 
@@ -17,7 +17,7 @@ export interface PostRow {
   expression: string;
   is_draft?: boolean;
   sample_rate: number;
-  mode: EncodedMode;
+  mode: ModeOption;
   created_at: string;
   profile_id?: string;
   author_username?: string | null;
@@ -104,7 +104,11 @@ export function PostList({ posts, currentUserId }: PostListProps) {
 
     const sr = post.sample_rate;
     const mode: ModeOption =
-      post.mode === 'float' ? ModeOption.Float : post.mode === 'uint8' ? ModeOption.Uint8 : ModeOption.Int8;
+      post.mode === 'float'
+        ? ModeOption.Float
+        : post.mode === 'uint8'
+          ? ModeOption.Uint8
+          : ModeOption.Int8;
 
     await toggle(post.expression, mode, sr);
     setActivePostId(post.id);

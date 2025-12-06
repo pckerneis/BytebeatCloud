@@ -23,10 +23,13 @@ const tanh = Math.tanh;
 
 function checkMode(mode) {
   switch (mode) {
-    case 'float': return 'float';
-    case 'int8': return 'int8';
+    case 'float':
+      return 'float';
+    case 'int8':
+      return 'int8';
     default:
-    case 'uint8': return 'uint8';
+    case 'uint8':
+      return 'uint8';
   }
 }
 

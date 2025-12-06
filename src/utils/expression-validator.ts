@@ -20,7 +20,7 @@ const allowedGlobals = new Set([
   'tanh',
   'exp',
   'parseInt',
-  'charCodeAt'
+  'charCodeAt',
 ]);
 
 const disallowedNodes = new Set<string>([

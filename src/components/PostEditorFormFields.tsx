@@ -2,7 +2,6 @@ import { useState, useRef } from 'react';
 import { ExpressionEditor, ExpressionErrorSnippet } from './ExpressionEditor';
 import {
   ModeOption,
-  encodeMode,
   SAMPLE_RATE_PRESETS,
   MAX_SAMPLE_RATE,
   MIN_SAMPLE_RATE,
@@ -145,12 +144,10 @@ export function PostEditorFormFields(props: PostEditorFormFieldsProps) {
 
     const trimmedTitle = title.trim();
 
-    const modeValue = encodeMode(mode);
-
     const payload = {
       title: trimmedTitle || undefined,
       expr: trimmedExpr,
-      mode: modeValue,
+      mode,
       sr: sampleRate,
     };
 

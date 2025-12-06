@@ -6,7 +6,7 @@ import { useSupabaseAuth } from '../../hooks/useSupabaseAuth';
 import { supabase } from '../../lib/supabaseClient';
 import { PostEditorFormFields } from '../../components/PostEditorFormFields';
 import Head from 'next/head';
-import { ModeOption, decodeMode, encodeMode, DEFAULT_SAMPLE_RATE } from '../../model/expression';
+import { ModeOption, DEFAULT_SAMPLE_RATE } from '../../model/expression';
 import { validateExpression } from '../../utils/expression-validator';
 import { useExpressionPlayer } from '../../hooks/useExpressionPlayer';
 
@@ -103,7 +103,7 @@ export default function ForkPostPage() {
       setDescription(data.description ?? '');
       setExpression(data.expression ?? '');
       setIsDraft(Boolean(data.is_draft));
-      setMode(decodeMode(data.mode as any));
+      setMode(data.mode);
       setSampleRate(data.sample_rate);
 
       setLoading(false);
@@ -139,8 +139,6 @@ export default function ForkPostPage() {
     setSaveStatus('saving');
     setSaveError('');
 
-    const modeValue = encodeMode(mode);
-
     const { data, error } = await supabase
       .from('posts')
       .insert({
@@ -150,7 +148,7 @@ export default function ForkPostPage() {
         expression: trimmedExpr,
         is_draft: isDraft,
         sample_rate: sampleRate,
-        mode: modeValue,
+        mode,
         fork_of_post_id: id,
         is_fork: true,
       })

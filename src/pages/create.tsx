@@ -8,11 +8,9 @@ import { PostEditorFormFields } from '../components/PostEditorFormFields';
 import Head from 'next/head';
 import {
   ModeOption,
-  decodeMode,
-  encodeMode,
   MAX_SAMPLE_RATE,
   MIN_SAMPLE_RATE,
-  DEFAULT_SAMPLE_RATE, EncodedMode,
+  DEFAULT_SAMPLE_RATE,
 } from '../model/expression';
 import { validateExpression } from '../utils/expression-validator';
 import { useExpressionPlayer } from '../hooks/useExpressionPlayer';
@@ -87,7 +85,7 @@ export default function CreatePage() {
         const parsed = JSON.parse(decoded) as {
           title?: string;
           expr?: string;
-          mode?: EncodedMode;
+          mode?: ModeOption;
           sr?: number;
         } | null;
 
@@ -98,7 +96,7 @@ export default function CreatePage() {
           setExpression(parsed.expr);
 
           if (parsed.mode) {
-            setMode(decodeMode(parsed.mode));
+            setMode(parsed.mode);
           }
 
           if (parsed.sr && !Number.isNaN(parsed.sr)) {
@@ -121,7 +119,7 @@ export default function CreatePage() {
         description?: string;
         expression?: string;
         isDraft?: boolean;
-        mode?: EncodedMode;
+        mode?: ModeOption;
         sampleRate?: number;
       } | null;
 
@@ -132,7 +130,7 @@ export default function CreatePage() {
       if (typeof parsed.expression === 'string') setExpression(parsed.expression);
       if (typeof parsed.isDraft === 'boolean') setIsDraft(parsed.isDraft);
 
-      if (parsed.mode) setMode(decodeMode(parsed.mode));
+      if (parsed.mode) setMode(parsed.mode);
       if (parsed.sampleRate) setSampleRate(parsed.sampleRate);
     } catch (e) {
       console.error(e);
@@ -148,8 +146,6 @@ export default function CreatePage() {
     if (!draftLoaded) return;
 
     try {
-      const modeValue = encodeMode(mode);
-
       window.localStorage.setItem(
         CREATE_DRAFT_STORAGE_KEY,
         JSON.stringify({
@@ -157,7 +153,7 @@ export default function CreatePage() {
           description,
           expression,
           isDraft,
-          mode: modeValue,
+          mode,
           sampleRate,
         }),
       );
@@ -187,8 +183,6 @@ export default function CreatePage() {
     setSaveStatus('saving');
     setSaveError('');
 
-    const modeValue = encodeMode(mode);
-
     const { data, error } = await supabase
       .from('posts')
       .insert({
@@ -198,7 +192,7 @@ export default function CreatePage() {
         expression: trimmedExpr,
         is_draft: isDraft,
         sample_rate: sampleRate,
-        mode: modeValue,
+        mode,
       })
       .select('id')
       .single();
