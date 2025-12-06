@@ -66,9 +66,11 @@ export default function ExplorePage() {
         error = result.error;
       } else {
         // trending
-        const rpcResult = await supabase.rpc('get_trending_feed', {
-          page,
-        });
+        const rpcResult = await supabase.rpc('get_trending_feed',
+          user
+            ? { page, viewer_id: (user as any).id as string }
+            : { page }
+        );
         data = (rpcResult.data ?? []) as PostRow[];
         error = rpcResult.error;
       }
