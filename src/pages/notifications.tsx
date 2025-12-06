@@ -114,7 +114,7 @@ export default function NotificationsPage() {
 
     let cancelled = false;
 
-    const loadPage = async (pageToLoad: number, markRead: boolean) => {
+    const loadPage = async (pageToLoad: number) => {
       const from = pageToLoad * PAGE_SIZE;
       const to = from + PAGE_SIZE - 1;
 
@@ -159,7 +159,7 @@ export default function NotificationsPage() {
     setError('');
     setHasMore(true);
     setPage(0);
-    void loadPage(0, true);
+    void loadPage(0);
 
     return () => {
       cancelled = true;

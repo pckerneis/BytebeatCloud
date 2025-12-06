@@ -56,10 +56,10 @@ There are a few differences with other web implementations:
 - [x] Support SR up to 48kHz
 - [x] Post description
 - [x] Tags
+- [x] Signed int mode
 
 **Working on now**
 
-- [ ] Signed int mode
 
 **Coming later**
 
