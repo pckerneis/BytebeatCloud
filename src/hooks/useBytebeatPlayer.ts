@@ -259,13 +259,12 @@ export function useBytebeatPlayer(options?: { enableVisualizer?: boolean }): Byt
           }
 
           setLastError(null);
-          const isFloatMode = mode === 'float';
           const sr = Number.isFinite(sampleRate) && sampleRate > 0 ? sampleRate : 8000;
           node.port.postMessage({
             type: 'setExpression',
             expression,
             sampleRate: sr,
-            float: isFloatMode,
+            mode,
           });
           node.port.postMessage({ type: 'reset' });
           if (ctx.state === 'suspended') {
@@ -304,13 +303,12 @@ export function useBytebeatPlayer(options?: { enableVisualizer?: boolean }): Byt
       }
 
       setLastError(null);
-      const isFloatMode = mode === 'float';
       const sr = Number.isFinite(sampleRate) && sampleRate > 0 ? sampleRate : 8000;
       node.port.postMessage({
         type: 'setExpression',
         expression,
         sampleRate: sr,
-        float: isFloatMode,
+        mode,
       });
     },
     [ensureContextAndNode],

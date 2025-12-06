@@ -1,5 +1,6 @@
 export enum ModeOption {
-  Int = 'int',
+  Uint8 = 'uint8',
+  Int8 = 'int8',
   Float = 'float',
 }
 
@@ -9,15 +10,18 @@ export const DEFAULT_SAMPLE_RATE = 8000;
 
 export const SAMPLE_RATE_PRESETS = [8000, 11025, 16000, 22050, 32000, 44100];
 
-export type EncodedMode = 'int' | 'float';
+export type EncodedMode = 'float' | 'uint8' | 'int8';
 
 export function encodeMode(mode: ModeOption): EncodedMode {
-  // ModeOption values already match the encoded strings.
-  return mode;
+  // ModeOption values already match the encoded strings, except legacy 'int'.
+  if (mode === ModeOption.Uint8) return 'uint8';
+  if (mode === ModeOption.Int8) return 'int8';
+  return 'float';
 }
 
 export function decodeMode(value: EncodedMode | null | undefined): ModeOption {
-  if (value === 'int') return ModeOption.Int;
+  if (value === 'uint8') return ModeOption.Uint8;
+  if ( value === 'int8') return ModeOption.Int8;
   return ModeOption.Float;
 }
 

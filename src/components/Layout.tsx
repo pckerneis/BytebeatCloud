@@ -7,7 +7,7 @@ import { warmUpBytebeatEngine, useBytebeatPlayer } from '../hooks/useBytebeatPla
 import { usePlayerStore } from '../hooks/usePlayerStore';
 import { supabase } from '../lib/supabaseClient';
 import { favoritePost, unfavoritePost } from '../services/favoritesClient';
-import { ModeOption } from '../model/expression';
+import { decodeMode, EncodedMode, encodeMode, ModeOption } from '../model/expression';
 import { PostRow } from './PostList';
 import { DEFAULT_THEME_ID, UI_THEMES, type ThemeId, getUiTheme } from '../theme/themes';
 import { ThemeContext } from '../theme/ThemeContext';
@@ -405,9 +405,7 @@ function FooterPlayer() {
     await stop();
 
     const sr = post.sample_rate;
-    const mode: ModeOption = post.mode === 'float' ? ModeOption.Float : ModeOption.Int;
-
-    await toggle(post.expression, mode, sr);
+    await toggle(post.expression, decodeMode(post.mode), sr);
   };
 
   const handleFooterPlayPause = async () => {

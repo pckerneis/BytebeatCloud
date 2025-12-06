@@ -122,11 +122,15 @@ export function PostEditorFormFields(props: PostEditorFormFieldsProps) {
   };
 
   const toggleMode = () => {
-    if (mode === ModeOption.Int) {
-      onMetaChange({ ...meta, mode: ModeOption.Float });
-    } else {
-      onMetaChange({ ...meta, mode: ModeOption.Int });
+    if (mode === ModeOption.Float) {
+      onMetaChange({ ...meta, mode: ModeOption.Uint8 });
+      return;
     }
+    if (mode === ModeOption.Uint8) {
+      onMetaChange({ ...meta, mode: ModeOption.Int8 });
+      return;
+    }
+    onMetaChange({ ...meta, mode: ModeOption.Float });
   };
 
   const rotateSampleRate = () => {

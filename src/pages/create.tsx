@@ -12,7 +12,7 @@ import {
   encodeMode,
   MAX_SAMPLE_RATE,
   MIN_SAMPLE_RATE,
-  DEFAULT_SAMPLE_RATE,
+  DEFAULT_SAMPLE_RATE, EncodedMode,
 } from '../model/expression';
 import { validateExpression } from '../utils/expression-validator';
 import { useExpressionPlayer } from '../hooks/useExpressionPlayer';
@@ -26,7 +26,7 @@ export default function CreatePage() {
   const [description, setDescription] = useState('');
   const [expression, setExpression] = useState('');
   const [isDraft, setIsDraft] = useState(false);
-  const [mode, setMode] = useState<ModeOption>(ModeOption.Int);
+  const [mode, setMode] = useState<ModeOption>(ModeOption.Uint8);
   const [sampleRate, setSampleRate] = useState<number>(DEFAULT_SAMPLE_RATE);
   const [draftLoaded, setDraftLoaded] = useState(false);
   const { isPlaying, toggle, lastError, stop, updateExpression } = useBytebeatPlayer({
@@ -87,7 +87,7 @@ export default function CreatePage() {
         const parsed = JSON.parse(decoded) as {
           title?: string;
           expr?: string;
-          mode?: 'int' | 'float';
+          mode?: EncodedMode;
           sr?: number;
         } | null;
 
@@ -121,7 +121,7 @@ export default function CreatePage() {
         description?: string;
         expression?: string;
         isDraft?: boolean;
-        mode?: 'int' | 'float';
+        mode?: EncodedMode;
         sampleRate?: number;
       } | null;
 
