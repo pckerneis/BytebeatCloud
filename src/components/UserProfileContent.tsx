@@ -406,20 +406,36 @@ export function UserProfileContent({
     };
   }, [activeTab, username, user]);
 
+  const navigateToUserActions = async () => {
+    void router.push(`/user-actions/${username}`);
+  }
+
   return (
     <section>
       <div className="profile-title-row">
         <h2>{username ? `@${username}` : 'User'}</h2>
         <div className="profile-title-actions">
           {!hideFollowButton && !isOwnProfile && (
-            <button
-              type="button"
-              className={isFollowed ? 'button primary' : 'button secondary'}
-              disabled={loadingFollow}
-              onClick={() => void handleToggleFollow()}
-            >
-              {isFollowed ? 'Followed' : 'Follow'}
-            </button>
+            <>
+              <button
+                type="button"
+                className={isFollowed ? 'button primary' : 'button secondary'}
+                disabled={loadingFollow}
+                onClick={() => void handleToggleFollow()}
+              >
+                {isFollowed ? 'Followed' : 'Follow'}
+              </button>
+
+              <button
+                style={{marginLeft: '10px'}}
+                type="button"
+                className={'button secondary'}
+                disabled={loadingFollow}
+                onClick={() => void navigateToUserActions()}
+              >
+                <span>⁝</span>
+              </button>
+            </>
           )}
           {extraHeader}
         </div>
