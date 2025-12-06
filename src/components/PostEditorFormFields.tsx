@@ -229,7 +229,7 @@ export function PostEditorFormFields(props: PostEditorFormFieldsProps) {
         <button
           type="button"
           className="button secondary"
-          disabled={!expression.trim() || !!validationIssue}
+          disabled={!isPlaying && (!expression.trim() || !!validationIssue)}
           onClick={onPlayClick}
         >
           {isPlaying ? 'Stop' : 'Play'}

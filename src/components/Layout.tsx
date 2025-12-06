@@ -11,6 +11,7 @@ import { ModeOption } from '../model/expression';
 import { PostRow } from './PostList';
 import { DEFAULT_THEME_ID, UI_THEMES, type ThemeId, getUiTheme } from '../theme/themes';
 import { ThemeContext } from '../theme/ThemeContext';
+import { getPreviewSource, subscribePreviewSource } from '../hooks/previewSource';
 
 const CURRENT_TOS_VERSION = '2025-11-30-v1';
 
@@ -267,6 +268,15 @@ function FooterPlayer() {
   const visualizerRef = useRef<HTMLCanvasElement | null>(null);
   const visualizerAnimationRef = useRef<number | null>(null);
   const [isTitleOverflowing, setIsTitleOverflowing] = useState(false);
+  const [preview, setPreview] = useState(getPreviewSource());
+
+  useEffect(() => {
+    const unsubscribe = subscribePreviewSource(setPreview);
+    return () => {
+      // Ensure cleanup returns void, ignore boolean return value
+      unsubscribe();
+    };
+  }, []);
 
   useEffect(() => {
     const container = titleRef.current;
@@ -401,12 +411,18 @@ function FooterPlayer() {
   };
 
   const handleFooterPlayPause = async () => {
-    if (!currentPost) return;
-
     if (isPlaying) {
       await stop();
-    } else {
+      return;
+    }
+    
+    if (currentPost) {
       await playPost(currentPost);
+      return;
+    }
+
+    if (preview) {
+      await toggle(preview.expression, preview.mode, preview.sampleRate);
     }
   };
 
@@ -487,7 +503,7 @@ function FooterPlayer() {
           type="button"
           className={`transport-button play ${isPlaying ? 'playing' : 'pause'}`}
           onClick={handleFooterPlayPause}
-          disabled={!currentPost}
+          disabled={!currentPost && !preview && !isPlaying}
         >
           {isPlaying ? '❚❚' : '▶'}
         </button>

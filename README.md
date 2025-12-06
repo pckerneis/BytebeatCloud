@@ -57,6 +57,9 @@ There are a few differences with other web implementations:
 - [x] Post description
 - [x] Tags
 
+**Working on now**
+- [ ] Signed int mode
+
 **Coming later**
 
 - [ ] Report posts or users
