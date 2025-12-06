@@ -47,7 +47,7 @@ jobs:
 
   e2e:
     name: E2E Tests
-    needs: unit
+    needs: [lint, unit]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
