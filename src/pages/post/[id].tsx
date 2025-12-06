@@ -7,6 +7,7 @@ import { PostList, type PostRow } from '../../components/PostList';
 import Head from 'next/head';
 import { enrichWithViewerFavorites } from '../../utils/favorites';
 import { enrichWithTags } from '../../utils/tags';
+import { validateExpression } from '../../utils/expression-validator';
 
 export default function PostDetailPage() {
   const router = useRouter();
@@ -116,6 +117,13 @@ export default function PostDetailPage() {
         }
       }
 
+      // Validate expression; if invalid, block display
+      if (!validateExpression(rowWithCount.expression).valid) {
+        setError('This post contains an invalid expression.');
+        setLoading(false);
+        return;
+      }
+
       // Attach tags for the main post.
       [rowWithCount] = (await enrichWithTags([rowWithCount])) as PostRow[];
 
@@ -146,6 +154,8 @@ export default function PostDetailPage() {
           rows = (await enrichWithTags(rows)) as PostRow[];
         }
 
+        // Filter out forks with invalid expressions
+        rows = rows.filter((r) => validateExpression(r.expression).valid);
         setForks(rows);
       }
 

@@ -7,6 +7,7 @@ import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
 import { enrichWithViewerFavorites } from '../utils/favorites';
 import { enrichWithTags } from '../utils/tags';
 import Link from 'next/link';
+import { validateExpression } from '../utils/expression-validator';
 
 export default function ExplorePage() {
   const { user } = useSupabaseAuth();
@@ -90,6 +91,9 @@ export default function ExplorePage() {
         if (rows.length > 0) {
           rows = (await enrichWithTags(rows)) as PostRow[];
         }
+
+        // Security: drop posts with invalid expressions
+        rows = rows.filter((r) => validateExpression(r.expression).valid);
 
         setPosts((prev) => (page === 0 ? rows : [...prev, ...rows]));
         if (rows.length < pageSize) {

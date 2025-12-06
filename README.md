@@ -54,13 +54,8 @@ There are a few differences with other web implementations:
 - [x] In-app notifications
 - [x] Master gain
 - [x] Support SR up to 48kHz
-- [x] Tags
 - [x] Post description
-
-**Working on**
-
-- [ ] Extend API
-- [ ] E2E testing
+- [x] Tags
 
 **Coming later**
 

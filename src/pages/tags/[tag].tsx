@@ -7,6 +7,7 @@ import { useSupabaseAuth } from '../../hooks/useSupabaseAuth';
 import { useInfiniteScroll } from '../../hooks/useInfiniteScroll';
 import { enrichWithViewerFavorites } from '../../utils/favorites';
 import { enrichWithTags } from '../../utils/tags';
+import { validateExpression } from '../../utils/expression-validator';
 
 export default function TagPage() {
   const router = useRouter();
@@ -138,6 +139,9 @@ export default function TagPage() {
         if (rows.length > 0) {
           rows = (await enrichWithTags(rows)) as PostRow[];
         }
+
+        // Security: drop posts with invalid expressions
+        rows = rows.filter((r) => validateExpression(r.expression).valid);
 
         setPosts((prev) => (page === 0 ? rows : [...prev, ...rows]));
         if (rows.length < pageSize) {

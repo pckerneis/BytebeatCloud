@@ -8,6 +8,7 @@ import { ReadonlyExpression } from './ExpressionEditor';
 import { usePlayerStore } from '../hooks/usePlayerStore';
 import { formatSampleRate, ModeOption } from '../model/expression';
 import { formatRelativeTime } from '../utils/time';
+import { validateExpression } from '../utils/expression-validator';
 
 export interface PostRow {
   id: string;
@@ -95,6 +96,11 @@ export function PostList({ posts, currentUserId }: PostListProps) {
 
     // Ensure any existing playback is fully stopped before starting a new one
     await stop();
+
+    // Security: block playback for invalid expressions
+    if (!validateExpression(post.expression).valid) {
+      return;
+    }
 
     const sr = post.sample_rate;
     const mode: ModeOption = post.mode === 'float' ? ModeOption.Float : ModeOption.Int;
