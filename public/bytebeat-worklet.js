@@ -19,6 +19,7 @@ const sin = Math.sin;
 const sqrt = Math.sqrt;
 const tan = Math.tan;
 const tanh = Math.tanh;
+const SR = sr;
 `;
 
 function checkMode(mode) {
@@ -61,7 +62,7 @@ return Number((${expression})) || 0;
 `;
           // Install the newly compiled function; it will be promoted to
           // _lastGoodFn only after a process() block runs without error.
-          this._fn = new Function('t', fnBody);
+          this._fn = new Function('t', 'sr', fnBody);
           const hasTarget =
             typeof targetSampleRate === 'number' &&
             isFinite(targetSampleRate) &&
@@ -114,7 +115,6 @@ return Number((${expression})) || 0;
             t += steps;
             const tSeconds = t / this._targetRate;
             const v = Number(fn(tSeconds)) || 0;
-            // clamp to [-1,1]
             lastRaw = Math.max(-1, Math.min(1, v));
           }
 
@@ -130,22 +130,14 @@ return Number((${expression})) || 0;
             const steps = Math.floor(phase);
             phase -= steps;
             t += steps;
-            lastRaw = fn(t) | 0;
+            lastRaw = fn(t, this._targetRate) | 0;
           }
 
-          if (this._mode === 'uint8') {
-            const byteValue = lastRaw & 0xff;
-            const sample = (byteValue - 128) / 128;
-            channel[i] = sample;
-            this._levelSumSquares += sample * sample;
-            this._levelSampleCount += 1;
-          } else {
-            const byteValue = (lastRaw + 128) & 0xff;
-            const sample = (byteValue - 128) / 128;
-            channel[i] = sample;
-            this._levelSumSquares += sample * sample;
-            this._levelSampleCount += 1;
-          }
+          const byteValue = this._mode === 'uint8' ? (lastRaw & 0xff) : ((lastRaw + 128) & 0xff);
+          const sample = (byteValue - 128) / 128;
+          channel[i] = sample;
+          this._levelSumSquares += sample * sample;
+          this._levelSampleCount += 1;
         }
       }
 

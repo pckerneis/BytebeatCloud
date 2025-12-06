@@ -21,6 +21,7 @@ const allowedGlobals = new Set([
   'exp',
   'parseInt',
   'charCodeAt',
+  'SR',
 ]);
 
 const disallowedNodes = new Set<string>([
