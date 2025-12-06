@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { ensureTestUser } from './utils/supabaseAdmin';
+import { ensureTestUser, clearProfilesTable } from './utils/supabaseAdmin';
 import { clearSupabaseSession, signInAndInjectSession } from './utils/auth';
 
 const TEST_USER_EMAIL = 'e2e+nav@example.com';
@@ -8,6 +8,11 @@ const TEST_USER_PASSWORD = 'password123';
 test.beforeAll(async () => {
   await ensureTestUser({ email: TEST_USER_EMAIL, password: TEST_USER_PASSWORD });
 });
+
+test.beforeEach(async () => {
+  await clearProfilesTable();
+});
+
 
 test('navigation for unauthenticated user', async ({page}) => {
   await clearSupabaseSession(page);
@@ -39,4 +44,58 @@ test('navigation for authenticated user', async ({ page }) => {
   await expect(nav.getByRole('link', { name: /Notifications/ })).toBeVisible();
 
   await expect(nav.getByRole('link', { name: 'Login' })).toHaveCount(0);
+});
+
+test('redirection to onboarding for user without username', async ({ page }) => {
+  await signInAndInjectSession(page, {
+    email: TEST_USER_EMAIL,
+    password: TEST_USER_PASSWORD,
+  });
+
+  await page.goto('/');
+
+  const nav = page.getByRole('navigation');
+
+  await expect(nav.getByRole('link', { name: 'Profile' })).toBeVisible();
+  await nav.getByRole('link', { name: 'Create' }).click();
+
+  // Wait for redirection to finish
+  await page.waitForURL('/onboarding');
+
+  const saveButton = page.getByRole('button', { name: 'Save username' });
+  await expect(saveButton).toBeDisabled();
+
+  const usernameField = page.getByPlaceholder('Choose a username');
+
+  // Username too short
+  await usernameField.click();
+  await usernameField.fill('t');
+  await expect(saveButton).toBeEnabled();
+  await saveButton.click();
+  await expect(page.getByText('Username must be at least 3 characters')).toBeVisible();
+
+  // Illegal characters
+  await usernameField.click();
+  await usernameField.fill('t@"');
+  await saveButton.click();
+  await expect(page.getByText('Only letters, digits, dots and hyphens and underscores are allowed')).toBeVisible();
+
+  // Username OK but ToS NOK
+  await usernameField.click();
+  await usernameField.fill('foo_bar-0.1');
+  await saveButton.click();
+  await expect(page.getByText('You must accept the Terms of Service to continue.')).toBeVisible();
+
+  // Accept ToS
+  const tosCheckbox = page.getByLabel('I accept the Terms of Service');
+  await tosCheckbox.click();
+  await saveButton.click();
+
+  // Wait for redirection
+  await page.waitForURL('/');
+
+  // Navigate to profile to check is authenticated
+  await nav.getByRole('link', { name: 'Profile' }).click();
+  await page.waitForURL('/profile');
+  await expect(page.getByRole('heading', { name: '@foo_bar-0.1' })).toBeVisible();
 });

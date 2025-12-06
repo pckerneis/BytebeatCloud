@@ -21,6 +21,18 @@ export const supabaseAdmin = createClient(url, serviceRoleKey ?? '', {
   },
 });
 
+export async function clearProfilesTable() {
+  const { error } = await supabaseAdmin
+    .from('profiles')
+    // Delete all rows; using a non-restrictive filter as PostgREST requires one
+    .delete()
+    .not('id', 'is', null);
+
+  if (error) {
+    throw new Error(`[e2e] Failed to clear profiles table: ${error.message}`);
+  }
+}
+
 export async function createTestUser(params: {
   email: string;
   password?: string;
