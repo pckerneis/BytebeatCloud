@@ -19,7 +19,20 @@ const sin = Math.sin;
 const sqrt = Math.sqrt;
 const tan = Math.tan;
 const tanh = Math.tanh;
+const SR = sr;
 `;
+
+function checkMode(mode) {
+  switch (mode) {
+    case 'float':
+      return 'float';
+    case 'int8':
+      return 'int8';
+    default:
+    case 'uint8':
+      return 'uint8';
+  }
+}
 
 class BytebeatProcessor extends AudioWorkletProcessor {
   constructor() {
@@ -29,11 +42,10 @@ class BytebeatProcessor extends AudioWorkletProcessor {
     this._fn = () => 0;
     this._lastGoodFn = this._fn;
 
-    this._float = false;
+    this._mode = 'uint8';
     this._targetRate = 8000;
     this._phase = 0;
     this._lastRaw = 0;
-    this._gain = 0.5;
 
     // For lightweight RMS metering
     this._levelSumSquares = 0;
@@ -41,7 +53,7 @@ class BytebeatProcessor extends AudioWorkletProcessor {
     this._levelTargetSamples = 2048;
 
     this.port.onmessage = (event) => {
-      const { type, expression, sampleRate: targetSampleRate, float } = event.data || {};
+      const { type, expression, sampleRate: targetSampleRate, mode } = event.data || {};
       if (type === 'setExpression' && typeof expression === 'string') {
         try {
           const fnBody = `
@@ -50,7 +62,7 @@ return Number((${expression})) || 0;
 `;
           // Install the newly compiled function; it will be promoted to
           // _lastGoodFn only after a process() block runs without error.
-          this._fn = new Function('t', fnBody);
+          this._fn = new Function('t', 'sr', fnBody);
           const hasTarget =
             typeof targetSampleRate === 'number' &&
             isFinite(targetSampleRate) &&
@@ -65,7 +77,7 @@ return Number((${expression})) || 0;
             this._levelSampleCount = 0;
           }
 
-          this._float = !!float;
+          this._mode = checkMode(mode);
           this._phase = 0;
         } catch (e) {
           // On compile error, keep the previous function but notify the UI
@@ -88,14 +100,13 @@ return Number((${expression})) || 0;
 
     const channel = output[0];
     const fn = this._fn;
-    const gain = this._gain;
     try {
       let t = this._t | 0;
       let phase = this._phase;
       let lastRaw = this._lastRaw;
       const ratio = this._targetRate / sampleRate; // target samples per device sample
 
-      if (this._float) {
+      if (this._mode === 'float') {
         for (let i = 0; i < channel.length; i += 1) {
           phase += ratio;
           if (phase >= 1) {
@@ -104,11 +115,10 @@ return Number((${expression})) || 0;
             t += steps;
             const tSeconds = t / this._targetRate;
             const v = Number(fn(tSeconds)) || 0;
-            // clamp to [-1,1]
             lastRaw = Math.max(-1, Math.min(1, v));
           }
 
-          const sample = lastRaw * gain;
+          const sample = lastRaw;
           channel[i] = sample;
           this._levelSumSquares += sample * sample;
           this._levelSampleCount += 1;
@@ -120,11 +130,11 @@ return Number((${expression})) || 0;
             const steps = Math.floor(phase);
             phase -= steps;
             t += steps;
-            lastRaw = fn(t) | 0;
+            lastRaw = fn(t, this._targetRate) | 0;
           }
 
-          const byteValue = lastRaw & 0xff;
-          const sample = ((byteValue - 128) / 128) * gain;
+          const byteValue = this._mode === 'uint8' ? (lastRaw & 0xff) : ((lastRaw + 128) & 0xff);
+          const sample = (byteValue - 128) / 128;
           channel[i] = sample;
           this._levelSumSquares += sample * sample;
           this._levelSampleCount += 1;

@@ -372,7 +372,7 @@ input[type='checkbox'] {
   border-radius: 0.15em;
   transform: translateY(-0.075em);
 
-  display: grid;
+  display: inline-grid;
   place-content: center;
 }
 
@@ -395,6 +395,14 @@ input[type='checkbox']:checked::before {
 input[type='checkbox']:focus {
   outline: max(1px, 0.15em) solid currentColor;
   outline-offset: max(2px, 0.15em);
+}
+
+textarea {
+  background: transparent;
+  border: none;
+  color: var(--text-color);
+  padding: 0;
+  outline-color: var(--accent-color);
 }
 
 button {
@@ -543,7 +551,7 @@ button {
   --thumb-width: 18px;
 }
 
-input[type="range"] {
+input[type='range'] {
   appearance: none;
   background: transparent;
   cursor: pointer;
@@ -553,14 +561,14 @@ input[type="range"] {
 /* Input Track */
 
 /* Chrome, Safari, Edge (Chromium) */
-input[type="range"]::-webkit-slider-runnable-track {
+input[type='range']::-webkit-slider-runnable-track {
   background: var(--chip-border-color);
   height: var(--track-height);
   border-radius: 3px;
 }
-  
+
 /* Firefox */
-input[type="range"]::-moz-range-track {
+input[type='range']::-moz-range-track {
   background: var(--chip-border-color);
   height: var(--track-height);
   border-radius: 3px;
@@ -569,7 +577,7 @@ input[type="range"]::-moz-range-track {
 /* Input Thumb */
 
 /* Chrome, Safari, Edge (Chromium) */
-input[type="range"]::-webkit-slider-thumb {
+input[type='range']::-webkit-slider-thumb {
   appearance: none;
   background: var(--accent-color);
   border-radius: 50%;
@@ -580,7 +588,7 @@ input[type="range"]::-webkit-slider-thumb {
 }
 
 /* Firefox */
-input[type="range"]::-moz-range-thumb {
+input[type='range']::-moz-range-thumb {
   appearance: none;
   background: var(--accent-color);
   border-radius: 0;
@@ -590,18 +598,18 @@ input[type="range"]::-moz-range-thumb {
 
 /* Focus styles */
 
-input[type="range"]:focus {
+input[type='range']:focus {
   outline: none;
 }
 
 /* Chrome, Safari, Edge (Chromium) */
-input[type="range"]:focus::-webkit-slider-thumb  {
+input[type='range']:focus::-webkit-slider-thumb {
   outline: 2px solid var(--accent-color);
   outline-offset: 2px;
 }
 
 /* Firefox */
-input[type="range"]:focus::-moz-range-thumb {
+input[type='range']:focus::-moz-range-thumb {
   outline: 2px solid var(--accent-color);
   outline-offset: 2px;
 }
@@ -1098,6 +1106,10 @@ button.chip {
   font-size: 16px;
   padding-left: 12px;
   padding-top: 2px;
+}
+
+.post-description-detail {
+  color: var(--secondary-text-color);
 }
 
 /* Modal */

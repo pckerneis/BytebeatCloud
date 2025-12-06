@@ -6,7 +6,7 @@ import { useSupabaseAuth } from '../../hooks/useSupabaseAuth';
 import { supabase } from '../../lib/supabaseClient';
 import { PostEditorFormFields } from '../../components/PostEditorFormFields';
 import Head from 'next/head';
-import { ModeOption, decodeMode, encodeMode, DEFAULT_SAMPLE_RATE } from '../../model/expression';
+import { ModeOption, DEFAULT_SAMPLE_RATE } from '../../model/expression';
 import { validateExpression } from '../../utils/expression-validator';
 import { useExpressionPlayer } from '../../hooks/useExpressionPlayer';
 
@@ -16,6 +16,7 @@ export default function ForkPostPage() {
 
   const [loading, setLoading] = useState(true);
   const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
   const [expression, setExpression] = useState('');
   const [isDraft, setIsDraft] = useState(false);
   const [mode, setMode] = useState<ModeOption>(ModeOption.Float);
@@ -31,7 +32,7 @@ export default function ForkPostPage() {
   const [saveError, setSaveError] = useState('');
   const [originalTitle, setOriginalTitle] = useState<string>('');
   const [originalAuthor, setOriginalAuthor] = useState<string | null>(null);
-  const [liveUpdateEnabled, setLiveUpdateEnabled] = useState(false);
+  const [liveUpdateEnabled, setLiveUpdateEnabled] = useState(true);
 
   const { validationIssue, handleExpressionChange, handlePlayClick, setValidationIssue } =
     useExpressionPlayer({
@@ -74,7 +75,7 @@ export default function ForkPostPage() {
 
       const { data, error } = await supabase
         .from('posts')
-        .select('title,expression,is_draft,sample_rate,mode,profiles(username)')
+        .select('title,description,expression,is_draft,sample_rate,mode,profiles(username)')
         .eq('id', id)
         .maybeSingle();
 
@@ -99,9 +100,10 @@ export default function ForkPostPage() {
       setOriginalAuthor((data as any).profiles?.username ?? null);
 
       setTitle(baseTitle ?? '');
+      setDescription(data.description ?? '');
       setExpression(data.expression ?? '');
       setIsDraft(Boolean(data.is_draft));
-      setMode(decodeMode(data.mode as any));
+      setMode(data.mode);
       setSampleRate(data.sample_rate);
 
       setLoading(false);
@@ -121,6 +123,7 @@ export default function ForkPostPage() {
 
     const trimmedTitle = title.trim();
     const trimmedExpr = expression.trim();
+    const trimmedDescription = description.trim();
 
     const result = validateExpression(trimmedExpr);
     if (!result.valid) {
@@ -136,17 +139,16 @@ export default function ForkPostPage() {
     setSaveStatus('saving');
     setSaveError('');
 
-    const modeValue = encodeMode(mode);
-
     const { data, error } = await supabase
       .from('posts')
       .insert({
         profile_id: (user as any).id,
         title: trimmedTitle,
+        description: trimmedDescription || '',
         expression: trimmedExpr,
         is_draft: isDraft,
         sample_rate: sampleRate,
-        mode: modeValue,
+        mode,
         fork_of_post_id: id,
         is_fork: true,
       })
@@ -159,11 +161,16 @@ export default function ForkPostPage() {
       return;
     }
 
-    await router.push(`/post/${data.id}`);
+    setSaveStatus('success');
+
+    if (!isDraft) {
+      await router.push(`/post/${data.id}`);
+    }
   };
 
   const meta = {
     title,
+    description,
     mode,
     sampleRate,
     isDraft,
@@ -171,6 +178,7 @@ export default function ForkPostPage() {
 
   const handleMetaChange = (next: typeof meta) => {
     setTitle(next.title);
+    setDescription(next.description);
     setMode(next.mode);
     setSampleRate(next.sampleRate);
     setIsDraft(next.isDraft);
@@ -200,13 +208,13 @@ export default function ForkPostPage() {
             <a href={'/login'}>Log in</a> to publish a post, or use a share link.
           </p>
         )}
-        {originalTitle && originalAuthor && (
+        {originalAuthor && (
           <p>
             Fork from <a href={`/post/${id}`}>{originalTitle || '(untitled)'}</a> by{' '}
             <a href={`/u/${originalAuthor}`}>@{originalAuthor}</a>
           </p>
         )}
-        {(!originalTitle || !originalAuthor) && <p>Fork from unknown post</p>}
+        {!originalAuthor && <p>Fork from unknown post</p>}
         <form className="create-form" onSubmit={handleSubmit}>
           <PostEditorFormFields
             meta={meta}

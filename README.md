@@ -54,19 +54,65 @@ There are a few differences with other web implementations:
 - [x] In-app notifications
 - [x] Master gain
 - [x] Support SR up to 48kHz
-
-**Coming soon**
-
-- [ ] Tags
-- [ ] Filter by tags
+- [x] Post description
+- [x] Tags
+- [x] Signed int mode
 
 **Coming later**
 
 - [ ] Report posts or users
-- [ ] Moderator tools
 - [ ] Block/unblock users
-- [ ] Post description
+- [ ] Reject silent/too loud posts
+- [ ] Moderator tools
 - [ ] Pin posts on profile
 - [ ] Search posts by name
 - [ ] C-compatible badge
-- [ ] Reject silent/too loud posts
+
+## Run locally
+
+First, install NPM dependencies.
+
+```bash
+npm install
+```
+
+The backend uses Supabase. To start Supabase locally, run
+
+```bash
+npx supabase start
+```
+
+This will start a local Supabase project, prepare the database, and print connection info that you'll need in next step.
+
+Create a `.env` file at project root and put the following content, replacing URL and key with the printed info.
+
+```
+# Project URL
+NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
+
+# Publishable key
+NEXT_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_*****
+```
+
+Then, run the frontend.
+
+```bash
+npm run dev
+```
+
+## Test locally
+
+Install dependencies and browsers:
+
+```bash
+npm install
+npx playwright install
+```
+
+In another terminal, run tests:
+
+```bash
+npm run test:e2e:ui
+```
+
+This command will start the Supabase local instance, the front end dev server and run the tests in UI mode.

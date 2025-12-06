@@ -2,7 +2,6 @@ import { useState, useRef } from 'react';
 import { ExpressionEditor, ExpressionErrorSnippet } from './ExpressionEditor';
 import {
   ModeOption,
-  encodeMode,
   SAMPLE_RATE_PRESETS,
   MAX_SAMPLE_RATE,
   MIN_SAMPLE_RATE,
@@ -77,7 +76,7 @@ export function PostEditorFormFields(props: PostEditorFormFieldsProps) {
   const isExpressionTooLong = expressionLength > EXPRESSION_MAX;
   const canSubmit = Boolean(expression.trim()) && !validationIssue && saveStatus !== 'saving';
 
-  const { title, mode, sampleRate, isDraft } = meta;
+  const { title, description, mode, sampleRate, isDraft } = meta;
   const [shareLinkCopied, setShareLinkCopied] = useState(false);
   const [sampleRateModalOpen, setSampleRateModalOpen] = useState(false);
   const [sampleRateInput, setSampleRateInput] = useState(sampleRate.toString());
@@ -122,11 +121,15 @@ export function PostEditorFormFields(props: PostEditorFormFieldsProps) {
   };
 
   const toggleMode = () => {
-    if (mode === ModeOption.Int) {
-      onMetaChange({ ...meta, mode: ModeOption.Float });
-    } else {
-      onMetaChange({ ...meta, mode: ModeOption.Int });
+    if (mode === ModeOption.Float) {
+      onMetaChange({ ...meta, mode: ModeOption.Uint8 });
+      return;
     }
+    if (mode === ModeOption.Uint8) {
+      onMetaChange({ ...meta, mode: ModeOption.Int8 });
+      return;
+    }
+    onMetaChange({ ...meta, mode: ModeOption.Float });
   };
 
   const rotateSampleRate = () => {
@@ -141,12 +144,10 @@ export function PostEditorFormFields(props: PostEditorFormFieldsProps) {
 
     const trimmedTitle = title.trim();
 
-    const modeValue = encodeMode(mode);
-
     const payload = {
       title: trimmedTitle || undefined,
       expr: trimmedExpr,
-      mode: modeValue,
+      mode,
       sr: sampleRate,
     };
 
@@ -177,8 +178,23 @@ export function PostEditorFormFields(props: PostEditorFormFieldsProps) {
           maxLength={64}
           value={title}
           onChange={(e) => onMetaChange({ ...meta, title: e.target.value })}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+            }
+          }}
           className="post-title-input"
           placeholder="Name your bytebeat expression"
+        />
+      </label>
+
+      <label className="field">
+        <textarea
+          value={description}
+          onChange={(e) => onMetaChange({ ...meta, description: e.target.value })}
+          className="post-description-input"
+          placeholder="Add an optional description"
+          rows={3}
         />
       </label>
 
@@ -214,7 +230,7 @@ export function PostEditorFormFields(props: PostEditorFormFieldsProps) {
         <button
           type="button"
           className="button secondary"
-          disabled={!expression.trim() || !!validationIssue}
+          disabled={!isPlaying && (!expression.trim() || !!validationIssue)}
           onClick={onPlayClick}
         >
           {isPlaying ? 'Stop' : 'Play'}

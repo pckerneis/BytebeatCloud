@@ -8,14 +8,16 @@ import { ReadonlyExpression } from './ExpressionEditor';
 import { usePlayerStore } from '../hooks/usePlayerStore';
 import { formatSampleRate, ModeOption } from '../model/expression';
 import { formatRelativeTime } from '../utils/time';
+import { validateExpression } from '../utils/expression-validator';
 
 export interface PostRow {
   id: string;
   title: string;
+  description?: string | null;
   expression: string;
   is_draft?: boolean;
   sample_rate: number;
-  mode: string;
+  mode: ModeOption;
   created_at: string;
   profile_id?: string;
   author_username?: string | null;
@@ -25,6 +27,7 @@ export interface PostRow {
   favorited_by_current_user?: boolean;
   fork_of_post_id?: string | null;
   is_fork?: boolean;
+  tags?: string[];
 }
 
 interface PostListProps {
@@ -94,8 +97,18 @@ export function PostList({ posts, currentUserId }: PostListProps) {
     // Ensure any existing playback is fully stopped before starting a new one
     await stop();
 
+    // Security: block playback for invalid expressions
+    if (!validateExpression(post.expression).valid) {
+      return;
+    }
+
     const sr = post.sample_rate;
-    const mode: ModeOption = post.mode === 'float' ? ModeOption.Float : ModeOption.Int;
+    const mode: ModeOption =
+      post.mode === 'float'
+        ? ModeOption.Float
+        : post.mode === 'uint8'
+          ? ModeOption.Uint8
+          : ModeOption.Int8;
 
     await toggle(post.expression, mode, sr);
     setActivePostId(post.id);
@@ -216,6 +229,13 @@ export function PostList({ posts, currentUserId }: PostListProps) {
                 <span className="chip mode">{post.mode}</span>
                 <span className="chip sample-rate">{formatSampleRate(post.sample_rate)}</span>
                 {lengthCategory && <span className="chip length-chip">{lengthCategory}</span>}
+                {post.tags &&
+                  post.tags.length > 0 &&
+                  post.tags.map((tag) => (
+                    <Link key={tag} href={`/tags/${tag}`} className="chip tag-chip">
+                      #{tag}
+                    </Link>
+                  ))}
                 <span className="created" title={createdTitle}>
                   {created}
                 </span>

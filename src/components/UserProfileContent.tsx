@@ -5,6 +5,8 @@ import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
 import { PostList, type PostRow } from './PostList';
 import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
 import { enrichWithViewerFavorites } from '../utils/favorites';
+import { enrichWithTags } from '../utils/tags';
+import { validateExpression } from '../utils/expression-validator';
 
 interface UserProfileContentProps {
   username: string | null;
@@ -123,6 +125,13 @@ export function UserProfileContent({
         if (user && rows.length > 0) {
           rows = (await enrichWithViewerFavorites((user as any).id as string, rows)) as PostRow[];
         }
+
+        if (rows.length > 0) {
+          rows = (await enrichWithTags(rows)) as PostRow[];
+        }
+
+        // Security: drop posts with invalid expressions
+        rows = rows.filter((r) => validateExpression(r.expression).valid);
 
         setPosts((prev) => (page === 0 ? rows : [...prev, ...rows]));
         if (page === 0) {
@@ -305,6 +314,12 @@ export function UserProfileContent({
           rows = (await enrichWithViewerFavorites((user as any).id as string, rows)) as PostRow[];
         }
 
+        if (rows.length > 0) {
+          rows = (await enrichWithTags(rows)) as PostRow[];
+        }
+
+        // Security: drop invalid expressions
+        rows = rows.filter((r) => validateExpression(r.expression).valid);
         setFavoritePosts(rows as PostRow[]);
       }
 
@@ -373,6 +388,12 @@ export function UserProfileContent({
           rows = (await enrichWithViewerFavorites((user as any).id as string, rows)) as PostRow[];
         }
 
+        if (rows.length > 0) {
+          rows = (await enrichWithTags(rows)) as PostRow[];
+        }
+
+        // Security: drop invalid expressions
+        rows = rows.filter((r) => validateExpression(r.expression).valid);
         setDraftPosts(rows as PostRow[]);
         setLoadingDrafts(false);
       }

@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import { ModeOption } from '../model/expression';
 import { validateExpression, type ValidationIssue } from '../utils/expression-validator';
+import { setPreviewSource } from './previewSource';
 
 interface UseExpressionPlayerOptions {
   expression: string;
@@ -59,10 +60,21 @@ export function useExpressionPlayer({
       if (result.valid && liveUpdateEnabled && isPlaying) {
         void updateExpression(value, mode, sampleRateValue);
       }
+
+      if (result.valid) {
+        setPreviewSource({ expression: value, mode, sampleRate: sampleRateValue });
+      } else {
+        setPreviewSource(null);
+      }
     }, 200);
   };
 
   const handlePlayClick = () => {
+    if (isPlaying) {
+      void toggle(expression, mode, sampleRateValue, loopPreview);
+      return;
+    }
+
     const trimmed = expression.trim();
     if (!trimmed) {
       setValidationIssue(null);

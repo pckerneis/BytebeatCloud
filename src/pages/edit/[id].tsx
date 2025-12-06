@@ -6,7 +6,7 @@ import { useSupabaseAuth } from '../../hooks/useSupabaseAuth';
 import { supabase } from '../../lib/supabaseClient';
 import { PostEditorFormFields } from '../../components/PostEditorFormFields';
 import Head from 'next/head';
-import { ModeOption, decodeMode, encodeMode, DEFAULT_SAMPLE_RATE } from '../../model/expression';
+import { ModeOption, DEFAULT_SAMPLE_RATE } from '../../model/expression';
 import { validateExpression } from '../../utils/expression-validator';
 import { useExpressionPlayer } from '../../hooks/useExpressionPlayer';
 
@@ -16,6 +16,7 @@ export default function EditPostPage() {
 
   const [loading, setLoading] = useState(true);
   const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
   const [expression, setExpression] = useState('');
   const [isDraft, setIsDraft] = useState(false);
   const [mode, setMode] = useState<ModeOption>(ModeOption.Float);
@@ -30,7 +31,7 @@ export default function EditPostPage() {
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'success'>('idle');
   const [saveError, setSaveError] = useState('');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [liveUpdateEnabled, setLiveUpdateEnabled] = useState(false);
+  const [liveUpdateEnabled, setLiveUpdateEnabled] = useState(true);
 
   const { validationIssue, handleExpressionChange, handlePlayClick, setValidationIssue } =
     useExpressionPlayer({
@@ -74,7 +75,7 @@ export default function EditPostPage() {
 
       const { data, error } = await supabase
         .from('posts')
-        .select('title,expression,is_draft,sample_rate,mode,profile_id')
+        .select('title,description,expression,is_draft,sample_rate,mode,profile_id')
         .eq('id', id)
         .maybeSingle();
 
@@ -102,9 +103,10 @@ export default function EditPostPage() {
       }
 
       setTitle(data.title ?? '');
+      setDescription(data.description ?? '');
       setExpression(data.expression ?? '');
       setIsDraft(Boolean(data.is_draft));
-      setMode(decodeMode(data.mode as any));
+      setMode(data.mode);
       setSampleRate(data.sample_rate);
 
       setLoading(false);
@@ -124,6 +126,7 @@ export default function EditPostPage() {
 
     const trimmedTitle = title.trim();
     const trimmedExpr = expression.trim();
+    const trimmedDescription = description.trim();
 
     const result = validateExpression(trimmedExpr);
     if (!result.valid) {
@@ -139,16 +142,15 @@ export default function EditPostPage() {
     setSaveStatus('saving');
     setSaveError('');
 
-    const modeValue = encodeMode(mode);
-
     const { error } = await supabase
       .from('posts')
       .update({
         title: trimmedTitle,
+        description: trimmedDescription || '',
         expression: trimmedExpr,
         is_draft: isDraft,
         sample_rate: sampleRate,
-        mode: modeValue,
+        mode,
       })
       .eq('id', id)
       .eq('profile_id', (user as any).id);
@@ -160,6 +162,10 @@ export default function EditPostPage() {
     }
 
     setSaveStatus('success');
+
+    if (!isDraft) {
+      await router.push(`/post/${id}`);
+    }
   };
 
   const handleDelete = async () => {
@@ -190,6 +196,7 @@ export default function EditPostPage() {
 
   const meta = {
     title,
+    description,
     mode,
     sampleRate,
     isDraft,
@@ -197,6 +204,7 @@ export default function EditPostPage() {
 
   const handleMetaChange = (next: typeof meta) => {
     setTitle(next.title);
+    setDescription(next.description);
     setMode(next.mode);
     setSampleRate(next.sampleRate);
     setIsDraft(next.isDraft);

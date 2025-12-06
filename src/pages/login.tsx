@@ -42,7 +42,7 @@ export default function LoginPage() {
         <title>BytebeatCloud - Login</title>
       </Head>
       <section>
-        <h2>Login</h2>
+        <h2>Login with your email address</h2>
         <form className="create-form" onSubmit={handleSubmit}>
           <label className="field">
             <input
