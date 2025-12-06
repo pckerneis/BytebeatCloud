@@ -38,7 +38,7 @@ export default function CreatePage() {
 
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'success'>('idle');
   const [saveError, setSaveError] = useState('');
-  const [liveUpdateEnabled, setLiveUpdateEnabled] = useState(false);
+  const [liveUpdateEnabled, setLiveUpdateEnabled] = useState(true);
 
   const { validationIssue, handleExpressionChange, handlePlayClick, setValidationIssue } =
     useExpressionPlayer({

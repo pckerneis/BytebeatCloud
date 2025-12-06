@@ -31,7 +31,7 @@ export default function EditPostPage() {
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'success'>('idle');
   const [saveError, setSaveError] = useState('');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [liveUpdateEnabled, setLiveUpdateEnabled] = useState(false);
+  const [liveUpdateEnabled, setLiveUpdateEnabled] = useState(true);
 
   const { validationIssue, handleExpressionChange, handlePlayClick, setValidationIssue } =
     useExpressionPlayer({

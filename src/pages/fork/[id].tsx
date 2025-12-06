@@ -32,7 +32,7 @@ export default function ForkPostPage() {
   const [saveError, setSaveError] = useState('');
   const [originalTitle, setOriginalTitle] = useState<string>('');
   const [originalAuthor, setOriginalAuthor] = useState<string | null>(null);
-  const [liveUpdateEnabled, setLiveUpdateEnabled] = useState(false);
+  const [liveUpdateEnabled, setLiveUpdateEnabled] = useState(true);
 
   const { validationIssue, handleExpressionChange, handlePlayClick, setValidationIssue } =
     useExpressionPlayer({
