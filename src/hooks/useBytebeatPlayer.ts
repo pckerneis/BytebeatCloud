@@ -21,6 +21,7 @@ let globalGainNode: GainNode | null = null;
 let analyserNode: AnalyserNode | null = null;
 let analyserData: Float32Array | null = null;
 let analyserTimerId: number | null = null;
+let analyserTapGain: GainNode | null = null;
 
 const ANALYSER_INTERVAL = 80;
 
@@ -99,9 +100,18 @@ async function ensureContextAndNodeBase() {
   if (!analyserNode && audioContext && workletNode) {
     const analyser = audioContext.createAnalyser();
     analyser.fftSize = 256;
+    analyser.smoothingTimeConstant = 0.8;
     analyserNode = analyser;
     analyserData = new Float32Array(analyser.fftSize);
     workletNode.connect(analyserNode);
+
+    if (!analyserTapGain) {
+      const tap = audioContext.createGain();
+      tap.gain.value = 0;
+      analyserTapGain = tap;
+      analyserNode.connect(analyserTapGain);
+      analyserTapGain.connect(audioContext.destination);
+    }
 
     const updateWaveform = () => {
       if (!analyserNode || !analyserData || !globalIsPlaying) {
@@ -247,6 +257,25 @@ export function useBytebeatPlayer(options?: { enableVisualizer?: boolean }): Byt
               node.connect(ctx.destination);
             }
             workletConnected = true;
+          }
+          // Ensure analyser branch is connected each time we start, because stop() calls node.disconnect()
+          if (analyserNode) {
+            try {
+              node.connect(analyserNode);
+            } catch {
+              // ignore if already connected
+            }
+            if (!analyserTapGain) {
+              try {
+                const tap = ctx.createGain();
+                tap.gain.value = 0;
+                analyserTapGain = tap;
+                analyserNode.connect(analyserTapGain);
+                analyserTapGain.connect(ctx.destination);
+              } catch {
+                // ignore
+              }
+            }
           }
           // Pre-validate expression by attempting to construct a Function on the main thread.
           // This prevents starting playback when there is a compile error.
