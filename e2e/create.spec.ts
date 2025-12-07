@@ -217,15 +217,16 @@ test.describe('Create page - authenticated', () => {
     // Should redirect to post detail page
     await page.waitForURL(/\/post\/[a-f0-9-]+/);
 
-    // Verify tags are visible and clickable
-    const bytebeatTag = page.getByRole('link', { name: '#bytebeat' });
-    const musicTag = page.getByRole('link', { name: '#music' });
+    // Verify tags are visible - both as chips and in description
+    const bytebeatTags = page.getByRole('link', { name: '#bytebeat' });
+    const musicTags = page.getByRole('link', { name: '#music' });
 
-    await expect(bytebeatTag).toBeVisible();
-    await expect(musicTag).toBeVisible();
+    await expect(bytebeatTags).toHaveCount(2); // chip + description
+    await expect(musicTags).toHaveCount(2);
 
-    // Click on a tag and verify navigation to tag page
-    await bytebeatTag.click();
+    // Click on the tag in the description
+    const descriptionBytebeatTag = page.locator('.post-description-detail').getByRole('link', { name: '#bytebeat' });
+    await descriptionBytebeatTag.click();
     await page.waitForURL(/\/tags\/bytebeat/);
     await expect(page.getByRole('heading', { name: '#bytebeat' })).toBeVisible();
   });

@@ -193,6 +193,7 @@ export function PostList({ posts, currentUserId }: PostListProps) {
           favorite?.favorited !== undefined ? favorite.favorited : !!post.favorited_by_current_user;
         const isFavoritePending = favoritePending[post.id];
         const lengthCategory = getLengthCategoryChip(post.expression);
+        const sortedTags = post.tags?.sort((a, b) => a.localeCompare(b));
 
         return (
           <li key={post.id} className={`post-item ${isActive ? 'playing' : ''}`}>
@@ -229,9 +230,9 @@ export function PostList({ posts, currentUserId }: PostListProps) {
                 <span className="chip mode">{post.mode}</span>
                 <span className="chip sample-rate">{formatSampleRate(post.sample_rate)}</span>
                 {lengthCategory && <span className="chip length-chip">{lengthCategory}</span>}
-                {post.tags &&
-                  post.tags.length > 0 &&
-                  post.tags.map((tag) => (
+                {sortedTags &&
+                  sortedTags.length > 0 &&
+                  sortedTags.map((tag) => (
                     <Link key={tag} href={`/tags/${tag}`} className="chip tag-chip">
                       #{tag}
                     </Link>
