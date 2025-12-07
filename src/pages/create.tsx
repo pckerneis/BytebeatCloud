@@ -189,7 +189,7 @@ export default function CreatePage() {
       .insert({
         profile_id: (user as any).id,
         title: trimmedTitle,
-        description: trimmedDescription || null,
+        description: trimmedDescription ?? '',
         expression: trimmedExpr,
         is_draft: isDraft,
         sample_rate: sampleRate,
@@ -253,7 +253,7 @@ export default function CreatePage() {
             lastError={lastError || null}
             saveStatus={saveStatus}
             saveError={saveError}
-            submitLabel={saveStatus === 'saving' ? 'Saving…' : 'Save'}
+            submitLabel={saveStatus === 'saving' ? 'Saving…' : 'Post saved'}
             showActions={!!user}
             isFork={false}
             liveUpdateEnabled={liveUpdateEnabled}

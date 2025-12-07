@@ -226,7 +226,7 @@ export default function ForkPostPage() {
             lastError={lastError || null}
             saveStatus={saveStatus}
             saveError={saveError}
-            submitLabel={saveStatus === 'saving' ? 'Saving…' : 'Save fork'}
+            submitLabel={saveStatus === 'saving' ? 'Saving…' : 'Fork saved'}
             showActions={!!user}
             isFork={true}
             liveUpdateEnabled={liveUpdateEnabled}

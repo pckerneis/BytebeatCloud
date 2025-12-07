@@ -1393,6 +1393,10 @@ button.chip {
     font-size: 16px;
   }
 
+  textarea {
+    font-size: 14px;
+  }
+
   .expression-preview {
     font-size: 14px;
     padding: 14px 22px;

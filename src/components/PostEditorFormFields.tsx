@@ -304,7 +304,7 @@ export function PostEditorFormFields(props: PostEditorFormFieldsProps) {
 
       {saveError && <p className="error-message">{saveError}</p>}
       {saveStatus === 'success' && !saveError && (
-        <p className="counter">Post {submitLabel.toLowerCase()}.</p>
+        <p className="counter">{submitLabel}.</p>
       )}
       {sampleRateModalOpen && (
         <div
