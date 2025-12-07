@@ -205,15 +205,33 @@ test.describe('Tag page - multiple tags', () => {
   test.beforeEach(async ({ page }) => {
     await ensureTestUserProfile(TEST_USER_EMAIL, TEST_USERNAME);
 
-    await supabaseAdmin.from('posts').insert({
-      profile_id: testUserId,
-      title: 'Post With Multiple Tags',
-      description: 'This has #tag1 and #tag2 and #tag3',
-      expression: 't',
-      is_draft: false,
-      sample_rate: 8000,
-      mode: 'uint8',
-    });
+    const { data: post } = await supabaseAdmin
+      .from('posts')
+      .insert({
+        profile_id: testUserId,
+        title: 'Post With Multiple Tags',
+        description: 'This has #tag1 and #tag2 and #tag3',
+        expression: 't',
+        is_draft: false,
+        sample_rate: 8000,
+        mode: 'uint8',
+      })
+      .select('id')
+      .single();
+
+    // Wait for tags to be indexed by the database trigger
+    if (post) {
+      let attempts = 0;
+      while (attempts < 10) {
+        const { data: tagLinks } = await supabaseAdmin
+          .from('post_tags')
+          .select('tag_id')
+          .eq('post_id', post.id);
+        if (tagLinks && tagLinks.length >= 3) break;
+        await new Promise((r) => setTimeout(r, 100));
+        attempts++;
+      }
+    }
 
     await clearSupabaseSession(page);
   });
@@ -221,18 +239,21 @@ test.describe('Tag page - multiple tags', () => {
   test('post appears on each tag page', async ({ page }) => {
     // Check tag1
     await page.goto('/tags/tag1');
-    await expect(page.getByText('Loading posts…')).toHaveCount(0, { timeout: 10000 });
-    await expect(page.getByRole('link', { name: 'Post With Multiple Tags' })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Post With Multiple Tags' })).toBeVisible({
+      timeout: 10000,
+    });
 
     // Check tag2
     await page.goto('/tags/tag2');
-    await expect(page.getByText('Loading posts…')).toHaveCount(0, { timeout: 10000 });
-    await expect(page.getByRole('link', { name: 'Post With Multiple Tags' })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Post With Multiple Tags' })).toBeVisible({
+      timeout: 10000,
+    });
 
     // Check tag3
     await page.goto('/tags/tag3');
-    await expect(page.getByText('Loading posts…')).toHaveCount(0, { timeout: 10000 });
-    await expect(page.getByRole('link', { name: 'Post With Multiple Tags' })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Post With Multiple Tags' })).toBeVisible({
+      timeout: 10000,
+    });
   });
 
   test('post shows all tag chips', async ({ page }) => {
