@@ -193,6 +193,17 @@ export function PostEditorFormFields(props: PostEditorFormFieldsProps) {
           placeholder="Add an optional description"
           rows={3}
         />
+        <details className="syntax-helper">
+          <summary>Formatting tips</summary>
+          <ul>
+            <li>
+              <strong>#tags</strong> — add hashtags like <code>#chiptune</code> or <code>#ambient</code>
+            </li>
+            <li>
+              <strong>@mentions</strong> — mention users like <code>@username</code>
+            </li>
+          </ul>
+        </details>
       </label>
 
       <div className="chips">

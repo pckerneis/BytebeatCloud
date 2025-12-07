@@ -1473,3 +1473,41 @@ button.chip {
 .legal-section h2 {
   font-size: 16px;
 }
+
+/* Syntax helper for description field */
+.syntax-helper {
+  font-size: 12px;
+  color: var(--secondary-text-color);
+  margin-top: 4px;
+}
+
+.syntax-helper summary {
+  cursor: pointer;
+  user-select: none;
+  opacity: 0.7;
+  transition: opacity 120ms ease-out;
+}
+
+.syntax-helper summary:hover {
+  opacity: 1;
+}
+
+.syntax-helper[open] summary {
+  opacity: 1;
+}
+
+.syntax-helper ul {
+  margin: 6px 0 0 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.syntax-helper code {
+  background: var(--card-bg-color);
+  border: 1px solid var(--border-color);
+  border-radius: 3px;
+  padding: 1px 4px;
+  font-size: 11px;
+}
