@@ -197,7 +197,8 @@ export function PostEditorFormFields(props: PostEditorFormFieldsProps) {
           <summary>Formatting tips</summary>
           <ul>
             <li>
-              <strong>#tags</strong> — add hashtags like <code>#chiptune</code> or <code>#ambient</code>
+              <strong>#tags</strong> — add hashtags like <code>#chiptune</code> or{' '}
+              <code>#ambient</code>
             </li>
             <li>
               <strong>@mentions</strong> — mention users like <code>@username</code>
