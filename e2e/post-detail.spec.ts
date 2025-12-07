@@ -220,7 +220,7 @@ test.describe('Post detail page - playback', () => {
 test.describe('Post detail page - fork button', () => {
   let testPostId: string;
 
-  test.beforeEach(async ({ page }) => {
+  test.beforeEach(async () => {
     // Create post by other user
     await ensureTestUserProfile(OTHER_USER_EMAIL, OTHER_USERNAME);
 
@@ -308,7 +308,7 @@ test.describe('Post detail page - fork button', () => {
 test.describe('Post detail page - favorites', () => {
   let testPostId: string;
 
-  test.beforeEach(async ({ page }) => {
+  test.beforeEach(async () => {
     await ensureTestUserProfile(TEST_USER_EMAIL, TEST_USERNAME);
 
     const { data } = await supabaseAdmin

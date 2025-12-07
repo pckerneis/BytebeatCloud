@@ -6,6 +6,7 @@ import {
   supabaseAdmin,
 } from './utils/supabaseAdmin';
 import { clearSupabaseSession, signInAndInjectSession } from './utils/auth';
+import { clearAndTypeInExpressionEditor } from './utils/codemirror-helpers';
 
 const TEST_USER_EMAIL = 'e2e+fork@example.com';
 const TEST_USER_PASSWORD = 'password123';
@@ -17,22 +18,6 @@ const OTHER_USERNAME = 'e2e_fork_other';
 
 let testUserId: string;
 let otherUserId: string;
-
-// Helper to type into CodeMirror editor
-async function typeInExpressionEditor(page: import('@playwright/test').Page, text: string) {
-  const editor = page.locator('.expression-input .cm-content');
-  await editor.click();
-  await page.keyboard.type(text);
-}
-
-// Helper to clear and type in CodeMirror editor
-async function clearAndTypeInExpressionEditor(page: import('@playwright/test').Page, text: string) {
-  const editor = page.locator('.expression-input .cm-content');
-  await editor.click();
-  await page.keyboard.press('ControlOrMeta+a');
-  await page.keyboard.press('Backspace');
-  await page.keyboard.type(text);
-}
 
 test.beforeAll(async () => {
   const user = await ensureTestUser({ email: TEST_USER_EMAIL, password: TEST_USER_PASSWORD });

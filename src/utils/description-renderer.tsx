@@ -43,7 +43,7 @@ export function renderDescriptionWithTagsAndMentions(
   }
 
   // Match @[userId] mentions (stored format with UUID)
-  const mentionIdRegex = /@\[([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\]/gi;
+  const mentionIdRegex = /@\[([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})]/gi;
 
   while ((match = mentionIdRegex.exec(description)) !== null) {
     matches.push({
@@ -116,7 +116,7 @@ export function renderDescriptionWithTagsAndMentions(
  * Extract user IDs from stored mention format for pre-fetching.
  */
 export function extractMentionUserIds(description: string): string[] {
-  const mentionIdRegex = /@\[([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\]/gi;
+  const mentionIdRegex = /@\[([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})]/gi;
   const matches = [...description.matchAll(mentionIdRegex)];
   return [...new Set(matches.map((m) => m[1]))];
 }

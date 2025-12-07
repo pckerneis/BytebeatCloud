@@ -12,7 +12,7 @@ import { supabase } from '../lib/supabaseClient';
 const MENTION_USERNAME_REGEX = /(?<![A-Za-z0-9_])@([A-Za-z0-9_]{1,30})(?![A-Za-z0-9_])/g;
 
 // Regex to match @[userId] (stored format)
-const MENTION_ID_REGEX = /@\[([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\]/gi;
+const MENTION_ID_REGEX = /@\[([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})]/gi;
 
 /**
  * Convert @username mentions to @[userId] format for storage.
