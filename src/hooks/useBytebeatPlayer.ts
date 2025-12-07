@@ -99,7 +99,7 @@ async function ensureContextAndNodeBase() {
 
   if (!analyserNode && audioContext && workletNode) {
     const analyser = audioContext.createAnalyser();
-    analyser.fftSize = 256;
+    analyser.fftSize = 1024;
     analyser.smoothingTimeConstant = 0.8;
     analyserNode = analyser;
     analyserData = new Float32Array(analyser.fftSize);
