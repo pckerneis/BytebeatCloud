@@ -15,6 +15,7 @@ import {
 import { validateExpression } from '../utils/expression-validator';
 import { useExpressionPlayer } from '../hooks/useExpressionPlayer';
 import { PostMetadataModel } from '../model/postEditor';
+import { convertMentionsToIds } from '../utils/mentions';
 
 const CREATE_DRAFT_STORAGE_KEY = 'bytebeat-cloud-create-draft-v1';
 
@@ -184,12 +185,15 @@ export default function CreatePage() {
     setSaveStatus('saving');
     setSaveError('');
 
+    // Convert @username mentions to @[userId] format for storage
+    const storedDescription = await convertMentionsToIds(trimmedDescription ?? '');
+
     const { data, error } = await supabase
       .from('posts')
       .insert({
         profile_id: (user as any).id,
         title: trimmedTitle,
-        description: trimmedDescription ?? '',
+        description: storedDescription,
         expression: trimmedExpr,
         is_draft: isDraft,
         sample_rate: sampleRate,

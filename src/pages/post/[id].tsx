@@ -8,7 +8,10 @@ import Head from 'next/head';
 import { enrichWithViewerFavorites } from '../../utils/favorites';
 import { enrichWithTags } from '../../utils/tags';
 import { validateExpression } from '../../utils/expression-validator';
-import { renderDescriptionWithTagsAndMentions } from '../../utils/description-renderer';
+import {
+  renderDescriptionWithTagsAndMentions,
+  extractMentionUserIds,
+} from '../../utils/description-renderer';
 
 export default function PostDetailPage() {
   const router = useRouter();
@@ -19,6 +22,7 @@ export default function PostDetailPage() {
   const [error, setError] = useState('');
   const [forks, setForks] = useState<PostRow[]>([]);
   const [forksError, setForksError] = useState('');
+  const [mentionUserMap, setMentionUserMap] = useState<Map<string, string>>(new Map());
 
   const { user } = useSupabaseAuth();
 
@@ -84,6 +88,23 @@ export default function PostDetailPage() {
       // Attach tags for the main post.
       [rowWithCount] = (await enrichWithTags([rowWithCount])) as PostRow[];
 
+      // Fetch usernames for mentions in description
+      const mentionUserIds = extractMentionUserIds(rowWithCount.description ?? '');
+      if (mentionUserIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('id, username')
+          .in('id', mentionUserIds);
+
+        if (profiles) {
+          const userMap = new Map<string, string>();
+          for (const p of profiles) {
+            userMap.set(p.id, p.username);
+          }
+          setMentionUserMap(userMap);
+        }
+      }
+
       setPosts([rowWithCount]);
 
       // Load published forks of this post
@@ -145,7 +166,7 @@ export default function PostDetailPage() {
 
             {posts[0]?.description && (
               <p className="post-description-detail">
-                {renderDescriptionWithTagsAndMentions(posts[0].description)}
+                {renderDescriptionWithTagsAndMentions(posts[0].description, mentionUserMap)}
               </p>
             )}
 

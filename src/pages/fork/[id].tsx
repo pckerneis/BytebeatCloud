@@ -9,6 +9,7 @@ import Head from 'next/head';
 import { ModeOption, DEFAULT_SAMPLE_RATE } from '../../model/expression';
 import { validateExpression } from '../../utils/expression-validator';
 import { useExpressionPlayer } from '../../hooks/useExpressionPlayer';
+import { convertMentionsToIds, convertMentionsToUsernames } from '../../utils/mentions';
 
 export default function ForkPostPage() {
   const router = useRouter();
@@ -98,8 +99,11 @@ export default function ForkPostPage() {
       setOriginalTitle(baseTitle);
       setOriginalAuthor((data as any).profiles?.username ?? null);
 
+      // Convert @[userId] mentions back to @username for editing
+      const { text: displayDescription } = await convertMentionsToUsernames(data.description ?? '');
+
       setTitle(baseTitle ?? '');
-      setDescription(data.description ?? '');
+      setDescription(displayDescription);
       setExpression(data.expression ?? '');
       setIsDraft(Boolean(data.is_draft));
       setMode(data.mode);
@@ -138,12 +142,15 @@ export default function ForkPostPage() {
     setSaveStatus('saving');
     setSaveError('');
 
+    // Convert @username mentions to @[userId] format for storage
+    const storedDescription = await convertMentionsToIds(trimmedDescription || '');
+
     const { data, error } = await supabase
       .from('posts')
       .insert({
         profile_id: (user as any).id,
         title: trimmedTitle,
-        description: trimmedDescription || '',
+        description: storedDescription,
         expression: trimmedExpr,
         is_draft: isDraft,
         sample_rate: sampleRate,

@@ -9,6 +9,7 @@ import Head from 'next/head';
 import { ModeOption, DEFAULT_SAMPLE_RATE } from '../../model/expression';
 import { validateExpression } from '../../utils/expression-validator';
 import { useExpressionPlayer } from '../../hooks/useExpressionPlayer';
+import { convertMentionsToIds, convertMentionsToUsernames } from '../../utils/mentions';
 
 export default function EditPostPage() {
   const router = useRouter();
@@ -101,8 +102,11 @@ export default function EditPostPage() {
         return;
       }
 
+      // Convert @[userId] mentions back to @username for editing
+      const { text: displayDescription } = await convertMentionsToUsernames(data.description ?? '');
+
       setTitle(data.title ?? '');
-      setDescription(data.description ?? '');
+      setDescription(displayDescription);
       setExpression(data.expression ?? '');
       setIsDraft(Boolean(data.is_draft));
       setMode(data.mode);
@@ -141,11 +145,14 @@ export default function EditPostPage() {
     setSaveStatus('saving');
     setSaveError('');
 
+    // Convert @username mentions to @[userId] format for storage
+    const storedDescription = await convertMentionsToIds(trimmedDescription || '');
+
     const { error } = await supabase
       .from('posts')
       .update({
         title: trimmedTitle,
-        description: trimmedDescription || '',
+        description: storedDescription,
         expression: trimmedExpr,
         is_draft: isDraft,
         sample_rate: sampleRate,

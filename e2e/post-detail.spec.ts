@@ -123,13 +123,13 @@ test.describe('Post detail page - viewing', () => {
     // Create another user to mention
     await ensureTestUserProfile(OTHER_USER_EMAIL, OTHER_USERNAME);
 
-    // Create a post with a mention
+    // Create a post with a mention (stored format uses @[userId])
     const { data: mentionPost } = await supabaseAdmin
       .from('posts')
       .insert({
         profile_id: testUserId,
         title: 'Post With Mention',
-        description: `Check out @${OTHER_USERNAME} for more!`,
+        description: `Check out @[${otherUserId}] for more!`,
         expression: 't',
         is_draft: false,
         sample_rate: 8000,
@@ -142,7 +142,7 @@ test.describe('Post detail page - viewing', () => {
 
     await expect(page.getByText('Loading…')).toHaveCount(0, { timeout: 10000 });
 
-    // Verify mention is a clickable link
+    // Verify mention is rendered with username and is a clickable link
     const description = page.locator('.post-description-detail');
     const mentionLink = description.getByRole('link', { name: `@${OTHER_USERNAME}` });
     await expect(mentionLink).toBeVisible();
