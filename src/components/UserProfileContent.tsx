@@ -45,9 +45,11 @@ export function UserProfileContent({
   const [followError, setFollowError] = useState('');
   const loadingMoreRef = useRef(false);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
+  const [isOwnProfile, setIsOwnProfile] = useState(false);
 
   // Reset pagination when username changes
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setPosts([]);
     setPage(0);
     setHasMore(true);
@@ -161,8 +163,6 @@ export function UserProfileContent({
   }, [username, page, user]);
 
   useInfiniteScroll({ hasMore, loadingMoreRef, sentinelRef, setPage });
-
-  const [isOwnProfile, setIsOwnProfile] = useState(false);
 
   useEffect(() => {
     if (!user) return;

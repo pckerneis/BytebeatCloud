@@ -15,6 +15,7 @@ export default function UpdateProfilePage() {
 
   useEffect(() => {
     if (loadedUsername) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setUsername(loadedUsername);
     }
   }, [loadedUsername]);

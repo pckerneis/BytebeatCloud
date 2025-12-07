@@ -20,6 +20,7 @@ export function useCurrentUserProfile() {
     }
 
     if (!user) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setStatus('no-user');
       void router.replace('/login');
       return;

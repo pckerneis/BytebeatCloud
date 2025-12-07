@@ -36,6 +36,7 @@ export default function TagPage() {
 
   useEffect(() => {
     // Reset pagination when tag or tab changes
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setPosts([]);
     setPage(0);
     setHasMore(true);

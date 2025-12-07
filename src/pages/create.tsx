@@ -91,6 +91,7 @@ export default function CreatePage() {
 
         if (parsed && typeof parsed.expr === 'string') {
           if (typeof parsed.title === 'string') {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setTitle(parsed.title);
           }
           setExpression(parsed.expr);

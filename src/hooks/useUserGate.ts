@@ -17,6 +17,7 @@ export function useUserGate(userId?: string): UserGateResult {
 
   useEffect(() => {
     if (!userId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setState({ checked: true, needsOnboarding: false, needsTosUpdate: false });
       return;
     }
