@@ -2,22 +2,12 @@ import { useEffect, useState } from 'react';
 import type { Session, AuthChangeEvent } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabaseClient';
 
-const devFakeAuth = process.env.NEXT_PUBLIC_DEV_FAKE_AUTH === '1';
-const devFakeEmail = process.env.NEXT_PUBLIC_DEV_FAKE_USER_EMAIL;
-
 export function useSupabaseAuth() {
   const [session, setSession] = useState<Session | null>(null);
-  const [loading, setLoading] = useState(!devFakeAuth);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let isMounted = true;
-
-    if (devFakeAuth) {
-      setLoading(false);
-      return () => {
-        isMounted = false;
-      };
-    }
 
     const init = async () => {
       const { data } = await supabase.auth.getSession();
@@ -47,10 +37,7 @@ export function useSupabaseAuth() {
     };
   }, []);
 
-  const fakeUser =
-    devFakeAuth && devFakeEmail ? ({ email: devFakeEmail } as unknown as Session['user']) : null;
-
-  const user = fakeUser ?? session?.user ?? null;
+  const user = session?.user ?? null;
 
   return { session, user, loading };
 }
