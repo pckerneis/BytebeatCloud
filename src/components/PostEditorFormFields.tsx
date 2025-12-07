@@ -27,8 +27,6 @@ interface PostEditorFormFieldsProps {
   saveStatus: 'idle' | 'saving' | 'success';
   saveError: string;
 
-  submitLabel: string;
-
   showDeleteButton?: boolean;
   onDeleteClick?: () => void;
 
@@ -63,7 +61,6 @@ export function PostEditorFormFields(props: PostEditorFormFieldsProps) {
     lastError,
     saveStatus,
     saveError,
-    submitLabel,
     showDeleteButton,
     onDeleteClick,
     showActions,
@@ -196,6 +193,18 @@ export function PostEditorFormFields(props: PostEditorFormFieldsProps) {
           placeholder="Add an optional description"
           rows={3}
         />
+        <details className="syntax-helper">
+          <summary>Formatting tips</summary>
+          <ul>
+            <li>
+              <strong>#tags</strong> — add hashtags like <code>#chiptune</code> or{' '}
+              <code>#ambient</code>
+            </li>
+            <li>
+              <strong>@mentions</strong> — mention users like <code>@username</code>
+            </li>
+          </ul>
+        </details>
       </label>
 
       <div className="chips">
@@ -285,7 +294,7 @@ export function PostEditorFormFields(props: PostEditorFormFieldsProps) {
             )}
 
             <button type="submit" className="button primary" disabled={!canSubmit}>
-              {submitLabel}
+              {saveStatus === 'saving' ? 'Saving…' : 'Save'}
             </button>
           </div>
         </div>
@@ -304,7 +313,7 @@ export function PostEditorFormFields(props: PostEditorFormFieldsProps) {
 
       {saveError && <p className="error-message">{saveError}</p>}
       {saveStatus === 'success' && !saveError && (
-        <p className="counter">Post {submitLabel.toLowerCase()}.</p>
+        <p className="counter">{isFork ? 'Fork saved.' : 'Post saved.'}</p>
       )}
       {sampleRateModalOpen && (
         <div

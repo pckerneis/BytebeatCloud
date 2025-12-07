@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
 import { PostList, type PostRow } from '../components/PostList';
@@ -8,6 +8,10 @@ import { enrichWithViewerFavorites } from '../utils/favorites';
 import { enrichWithTags } from '../utils/tags';
 import Link from 'next/link';
 import { validateExpression } from '../utils/expression-validator';
+import { useTabState } from '../hooks/useTabState';
+
+const tabs = ['feed', 'recent', 'trending'] as const;
+type TabName = (typeof tabs)[number];
 
 export default function ExplorePage() {
   const { user } = useSupabaseAuth();
@@ -19,7 +23,15 @@ export default function ExplorePage() {
   const loadingMoreRef = useRef(false);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
 
-  const [activeTab, setActiveTab] = useState<'feed' | 'recent' | 'trending'>('feed');
+  const resetPagination = useCallback(() => {
+    setPosts([]);
+    setPage(0);
+    setHasMore(true);
+    setError('');
+    loadingMoreRef.current = false;
+  }, []);
+
+  const [activeTab, setActiveTab] = useTabState(tabs, 'feed', { onTabChange: resetPagination });
 
   useEffect(() => {
     let cancelled = false;
@@ -114,14 +126,8 @@ export default function ExplorePage() {
 
   useInfiniteScroll({ hasMore, loadingMoreRef, sentinelRef, setPage });
 
-  const handleTabClick = (tab: 'feed' | 'recent' | 'trending') => {
-    if (tab === activeTab) return;
+  const handleTabClick = (tab: TabName) => {
     setActiveTab(tab);
-    setPage(0);
-    setPosts([]);
-    setHasMore(true);
-    setError('');
-    loadingMoreRef.current = false;
   };
 
   return (
@@ -161,7 +167,7 @@ export default function ExplorePage() {
         {!loading && !error && posts.length > 0 && (
           <PostList posts={posts} currentUserId={user ? (user as any).id : undefined} />
         )}
-        <div ref={sentinelRef} style={{ height: 1 }} />
+        <div ref={sentinelRef} style={{ height: 1 }} data-testid="scroll-sentinel" />
         {hasMore && !loading && posts.length > 0 && <p className="text-centered">Loading more…</p>}
 
         {!hasMore && !loading && posts.length > 0 && (

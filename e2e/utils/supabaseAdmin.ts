@@ -6,7 +6,6 @@ const url =
 const serviceRoleKey = process.env.E2E_SUPABASE_SERVICE_ROLE_KEY;
 
 if (!serviceRoleKey) {
-  // eslint-disable-next-line no-console
   console.warn(
     '[e2e] E2E_SUPABASE_SERVICE_ROLE_KEY is not set. Admin helpers will not work properly.',
   );
@@ -65,4 +64,48 @@ export async function ensureTestUser(params: { email: string; password?: string 
 
   // Fall back to creating if not found or listing failed.
   return createTestUser({ email, password });
+}
+
+export async function ensureTestUserProfile(email: string, username: string) {
+  // Find the user by email
+  const { data: list, error: listError } = await supabaseAdmin.auth.admin.listUsers({
+    page: 1,
+    perPage: 1000,
+  });
+
+  if (listError) {
+    throw new Error(`[e2e] Failed to list users: ${listError.message}`);
+  }
+
+  const user = list.users.find((u) => u.email === email);
+  if (!user) {
+    throw new Error(`[e2e] User with email ${email} not found`);
+  }
+
+  // Upsert profile with username
+  const { error } = await supabaseAdmin.from('profiles').upsert(
+    {
+      id: user.id,
+      username,
+      tos_version: '2025-11-30-v1',
+      tos_accepted_at: new Date().toISOString(),
+    },
+    { onConflict: 'id' },
+  );
+
+  if (error) {
+    throw new Error(`[e2e] Failed to create profile: ${error.message}`);
+  }
+}
+
+/**
+ * Wait for tags to be indexed by the database trigger after inserting a post.
+ * The trigger runs synchronously but there can be transaction visibility delays.
+ */
+export async function waitForTagsIndexed(postId: string, expectedCount: number, maxAttempts = 20) {
+  for (let i = 0; i < maxAttempts; i++) {
+    const { data } = await supabaseAdmin.from('post_tags').select('tag_id').eq('post_id', postId);
+    if (data && data.length >= expectedCount) return;
+    await new Promise((r) => setTimeout(r, 100));
+  }
 }

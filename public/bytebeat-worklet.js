@@ -155,7 +155,7 @@ return Number((${expression})) || 0;
             lastRaw = fn(t, this._targetRate) | 0;
           }
 
-          const byteValue = this._mode === 'uint8' ? (lastRaw & 0xff) : ((lastRaw + 128) & 0xff);
+          const byteValue = this._mode === 'uint8' ? lastRaw & 0xff : (lastRaw + 128) & 0xff;
           const sample = (byteValue - 128) / 128;
           channel[i] = sample;
           this._levelSumSquares += sample * sample;

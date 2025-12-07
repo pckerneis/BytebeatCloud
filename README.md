@@ -102,6 +102,22 @@ npm run dev
 
 ## Test locally
 
+### Unit tests
+
+Install dependencies
+
+```bash
+npm install
+```
+
+Run unit tests:
+
+```bash
+npm run test:unit
+```
+
+### E2E tests
+
 Install dependencies and browsers:
 
 ```bash

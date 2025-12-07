@@ -15,6 +15,7 @@ import {
 import { validateExpression } from '../utils/expression-validator';
 import { useExpressionPlayer } from '../hooks/useExpressionPlayer';
 import { PostMetadataModel } from '../model/postEditor';
+import { convertMentionsToIds } from '../utils/mentions';
 
 const CREATE_DRAFT_STORAGE_KEY = 'bytebeat-cloud-create-draft-v1';
 
@@ -91,6 +92,7 @@ export default function CreatePage() {
 
         if (parsed && typeof parsed.expr === 'string') {
           if (typeof parsed.title === 'string') {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setTitle(parsed.title);
           }
           setExpression(parsed.expr);
@@ -183,12 +185,15 @@ export default function CreatePage() {
     setSaveStatus('saving');
     setSaveError('');
 
+    // Convert @username mentions to @[userId] format for storage
+    const storedDescription = await convertMentionsToIds(trimmedDescription ?? '');
+
     const { data, error } = await supabase
       .from('posts')
       .insert({
         profile_id: (user as any).id,
         title: trimmedTitle,
-        description: trimmedDescription || null,
+        description: storedDescription,
         expression: trimmedExpr,
         is_draft: isDraft,
         sample_rate: sampleRate,
@@ -252,7 +257,6 @@ export default function CreatePage() {
             lastError={lastError || null}
             saveStatus={saveStatus}
             saveError={saveError}
-            submitLabel={saveStatus === 'saving' ? 'Saving…' : 'Save'}
             showActions={!!user}
             isFork={false}
             liveUpdateEnabled={liveUpdateEnabled}

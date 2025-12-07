@@ -21,6 +21,7 @@ let globalGainNode: GainNode | null = null;
 let analyserNode: AnalyserNode | null = null;
 let analyserData: Float32Array | null = null;
 let analyserTimerId: number | null = null;
+let analyserTapGain: GainNode | null = null;
 
 const ANALYSER_INTERVAL = 80;
 
@@ -81,7 +82,8 @@ async function ensureContextAndNodeBase() {
     const basePath = process.env.NEXT_PUBLIC_BASE_PATH
       ? `/${process.env.NEXT_PUBLIC_BASE_PATH}`
       : '';
-    await ctx.audioWorklet.addModule(`${basePath}/bytebeat-worklet.js`);
+    const version = process.env.NEXT_PUBLIC_APP_VERSION ?? new Date().getTime().toString();
+    await ctx.audioWorklet.addModule(`${basePath}/bytebeat-worklet.js?v=${version}`);
     audioContext = ctx;
   }
 
@@ -97,10 +99,19 @@ async function ensureContextAndNodeBase() {
 
   if (!analyserNode && audioContext && workletNode) {
     const analyser = audioContext.createAnalyser();
-    analyser.fftSize = 256;
+    analyser.fftSize = 1024;
+    analyser.smoothingTimeConstant = 0.8;
     analyserNode = analyser;
     analyserData = new Float32Array(analyser.fftSize);
     workletNode.connect(analyserNode);
+
+    if (!analyserTapGain) {
+      const tap = audioContext.createGain();
+      tap.gain.value = 0;
+      analyserTapGain = tap;
+      analyserNode.connect(analyserTapGain);
+      analyserTapGain.connect(audioContext.destination);
+    }
 
     const updateWaveform = () => {
       if (!analyserNode || !analyserData || !globalIsPlaying) {
@@ -247,10 +258,28 @@ export function useBytebeatPlayer(options?: { enableVisualizer?: boolean }): Byt
             }
             workletConnected = true;
           }
+          // Ensure analyser branch is connected each time we start, because stop() calls node.disconnect()
+          if (analyserNode) {
+            try {
+              node.connect(analyserNode);
+            } catch {
+              // ignore if already connected
+            }
+            if (!analyserTapGain) {
+              try {
+                const tap = ctx.createGain();
+                tap.gain.value = 0;
+                analyserTapGain = tap;
+                analyserNode.connect(analyserTapGain);
+                analyserTapGain.connect(ctx.destination);
+              } catch {
+                // ignore
+              }
+            }
+          }
           // Pre-validate expression by attempting to construct a Function on the main thread.
           // This prevents starting playback when there is a compile error.
           try {
-            // eslint-disable-next-line no-new-func
             // We only care that this compiles; the worklet does the actual evaluation.
             void new Function('t', String(expression));
           } catch (e) {
@@ -295,7 +324,6 @@ export function useBytebeatPlayer(options?: { enableVisualizer?: boolean }): Byt
 
       // Pre-validate expression similarly to toggle, but without touching playback state.
       try {
-        // eslint-disable-next-line no-new-func
         void new Function('t', String(expression));
       } catch (e) {
         setLastError(String((e as Error).message || e));

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
 import { supabase } from '../../lib/supabaseClient';
@@ -8,6 +8,10 @@ import { useInfiniteScroll } from '../../hooks/useInfiniteScroll';
 import { enrichWithViewerFavorites } from '../../utils/favorites';
 import { enrichWithTags } from '../../utils/tags';
 import { validateExpression } from '../../utils/expression-validator';
+import { useTabState } from '../../hooks/useTabState';
+
+const tabs = ['recent', 'trending'] as const;
+type TabName = (typeof tabs)[number];
 
 export default function TagPage() {
   const router = useRouter();
@@ -24,14 +28,19 @@ export default function TagPage() {
   const loadingMoreRef = useRef(false);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
 
-  const [activeTab, setActiveTab] = useState<'recent' | 'trending'>('recent');
-
-  useEffect(() => {
-    // Reset pagination when tag or tab changes
+  const resetPagination = useCallback(() => {
     setPosts([]);
     setPage(0);
     setHasMore(true);
-  }, [tag, activeTab]);
+  }, []);
+
+  const [activeTab, setActiveTab] = useTabState(tabs, 'recent', { onTabChange: resetPagination });
+
+  // Reset pagination when tag changes
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    resetPagination();
+  }, [tag, resetPagination]);
 
   useEffect(() => {
     if (!tag || typeof tag !== 'string') return;
@@ -61,7 +70,7 @@ export default function TagPage() {
       if (cancelled) return;
 
       if (tagError || !tagRow) {
-        setError('Tag not found.');
+        setError('No posts found for this tag.');
         if (page === 0) setPosts([]);
         setHasMore(false);
         loadingMoreRef.current = false;
@@ -162,8 +171,7 @@ export default function TagPage() {
 
   useInfiniteScroll({ hasMore, loadingMoreRef, sentinelRef, setPage });
 
-  const handleTabClick = (tab: 'recent' | 'trending') => {
-    if (tab === activeTab) return;
+  const handleTabClick = (tab: TabName) => {
     setActiveTab(tab);
   };
 
@@ -203,7 +211,7 @@ export default function TagPage() {
           <PostList posts={posts} currentUserId={user ? ((user as any).id as string) : undefined} />
         )}
 
-        <div ref={sentinelRef} style={{ height: 1 }} />
+        <div ref={sentinelRef} style={{ height: 1 }} data-testid="scroll-sentinel" />
         {hasMore && !loading && posts.length > 0 && <p className="text-centered">Loading more…</p>}
 
         {!hasMore && !loading && posts.length > 0 && (

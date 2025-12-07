@@ -33,7 +33,6 @@ export default function OnboardingPage() {
         .maybeSingle();
 
       if (fetchError) {
-        // eslint-disable-next-line no-console
         console.warn('Error fetching profile', fetchError.message);
         return;
       }
@@ -83,6 +82,10 @@ export default function OnboardingPage() {
       }
       setStatus('idle');
       return;
+    }
+
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('user:profile-updated'));
     }
 
     void router.replace('/');

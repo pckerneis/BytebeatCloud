@@ -39,7 +39,7 @@ self.addEventListener('fetch', (event) => {
   const isStaticAsset =
     url.pathname.startsWith('/_next/') ||
     url.pathname.startsWith('/icons/') ||
-    url.pathname === '/bytebeat-worklet.js' ||
+    url.pathname.endsWith('/bytebeat-worklet.js') ||
     url.pathname.startsWith('/fonts/');
 
   // Network-first for HTML/navigation requests: always try to get fresh UI, fallback to cache.

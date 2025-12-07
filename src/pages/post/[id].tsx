@@ -8,6 +8,10 @@ import Head from 'next/head';
 import { enrichWithViewerFavorites } from '../../utils/favorites';
 import { enrichWithTags } from '../../utils/tags';
 import { validateExpression } from '../../utils/expression-validator';
+import {
+  renderDescriptionWithTagsAndMentions,
+  extractMentionUserIds,
+} from '../../utils/description-renderer';
 
 export default function PostDetailPage() {
   const router = useRouter();
@@ -18,51 +22,9 @@ export default function PostDetailPage() {
   const [error, setError] = useState('');
   const [forks, setForks] = useState<PostRow[]>([]);
   const [forksError, setForksError] = useState('');
+  const [mentionUserMap, setMentionUserMap] = useState<Map<string, string>>(new Map());
 
   const { user } = useSupabaseAuth();
-
-  const renderDescriptionWithTags = (description: string) => {
-    const nodes: JSX.Element[] = [];
-    // Match #tags where:
-    // - the # is NOT immediately preceded by another tag character, so
-    //   sequences like "#one#two" only yield "#one"; and
-    // - the tag body is 1–30 valid chars and is NOT followed by another
-    //   valid tag char, so overlong sequences are ignored.
-    const regex = /(?<![A-Za-z0-9_-])#([A-Za-z0-9_-]{1,30})(?![A-Za-z0-9_-])/g;
-    let lastIndex = 0;
-    let match: RegExpExecArray | null;
-    let i = 0;
-
-    while ((match = regex.exec(description)) !== null) {
-      const fullMatch = match[0]; // e.g. "#Tag"
-      const tagName = match[1];
-      const start = match.index;
-
-      // Add any plain text before this tag.
-      if (start > lastIndex) {
-        nodes.push(<span key={`text-${i}`}>{description.slice(lastIndex, start)}</span>);
-        i += 1;
-      }
-
-      const normalized = tagName.toLowerCase();
-
-      nodes.push(
-        <Link key={`tag-${i}`} href={`/tags/${normalized}`} className="tag-link">
-          #{tagName}
-        </Link>,
-      );
-      i += 1;
-
-      lastIndex = start + fullMatch.length;
-    }
-
-    // Trailing text after the last tag.
-    if (lastIndex < description.length) {
-      nodes.push(<span key={`text-${i}`}>{description.slice(lastIndex)}</span>);
-    }
-
-    return nodes;
-  };
 
   useEffect(() => {
     if (!id || typeof id !== 'string') return;
@@ -87,7 +49,6 @@ export default function PostDetailPage() {
       if (cancelled) return;
 
       if (error) {
-        // eslint-disable-next-line no-console
         console.warn('Error loading post', error.message);
         setError('Unable to load post.');
         setLoading(false);
@@ -127,6 +88,23 @@ export default function PostDetailPage() {
       // Attach tags for the main post.
       [rowWithCount] = (await enrichWithTags([rowWithCount])) as PostRow[];
 
+      // Fetch usernames for mentions in description
+      const mentionUserIds = extractMentionUserIds(rowWithCount.description ?? '');
+      if (mentionUserIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('id, username')
+          .in('id', mentionUserIds);
+
+        if (profiles) {
+          const userMap = new Map<string, string>();
+          for (const p of profiles) {
+            userMap.set(p.id, p.username);
+          }
+          setMentionUserMap(userMap);
+        }
+      }
+
       setPosts([rowWithCount]);
 
       // Load published forks of this post
@@ -140,7 +118,6 @@ export default function PostDetailPage() {
         .order('created_at', { ascending: false });
 
       if (forkError) {
-        // eslint-disable-next-line no-console
         console.warn('Error loading forks for post', forkError.message);
         setForksError('Unable to load forks.');
       } else {
@@ -189,7 +166,7 @@ export default function PostDetailPage() {
 
             {posts[0]?.description && (
               <p className="post-description-detail">
-                {renderDescriptionWithTags(posts[0].description)}
+                {renderDescriptionWithTagsAndMentions(posts[0].description, mentionUserMap)}
               </p>
             )}
 
