@@ -69,7 +69,7 @@ export default function TagPage() {
       if (cancelled) return;
 
       if (tagError || !tagRow) {
-        setError('Tag not found.');
+        setError('No posts found for this tag.');
         if (page === 0) setPosts([]);
         setHasMore(false);
         loadingMoreRef.current = false;
