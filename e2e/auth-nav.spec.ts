@@ -102,7 +102,9 @@ test('redirection to onboarding for user without username', async ({ page }) => 
   await page.waitForURL('/');
 
   // Navigate to profile to check is authenticated
-  await expect(nav.getByRole('link', { name: 'Profile' })).toHaveAttribute('href', '/onboarding', { timeout: 10000 });
+  await expect(nav.getByRole('link', { name: 'Profile' })).toHaveAttribute('href', '/onboarding', {
+    timeout: 10000,
+  });
   await nav.getByRole('link', { name: 'Profile' }).click();
   await page.waitForURL('/profile');
   await expect(page.getByRole('heading', { name: '@foo_bar-0.1' })).toBeVisible();
