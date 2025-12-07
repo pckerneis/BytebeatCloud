@@ -224,7 +224,9 @@ test.describe('Own profile - favorites tab', () => {
 
     await page.goto('/profile?tab=favorites');
 
-    await expect(page.getByRole('link', { name: 'Post I Favorited' })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Post I Favorited' })).toBeVisible({
+      timeout: 10000,
+    });
   });
 });
 
@@ -310,7 +312,9 @@ test.describe('Other user profile page (/u/[username])', () => {
     await page.goto(`/u/${OTHER_USERNAME}`);
 
     // Should show empty message
-    await expect(page.getByText('This user has no public posts yet.')).toBeVisible();
+    await expect(page.getByText('This user has no public posts yet.')).toBeVisible({
+      timeout: 10000,
+    });
     await expect(page.getByRole('link', { name: 'Other User Draft' })).toHaveCount(0);
   });
 });

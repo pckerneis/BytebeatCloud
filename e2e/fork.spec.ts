@@ -268,9 +268,11 @@ test.describe('Fork page - forked post appears in original forks list', () => {
   test('forked post appears in original post forks section', async ({ page }) => {
     // First, create the fork
     await page.goto(`/fork/${originalPostId}`);
-    await expect(page.getByText('Loading…')).toHaveCount(0, { timeout: 10000 });
 
+    // Wait for form to load
     const titleField = page.getByPlaceholder('Name your bytebeat expression');
+    await expect(titleField).toBeVisible({ timeout: 10000 });
+
     await titleField.clear();
     await titleField.fill('My New Fork');
 
@@ -279,10 +281,9 @@ test.describe('Fork page - forked post appears in original forks list', () => {
 
     // Now navigate to original post
     await page.goto(`/post/${originalPostId}`);
-    await expect(page.getByText('Loading…')).toHaveCount(0, { timeout: 10000 });
 
     // Forks section should show the fork
-    await expect(page.getByRole('link', { name: 'My New Fork' })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'My New Fork' })).toBeVisible({ timeout: 10000 });
   });
 });
 

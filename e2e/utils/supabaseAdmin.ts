@@ -97,3 +97,15 @@ export async function ensureTestUserProfile(email: string, username: string) {
     throw new Error(`[e2e] Failed to create profile: ${error.message}`);
   }
 }
+
+/**
+ * Wait for tags to be indexed by the database trigger after inserting a post.
+ * The trigger runs synchronously but there can be transaction visibility delays.
+ */
+export async function waitForTagsIndexed(postId: string, expectedCount: number, maxAttempts = 20) {
+  for (let i = 0; i < maxAttempts; i++) {
+    const { data } = await supabaseAdmin.from('post_tags').select('tag_id').eq('post_id', postId);
+    if (data && data.length >= expectedCount) return;
+    await new Promise((r) => setTimeout(r, 100));
+  }
+}

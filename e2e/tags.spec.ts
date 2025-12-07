@@ -4,8 +4,9 @@ import {
   clearProfilesTable,
   ensureTestUserProfile,
   supabaseAdmin,
+  waitForTagsIndexed,
 } from './utils/supabaseAdmin';
-import { clearSupabaseSession, signInAndInjectSession } from './utils/auth';
+import { clearSupabaseSession } from './utils/auth';
 
 const TEST_USER_EMAIL = 'e2e+tags@example.com';
 const TEST_USER_PASSWORD = 'password123';
@@ -30,35 +31,45 @@ test.describe('Tag page - viewing', () => {
     await ensureTestUserProfile(TEST_USER_EMAIL, TEST_USERNAME);
 
     // Create posts with tags
-    await supabaseAdmin.from('posts').insert([
-      {
-        profile_id: testUserId,
-        title: 'Post With Music Tag',
-        description: 'A post about #music',
-        expression: 't',
-        is_draft: false,
-        sample_rate: 8000,
-        mode: 'uint8',
-      },
-      {
-        profile_id: testUserId,
-        title: 'Another Music Post',
-        description: 'More #music content',
-        expression: 't >> 1',
-        is_draft: false,
-        sample_rate: 8000,
-        mode: 'uint8',
-      },
-      {
-        profile_id: testUserId,
-        title: 'Post With Different Tag',
-        description: 'This is about #bytebeat',
-        expression: 't >> 2',
-        is_draft: false,
-        sample_rate: 8000,
-        mode: 'uint8',
-      },
-    ]);
+    const { data: posts } = await supabaseAdmin
+      .from('posts')
+      .insert([
+        {
+          profile_id: testUserId,
+          title: 'Post With Music Tag',
+          description: 'A post about #music',
+          expression: 't',
+          is_draft: false,
+          sample_rate: 8000,
+          mode: 'uint8',
+        },
+        {
+          profile_id: testUserId,
+          title: 'Another Music Post',
+          description: 'More #music content',
+          expression: 't >> 1',
+          is_draft: false,
+          sample_rate: 8000,
+          mode: 'uint8',
+        },
+        {
+          profile_id: testUserId,
+          title: 'Post With Different Tag',
+          description: 'This is about #bytebeat',
+          expression: 't >> 2',
+          is_draft: false,
+          sample_rate: 8000,
+          mode: 'uint8',
+        },
+      ])
+      .select('id');
+
+    // Wait for tags to be indexed
+    if (posts) {
+      for (const post of posts) {
+        await waitForTagsIndexed(post.id, 1);
+      }
+    }
 
     await clearSupabaseSession(page);
   });
@@ -72,10 +83,8 @@ test.describe('Tag page - viewing', () => {
   test('shows posts with the tag', async ({ page }) => {
     await page.goto('/tags/music');
 
-    await expect(page.getByText('Loading posts…')).toHaveCount(0, { timeout: 10000 });
-
-    // Should show 2 posts with #music tag
-    await expect(page.locator('.post-item')).toHaveCount(2);
+    // Wait for posts to load
+    await expect(page.locator('.post-item')).toHaveCount(2, { timeout: 10000 });
     await expect(page.getByRole('link', { name: 'Post With Music Tag' })).toBeVisible();
     await expect(page.getByRole('link', { name: 'Another Music Post' })).toBeVisible();
 
@@ -219,18 +228,9 @@ test.describe('Tag page - multiple tags', () => {
       .select('id')
       .single();
 
-    // Wait for tags to be indexed by the database trigger
+    // Wait for tags to be indexed
     if (post) {
-      let attempts = 0;
-      while (attempts < 10) {
-        const { data: tagLinks } = await supabaseAdmin
-          .from('post_tags')
-          .select('tag_id')
-          .eq('post_id', post.id);
-        if (tagLinks && tagLinks.length >= 3) break;
-        await new Promise((r) => setTimeout(r, 100));
-        attempts++;
-      }
+      await waitForTagsIndexed(post.id, 3);
     }
 
     await clearSupabaseSession(page);

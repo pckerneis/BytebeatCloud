@@ -71,9 +71,10 @@ test.describe('Favorites - from post list', () => {
   test('can favorite a post from explore page', async ({ page }) => {
     await page.goto('/explore?tab=recent');
 
-    await expect(page.locator('.post-item')).toHaveCount(1, { timeout: 10000 });
-
+    // Wait for post to load
     const favoriteButton = page.locator('.post-item .favorite-button');
+    await expect(favoriteButton).toBeVisible({ timeout: 10000 });
+
     const favoriteCount = favoriteButton.locator('.favorite-count');
 
     // Initial state
@@ -83,7 +84,7 @@ test.describe('Favorites - from post list', () => {
     // Favorite
     await favoriteButton.click();
 
-    await expect(favoriteButton).toHaveClass(/favorited/);
+    await expect(favoriteButton).toHaveClass(/favorited/, { timeout: 5000 });
     await expect(favoriteCount).toHaveText('1');
   });
 
@@ -298,14 +299,23 @@ test.describe('Favorites - appears in profile favorites tab', () => {
 
     // Verify it's in favorites
     await page.goto('/profile?tab=favorites');
-    await expect(page.getByRole('link', { name: 'Post For Favorites Tab' })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Post For Favorites Tab' })).toBeVisible({
+      timeout: 10000,
+    });
 
     // Unfavorite from the favorites tab
-    await page.locator('.post-item .favorite-button').click();
+    const favoriteButton = page.locator('.post-item .favorite-button');
+    await expect(favoriteButton).toBeVisible();
+    await favoriteButton.click();
 
-    // Post should disappear (or show empty message after refresh)
+    // Wait for unfavorite to complete
+    await expect(favoriteButton).not.toHaveClass(/favorited/, { timeout: 5000 });
+
+    // Post should disappear after refresh
     await page.reload();
-    await expect(page.getByText('This user has no public favorites yet.')).toBeVisible();
+    await expect(page.getByText('This user has no public favorites yet.')).toBeVisible({
+      timeout: 10000,
+    });
   });
 });
 

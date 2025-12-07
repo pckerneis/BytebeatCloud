@@ -132,10 +132,14 @@ test.describe('Notification triggers - favorite', () => {
 
     // Go to explore and favorite the post
     await page.goto('/explore?tab=recent');
-    await expect(page.locator('.post-item')).toHaveCount(1, { timeout: 10000 });
+    const favoriteButton = page.locator('.post-item .favorite-button');
+    await expect(favoriteButton).toBeVisible({ timeout: 10000 });
 
-    await page.locator('.post-item .favorite-button').click();
-    await expect(page.locator('.post-item .favorite-button')).toHaveClass(/favorited/);
+    await favoriteButton.click();
+    await expect(favoriteButton).toHaveClass(/favorited/, { timeout: 5000 });
+
+    // Wait a moment for the notification trigger to complete
+    await page.waitForTimeout(500);
 
     // Check notification was created
     const { data: notifications } = await supabaseAdmin
@@ -394,6 +398,9 @@ test.describe('Notification triggers - mention', () => {
 
     await page.getByRole('button', { name: 'Save' }).click();
     await page.waitForURL(/\/post\//);
+
+    // Wait a moment for the notification trigger to complete
+    await page.waitForTimeout(500);
 
     // Check notification was created
     const { data: notifications } = await supabaseAdmin

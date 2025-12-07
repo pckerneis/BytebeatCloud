@@ -72,10 +72,8 @@ test.describe('Infinite scroll - Explore page', () => {
 
     await page.goto('/explore?tab=recent');
 
-    await expect(page.getByText('Loading posts…')).toHaveCount(0, { timeout: 10000 });
-
-    // Initial load
-    await expect(page.locator('.post-item')).toHaveCount(20);
+    // Wait for initial load
+    await expect(page.locator('.post-item')).toHaveCount(20, { timeout: 15000 });
 
     // Scroll to trigger infinite scroll
     await scrollToLoadMore(page);

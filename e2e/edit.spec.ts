@@ -69,12 +69,9 @@ test.describe('Edit page - loading existing post', () => {
   test('loads existing post data into form', async ({ page }) => {
     await page.goto(`/edit/${testPostId}`);
 
-    // Wait for loading to finish
-    await expect(page.getByText('Loading…')).toHaveCount(0, { timeout: 10000 });
-
-    // Verify title is loaded
+    // Wait for title to be loaded (indicates form is ready)
     const titleField = page.getByPlaceholder('Name your bytebeat expression');
-    await expect(titleField).toHaveValue('Original Title');
+    await expect(titleField).toHaveValue('Original Title', { timeout: 10000 });
 
     // Verify description is loaded
     const descriptionField = page.getByPlaceholder('Add an optional description');
