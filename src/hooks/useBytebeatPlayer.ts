@@ -281,7 +281,6 @@ export function useBytebeatPlayer(options?: { enableVisualizer?: boolean }): Byt
           // Pre-validate expression by attempting to construct a Function on the main thread.
           // This prevents starting playback when there is a compile error.
           try {
-            // eslint-disable-next-line no-new-func
             // We only care that this compiles; the worklet does the actual evaluation.
             void new Function('t', String(expression));
           } catch (e) {
@@ -326,7 +325,6 @@ export function useBytebeatPlayer(options?: { enableVisualizer?: boolean }): Byt
 
       // Pre-validate expression similarly to toggle, but without touching playback state.
       try {
-        // eslint-disable-next-line no-new-func
         void new Function('t', String(expression));
       } catch (e) {
         setLastError(String((e as Error).message || e));

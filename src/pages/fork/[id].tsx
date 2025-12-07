@@ -82,7 +82,6 @@ export default function ForkPostPage() {
       if (cancelled) return;
 
       if (error) {
-        // eslint-disable-next-line no-console
         console.warn('Error loading post to fork', error.message);
         setSaveError('Unable to load post to fork.');
         setLoading(false);

@@ -86,7 +86,6 @@ export function UserProfileContent({
       if (cancelled) return;
 
       if (profileError || !profile) {
-        // eslint-disable-next-line no-console
         console.warn('Error loading profile for user posts', profileError?.message);
         setError('Unable to load posts.');
         if (page === 0) {
@@ -119,7 +118,7 @@ export function UserProfileContent({
       if (cancelled) return;
 
       if (error) {
-        // eslint-disable-next-line no-console
+         
         console.warn('Error loading user posts', error.message);
         setError('Unable to load posts.');
         if (page === 0) {
@@ -183,7 +182,6 @@ export function UserProfileContent({
       if (cancelled) return;
 
       if (error) {
-        // eslint-disable-next-line no-console
         console.warn('Error checking follow state', error.message);
         setIsFollowed(false);
         return;
@@ -222,7 +220,6 @@ export function UserProfileContent({
         .eq('followed_id', viewedProfileId);
 
       if (error) {
-        // eslint-disable-next-line no-console
         console.warn('Error unfollowing user', error.message);
         setFollowError('Unable to unfollow user.');
       } else {
@@ -235,7 +232,6 @@ export function UserProfileContent({
       });
 
       if (error) {
-        // eslint-disable-next-line no-console
         console.warn('Error following user', error.message);
         setFollowError('Unable to follow user.');
       } else {
@@ -282,7 +278,6 @@ export function UserProfileContent({
       if (cancelled) return;
 
       if (favError) {
-        // eslint-disable-next-line no-console
         console.warn('Error loading favorites', favError.message);
         setFavoritesError('Unable to load favorites.');
         setFavoritePosts([]);
@@ -310,7 +305,6 @@ export function UserProfileContent({
       if (cancelled) return;
 
       if (postsError) {
-        // eslint-disable-next-line no-console
         console.warn('Error loading favorite posts', postsError.message);
         setFavoritesError('Unable to load favorites.');
         setFavoritePosts([]);
@@ -382,7 +376,6 @@ export function UserProfileContent({
       if (cancelled) return;
 
       if (draftError) {
-        // eslint-disable-next-line no-console
         console.warn('Error loading drafts', draftError.message);
         setDraftsError('Unable to load drafts.');
         setDraftPosts([]);

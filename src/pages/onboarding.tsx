@@ -33,7 +33,6 @@ export default function OnboardingPage() {
         .maybeSingle();
 
       if (fetchError) {
-        // eslint-disable-next-line no-console
         console.warn('Error fetching profile', fetchError.message);
         return;
       }

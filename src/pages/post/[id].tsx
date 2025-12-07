@@ -87,7 +87,7 @@ export default function PostDetailPage() {
       if (cancelled) return;
 
       if (error) {
-        // eslint-disable-next-line no-console
+         
         console.warn('Error loading post', error.message);
         setError('Unable to load post.');
         setLoading(false);
@@ -140,7 +140,7 @@ export default function PostDetailPage() {
         .order('created_at', { ascending: false });
 
       if (forkError) {
-        // eslint-disable-next-line no-console
+         
         console.warn('Error loading forks for post', forkError.message);
         setForksError('Unable to load forks.');
       } else {

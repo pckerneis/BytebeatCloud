@@ -6,7 +6,6 @@ const url =
 const serviceRoleKey = process.env.E2E_SUPABASE_SERVICE_ROLE_KEY;
 
 if (!serviceRoleKey) {
-  // eslint-disable-next-line no-console
   console.warn(
     '[e2e] E2E_SUPABASE_SERVICE_ROLE_KEY is not set. Admin helpers will not work properly.',
   );

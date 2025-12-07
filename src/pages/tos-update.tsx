@@ -31,7 +31,6 @@ export default function TosUpdatePage() {
         .maybeSingle();
 
       if (fetchError) {
-        // eslint-disable-next-line no-console
         console.warn('Error loading profile for ToS update', fetchError.message);
         setError('Unable to load your profile.');
         return;

@@ -207,7 +207,6 @@ export default function FooterPlayer() {
         const { error } = await favoritePost(userId, currentPost.id);
 
         if (error) {
-          // eslint-disable-next-line no-console
           console.warn('Error favoriting post', error.message);
           return;
         }
@@ -219,7 +218,6 @@ export default function FooterPlayer() {
       const { error: deleteError } = await unfavoritePost(userId, currentPost.id);
 
       if (deleteError) {
-        // eslint-disable-next-line no-console
         console.warn('Error removing favorite', deleteError.message);
         return;
       }
