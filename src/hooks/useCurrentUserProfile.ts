@@ -1,12 +1,10 @@
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/router';
 import { supabase } from '../lib/supabaseClient';
 import { useSupabaseAuth } from './useSupabaseAuth';
 
 export type ProfileStatus = 'idle' | 'loading' | 'error' | 'no-user';
 
 export function useCurrentUserProfile() {
-  const router = useRouter();
   const { user, loading } = useSupabaseAuth();
 
   const [status, setStatus] = useState<ProfileStatus>('idle');
@@ -22,7 +20,6 @@ export function useCurrentUserProfile() {
     if (!user) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setStatus('no-user');
-      void router.replace('/login');
       return;
     }
 
@@ -54,7 +51,7 @@ export function useCurrentUserProfile() {
     return () => {
       cancelled = true;
     };
-  }, [user, loading, router]);
+  }, [user, loading]);
 
   return { user, loading, status, error, username };
 }
