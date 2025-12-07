@@ -146,7 +146,7 @@ test.describe('Edit page - saving changes', () => {
     await titleField.fill('Updated Title');
 
     // Save (public post redirects to detail page)
-    const saveButton = page.getByRole('button', { name: 'Changes saved' });
+    const saveButton = page.getByRole('button', { name: 'Save' });
     await saveButton.click();
 
     // Should redirect to post detail
@@ -166,7 +166,7 @@ test.describe('Edit page - saving changes', () => {
     await descriptionField.fill('New description added');
 
     // Save
-    const saveButton = page.getByRole('button', { name: 'Changes saved' });
+    const saveButton = page.getByRole('button', { name: 'Save' });
     await saveButton.click();
 
     // Should redirect to post detail
@@ -186,7 +186,7 @@ test.describe('Edit page - saving changes', () => {
     await expect(page.getByRole('button', { name: 'int8' })).toBeVisible();
 
     // Save
-    const saveButton = page.getByRole('button', { name: 'Changes saved' });
+    const saveButton = page.getByRole('button', { name: 'Save' });
     await saveButton.click();
 
     await page.waitForURL(/\/post\//);
@@ -204,13 +204,13 @@ test.describe('Edit page - saving changes', () => {
     await clearAndTypeInExpressionEditor(page, 't * 5');
 
     // Save
-    const saveButton = page.getByRole('button', { name: 'Changes saved' });
+    const saveButton = page.getByRole('button', { name: 'Save' });
     await saveButton.click();
 
     await page.waitForURL(/\/post\//);
 
     // Verify expression is updated
-    await expect(page.locator('.cm-content')).toContainText('t * 5');
+    await expect(page.locator('.cm-content')).toContainText('t*5');
   });
 
   test('saving as draft stays on edit page', async ({ page }) => {
@@ -223,12 +223,12 @@ test.describe('Edit page - saving changes', () => {
     await draftCheckbox.check();
 
     // Save
-    const saveButton = page.getByRole('button', { name: 'Changes saved' });
+    const saveButton = page.getByRole('button', { name: 'Save' });
     await saveButton.click();
 
     // Should stay on edit page and show success message
     await expect(page).toHaveURL(/\/edit\//);
-    await expect(page.getByText('Changes saved.')).toBeVisible();
+    await expect(page.getByText('Post saved.')).toBeVisible();
   });
 
   test('save button disabled with invalid expression', async ({ page }) => {
@@ -240,7 +240,7 @@ test.describe('Edit page - saving changes', () => {
     await clearAndTypeInExpressionEditor(page, 't +');
 
     // Save button should be disabled
-    const saveButton = page.getByRole('button', { name: 'Changes saved' });
+    const saveButton = page.getByRole('button', { name: 'Save' });
     await expect(saveButton).toBeDisabled();
   });
 });

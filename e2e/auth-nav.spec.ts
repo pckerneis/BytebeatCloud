@@ -56,9 +56,15 @@ test('redirection to onboarding for user without username', async ({ page }) => 
   const nav = page.getByRole('navigation');
 
   await expect(nav.getByRole('link', { name: 'Profile' })).toBeVisible();
-  await nav.getByRole('link', { name: 'Create' }).click();
 
-  // Wait for redirection to finish
+  // Wait for the gate check to complete - the Create link will point to /onboarding
+  // once the gate determines the user needs onboarding
+  const createLink = nav.getByRole('link', { name: 'Create' });
+  await expect(createLink).toHaveAttribute('href', '/onboarding', { timeout: 10000 });
+
+  await createLink.click();
+
+  // Wait for navigation to finish
   await page.waitForURL('/onboarding');
 
   const saveButton = page.getByRole('button', { name: 'Save username' });
@@ -96,6 +102,7 @@ test('redirection to onboarding for user without username', async ({ page }) => 
   await page.waitForURL('/');
 
   // Navigate to profile to check is authenticated
+  await expect(nav.getByRole('link', { name: 'Profile' })).toHaveAttribute('href', '/onboarding', { timeout: 10000 });
   await nav.getByRole('link', { name: 'Profile' }).click();
   await page.waitForURL('/profile');
   await expect(page.getByRole('heading', { name: '@foo_bar-0.1' })).toBeVisible();

@@ -211,7 +211,7 @@ test.describe('Create page - authenticated', () => {
     await typeInExpressionEditor(page, 't * 3');
 
     // Save
-    const saveButton = page.getByRole('button', { name: 'Post saved' });
+    const saveButton = page.getByRole('button', { name: 'Save' });
     await saveButton.click();
 
     // Should redirect to post detail page
