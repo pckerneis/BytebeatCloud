@@ -105,8 +105,8 @@ export default function Home() {
         <div className="home-footer">
           <div>
             <div>BytebeatCloud</div>
-            <div title={process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA ?? 'dev'}>
-              {shortenVersion(process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA) ?? 'dev'}
+            <div title={process.env.NEXT_PUBLIC_APP_VERSION ?? 'dev'}>
+              {shortenVersion(process.env.NEXT_PUBLIC_APP_VERSION) ?? 'dev'}
             </div>
           </div>
           <div>

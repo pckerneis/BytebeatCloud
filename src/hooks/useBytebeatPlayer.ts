@@ -83,7 +83,7 @@ async function ensureContextAndNodeBase() {
       ? `/${process.env.NEXT_PUBLIC_BASE_PATH}`
       : '';
     const version =
-      process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA ?? new Date().getTime().toString();
+      process.env.NEXT_PUBLIC_APP_VERSION ?? new Date().getTime().toString();
     await ctx.audioWorklet.addModule(`${basePath}/bytebeat-worklet.js?v=${version}`);
     audioContext = ctx;
   }
