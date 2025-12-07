@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabaseClient';
 /**
  * Stored format: @[userId] where userId is a UUID
  * Display format: @username
- * 
+ *
  * When saving, we convert @username to @[userId]
  * When rendering, we convert @[userId] back to @username
  */

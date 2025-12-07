@@ -225,7 +225,9 @@ test.describe('Create page - authenticated', () => {
     await expect(musicTags).toHaveCount(2);
 
     // Click on the tag in the description
-    const descriptionBytebeatTag = page.locator('.post-description-detail').getByRole('link', { name: '#bytebeat' });
+    const descriptionBytebeatTag = page
+      .locator('.post-description-detail')
+      .getByRole('link', { name: '#bytebeat' });
     await descriptionBytebeatTag.click();
     await page.waitForURL(/\/tags\/bytebeat/);
     await expect(page.getByRole('heading', { name: '#bytebeat' })).toBeVisible();

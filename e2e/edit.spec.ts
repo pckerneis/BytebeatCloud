@@ -26,10 +26,7 @@ async function typeInExpressionEditor(page: import('@playwright/test').Page, tex
 }
 
 // Helper to clear and type in CodeMirror editor
-async function clearAndTypeInExpressionEditor(
-  page: import('@playwright/test').Page,
-  text: string,
-) {
+async function clearAndTypeInExpressionEditor(page: import('@playwright/test').Page, text: string) {
   const editor = page.locator('.expression-input .cm-content');
   await editor.click();
   // Select all and delete

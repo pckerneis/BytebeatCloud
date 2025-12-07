@@ -242,7 +242,6 @@ async function typeInExpressionEditor(page: import('@playwright/test').Page, tex
 }
 
 test.describe('Notification triggers - fork', () => {
-
   test('forking a post creates a notification for the original author', async ({ page }) => {
     await ensureTestUserProfile(TEST_USER_EMAIL, TEST_USERNAME);
     await ensureTestUserProfile(OTHER_USER_EMAIL, OTHER_USERNAME);

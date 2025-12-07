@@ -15,7 +15,7 @@ interface Match {
  * Renders a description string with clickable #tags and @[userId] mentions.
  * - Tags link to /tags/{tagname}
  * - Mentions (stored as @[userId]) link to /u/{username}
- * 
+ *
  * @param description - The description text (with stored @[userId] format)
  * @param userMap - Map of userId -> username for resolving mentions
  */

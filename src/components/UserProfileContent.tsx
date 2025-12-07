@@ -15,10 +15,7 @@ const POST_SELECT_COLUMNS =
   'id,title,expression,is_draft,sample_rate,mode,created_at,profile_id,fork_of_post_id,is_fork,author_username,origin_title,origin_username,favorites_count';
 
 // Shared enrichment pipeline
-async function enrichPosts(
-  rows: PostRow[],
-  currentUserId?: string | null,
-): Promise<PostRow[]> {
+async function enrichPosts(rows: PostRow[], currentUserId?: string | null): Promise<PostRow[]> {
   if (currentUserId && rows.length > 0) {
     rows = (await enrichWithViewerFavorites(currentUserId, rows)) as PostRow[];
   }
@@ -335,8 +332,8 @@ const tabs = ['posts', 'drafts', 'favorites'] as const;
 type TabName = (typeof tabs)[number];
 
 export function UserProfileContent({
- profileId,
- username,
+  profileId,
+  username,
   extraHeader,
   hideFollowButton,
 }: UserProfileContentProps) {
@@ -352,11 +349,7 @@ export function UserProfileContent({
   // Load data based on active tab
   const postsQuery = useUserPosts(profileId, currentUserId);
 
-  const favoritesQuery = useUserFavorites(
-    profileId,
-    currentUserId,
-    activeTab === 'favorites',
-  );
+  const favoritesQuery = useUserFavorites(profileId, currentUserId, activeTab === 'favorites');
 
   const draftsQuery = useUserDrafts(
     profileId,
