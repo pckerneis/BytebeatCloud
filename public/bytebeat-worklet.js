@@ -1,24 +1,46 @@
 const expressionApi = `
+const E = Math.E;
+const LN10 = Math.LN10;
+const LN2 = Math.LN2;
+const LOG2E = Math.LOG2E;
 const PI = Math.PI;
+const SQRT1_2 = Math.SQRT1_2;
+const SQRT2 = Math.SQRT2;
 const TAU = Math.PI * 2;
 const abs = Math.abs;
 const acos = Math.acos;
+const acosh = Math.acosh;
 const asin = Math.asin;
+const asinh = Math.asinh;
 const atan = Math.atan;
+const atanh = Math.atanh;
+const cbrt = Math.cbrt;
 const ceil = Math.ceil;
+const clz32 = Math.clz32;
 const cos = Math.cos;
+const cosh = Math.cosh;
 const exp = Math.exp;
+const expm1 = Math.expm1;
 const floor = Math.floor;
+const fround = Math.fround;
+const hypot = Math.hypot;
+const imul = Math.imul;
 const log = Math.log;
+const log10 = Math.log10;
+const log1p = Math.log1p;
+const log2 = Math.log2;
 const max = Math.max;
 const min = Math.min;
 const pow = Math.pow;
 const random = Math.random;
 const round = Math.round;
+const sign = Math.sign;
 const sin = Math.sin;
+const sinh = Math.sinh;
 const sqrt = Math.sqrt;
 const tan = Math.tan;
 const tanh = Math.tanh;
+const trunc = Math.trunc;
 const SR = sr;
 `;
 
@@ -114,7 +136,7 @@ return Number((${expression})) || 0;
             phase -= steps;
             t += steps;
             const tSeconds = t / this._targetRate;
-            const v = Number(fn(tSeconds)) || 0;
+            const v = Number(fn(tSeconds, this._targetRate)) || 0;
             lastRaw = Math.max(-1, Math.min(1, v));
           }
 
