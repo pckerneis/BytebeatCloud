@@ -1,7 +1,6 @@
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import type { PropsWithChildren } from 'react';
-import { useEffect, useRef, useState } from 'react';
+import { PropsWithChildren, useEffect, useState } from 'react';
 import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
 import { warmUpBytebeatEngine } from '../hooks/useBytebeatPlayer';
 import { supabase } from '../lib/supabaseClient';
@@ -26,88 +25,75 @@ function NavLink({ href, children }: PropsWithChildren<{ href: string }>) {
 export function Layout({ children }: PropsWithChildren) {
   const { user } = useSupabaseAuth();
   const router = useRouter();
-  const [theme, setTheme] = useState<ThemeId | null>(null);
+  const [theme, setTheme] = useState<ThemeId | null>(() => {
+    if (typeof window === 'undefined') return DEFAULT_THEME_ID;
+
+    const stored = window.localStorage.getItem('ui-theme') as ThemeId | null;
+
+    if (stored && UI_THEMES.some((t) => t.id === stored)) {
+      return stored;
+    } else {
+      return DEFAULT_THEME_ID;
+    }
+  });
+
   const [notificationsCount, setNotificationsCount] = useState<number | null>(null);
   const userId = (user as any)?.id as string | undefined;
   const gate = useUserGate(userId);
   const needsOnboarding = !!userId && gate.checked && gate.needsOnboarding;
-  const redirectOnceRef = useRef(false);
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
     await router.push('/');
   };
 
-  useEffect(() => {
-    if (!user) {
+  const loadCount = async () => {
+    const { count, error } = await supabase
+      .from('notifications')
+      .select('id', { count: 'exact', head: true })
+      .eq('read', false);
+
+    if (error) {
       setNotificationsCount(null);
-      return;
-    }
-
-    let cancelled = false;
-
-    const loadCount = async () => {
-      const { count, error } = await supabase
-        .from('notifications')
-        .select('id', { count: 'exact', head: true })
-        .eq('read', false);
-
-      if (cancelled) return;
-
-      if (error) {
-        setNotificationsCount(null);
-        return;
-      }
-
+    } else {
       setNotificationsCount(typeof count === 'number' ? count : null);
-    };
-
-    const handleRefresh = () => {
-      void loadCount();
-    };
-
-    if (typeof window !== 'undefined') {
-      window.addEventListener('notifications:refresh', handleRefresh);
     }
+  };
 
+  const handleRefresh = () => {
     void loadCount();
+  };
 
-    const interval = window.setInterval(() => {
+  if (typeof window !== 'undefined') {
+    window.addEventListener('notifications:refresh', handleRefresh);
+  }
+
+  void loadCount();
+
+  useEffect(() => {
+    const interval = setInterval(() => {
       void loadCount();
     }, 30000);
 
     return () => {
-      cancelled = true;
-      window.clearInterval(interval);
       if (typeof window !== 'undefined') {
+        window.clearInterval(interval);
         window.removeEventListener('notifications:refresh', handleRefresh);
       }
     };
-  }, [user]);
+  });
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    if (theme) {
+      const root = document.body;
 
-    const stored = window.localStorage.getItem('ui-theme') as ThemeId | null;
-    if (stored && UI_THEMES.some((t) => t.id === stored)) {
-      setTheme(stored);
-    } else {
-      setTheme(DEFAULT_THEME_ID);
+      UI_THEMES.forEach((t) => {
+        root.classList.remove(`theme-${t.id}`);
+      });
+
+      root.classList.add(`theme-${theme}`);
+      window.localStorage.setItem('ui-theme', theme);
     }
-  }, []);
-
-  useEffect(() => {
-    if (typeof document === 'undefined') return;
-    if (!theme) return;
-
-    const root = document.body;
-
-    UI_THEMES.forEach((t) => {
-      root.classList.remove(`theme-${t.id}`);
-    });
-
-    root.classList.add(`theme-${theme}`);
-    window.localStorage.setItem('ui-theme', theme);
   }, [theme]);
 
   const handleCycleTheme = () => {
@@ -121,30 +107,23 @@ export function Layout({ children }: PropsWithChildren) {
     setTheme(next.id);
   };
 
-  useEffect(() => {
-    if (!userId) return;
-    if (!gate.checked) return;
-    if (redirectOnceRef.current) return;
-
+  if (userId && gate.checked) {
     if (gate.needsOnboarding) {
       if (
         router.pathname !== '/onboarding' &&
         router.pathname !== '/tos-update' &&
         router.pathname !== '/terms'
       ) {
-        redirectOnceRef.current = true;
         void router.replace('/onboarding');
       }
-      return;
     }
 
     if (gate.needsTosUpdate) {
       if (router.pathname !== '/tos-update' && router.pathname !== '/terms') {
-        redirectOnceRef.current = true;
         void router.replace('/tos-update');
       }
     }
-  }, [userId, gate.checked, gate.needsOnboarding, gate.needsTosUpdate, router.pathname, router]);
+  }
 
   // Warm up the audio engine on the very first user interaction anywhere
   // in the app, so the initial AudioContext/worklet cost is paid upfront.
@@ -201,7 +180,9 @@ export function Layout({ children }: PropsWithChildren) {
                 </Link>
               </li>
               <NavLink href={needsOnboarding ? '/onboarding' : '/explore'}>Explore</NavLink>
-              {user && <NavLink href={needsOnboarding ? '/onboarding' : '/profile'}>Profile</NavLink>}
+              {user && (
+                <NavLink href={needsOnboarding ? '/onboarding' : '/profile'}>Profile</NavLink>
+              )}
               {user && (
                 <NavLink href={needsOnboarding ? '/onboarding' : '/notifications'}>
                   <span className={'notifications-nav-label'}>Notifications</span>
