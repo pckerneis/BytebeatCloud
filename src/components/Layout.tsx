@@ -25,17 +25,29 @@ function NavLink({ href, children }: PropsWithChildren<{ href: string }>) {
 export function Layout({ children }: PropsWithChildren) {
   const { user } = useSupabaseAuth();
   const router = useRouter();
-  const [theme, setTheme] = useState<ThemeId | null>(() => {
-    if (typeof window === 'undefined') return DEFAULT_THEME_ID;
+  const [theme, setTheme] = useState<ThemeId>(DEFAULT_THEME_ID);
 
-    const stored = window.localStorage.getItem('ui-theme') as ThemeId | null;
+  useEffect(() => {
+    const stored = localStorage.getItem('ui-theme') as ThemeId | null;
 
     if (stored && UI_THEMES.some((t) => t.id === stored)) {
-      return stored;
-    } else {
-      return DEFAULT_THEME_ID;
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setTheme(stored);
     }
-  });
+  }, []);
+
+  useEffect(() => {
+    if (theme) {
+      const root = document.body;
+
+      UI_THEMES.forEach((t) => {
+        root.classList.remove(`theme-${t.id}`);
+      });
+
+      root.classList.add(`theme-${theme}`);
+      window.localStorage.setItem('ui-theme', theme);
+    }
+  }, [theme]);
 
   const [notificationsCount, setNotificationsCount] = useState<number | null>(null);
   const userId = (user as any)?.id as string | undefined;
@@ -82,19 +94,6 @@ export function Layout({ children }: PropsWithChildren) {
       }
     };
   });
-
-  useEffect(() => {
-    if (theme) {
-      const root = document.body;
-
-      UI_THEMES.forEach((t) => {
-        root.classList.remove(`theme-${t.id}`);
-      });
-
-      root.classList.add(`theme-${theme}`);
-      window.localStorage.setItem('ui-theme', theme);
-    }
-  }, [theme]);
 
   const handleCycleTheme = () => {
     if (!theme) {
@@ -205,8 +204,8 @@ export function Layout({ children }: PropsWithChildren) {
               {!user && <NavLink href="/login">Login</NavLink>}
             </ul>
             <div className="theme-switcher">
-              <button type="button" className="theme-toggle-button" onClick={handleCycleTheme}>
-                {getUiTheme(theme ?? DEFAULT_THEME_ID).label}
+              <button type="button" className="theme-toggle-button" onClick={handleCycleTheme} suppressHydrationWarning>
+                {getUiTheme(theme).label}
               </button>
             </div>
           </nav>
