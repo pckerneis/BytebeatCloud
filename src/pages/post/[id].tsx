@@ -87,7 +87,6 @@ export default function PostDetailPage() {
       if (cancelled) return;
 
       if (error) {
-         
         console.warn('Error loading post', error.message);
         setError('Unable to load post.');
         setLoading(false);
@@ -140,7 +139,6 @@ export default function PostDetailPage() {
         .order('created_at', { ascending: false });
 
       if (forkError) {
-         
         console.warn('Error loading forks for post', forkError.message);
         setForksError('Unable to load forks.');
       } else {

@@ -204,7 +204,12 @@ export function Layout({ children }: PropsWithChildren) {
               {!user && <NavLink href="/login">Login</NavLink>}
             </ul>
             <div className="theme-switcher">
-              <button type="button" className="theme-toggle-button" onClick={handleCycleTheme} suppressHydrationWarning>
+              <button
+                type="button"
+                className="theme-toggle-button"
+                onClick={handleCycleTheme}
+                suppressHydrationWarning
+              >
                 {getUiTheme(theme).label}
               </button>
             </div>

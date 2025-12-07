@@ -120,7 +120,6 @@ export function UserProfileContent({
       if (cancelled) return;
 
       if (error) {
-         
         console.warn('Error loading user posts', error.message);
         setError('Unable to load posts.');
         if (page === 0) {

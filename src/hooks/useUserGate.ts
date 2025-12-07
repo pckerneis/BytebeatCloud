@@ -40,7 +40,8 @@ export function useUserGate(userId?: string): UserGateResult {
 
       const hasUsername = !!data?.username;
       const needsOnboarding = !hasUsername;
-      const needsTosUpdate = !!data?.username && !!CURRENT_TOS_VERSION && data.tos_version !== CURRENT_TOS_VERSION;
+      const needsTosUpdate =
+        !!data?.username && !!CURRENT_TOS_VERSION && data.tos_version !== CURRENT_TOS_VERSION;
 
       setState({ checked: true, needsOnboarding, needsTosUpdate });
     };
