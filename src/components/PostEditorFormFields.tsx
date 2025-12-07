@@ -27,8 +27,6 @@ interface PostEditorFormFieldsProps {
   saveStatus: 'idle' | 'saving' | 'success';
   saveError: string;
 
-  submitLabel: string;
-
   showDeleteButton?: boolean;
   onDeleteClick?: () => void;
 
@@ -63,7 +61,6 @@ export function PostEditorFormFields(props: PostEditorFormFieldsProps) {
     lastError,
     saveStatus,
     saveError,
-    submitLabel,
     showDeleteButton,
     onDeleteClick,
     showActions,
@@ -285,7 +282,7 @@ export function PostEditorFormFields(props: PostEditorFormFieldsProps) {
             )}
 
             <button type="submit" className="button primary" disabled={!canSubmit}>
-              {submitLabel}
+              {saveStatus === 'saving' ? 'Saving…' : 'Save'}
             </button>
           </div>
         </div>
@@ -304,7 +301,7 @@ export function PostEditorFormFields(props: PostEditorFormFieldsProps) {
 
       {saveError && <p className="error-message">{saveError}</p>}
       {saveStatus === 'success' && !saveError && (
-        <p className="counter">{submitLabel}.</p>
+        <p className="counter">{isFork ? 'Fork saved.' : 'Post saved.'}</p>
       )}
       {sampleRateModalOpen && (
         <div

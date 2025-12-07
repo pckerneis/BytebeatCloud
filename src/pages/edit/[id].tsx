@@ -240,7 +240,6 @@ export default function EditPostPage() {
             lastError={lastError || null}
             saveStatus={saveStatus}
             saveError={saveError}
-            submitLabel={saveStatus === 'saving' ? 'Saving…' : 'Changes saved'}
             showDeleteButton
             onDeleteClick={() => setShowDeleteConfirm(true)}
             showActions={!!user}

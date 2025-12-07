@@ -253,7 +253,6 @@ export default function CreatePage() {
             lastError={lastError || null}
             saveStatus={saveStatus}
             saveError={saveError}
-            submitLabel={saveStatus === 'saving' ? 'Saving…' : 'Post saved'}
             showActions={!!user}
             isFork={false}
             liveUpdateEnabled={liveUpdateEnabled}
