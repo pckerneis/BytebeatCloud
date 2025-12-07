@@ -14,7 +14,7 @@ export default function UserPage() {
   return (
     <>
       <Head>
-        <title>BytebeatCloud - {uname ?? 'User'}</title>
+        <title>{`BytebeatCloud - @${uname ?? 'User'}`}</title>
       </Head>
       <section>
         {loading && <p className="text-centered">Loading…</p>}
