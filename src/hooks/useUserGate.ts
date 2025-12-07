@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
+import { CURRENT_TOS_VERSION } from '../constants';
 
 export interface UserGateResult {
   checked: boolean;
@@ -7,7 +8,7 @@ export interface UserGateResult {
   needsTosUpdate: boolean;
 }
 
-export function useUserGate(userId?: string, currentTosVersion?: string): UserGateResult {
+export function useUserGate(userId?: string): UserGateResult {
   const [state, setState] = useState<UserGateResult>({
     checked: !userId,
     needsOnboarding: false,
@@ -38,7 +39,7 @@ export function useUserGate(userId?: string, currentTosVersion?: string): UserGa
 
       const hasUsername = !!data?.username;
       const needsOnboarding = !hasUsername;
-      const needsTosUpdate = !!data?.username && !!currentTosVersion && data.tos_version !== currentTosVersion;
+      const needsTosUpdate = !!data?.username && !!CURRENT_TOS_VERSION && data.tos_version !== CURRENT_TOS_VERSION;
 
       setState({ checked: true, needsOnboarding, needsTosUpdate });
     };
@@ -48,7 +49,7 @@ export function useUserGate(userId?: string, currentTosVersion?: string): UserGa
     return () => {
       cancelled = true;
     };
-  }, [userId, currentTosVersion]);
+  }, [userId]);
 
   return state;
 }

@@ -10,8 +10,6 @@ import { ThemeContext } from '../theme/ThemeContext';
 import { useUserGate } from '../hooks/useUserGate';
 import FooterPlayer from './FooterPlayer';
 
-const CURRENT_TOS_VERSION = '2025-11-30-v1';
-
 function NavLink({ href, children }: PropsWithChildren<{ href: string }>) {
   const router = useRouter();
   const isActive = router.pathname === href;
@@ -31,7 +29,7 @@ export function Layout({ children }: PropsWithChildren) {
   const [theme, setTheme] = useState<ThemeId | null>(null);
   const [notificationsCount, setNotificationsCount] = useState<number | null>(null);
   const userId = (user as any)?.id as string | undefined;
-  const gate = useUserGate(userId, CURRENT_TOS_VERSION);
+  const gate = useUserGate(userId);
   const needsOnboarding = !!userId && gate.checked && gate.needsOnboarding;
   const redirectOnceRef = useRef(false);
 
