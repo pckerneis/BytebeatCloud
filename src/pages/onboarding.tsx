@@ -84,6 +84,10 @@ export default function OnboardingPage() {
       return;
     }
 
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('user:profile-updated'));
+    }
+
     void router.replace('/');
   };
 

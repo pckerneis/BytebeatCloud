@@ -14,6 +14,18 @@ export function useUserGate(userId?: string): UserGateResult {
     needsOnboarding: false,
     needsTosUpdate: false,
   });
+  const [refreshTick, setRefreshTick] = useState(0);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const handler = () => setRefreshTick((t) => t + 1);
+    window.addEventListener('user:profile-updated', handler);
+
+    return () => {
+      window.removeEventListener('user:profile-updated', handler);
+    };
+  }, []);
 
   useEffect(() => {
     if (!userId) {
@@ -51,7 +63,7 @@ export function useUserGate(userId?: string): UserGateResult {
     return () => {
       cancelled = true;
     };
-  }, [userId]);
+  }, [userId, refreshTick]);
 
   return state;
 }

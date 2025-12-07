@@ -111,7 +111,8 @@ export function Layout({ children }: PropsWithChildren) {
       if (
         router.pathname !== '/onboarding' &&
         router.pathname !== '/tos-update' &&
-        router.pathname !== '/terms'
+        router.pathname !== '/terms' &&
+        router.pathname !== '/'
       ) {
         void router.replace('/onboarding');
       }
