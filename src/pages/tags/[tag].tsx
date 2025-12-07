@@ -8,6 +8,10 @@ import { useInfiniteScroll } from '../../hooks/useInfiniteScroll';
 import { enrichWithViewerFavorites } from '../../utils/favorites';
 import { enrichWithTags } from '../../utils/tags';
 import { validateExpression } from '../../utils/expression-validator';
+import { useSyncTabQuery } from '../../hooks/useSyncTabQuery';
+
+const tabs = ['recent', 'trending'] as const;
+type TabName = (typeof tabs)[number];
 
 export default function TagPage() {
   const router = useRouter();
@@ -24,7 +28,11 @@ export default function TagPage() {
   const loadingMoreRef = useRef(false);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
 
-  const [activeTab, setActiveTab] = useState<'recent' | 'trending'>('recent');
+  const [activeTab, setActiveTab] = useState<TabName>('recent');
+
+  useSyncTabQuery<TabName>(tabs, (tab) => {
+    setActiveTab((prev) => (prev !== tab ? tab : prev));
+  });
 
   useEffect(() => {
     // Reset pagination when tag or tab changes
@@ -162,9 +170,12 @@ export default function TagPage() {
 
   useInfiniteScroll({ hasMore, loadingMoreRef, sentinelRef, setPage });
 
-  const handleTabClick = (tab: 'recent' | 'trending') => {
+  const handleTabClick = (tab: TabName) => {
     if (tab === activeTab) return;
     setActiveTab(tab);
+    void router.push({ pathname: router.pathname, query: { ...router.query, tab } }, undefined, {
+      shallow: true,
+    });
   };
 
   const titleTag = displayTag ?? normalizedTag ?? '';

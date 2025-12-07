@@ -7,12 +7,16 @@ import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
 import { enrichWithViewerFavorites } from '../utils/favorites';
 import { enrichWithTags } from '../utils/tags';
 import { validateExpression } from '../utils/expression-validator';
+import { useSyncTabQuery } from '../hooks/useSyncTabQuery';
 
 interface UserProfileContentProps {
   username: string | null;
   extraHeader?: ReactNode;
   hideFollowButton?: boolean;
 }
+
+const tabs = ['posts', 'drafts', 'favorites'] as const;
+type TabName = (typeof tabs)[number];
 
 export function UserProfileContent({
   username,
@@ -28,7 +32,7 @@ export function UserProfileContent({
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const [hasLoadedFirstPage, setHasLoadedFirstPage] = useState(false);
-  const [activeTab, setActiveTab] = useState<'posts' | 'drafts' | 'favorites'>('posts');
+  const [activeTab, setActiveTab] = useState<TabName>('posts');
   const [favoritePosts, setFavoritePosts] = useState<PostRow[]>([]);
   const [loadingFavorites, setLoadingFavorites] = useState(false);
   const [favoritesError, setFavoritesError] = useState('');
@@ -49,6 +53,10 @@ export function UserProfileContent({
     setHasMore(true);
     setHasLoadedFirstPage(false);
   }, [username]);
+
+  useSyncTabQuery(tabs, (tab) => {
+    setActiveTab((prev) => (prev !== tab ? tab : prev));
+  });
 
   // Paginated load of this user's public posts by username
   useEffect(() => {
@@ -406,6 +414,14 @@ export function UserProfileContent({
     };
   }, [activeTab, username, user]);
 
+  const handleTabClick = (tab: TabName) => {
+    if (tab === activeTab) return;
+    setActiveTab(tab);
+    void router.push({ pathname: router.pathname, query: { ...router.query, tab } }, undefined, {
+      shallow: true,
+    });
+  };
+
   return (
     <section>
       <div className="profile-title-row">
@@ -428,21 +444,21 @@ export function UserProfileContent({
       <div className="tab-header">
         <span
           className={activeTab === 'posts' ? 'tab-button active' : 'tab-button'}
-          onClick={() => setActiveTab('posts')}
+          onClick={() => handleTabClick('posts')}
         >
           Posts
         </span>
         {isOwnProfile && (
           <span
             className={activeTab === 'drafts' ? 'tab-button active' : 'tab-button'}
-            onClick={() => setActiveTab('drafts')}
+            onClick={() => handleTabClick('drafts')}
           >
             Drafts
           </span>
         )}
         <span
           className={activeTab === 'favorites' ? 'tab-button active' : 'tab-button'}
-          onClick={() => setActiveTab('favorites')}
+          onClick={() => handleTabClick('favorites')}
         >
           Favorites
         </span>
