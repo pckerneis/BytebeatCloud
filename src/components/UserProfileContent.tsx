@@ -69,7 +69,6 @@ function useLazyPostList(
       } else {
         const rows = await enrichPosts((data ?? []) as PostRow[], currentUserId);
         setPosts(rows);
-        // eslint-disable-next-line react-hooks/set-state-in-effect
         setHasLoaded(true);
       }
 

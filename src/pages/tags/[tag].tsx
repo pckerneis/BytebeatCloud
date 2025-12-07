@@ -38,6 +38,7 @@ export default function TagPage() {
 
   // Reset pagination when tag changes
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     resetPagination();
   }, [tag, resetPagination]);
 
