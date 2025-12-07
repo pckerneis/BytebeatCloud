@@ -107,7 +107,7 @@ export default function Home() {
             <div>BytebeatCloud</div>
             <div title={process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA ?? 'dev'}>
               {shortenVersion(process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA) ?? 'dev'}
-              </div>
+            </div>
           </div>
           <div>
             <div>
