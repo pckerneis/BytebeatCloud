@@ -28,8 +28,11 @@ export function useProfile(username: string | null) {
 
       if (cancelled) return;
 
-      if (profileError || !data) {
+      if (profileError) {
         setError('Unable to load profile.');
+        setProfileId(null);
+      } else if (!data) {
+        // User not found (no error, but no data)
         setProfileId(null);
       } else {
         setProfileId(data.id);

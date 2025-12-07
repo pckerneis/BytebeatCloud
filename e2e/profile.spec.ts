@@ -348,4 +348,11 @@ test.describe('Profile page - unauthenticated', () => {
 
     await page.waitForURL('/login');
   });
+
+  test('shows error for non-existent user', async ({ page }) => {
+    await page.goto('/u/nonexistent_user_12345');
+
+    await expect(page.getByText('Loading…')).toHaveCount(0, { timeout: 10000 });
+    await expect(page.getByText('User not found.')).toBeVisible();
+  });
 });
