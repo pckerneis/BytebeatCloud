@@ -118,6 +118,41 @@ test.describe('Post detail page - viewing', () => {
     await expect(page.getByText('Loading…')).toHaveCount(0, { timeout: 10000 });
     await expect(page.getByText('Post not found.')).toBeVisible();
   });
+
+  test('displays mentions as clickable links', async ({ page }) => {
+    // Create another user to mention
+    await ensureTestUserProfile(OTHER_USER_EMAIL, OTHER_USERNAME);
+
+    // Create a post with a mention
+    const { data: mentionPost } = await supabaseAdmin
+      .from('posts')
+      .insert({
+        profile_id: testUserId,
+        title: 'Post With Mention',
+        description: `Check out @${OTHER_USERNAME} for more!`,
+        expression: 't',
+        is_draft: false,
+        sample_rate: 8000,
+        mode: 'uint8',
+      })
+      .select('id')
+      .single();
+
+    await page.goto(`/post/${mentionPost!.id}`);
+
+    await expect(page.getByText('Loading…')).toHaveCount(0, { timeout: 10000 });
+
+    // Verify mention is a clickable link
+    const description = page.locator('.post-description-detail');
+    const mentionLink = description.getByRole('link', { name: `@${OTHER_USERNAME}` });
+    await expect(mentionLink).toBeVisible();
+
+    // Click the mention link
+    await mentionLink.click();
+
+    // Should navigate to user profile
+    await page.waitForURL(`/u/${OTHER_USERNAME}`);
+  });
 });
 
 test.describe('Post detail page - playback', () => {

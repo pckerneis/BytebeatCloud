@@ -234,18 +234,14 @@ test.describe('Notification triggers - favorite', () => {
   });
 });
 
+// Helper to type into CodeMirror editor
+async function typeInExpressionEditor(page: import('@playwright/test').Page, text: string) {
+  const editor = page.locator('.expression-input .cm-content');
+  await editor.click();
+  await page.keyboard.type(text);
+}
+
 test.describe('Notification triggers - fork', () => {
-  // Helper to type into CodeMirror editor
-  async function clearAndTypeInExpressionEditor(
-    page: import('@playwright/test').Page,
-    text: string,
-  ) {
-    const editor = page.locator('.expression-input .cm-content');
-    await editor.click();
-    await page.keyboard.press('ControlOrMeta+a');
-    await page.keyboard.press('Backspace');
-    await page.keyboard.type(text);
-  }
 
   test('forking a post creates a notification for the original author', async ({ page }) => {
     await ensureTestUserProfile(TEST_USER_EMAIL, TEST_USERNAME);
@@ -376,5 +372,146 @@ test.describe('Notification triggers - fork', () => {
       .eq('event_type', 'fork');
 
     expect(notifications).toHaveLength(0);
+  });
+});
+
+test.describe('Notification triggers - mention', () => {
+  test('mentioning a user in post description creates a notification', async ({ page }) => {
+    await ensureTestUserProfile(TEST_USER_EMAIL, TEST_USERNAME);
+    await ensureTestUserProfile(OTHER_USER_EMAIL, OTHER_USERNAME);
+
+    await signInAndInjectSession(page, {
+      email: TEST_USER_EMAIL,
+      password: TEST_USER_PASSWORD,
+    });
+
+    // Create a post with a mention
+    await page.goto('/create');
+
+    await typeInExpressionEditor(page, 't');
+
+    const descriptionField = page.getByPlaceholder('Add an optional description');
+    await descriptionField.fill(`Check this out @${OTHER_USERNAME}!`);
+
+    await page.getByRole('button', { name: 'Save' }).click();
+    await page.waitForURL(/\/post\//);
+
+    // Check notification was created
+    const { data: notifications } = await supabaseAdmin
+      .from('notifications')
+      .select('*')
+      .eq('user_id', otherUserId)
+      .eq('event_type', 'mention')
+      .eq('actor_id', testUserId);
+
+    expect(notifications).toHaveLength(1);
+    expect(notifications![0].read).toBe(false);
+  });
+
+  test('mentioning self does not create a notification', async ({ page }) => {
+    await ensureTestUserProfile(TEST_USER_EMAIL, TEST_USERNAME);
+
+    await signInAndInjectSession(page, {
+      email: TEST_USER_EMAIL,
+      password: TEST_USER_PASSWORD,
+    });
+
+    await page.goto('/create');
+
+    await typeInExpressionEditor(page, 't');
+
+    const descriptionField = page.getByPlaceholder('Add an optional description');
+    await descriptionField.fill(`I'm mentioning myself @${TEST_USERNAME}`);
+
+    await page.getByRole('button', { name: 'Save' }).click();
+    await page.waitForURL(/\/post\//);
+
+    // No notification for self-mention
+    const { data: notifications } = await supabaseAdmin
+      .from('notifications')
+      .select('*')
+      .eq('user_id', testUserId)
+      .eq('event_type', 'mention');
+
+    expect(notifications).toHaveLength(0);
+  });
+
+  test('mentioning in draft does not create a notification', async ({ page }) => {
+    await ensureTestUserProfile(TEST_USER_EMAIL, TEST_USERNAME);
+    await ensureTestUserProfile(OTHER_USER_EMAIL, OTHER_USERNAME);
+
+    await signInAndInjectSession(page, {
+      email: TEST_USER_EMAIL,
+      password: TEST_USER_PASSWORD,
+    });
+
+    await page.goto('/create');
+
+    await typeInExpressionEditor(page, 't');
+
+    const descriptionField = page.getByPlaceholder('Add an optional description');
+    await descriptionField.fill(`Draft mention @${OTHER_USERNAME}`);
+
+    // Save as draft
+    await page.getByLabel('Save as draft').check();
+    await page.getByRole('button', { name: 'Save' }).click();
+
+    await expect(page.getByText('Post saved.')).toBeVisible();
+
+    // No notification for draft
+    const { data: mentionNotifications } = await supabaseAdmin
+      .from('notifications')
+      .select('*')
+      .eq('user_id', otherUserId)
+      .eq('event_type', 'mention');
+
+    expect(mentionNotifications).toHaveLength(0);
+  });
+
+  test('multiple mentions create multiple notifications', async ({ page }) => {
+    await ensureTestUserProfile(TEST_USER_EMAIL, TEST_USERNAME);
+    await ensureTestUserProfile(OTHER_USER_EMAIL, OTHER_USERNAME);
+
+    // Create a third user
+    const thirdUser = await ensureTestUser({
+      email: 'e2e+notiftrig_third@example.com',
+      password: 'password123',
+    });
+    await ensureTestUserProfile('e2e+notiftrig_third@example.com', 'e2e_third_user');
+
+    await signInAndInjectSession(page, {
+      email: TEST_USER_EMAIL,
+      password: TEST_USER_PASSWORD,
+    });
+
+    await page.goto('/create');
+
+    await typeInExpressionEditor(page, 't');
+
+    const descriptionField = page.getByPlaceholder('Add an optional description');
+    await descriptionField.fill(`Hey @${OTHER_USERNAME} and @e2e_third_user!`);
+
+    await page.getByRole('button', { name: 'Save' }).click();
+    await page.waitForURL(/\/post\//);
+
+    // Check notifications for both users
+    const { data: notif1 } = await supabaseAdmin
+      .from('notifications')
+      .select('*')
+      .eq('user_id', otherUserId)
+      .eq('event_type', 'mention');
+
+    const { data: notif2 } = await supabaseAdmin
+      .from('notifications')
+      .select('*')
+      .eq('user_id', thirdUser.id)
+      .eq('event_type', 'mention');
+
+    expect(notif1).toHaveLength(1);
+    expect(notif2).toHaveLength(1);
+
+    // Cleanup third user
+    await supabaseAdmin.from('notifications').delete().eq('user_id', thirdUser.id);
+    await supabaseAdmin.from('profiles').delete().eq('id', thirdUser.id);
   });
 });

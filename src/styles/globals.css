@@ -1112,6 +1112,17 @@ button.chip {
   color: var(--secondary-text-color);
 }
 
+.post-description-detail .tag-link,
+.post-description-detail .mention-link {
+  color: var(--accent-color);
+  text-decoration: none;
+}
+
+.post-description-detail .tag-link:hover,
+.post-description-detail .mention-link:hover {
+  text-decoration: underline;
+}
+
 /* Modal */
 
 .modal-backdrop {
