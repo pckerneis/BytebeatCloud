@@ -7,6 +7,10 @@ import { enrichWithViewerFavorites } from '../utils/favorites';
 import { enrichWithTags } from '../utils/tags';
 import { validateExpression } from '../utils/expression-validator';
 
+function shortenVersion(version: string | undefined): string | undefined {
+  return version?.slice(0, 7);
+}
+
 export default function Home() {
   const { user } = useSupabaseAuth();
   const [trendingPosts, setTrendingPosts] = useState<PostRow[]>([]);
@@ -101,7 +105,9 @@ export default function Home() {
         <div className="home-footer">
           <div>
             <div>BytebeatCloud</div>
-            <div>{process.env.NEXT_PUBLIC_APP_VERSION ?? 'dev'}</div>
+            <div title={process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA ?? 'dev'}>
+              {shortenVersion(process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA) ?? 'dev'}
+              </div>
           </div>
           <div>
             <div>
