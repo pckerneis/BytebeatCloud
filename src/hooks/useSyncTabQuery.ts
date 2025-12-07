@@ -16,5 +16,5 @@ export function useSyncTabQuery<T extends string>(
     } else {
       onTab(tabs[0]);
     }
-  }, [router.query?.tab]);
+  }, [router.query?.tab, tabs, onTab]);
 }
