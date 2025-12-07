@@ -1,5 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
-import { useRouter } from 'next/router';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
 import { PostList, type PostRow } from '../components/PostList';
@@ -9,13 +8,12 @@ import { enrichWithViewerFavorites } from '../utils/favorites';
 import { enrichWithTags } from '../utils/tags';
 import Link from 'next/link';
 import { validateExpression } from '../utils/expression-validator';
-import { useSyncTabQuery } from '../hooks/useSyncTabQuery';
+import { useTabState } from '../hooks/useTabState';
 
 const tabs = ['feed', 'recent', 'trending'] as const;
 type TabName = (typeof tabs)[number];
 
 export default function ExplorePage() {
-  const router = useRouter();
   const { user } = useSupabaseAuth();
   const [posts, setPosts] = useState<PostRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -25,11 +23,15 @@ export default function ExplorePage() {
   const loadingMoreRef = useRef(false);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
 
-  const [activeTab, setActiveTab] = useState<TabName>('feed');
+  const resetPagination = useCallback(() => {
+    setPosts([]);
+    setPage(0);
+    setHasMore(true);
+    setError('');
+    loadingMoreRef.current = false;
+  }, []);
 
-  useSyncTabQuery<TabName>(tabs, (tab) => {
-    setActiveTab((prev) => (prev !== tab ? tab : prev));
-  });
+  const [activeTab, setActiveTab] = useTabState(tabs, 'feed', { onTabChange: resetPagination });
 
   useEffect(() => {
     let cancelled = false;
@@ -124,17 +126,8 @@ export default function ExplorePage() {
 
   useInfiniteScroll({ hasMore, loadingMoreRef, sentinelRef, setPage });
 
-  const handleTabClick = (tab: 'feed' | 'recent' | 'trending') => {
-    if (tab === activeTab) return;
+  const handleTabClick = (tab: TabName) => {
     setActiveTab(tab);
-    setPage(0);
-    setPosts([]);
-    setHasMore(true);
-    setError('');
-    loadingMoreRef.current = false;
-    void router.push({ pathname: router.pathname, query: { ...router.query, tab } }, undefined, {
-      shallow: true,
-    });
   };
 
   return (

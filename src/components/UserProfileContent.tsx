@@ -1,4 +1,4 @@
-import { ReactNode, useEffect, useRef, useState } from 'react';
+import { ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { enrichWithViewerFavorites } from '../utils/favorites';
 import { enrichWithTags } from '../utils/tags';
@@ -8,6 +8,116 @@ import { useRouter } from 'next/router';
 import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
 import { PostList } from './PostList';
 import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
+import { useTabState } from '../hooks/useTabState';
+
+// Shared constants
+const POST_SELECT_COLUMNS =
+  'id,title,expression,is_draft,sample_rate,mode,created_at,profile_id,fork_of_post_id,is_fork,author_username,origin_title,origin_username,favorites_count';
+
+// Shared enrichment pipeline
+async function enrichPosts(
+  rows: PostRow[],
+  currentUserId?: string | null,
+): Promise<PostRow[]> {
+  if (currentUserId && rows.length > 0) {
+    rows = (await enrichWithViewerFavorites(currentUserId, rows)) as PostRow[];
+  }
+  if (rows.length > 0) {
+    rows = (await enrichWithTags(rows)) as PostRow[];
+  }
+  return rows.filter((r) => validateExpression(r.expression).valid);
+}
+
+// Generic lazy-loading hook for favorites/drafts
+type PostFetcher = (profileId: string) => Promise<{ data: any[] | null; error: any }>;
+
+function useLazyPostList(
+  profileId: string | null,
+  currentUserId: string | null,
+  enabled: boolean,
+  fetcher: PostFetcher,
+  errorMessage: string,
+) {
+  const [posts, setPosts] = useState<PostRow[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [hasLoaded, setHasLoaded] = useState(false);
+
+  // Reset when profile changes
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setHasLoaded(false);
+    setPosts([]);
+  }, [profileId]);
+
+  useEffect(() => {
+    if (!profileId || !enabled || hasLoaded) return;
+
+    let cancelled = false;
+
+    const load = async () => {
+      setLoading(true);
+      setError('');
+
+      const { data, error: fetchError } = await fetcher(profileId);
+
+      if (cancelled) return;
+
+      if (fetchError) {
+        setError(errorMessage);
+        setPosts([]);
+      } else {
+        const rows = await enrichPosts((data ?? []) as PostRow[], currentUserId);
+        setPosts(rows);
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setHasLoaded(true);
+      }
+
+      setLoading(false);
+    };
+
+    void load();
+    return () => {
+      cancelled = true;
+    };
+  }, [profileId, currentUserId, enabled, hasLoaded, fetcher, errorMessage]);
+
+  return { posts, loading, error };
+}
+
+// Reusable tab content renderer
+interface TabContentProps {
+  loading: boolean;
+  error: string;
+  posts: PostRow[];
+  emptyMessage: string;
+  currentUserId?: string;
+  loadingMessage?: string;
+  extraError?: string;
+  children?: ReactNode;
+}
+
+function TabContent({
+  loading,
+  error,
+  posts,
+  emptyMessage,
+  currentUserId,
+  loadingMessage = 'Loading…',
+  extraError,
+  children,
+}: TabContentProps) {
+  if (loading) return <p className="text-centered">{loadingMessage}</p>;
+  if (error) return <p className="error-message">{error}</p>;
+  if (extraError) return <p className="error-message">{extraError}</p>;
+  if (posts.length === 0) return <p className="text-centered">{emptyMessage}</p>;
+  return (
+    <>
+      <PostList posts={posts} currentUserId={currentUserId} />
+      {children}
+    </>
+  );
+}
 
 export function useUserPosts(profileId: string | null, currentUserId?: string) {
   const [posts, setPosts] = useState<PostRow[]>([]);
@@ -45,9 +155,7 @@ export function useUserPosts(profileId: string | null, currentUserId?: string) {
 
       const { data, error: fetchError } = await supabase
         .from('posts_with_meta')
-        .select(
-          'id,title,expression,is_draft,sample_rate,mode,created_at,profile_id,fork_of_post_id,is_fork,author_username,origin_title,origin_username,favorites_count',
-        )
+        .select(POST_SELECT_COLUMNS)
         .eq('profile_id', profileId)
         .eq('is_draft', false)
         .order('created_at', { ascending: false })
@@ -60,18 +168,7 @@ export function useUserPosts(profileId: string | null, currentUserId?: string) {
         if (page === 0) setPosts([]);
         setHasMore(false);
       } else {
-        let rows = (data ?? []) as PostRow[];
-
-        if (currentUserId && rows.length > 0) {
-          rows = (await enrichWithViewerFavorites(currentUserId, rows)) as PostRow[];
-        }
-
-        if (rows.length > 0) {
-          rows = (await enrichWithTags(rows)) as PostRow[];
-        }
-
-        rows = rows.filter((r) => validateExpression(r.expression).valid);
-
+        const rows = await enrichPosts((data ?? []) as PostRow[], currentUserId);
         setPosts((prev) => (page === 0 ? rows : [...prev, ...rows]));
         if (rows.length < pageSize) {
           setHasMore(false);
@@ -97,154 +194,52 @@ export function useUserFavorites(
   currentUserId: string | null,
   enabled: boolean,
 ) {
-  const [posts, setPosts] = useState<PostRow[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [hasLoaded, setHasLoaded] = useState(false);
+  const fetcher = useCallback(async (pid: string) => {
+    const { data: favRows, error: favError } = await supabase
+      .from('favorites')
+      .select('post_id')
+      .eq('profile_id', pid);
 
-  useEffect(() => {
-    if (!profileId || !enabled) return;
-    if (hasLoaded) return; // Only load once
+    if (favError) return { data: null, error: favError };
 
-    let cancelled = false;
+    const postIds = (favRows ?? []).map((f: any) => f.post_id as string);
+    if (postIds.length === 0) return { data: [], error: null };
 
-    const loadFavorites = async () => {
-      setLoading(true);
-      setError('');
+    return supabase
+      .from('posts_with_meta')
+      .select(POST_SELECT_COLUMNS)
+      .in('id', postIds)
+      .eq('is_draft', false)
+      .order('created_at', { ascending: false });
+  }, []);
 
-      const { data: favRows, error: favError } = await supabase
-        .from('favorites')
-        .select('post_id')
-        .eq('profile_id', profileId);
-
-      if (cancelled) return;
-
-      if (favError) {
-        setError('Unable to load favorites.');
-        setPosts([]);
-        setLoading(false);
-        return;
-      }
-
-      const postIds = (favRows ?? []).map((f: any) => f.post_id as string);
-      if (postIds.length === 0) {
-        setPosts([]);
-        setLoading(false);
-        return;
-      }
-
-      const { data: postsData, error: postsError } = await supabase
-        .from('posts_with_meta')
-        .select(
-          'id,title,expression,is_draft,sample_rate,mode,created_at,profile_id,fork_of_post_id,is_fork,author_username,origin_title,origin_username,favorites_count',
-        )
-        .in('id', postIds)
-        .eq('is_draft', false)
-        .order('created_at', { ascending: false });
-
-      if (cancelled) return;
-
-      if (postsError) {
-        setError('Unable to load favorites.');
-        setPosts([]);
-      } else {
-        let rows = (postsData ?? []) as PostRow[];
-
-        if (currentUserId && rows.length > 0) {
-          rows = (await enrichWithViewerFavorites(currentUserId, rows)) as PostRow[];
-        }
-
-        if (rows.length > 0) {
-          rows = (await enrichWithTags(rows)) as PostRow[];
-        }
-
-        rows = rows.filter((r) => validateExpression(r.expression).valid);
-        setPosts(rows);
-      }
-
-      setLoading(false);
-    };
-
-    void loadFavorites();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [profileId, currentUserId, enabled, hasLoaded]);
-
-  // Reset when profile changes
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setHasLoaded(false);
-    setPosts([]);
-  }, [profileId]);
-
-  return { posts, loading, error };
+  return useLazyPostList(profileId, currentUserId, enabled, fetcher, 'Unable to load favorites.');
 }
 
-export function useUserDrafts(profileId: string | null, currentUserId: string, enabled: boolean) {
-  const [posts, setPosts] = useState<PostRow[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [hasLoaded, setHasLoaded] = useState(false);
-
-  useEffect(() => {
-    if (!profileId || !currentUserId || !enabled) return;
-    if (hasLoaded) return; // Only load once
-
-    let cancelled = false;
-
-    const loadDrafts = async () => {
-      setLoading(true);
-      setError('');
-
-      const { data, error: draftError } = await supabase
+export function useUserDrafts(
+  profileId: string | null,
+  currentUserId: string | null,
+  enabled: boolean,
+) {
+  const fetcher = useCallback(
+    async (pid: string) =>
+      supabase
         .from('posts_with_meta')
-        .select(
-          'id,title,expression,is_draft,sample_rate,mode,created_at,profile_id,fork_of_post_id,is_fork,author_username,origin_title,origin_username,favorites_count',
-        )
-        .eq('profile_id', profileId)
+        .select(POST_SELECT_COLUMNS)
+        .eq('profile_id', pid)
         .eq('is_draft', true)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false }),
+    [],
+  );
 
-      if (cancelled) return;
-
-      if (draftError) {
-        setError('Unable to load drafts.');
-        setPosts([]);
-      } else {
-        let rows = (data ?? []) as PostRow[];
-
-        if (currentUserId && rows.length > 0) {
-          rows = (await enrichWithViewerFavorites(currentUserId, rows)) as PostRow[];
-        }
-
-        if (rows.length > 0) {
-          rows = (await enrichWithTags(rows)) as PostRow[];
-        }
-
-        rows = rows.filter((r) => validateExpression(r.expression).valid);
-        setPosts(rows);
-      }
-
-      setLoading(false);
-    };
-
-    void loadDrafts();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [profileId, currentUserId, enabled, hasLoaded]);
-
-  // Reset when profile changes
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setHasLoaded(false);
-    setPosts([]);
-  }, [profileId]);
-
-  return { posts, loading, error };
+  // Only enable if currentUserId is present (own profile check)
+  return useLazyPostList(
+    profileId,
+    currentUserId,
+    enabled && !!currentUserId,
+    fetcher,
+    'Unable to load drafts.',
+  );
 }
 
 export function useFollowStatus(
@@ -351,30 +346,7 @@ export function UserProfileContent({
   const currentUserId = user ? (user as any).id : undefined;
   const isOwnProfile = Boolean(currentUserId && currentUserId === profileId);
 
-  // Get active tab from URL on initial load, then manage in state
-  const [activeTab, setActiveTabState] = useState<TabName>(() => {
-    const tabParam = router.query.tab as string;
-    return tabs.includes(tabParam as TabName) ? (tabParam as TabName) : 'posts';
-  });
-
-  // Sync with URL on mount only
-  useEffect(() => {
-    const tabParam = router.query.tab as string;
-    if (tabs.includes(tabParam as TabName)) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setActiveTabState(tabParam as TabName);
-    }
-  }, [router.query.tab]); // Only on mount
-
-  const setActiveTab = (tab: TabName) => {
-    setActiveTabState(tab);
-    // Update URL without navigation
-    void router.push(
-      { pathname: router.pathname, query: { ...router.query, tab } },
-      undefined,
-      { shallow: true }
-    );
-  };
+  const [activeTab, setActiveTab] = useTabState(tabs, 'posts');
 
   // Load data based on active tab
   const postsQuery = useUserPosts(profileId, currentUserId);
@@ -463,60 +435,44 @@ export function UserProfileContent({
       </div>
 
       {activeTab === 'posts' && (
-        <>
-          {postsQuery.loading && <p className="text-centered">Loading…</p>}
-          {!postsQuery.loading && postsQuery.error && (
-            <p className="error-message">{postsQuery.error}</p>
-          )}
-          {!postsQuery.loading && followError && <p className="error-message">{followError}</p>}
-
-          {!postsQuery.loading && !postsQuery.error && postsQuery.posts.length === 0 && (
-            <p className="text-centered">This user has no public posts yet.</p>
-          )}
-
-          {!postsQuery.loading && postsQuery.posts.length > 0 && (
-            <PostList posts={postsQuery.posts} currentUserId={currentUserId} />
-          )}
-
+        <TabContent
+          loading={postsQuery.loading}
+          error={postsQuery.error}
+          posts={postsQuery.posts}
+          emptyMessage="This user has no public posts yet."
+          currentUserId={currentUserId}
+          extraError={followError}
+        >
           <div ref={sentinelRef} style={{ height: 1 }} />
           {postsQuery.hasMore && !postsQuery.loading && postsQuery.posts.length > 0 && (
             <p className="text-centered">Loading more…</p>
           )}
-
           {!postsQuery.hasMore && !postsQuery.loading && postsQuery.posts.length > 0 && (
             <p className="text-centered">You reached the end!</p>
           )}
-        </>
+        </TabContent>
       )}
 
       {activeTab === 'favorites' && (
-        <>
-          {favoritesQuery.loading && <p className="text-centered">Loading favorites…</p>}
-          {!favoritesQuery.loading && favoritesQuery.error && (
-            <p className="error-message">{favoritesQuery.error}</p>
-          )}
-          {!favoritesQuery.loading && favoritesQuery.posts.length === 0 && (
-            <p className="text-centered">This user has no public favorites yet.</p>
-          )}
-          {!favoritesQuery.loading && favoritesQuery.posts.length > 0 && (
-            <PostList posts={favoritesQuery.posts} currentUserId={currentUserId} />
-          )}
-        </>
+        <TabContent
+          loading={favoritesQuery.loading}
+          error={favoritesQuery.error}
+          posts={favoritesQuery.posts}
+          emptyMessage="This user has no public favorites yet."
+          currentUserId={currentUserId}
+          loadingMessage="Loading favorites…"
+        />
       )}
 
       {activeTab === 'drafts' && isOwnProfile && (
-        <>
-          {draftsQuery.loading && <p className="text-centered">Loading drafts…</p>}
-          {!draftsQuery.loading && draftsQuery.error && (
-            <p className="error-message">{draftsQuery.error}</p>
-          )}
-          {!draftsQuery.loading && draftsQuery.posts.length === 0 && (
-            <p className="text-centered">You have no drafts yet.</p>
-          )}
-          {!draftsQuery.loading && draftsQuery.posts.length > 0 && (
-            <PostList posts={draftsQuery.posts} currentUserId={currentUserId} />
-          )}
-        </>
+        <TabContent
+          loading={draftsQuery.loading}
+          error={draftsQuery.error}
+          posts={draftsQuery.posts}
+          emptyMessage="You have no drafts yet."
+          currentUserId={currentUserId}
+          loadingMessage="Loading drafts…"
+        />
       )}
     </section>
   );

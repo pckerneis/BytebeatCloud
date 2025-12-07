@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
 import { supabase } from '../../lib/supabaseClient';
@@ -8,7 +8,7 @@ import { useInfiniteScroll } from '../../hooks/useInfiniteScroll';
 import { enrichWithViewerFavorites } from '../../utils/favorites';
 import { enrichWithTags } from '../../utils/tags';
 import { validateExpression } from '../../utils/expression-validator';
-import { useSyncTabQuery } from '../../hooks/useSyncTabQuery';
+import { useTabState } from '../../hooks/useTabState';
 
 const tabs = ['recent', 'trending'] as const;
 type TabName = (typeof tabs)[number];
@@ -28,19 +28,18 @@ export default function TagPage() {
   const loadingMoreRef = useRef(false);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
 
-  const [activeTab, setActiveTab] = useState<TabName>('recent');
-
-  useSyncTabQuery<TabName>(tabs, (tab) => {
-    setActiveTab((prev) => (prev !== tab ? tab : prev));
-  });
-
-  useEffect(() => {
-    // Reset pagination when tag or tab changes
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+  const resetPagination = useCallback(() => {
     setPosts([]);
     setPage(0);
     setHasMore(true);
-  }, [tag, activeTab]);
+  }, []);
+
+  const [activeTab, setActiveTab] = useTabState(tabs, 'recent', { onTabChange: resetPagination });
+
+  // Reset pagination when tag changes
+  useEffect(() => {
+    resetPagination();
+  }, [tag, resetPagination]);
 
   useEffect(() => {
     if (!tag || typeof tag !== 'string') return;
@@ -172,11 +171,7 @@ export default function TagPage() {
   useInfiniteScroll({ hasMore, loadingMoreRef, sentinelRef, setPage });
 
   const handleTabClick = (tab: TabName) => {
-    if (tab === activeTab) return;
     setActiveTab(tab);
-    void router.push({ pathname: router.pathname, query: { ...router.query, tab } }, undefined, {
-      shallow: true,
-    });
   };
 
   const titleTag = displayTag ?? normalizedTag ?? '';
