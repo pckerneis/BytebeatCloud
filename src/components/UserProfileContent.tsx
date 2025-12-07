@@ -168,9 +168,11 @@ export function useUserPosts(profileId: string | null, currentUserId?: string) {
         if (page === 0) setPosts([]);
         setHasMore(false);
       } else {
+        const rawLength = (data ?? []).length;
         const rows = await enrichPosts((data ?? []) as PostRow[], currentUserId);
         setPosts((prev) => (page === 0 ? rows : [...prev, ...rows]));
-        if (rows.length < pageSize) {
+        // Check raw data length, not enriched length (enrichPosts filters invalid expressions)
+        if (rawLength < pageSize) {
           setHasMore(false);
         }
       }
@@ -435,22 +437,23 @@ export function UserProfileContent({
       </div>
 
       {activeTab === 'posts' && (
-        <TabContent
-          loading={postsQuery.loading}
-          error={postsQuery.error}
-          posts={postsQuery.posts}
-          emptyMessage="This user has no public posts yet."
-          currentUserId={currentUserId}
-          extraError={followError}
-        >
-          <div ref={sentinelRef} style={{ height: 1 }} />
+        <>
+          <TabContent
+            loading={postsQuery.loading}
+            error={postsQuery.error}
+            posts={postsQuery.posts}
+            emptyMessage="This user has no public posts yet."
+            currentUserId={currentUserId}
+            extraError={followError}
+          />
+          <div ref={sentinelRef} style={{ height: 1 }} data-testid="scroll-sentinel" />
           {postsQuery.hasMore && !postsQuery.loading && postsQuery.posts.length > 0 && (
             <p className="text-centered">Loading more…</p>
           )}
           {!postsQuery.hasMore && !postsQuery.loading && postsQuery.posts.length > 0 && (
             <p className="text-centered">You reached the end!</p>
           )}
-        </TabContent>
+        </>
       )}
 
       {activeTab === 'favorites' && (

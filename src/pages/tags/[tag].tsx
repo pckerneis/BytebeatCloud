@@ -210,7 +210,7 @@ export default function TagPage() {
           <PostList posts={posts} currentUserId={user ? ((user as any).id as string) : undefined} />
         )}
 
-        <div ref={sentinelRef} style={{ height: 1 }} />
+        <div ref={sentinelRef} style={{ height: 1 }} data-testid="scroll-sentinel" />
         {hasMore && !loading && posts.length > 0 && <p className="text-centered">Loading more…</p>}
 
         {!hasMore && !loading && posts.length > 0 && (

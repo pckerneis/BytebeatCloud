@@ -167,7 +167,7 @@ export default function ExplorePage() {
         {!loading && !error && posts.length > 0 && (
           <PostList posts={posts} currentUserId={user ? (user as any).id : undefined} />
         )}
-        <div ref={sentinelRef} style={{ height: 1 }} />
+        <div ref={sentinelRef} style={{ height: 1 }} data-testid="scroll-sentinel" />
         {hasMore && !loading && posts.length > 0 && <p className="text-centered">Loading more…</p>}
 
         {!hasMore && !loading && posts.length > 0 && (
