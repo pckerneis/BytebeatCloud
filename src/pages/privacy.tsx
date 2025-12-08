@@ -72,8 +72,8 @@ export default function Privacy() {
             <li>Right to object</li>
           </ul>
           <p>
-            To exercise your rights, contact: {process.env.NEXT_PUBLIC_LEGAL_CONTACT_EMAIL}. You may also lodge
-            a complaint with a supervisory authority.
+            To exercise your rights, contact: {process.env.NEXT_PUBLIC_LEGAL_CONTACT_EMAIL}. You may
+            also lodge a complaint with a supervisory authority.
           </p>
 
           <h2>7. Cookies</h2>

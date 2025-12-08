@@ -20,7 +20,8 @@ export default function LegalMentions() {
             <br />
             <strong>Email :</strong> {process.env.NEXT_PUBLIC_LEGAL_CONTACT_EMAIL}
             <br />
-            <strong>Responsable de la publication :</strong> {process.env.NEXT_PUBLIC_LEGAL_PUBLISHER_NAME}
+            <strong>Responsable de la publication :</strong>{' '}
+            {process.env.NEXT_PUBLIC_LEGAL_PUBLISHER_NAME}
           </p>
 
           <h2>2. Hébergement</h2>
