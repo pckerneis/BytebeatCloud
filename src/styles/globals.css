@@ -357,6 +357,7 @@ input {
 
 input[type='number'] {
   border: 1px solid var(--chip-border-color);
+  padding: 2px 8px;
 }
 
 input[type='checkbox'] {
@@ -1554,4 +1555,15 @@ button.chip {
 .profile-social-link:hover {
   border-color: var(--accent-color);
   color: var(--accent-color);
+}
+
+/* Post detail actions */
+.post-detail-actions {
+  margin: 16px 0;
+}
+
+.export-wav-modal {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }

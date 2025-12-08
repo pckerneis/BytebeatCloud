@@ -1,6 +1,7 @@
-import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
+import { ExportWavModal } from '../../components/ExportWavModal';
+import { ModeOption } from '../../model/expression';
 import { supabase } from '../../lib/supabaseClient';
 import { useSupabaseAuth } from '../../hooks/useSupabaseAuth';
 import { PostList, type PostRow } from '../../components/PostList';
@@ -23,6 +24,7 @@ export default function PostDetailPage() {
   const [forks, setForks] = useState<PostRow[]>([]);
   const [forksError, setForksError] = useState('');
   const [mentionUserMap, setMentionUserMap] = useState<Map<string, string>>(new Map());
+  const [showExportModal, setShowExportModal] = useState(false);
 
   const { user } = useSupabaseAuth();
 
@@ -168,6 +170,26 @@ export default function PostDetailPage() {
               <p className="post-description-detail">
                 {renderDescriptionWithTagsAndMentions(posts[0].description, mentionUserMap)}
               </p>
+            )}
+
+            <div className="post-detail-actions">
+              <button
+                type="button"
+                className="button secondary"
+                onClick={() => setShowExportModal(true)}
+              >
+                Export to WAV
+              </button>
+            </div>
+
+            {showExportModal && posts[0] && (
+              <ExportWavModal
+                expression={posts[0].expression}
+                mode={(posts[0].mode as ModeOption) || ModeOption.Uint8}
+                sampleRate={posts[0].sample_rate || 8000}
+                title={posts[0].title || 'bytebeat'}
+                onClose={() => setShowExportModal(false)}
+              />
             )}
 
             <h3>Forks</h3>
