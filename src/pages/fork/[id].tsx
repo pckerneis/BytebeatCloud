@@ -25,7 +25,7 @@ export default function ForkPostPage() {
   const { isPlaying, toggle, lastError, stop, updateExpression } = useBytebeatPlayer({
     enableVisualizer: false,
   });
-  const { setCurrentPostById } = usePlayerStore();
+  const { currentPost, setCurrentPostById } = usePlayerStore();
 
   const { user } = useSupabaseAuth();
 
@@ -50,9 +50,12 @@ export default function ForkPostPage() {
 
   useEffect(() => {
     return () => {
-      void stop();
+      // Only stop if the editor's preview is playing (no post selected)
+      if (!currentPost) {
+        void stop();
+      }
     };
-  }, [stop]);
+  }, [stop, currentPost]);
 
   useEffect(() => {
     if (!liveUpdateEnabled || !isPlaying) return;
