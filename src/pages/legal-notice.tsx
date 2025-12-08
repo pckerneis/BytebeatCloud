@@ -14,13 +14,13 @@ export default function LegalMentions() {
             Le site <strong>bytebeat.cloud</strong> est édité par :
           </p>
           <p>
-            <strong>Nom et prénom :</strong> {process.env.LEGAL_PUBLISHER_NAME}
+            <strong>Nom et prénom :</strong> {process.env.NEXT_PUBLIC_LEGAL_PUBLISHER_NAME}
             <br />
-            <strong>Adresse :</strong> {process.env.LEGAL_PUBLISHER_ADDRESS}
+            <strong>Adresse :</strong> {process.env.NEXT_PUBLIC_LEGAL_PUBLISHER_ADDRESS}
             <br />
-            <strong>Email :</strong> {process.env.LEGAL_CONTACT_EMAIL}
+            <strong>Email :</strong> {process.env.NEXT_PUBLIC_LEGAL_CONTACT_EMAIL}
             <br />
-            <strong>Responsable de la publication :</strong> {process.env.LEGAL_PUBLISHER_NAME}
+            <strong>Responsable de la publication :</strong> {process.env.NEXT_PUBLIC_LEGAL_PUBLISHER_NAME}
           </p>
 
           <h2>2. Hébergement</h2>
@@ -62,7 +62,7 @@ export default function LegalMentions() {
           <p>
             Les données sont hébergées par Supabase, agissant en tant que sous-traitant. Vous
             disposez des droits d’accès, rectification, suppression, opposition et portabilité. Pour
-            exercer vos droits, contactez : {process.env.LEGAL_CONTACT_EMAIL}
+            exercer vos droits, contactez : {process.env.NEXT_PUBLIC_LEGAL_CONTACT_EMAIL}
           </p>
 
           <h2>5. Responsabilité et modération</h2>
@@ -80,7 +80,7 @@ export default function LegalMentions() {
           </p>
 
           <h2>7. Contact</h2>
-          <p>Pour toute question : {process.env.LEGAL_CONTACT_EMAIL}</p>
+          <p>Pour toute question : {process.env.NEXT_PUBLIC_LEGAL_CONTACT_EMAIL}</p>
         </div>
 
         <h1 id="en">Legal notice — English version</h1>
@@ -90,13 +90,13 @@ export default function LegalMentions() {
             The website <strong>bytebeat.cloud</strong> is published by:
           </p>
           <p>
-            <strong>Name:</strong> {process.env.LEGAL_PUBLISHER_NAME}
+            <strong>Name:</strong> {process.env.NEXT_PUBLIC_LEGAL_PUBLISHER_NAME}
             <br />
-            <strong>Address:</strong> {process.env.LEGAL_PUBLISHER_ADDRESS}
+            <strong>Address:</strong> {process.env.NEXT_PUBLIC_LEGAL_PUBLISHER_ADDRESS}
             <br />
-            <strong>Email:</strong> {process.env.LEGAL_CONTACT_EMAIL}
+            <strong>Email:</strong> {process.env.NEXT_PUBLIC_LEGAL_CONTACT_EMAIL}
             <br />
-            <strong>Publication manager:</strong> {process.env.LEGAL_PUBLISHER_NAME}
+            <strong>Publication manager:</strong> {process.env.NEXT_PUBLIC_LEGAL_PUBLISHER_NAME}
           </p>
 
           <h2>2. Hosting</h2>
@@ -137,7 +137,7 @@ export default function LegalMentions() {
           <p>
             Data is hosted by Supabase (data processor). Users have rights of access, rectification,
             deletion, objection and portability. To exercise these rights contact:{' '}
-            {process.env.LEGAL_CONTACT_EMAIL}.
+            {process.env.NEXT_PUBLIC_LEGAL_CONTACT_EMAIL}.
           </p>
 
           <h2>5. Liability & moderation</h2>
@@ -154,7 +154,7 @@ export default function LegalMentions() {
           </p>
 
           <h2>7. Contact</h2>
-          <p>For questions: {process.env.LEGAL_CONTACT_EMAIL}</p>
+          <p>For questions: {process.env.NEXT_PUBLIC_LEGAL_CONTACT_EMAIL}</p>
         </div>
 
         <footer>
