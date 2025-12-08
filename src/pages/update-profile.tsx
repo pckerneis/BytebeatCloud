@@ -7,8 +7,17 @@ import { useCurrentUserProfile } from '../hooks/useCurrentUserProfile';
 
 export default function UpdateProfilePage() {
   const router = useRouter();
-  const { user, status, error: profileError, username: loadedUsername } = useCurrentUserProfile();
+  const {
+    user,
+    status,
+    error: profileError,
+    username: loadedUsername,
+    bio: loadedBio,
+    socialLinks: loadedSocialLinks,
+  } = useCurrentUserProfile();
   const [username, setUsername] = useState('');
+  const [bio, setBio] = useState('');
+  const [socialLinks, setSocialLinks] = useState<string[]>(['', '', '']);
   const [error, setError] = useState('');
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving'>('idle');
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -18,7 +27,18 @@ export default function UpdateProfilePage() {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setUsername(loadedUsername);
     }
-  }, [loadedUsername]);
+    if (loadedBio !== null) {
+      setBio(loadedBio);
+    }
+    if (loadedSocialLinks) {
+      // Pad to 3 entries
+      setSocialLinks([
+        loadedSocialLinks[0] ?? '',
+        loadedSocialLinks[1] ?? '',
+        loadedSocialLinks[2] ?? '',
+      ]);
+    }
+  }, [loadedUsername, loadedBio, loadedSocialLinks]);
 
   const handleSave = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -36,7 +56,11 @@ export default function UpdateProfilePage() {
 
     const { error: updateError } = await supabase
       .from('profiles')
-      .update({ username: username.trim() })
+      .update({
+        username: username.trim(),
+        bio: bio.trim() || null,
+        social_links: socialLinks.filter((url) => url.trim()).map((url) => url.trim()),
+      })
       .eq('id', (user as any).id);
 
     if (updateError) {
@@ -140,6 +164,12 @@ export default function UpdateProfilePage() {
     await router.push('/');
   };
 
+  const handleSocialLinkChange = (index: number, value: string) => {
+    const updated = [...socialLinks];
+    updated[index] = value;
+    setSocialLinks(updated);
+  };
+
   return (
     <>
       <Head>
@@ -161,7 +191,7 @@ export default function UpdateProfilePage() {
               Sign out
             </button>
 
-            <h3>Update username</h3>
+            <h3>Username</h3>
             <label className="field">
               <input
                 type="text"
@@ -172,8 +202,41 @@ export default function UpdateProfilePage() {
                 maxLength={32}
               />
             </label>
-            <button type="submit" className="button secondary" disabled={saveStatus === 'saving'}>
-              {saveStatus === 'saving' ? 'Saving…' : 'Save username'}
+
+            <h3>Bio</h3>
+            <label className="field">
+              <textarea
+                value={bio}
+                onChange={(e) => setBio(e.target.value)}
+                className="post-title-input"
+                placeholder="Tell us about yourself"
+                maxLength={500}
+                rows={4}
+                style={{ resize: 'vertical' }}
+              />
+            </label>
+            <p className="field-hint">{bio.length}/500 characters</p>
+
+            <h3>Social links</h3>
+            {socialLinks.map((url, index) => (
+              <label key={index} className="field">
+                <input
+                  type="url"
+                  value={url}
+                  onChange={(e) => handleSocialLinkChange(index, e.target.value)}
+                  className="post-title-input"
+                  placeholder={`social link ${index + 1}`}
+                />
+              </label>
+            ))}
+
+            <button
+              type="submit"
+              className="button secondary"
+              style={{ marginTop: '10px' }}
+              disabled={saveStatus === 'saving'}
+            >
+              {saveStatus === 'saving' ? 'Saving…' : 'Save profile'}
             </button>
 
             <h3>Delete account</h3>

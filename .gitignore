@@ -5,4 +5,4 @@ node_modules
 /out
 .vscode
 test-results
-.tsconfig.tsbuildinfo
+tsconfig.tsbuildinfo
