@@ -98,7 +98,12 @@ export default function Home() {
             <p className="text-centered">No trending posts yet.</p>
           )}
           {!trendingLoading && !trendingError && trendingPosts.length > 0 && (
-            <PostList posts={trendingPosts} currentUserId={user ? (user as any).id : undefined} />
+            <>
+              <PostList posts={trendingPosts} currentUserId={user ? (user as any).id : undefined} />
+              <p className="text-centered">
+                <Link href="/explore">Explore more posts →</Link>
+              </p>
+            </>
           )}
         </section>
 
