@@ -232,8 +232,7 @@ export default function UpdateProfilePage() {
 
             <button
               type="submit"
-              className="button secondary"
-              style={{ marginTop: '10px' }}
+              className="button secondary mt-10"
               disabled={saveStatus === 'saving'}
             >
               {saveStatus === 'saving' ? 'Saving…' : 'Save profile'}
