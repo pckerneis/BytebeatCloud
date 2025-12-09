@@ -25,6 +25,7 @@
     "@uiw/codemirror-theme-monokai-dimmed": "^4.25.3",
     "@uiw/codemirror-theme-noctis-lilac": "^4.25.3",
     "@uiw/react-codemirror": "^4.22.0",
+    "@vercel/og": "^0.8.5",
     "codemirror": "^6.0.1",
     "next": "16.0.7",
     "react": "19.2.1",
