@@ -242,11 +242,7 @@ export default function PostDetailPage({ postMeta, baseUrl }: PostDetailPageProp
               >
                 Export to WAV
               </button>
-              <button
-                type="button"
-                className="button secondary ml-10"
-                onClick={handleShare}
-              >
+              <button type="button" className="button secondary ml-10" onClick={handleShare}>
                 {shareButtonText}
               </button>
             </div>
