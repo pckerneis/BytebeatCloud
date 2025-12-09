@@ -39,8 +39,33 @@ export default function PostDetailPage({ postMeta, baseUrl }: PostDetailPageProp
   const [forksError, setForksError] = useState('');
   const [mentionUserMap, setMentionUserMap] = useState<Map<string, string>>(new Map());
   const [showExportModal, setShowExportModal] = useState(false);
+  const [shareButtonText, setShareButtonText] = useState('Share');
 
   const { user } = useSupabaseAuth();
+
+  const handleShare = async () => {
+    const shareUrl = `${baseUrl}/post/${id}`;
+    const shareTitle = posts[0]?.title || 'Check out this bytebeat';
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: shareTitle,
+          url: shareUrl,
+        });
+      } catch (err) {
+        // User cancelled or share failed silently
+      }
+    } else {
+      try {
+        await navigator.clipboard.writeText(shareUrl);
+        setShareButtonText('Link copied!');
+        setTimeout(() => setShareButtonText('Share'), 2000);
+      } catch (err) {
+        console.error('Failed to copy link', err);
+      }
+    }
+  };
 
   useEffect(() => {
     if (!id || typeof id !== 'string') return;
@@ -216,6 +241,9 @@ export default function PostDetailPage({ postMeta, baseUrl }: PostDetailPageProp
                 onClick={() => setShowExportModal(true)}
               >
                 Export to WAV
+              </button>
+              <button type="button" className="button secondary ml-10" onClick={handleShare}>
+                {shareButtonText}
               </button>
             </div>
 
