@@ -240,6 +240,45 @@ export function useUserDrafts(
   );
 }
 
+export function useProfileDetails(profileId: string | null) {
+  const [bio, setBio] = useState<string | null>(null);
+  const [socialLinks, setSocialLinks] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!profileId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+
+    const fetchDetails = async () => {
+      setLoading(true);
+      const { data } = await supabase
+        .from('profiles')
+        .select('bio, social_links')
+        .eq('id', profileId)
+        .maybeSingle();
+
+      if (cancelled) return;
+
+      setBio(data?.bio ?? null);
+      setSocialLinks((data?.social_links as string[]) ?? []);
+      setLoading(false);
+    };
+
+    void fetchDetails();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [profileId]);
+
+  return { bio, socialLinks, loading };
+}
+
 export function useFollowStatus(
   currentUserId: string | undefined,
   viewedProfileId: string | null,
@@ -357,6 +396,9 @@ export function UserProfileContent({
     activeTab === 'drafts' && isOwnProfile,
   );
 
+  // Profile details (bio, social links)
+  const { bio, socialLinks } = useProfileDetails(profileId);
+
   // Follow status
   const {
     isFollowed,
@@ -404,6 +446,24 @@ export function UserProfileContent({
           {extraHeader}
         </div>
       </div>
+
+      {bio && <p className="profile-bio">{bio}</p>}
+
+      {socialLinks.length > 0 && (
+        <div className="profile-social-links">
+          {socialLinks.map((url, index) => (
+            <a
+              key={index}
+              href={url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="profile-social-link"
+            >
+              {url}
+            </a>
+          ))}
+        </div>
+      )}
 
       <div className="tab-header">
         <span

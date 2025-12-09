@@ -13,9 +13,9 @@ export default function Privacy() {
 
           <h2>1. Who is responsible?</h2>
           <p>
-            <strong>Publisher:</strong> {process.env.LEGAL_PUBLISHER_NAME}
+            <strong>Publisher:</strong> {process.env.NEXT_PUBLIC_LEGAL_PUBLISHER_NAME}
             <br />
-            <strong>Contact:</strong> {process.env.LEGAL_CONTACT_EMAIL}
+            <strong>Contact:</strong> {process.env.NEXT_PUBLIC_LEGAL_CONTACT_EMAIL}
             <br />
             <strong>Website:</strong> bytebeat.cloud
           </p>
@@ -72,8 +72,8 @@ export default function Privacy() {
             <li>Right to object</li>
           </ul>
           <p>
-            To exercise your rights, contact: {process.env.LEGAL_CONTACT_EMAIL}. You may also lodge
-            a complaint with a supervisory authority.
+            To exercise your rights, contact: {process.env.NEXT_PUBLIC_LEGAL_CONTACT_EMAIL}. You may
+            also lodge a complaint with a supervisory authority.
           </p>
 
           <h2>7. Cookies</h2>
@@ -99,7 +99,7 @@ export default function Privacy() {
           </p>
 
           <h2>10. Contact & DPO</h2>
-          <p>Contact: {process.env.LEGAL_CONTACT_EMAIL}</p>
+          <p>Contact: {process.env.NEXT_PUBLIC_LEGAL_CONTACT_EMAIL}</p>
           <p>
             We do not currently have a DPO appointed (contact us if you believe one is required).
           </p>

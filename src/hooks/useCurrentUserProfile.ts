@@ -10,6 +10,8 @@ export function useCurrentUserProfile() {
   const [status, setStatus] = useState<ProfileStatus>('idle');
   const [error, setError] = useState('');
   const [username, setUsername] = useState<string | null>(null);
+  const [bio, setBio] = useState<string | null>(null);
+  const [socialLinks, setSocialLinks] = useState<string[]>([]);
 
   useEffect(() => {
     // Wait for auth to finish loading before deciding where to redirect.
@@ -30,7 +32,7 @@ export function useCurrentUserProfile() {
     const go = async () => {
       const { data, error: profileError } = await supabase
         .from('profiles')
-        .select('username')
+        .select('username, bio, social_links')
         .eq('id', (user as any).id)
         .maybeSingle();
 
@@ -43,6 +45,8 @@ export function useCurrentUserProfile() {
       }
 
       setUsername(data.username);
+      setBio(data.bio ?? null);
+      setSocialLinks((data.social_links as string[]) ?? []);
       setStatus('idle');
     };
 
@@ -53,5 +57,5 @@ export function useCurrentUserProfile() {
     };
   }, [user, loading]);
 
-  return { user, loading, status, error, username };
+  return { user, loading, status, error, username, bio, socialLinks };
 }
