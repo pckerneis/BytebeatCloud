@@ -1,0 +1,207 @@
+import { ImageResponse } from '@vercel/og';
+import type { NextRequest } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
+
+export const config = {
+  runtime: 'edge',
+};
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+
+function generateWaveformSamples(expression: string, sampleCount: number): number[] {
+  const samples: number[] = [];
+  
+  let hash = 0;
+  for (let i = 0; i < expression.length; i++) {
+    hash = ((hash << 5) - hash + expression.charCodeAt(i)) | 0;
+  }
+  
+  const seed = Math.abs(hash);
+  const frequency1 = ((seed % 7) + 1) * 0.1;
+  const frequency2 = ((seed % 11) + 1) * 0.05;
+  const frequency3 = ((seed % 21) + 1) * 0.03;
+  const phase = (seed % 100) / 100 * Math.PI * 2;
+  
+  for (let i = 0; i < sampleCount; i++) {
+    const t = i / sampleCount;
+    const value = Math.sin(t * Math.PI * 2 * frequency1 * 10 + phase) * 0.6 +
+                  Math.sin(t * Math.PI * 2 * frequency2 * 20 + phase * 2) * 0.4 +
+                  Math.sin(t * Math.PI * 2 * frequency3 * 20 + phase * 2) * 0.2;
+    samples.push(value);
+  }
+  
+  return samples;
+}
+
+export default async function handler(req: NextRequest) {
+  let fontData: ArrayBuffer | null = null;
+  try {
+    const fontRes = await fetch(
+      'https://fonts.gstatic.com/s/inconsolata/v37/QldgNThLqRwH-OJ1UHjlKENVzkWGVkL3GZQmAwLYxYWI2qfdm7Lpp4U8aRo.ttf'
+    );
+    if (fontRes.ok) {
+      fontData = await fontRes.arrayBuffer();
+    }
+  } catch {
+    // Font loading failed
+  }
+
+  const url = new URL(req.url);
+  const pathParts = url.pathname.split('/');
+  const id = pathParts[pathParts.length - 1];
+
+  if (!id) {
+    return new Response('Missing post ID', { status: 400 });
+  }
+
+  const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+  const { data: post, error } = await supabase
+    .from('posts_with_meta')
+    .select('id, title, expression, author_username')
+    .eq('id', id)
+    .maybeSingle();
+
+  if (error || !post) {
+    return new Response('Post not found', { status: 404 });
+  }
+
+  const title = post.title || '(untitled)';
+  const author = post.author_username ? `@${post.author_username}` : '@unknown';
+  const waveformSamples = generateWaveformSamples(post.expression, 80);
+  const barWidth = 10;
+  const barGap = 2;
+  const waveformHeight = 100;
+
+  return new ImageResponse(
+    (
+      <div
+        style={{
+          width: '1200px',
+          height: '630px',
+          display: 'flex',
+          flexDirection: 'column',
+          background: '#1a1a20',
+          fontFamily: 'Inconsolata',
+          padding: '30px 40px',
+        }}
+      >
+        <div
+          style={{
+            display: 'flex',
+            fontSize: '28px',
+            fontWeight: 700,
+            color: '#7b34ff',
+            marginBottom: '40px',
+          }}
+        >
+          BytebeatCloud
+        </div>
+
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'flex-start',
+            width: '1000px',
+            marginLeft: '60px',
+          }}
+        >
+          <div
+            style={{
+              display: 'flex',
+              fontSize: '48px',
+              fontWeight: 700,
+              color: 'white',
+              marginBottom: '16px',
+            }}
+          >
+            Editing
+          </div>
+
+          <div
+            style={{
+              display: 'flex',
+              fontSize: '24px',
+              color: '#a0a0a0',
+              marginBottom: '8px',
+            }}
+          >
+            {author}
+          </div>
+
+          <div
+            style={{
+              display: 'flex',
+              fontSize: '36px',
+              fontWeight: 600,
+              color: '#e0e0e0',
+              marginBottom: '40px',
+            }}
+          >
+            {title.length > 40 ? title.slice(0, 40) + '...' : title}
+          </div>
+
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              height: `${waveformHeight}px`,
+              marginBottom: '40px',
+              marginLeft: '20px',
+            }}
+          >
+            {waveformSamples.map((sample, i) => {
+              const height = Math.max(4, Math.abs(sample) * waveformHeight);
+              return (
+                <div
+                  key={i}
+                  style={{
+                    width: `${barWidth}px`,
+                    height: `${height}px`,
+                    backgroundColor: '#7b34ff',
+                    marginLeft: i === 0 ? '0' : `${barGap}px`,
+                    borderRadius: '2px',
+                  }}
+                />
+              );
+            })}
+          </div>
+
+          <div
+            style={{
+              display: 'flex',
+              fontSize: '22px',
+              fontFamily: 'monospace',
+              color: '#c2c2c7ff',
+              background: '#101013ff',
+              padding: '12px 16px',
+              borderRadius: '8px',
+              width: '1000px',
+              overflow: 'hidden',
+              lineHeight: 1.4,
+              wordBreak: 'break-all',
+            }}
+          >
+            {post.expression.length > 100 ? post.expression.slice(0, 100) + '...' : post.expression}
+          </div>
+        </div>
+      </div>
+    ),
+    {
+      width: 1200,
+      height: 630,
+      ...(fontData && {
+        fonts: [
+          {
+            name: 'Inconsolata',
+            data: fontData,
+            style: 'normal' as const,
+            weight: 400,
+          },
+        ],
+      }),
+    },
+  );
+}

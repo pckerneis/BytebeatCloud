@@ -239,6 +239,14 @@ export default function CreatePage() {
     <>
       <Head>
         <title>BytebeatCloud - Create</title>
+        <meta name="description" content="Create a new bytebeat on BytebeatCloud" />
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content="Create - BytebeatCloud" />
+        <meta property="og:description" content="Create a new bytebeat on BytebeatCloud" />
+        <meta property="og:image" content={`${typeof window !== 'undefined' ? window.location.origin : ''}/api/og/create${expression ? `?expr=${encodeURIComponent(expression)}` : ''}`} />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+        <meta name="twitter:card" content="summary_large_image" />
       </Head>
       <section>
         <h2>Create</h2>
