@@ -100,8 +100,7 @@ export function renderToWav(options: ExportOptions): ArrayBuffer {
 
   if (mode === ModeOption.Float) {
     for (let i = 0; i < totalSamples; i++) {
-      const tSeconds = i / sampleRate;
-      const v = fn(tSeconds, sampleRate);
+      const v = fn(i, sampleRate);
       samples[i] = Math.max(-1, Math.min(1, v));
     }
   } else {

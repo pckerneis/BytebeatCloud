@@ -1,24 +1,18 @@
 import { ImageResponse } from '@vercel/og';
 import type { NextRequest } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 
 export const config = {
   runtime: 'edge',
 };
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-
 function generateWaveformSamples(expression: string, sampleCount: number): number[] {
   const samples: number[] = [];
 
-  // Create a simple hash from the expression
   let hash = 0;
   for (let i = 0; i < expression.length; i++) {
     hash = ((hash << 5) - hash + expression.charCodeAt(i)) | 0;
   }
 
-  // Use hash to seed a deterministic pattern
   const seed = Math.abs(hash);
   const frequency1 = ((seed % 7) + 1) * 0.1;
   const frequency2 = ((seed % 11) + 1) * 0.05;
@@ -27,7 +21,6 @@ function generateWaveformSamples(expression: string, sampleCount: number): numbe
 
   for (let i = 0; i < sampleCount; i++) {
     const t = i / sampleCount;
-    // Combine sine waves with different frequencies for visual variety
     const value =
       Math.sin(t * Math.PI * 2 * frequency1 * 10 + phase) * 0.6 +
       Math.sin(t * Math.PI * 2 * frequency2 * 20 + phase * 2) * 0.4 +
@@ -39,7 +32,6 @@ function generateWaveformSamples(expression: string, sampleCount: number): numbe
 }
 
 export default async function handler(req: NextRequest) {
-  // Load font inside handler to properly handle errors
   let fontData: ArrayBuffer | null = null;
   try {
     const fontRes = await fetch(
@@ -49,36 +41,13 @@ export default async function handler(req: NextRequest) {
       fontData = await fontRes.arrayBuffer();
     }
   } catch {
-    // Font loading failed, will use fallback
+    // Font loading failed
   }
 
   const url = new URL(req.url);
-  const pathParts = url.pathname.split('/');
-  const id = pathParts[pathParts.length - 1];
+  const expression = url.searchParams.get('expr') || 't';
 
-  if (!id) {
-    return new Response('Missing post ID', { status: 400 });
-  }
-
-  const supabase = createClient(supabaseUrl, supabaseAnonKey);
-
-  const { data: post, error } = await supabase
-    .from('posts_with_meta')
-    .select('id, title, expression, author_username, mode')
-    .eq('id', id)
-    .maybeSingle();
-
-  if (error || !post) {
-    return new Response('Post not found', { status: 404 });
-  }
-
-  const title = post.title || '(untitled)';
-  const author = post.author_username ? `@${post.author_username}` : '@unknown';
-
-  // Generate waveform samples (deterministic pattern based on expression)
-  const waveformSamples = generateWaveformSamples(post.expression, 80);
-
-  // Waveform bar dimensions
+  const waveformSamples = generateWaveformSamples(expression, 80);
   const barWidth = 10;
   const barGap = 2;
   const waveformHeight = 120;
@@ -96,7 +65,6 @@ export default async function handler(req: NextRequest) {
           padding: '30px 40px',
         }}
       >
-        {/* BytebeatCloud */}
         <div
           style={{
             display: 'flex',
@@ -109,7 +77,6 @@ export default async function handler(req: NextRequest) {
           BytebeatCloud
         </div>
 
-        {/* Content container */}
         <div
           style={{
             display: 'flex',
@@ -119,38 +86,35 @@ export default async function handler(req: NextRequest) {
             marginLeft: '60px',
           }}
         >
-          {/* Author */}
-          <div
-            style={{
-              display: 'flex',
-              fontSize: '30px',
-              color: '#a0a0a0',
-              marginBottom: '8px',
-            }}
-          >
-            {author}
-          </div>
-
-          {/* Title */}
           <div
             style={{
               display: 'flex',
               fontSize: '42px',
               fontWeight: 700,
               color: 'white',
-              marginBottom: '60px',
+              marginBottom: '24px',
             }}
           >
-            {title.length > 50 ? title.slice(0, 50) + '...' : title}
+            New Bytebeat
           </div>
 
-          {/* Waveform */}
+          <div
+            style={{
+              display: 'flex',
+              fontSize: '24px',
+              color: '#a0a0a0',
+              marginBottom: '40px',
+            }}
+          >
+            Listen to this expression
+          </div>
+
           <div
             style={{
               display: 'flex',
               alignItems: 'center',
               height: `${waveformHeight}px`,
-              marginBottom: '60px',
+              marginBottom: '40px',
               marginLeft: '20px',
             }}
           >
@@ -171,7 +135,6 @@ export default async function handler(req: NextRequest) {
             })}
           </div>
 
-          {/* Expression preview */}
           <div
             style={{
               display: 'flex',
@@ -188,7 +151,7 @@ export default async function handler(req: NextRequest) {
               wordBreak: 'break-all',
             }}
           >
-            {post.expression.length > 120 ? post.expression.slice(0, 120) + '...' : post.expression}
+            {expression.length > 120 ? expression.slice(0, 120) + '...' : expression}
           </div>
         </div>
       </div>

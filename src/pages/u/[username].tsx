@@ -15,6 +15,17 @@ export default function UserPage() {
     <>
       <Head>
         <title>{`BytebeatCloud - @${uname ?? 'User'}`}</title>
+        <meta name="description" content={`@${uname}'s profile on BytebeatCloud`} />
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content={`@${uname} - BytebeatCloud`} />
+        <meta property="og:description" content={`@${uname}'s profile on BytebeatCloud`} />
+        <meta
+          property="og:image"
+          content={`${typeof window !== 'undefined' ? window.location.origin : ''}/api/og/user/${encodeURIComponent(uname ?? '')}`}
+        />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+        <meta name="twitter:card" content="summary_large_image" />
       </Head>
       <section>
         {loading && <p className="text-centered">Loading…</p>}
