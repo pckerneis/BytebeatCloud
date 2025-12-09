@@ -39,6 +39,19 @@ function generateWaveformSamples(expression: string, sampleCount: number): numbe
 }
 
 export default async function handler(req: NextRequest) {
+  // Load font inside handler to properly handle errors
+  let fontData: ArrayBuffer | null = null;
+  try {
+    const fontRes = await fetch(
+      'https://fonts.gstatic.com/s/inconsolata/v37/QldgNThLqRwH-OJ1UHjlKENVzkWGVkL3GZQmAwLYxYWI2qfdm7Lpp4U8aRo.ttf'
+    );
+    if (fontRes.ok) {
+      fontData = await fontRes.arrayBuffer();
+    }
+  } catch {
+    // Font loading failed, will use fallback
+  }
+
   const url = new URL(req.url);
   const pathParts = url.pathname.split('/');
   const id = pathParts[pathParts.length - 1];
@@ -78,117 +91,121 @@ export default async function handler(req: NextRequest) {
           height: '630px',
           display: 'flex',
           flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
           background: '#1a1a20',
-          fontFamily: 'system-ui, -apple-system, sans-serif',
+          fontFamily: 'Inconsolata',
+          padding: '30px 40px',
         }}
       >
-        {/* Logo / Brand */}
-        <div
-          style={{
-            position: 'absolute',
-            top: '30px',
-            left: '40px',
-            display: 'flex',
-            alignItems: 'center',
-          }}
-        >
-          <span
-            style={{
-              fontSize: '28px',
-              fontWeight: 700,
-              color: '#7b34ff',
-            }}
-          >
-            BytebeatCloud
-          </span>
-        </div>
-
-        {/* Play button circle */}
-        <div
-          style={{
-            paddingLeft: '40px',
-            paddingRight: '40px',
-            paddingTop: '20px',
-            paddingBottom: '20px',
-            borderRadius: '16px',
-            background: '#7b34ff',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            marginBottom: '30px',
-          }}
-        >
-          <span
-            style={{
-              fontSize: '40px',
-              fontWeight: 700,
-              color: 'white',
-            }}
-          >
-            Play
-          </span>
-        </div>
-
-        {/* Waveform visualization using bars */}
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            height: `${waveformHeight}px`,
-            marginBottom: '30px',
-          }}
-        >
-          {waveformSamples.map((sample, i) => {
-            const height = Math.max(4, Math.abs(sample) * waveformHeight);
-            return (
-              <div
-                key={i}
-                style={{
-                  width: `${barWidth}px`,
-                  height: `${height}px`,
-                  backgroundColor: '#7b34ff',
-                  marginLeft: i === 0 ? '0' : `${barGap}px`,
-                  borderRadius: '2px',
-                }}
-              />
-            );
-          })}
-        </div>
-
-        {/* Title */}
-        <div
-          style={{
-            display: 'flex',
-            fontSize: '48px',
-            fontWeight: 700,
-            color: 'white',
-            textAlign: 'center',
-            maxWidth: '1000px',
-            marginBottom: '12px',
-          }}
-        >
-          {title.length > 40 ? title.slice(0, 40) + '...' : title}
-        </div>
-
-        {/* Author */}
+        {/* BytebeatCloud */}
         <div
           style={{
             display: 'flex',
             fontSize: '28px',
-            color: '#a0a0a0',
-            textAlign: 'center',
+            fontWeight: 700,
+            color: '#7b34ff',
+            marginBottom: '52px',
           }}
         >
-          by {author}
+          BytebeatCloud
+        </div>
+
+        {/* Content container */}
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'flex-start',
+            width: '1000px',
+            marginLeft: '60px',
+          }}
+        >
+          {/* Author */}
+          <div
+            style={{
+              display: 'flex',
+              fontSize: '30px',
+              color: '#a0a0a0',
+              marginBottom: '8px',
+            }}
+          >
+            {author}
+          </div>
+
+          {/* Title */}
+          <div
+            style={{
+              display: 'flex',
+              fontSize: '42px',
+              fontWeight: 700,
+              color: 'white',
+              marginBottom: '60px',
+            }}
+          >
+            {title.length > 50 ? title.slice(0, 50) + '...' : title}
+          </div>
+
+          {/* Waveform */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              height: `${waveformHeight}px`,
+              marginBottom: '60px',
+              marginLeft: '20px'
+            }}
+          >
+            {waveformSamples.map((sample, i) => {
+              const height = Math.max(4, Math.abs(sample) * waveformHeight);
+              return (
+                <div
+                  key={i}
+                  style={{
+                    width: `${barWidth}px`,
+                    height: `${height}px`,
+                    backgroundColor: '#7b34ff',
+                    marginLeft: i === 0 ? '0' : `${barGap}px`,
+                    borderRadius: '2px',
+                  }}
+                />
+              );
+            })}
+          </div>
+
+          {/* Expression preview */}
+          <div
+            style={{
+              display: 'flex',
+              fontSize: '26px',
+              fontFamily: 'monospace',
+              color: '#c2c2c7ff',
+              background: '#101013ff',
+              padding: '12px 16px',
+              borderRadius: '8px',
+              width: '1000px',
+              maxHeight: '90px',
+              overflow: 'hidden',
+              lineHeight: 1.4,
+              wordBreak: 'break-all',
+            }}
+          >
+            {post.expression.length > 120 ? post.expression.slice(0, 120) + '...' : post.expression}
+          </div>
         </div>
       </div>
     ),
     {
       width: 1200,
       height: 630,
+      ...(fontData && {
+        fonts: [
+          {
+            name: 'Inconsolata',
+            data: fontData,
+            style: 'normal' as const,
+            weight: 400,
+          },
+        ],
+      }),
     },
   );
 }
