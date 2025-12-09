@@ -7,26 +7,27 @@ export const config = {
 
 function generateWaveformSamples(expression: string, sampleCount: number): number[] {
   const samples: number[] = [];
-  
+
   let hash = 0;
   for (let i = 0; i < expression.length; i++) {
     hash = ((hash << 5) - hash + expression.charCodeAt(i)) | 0;
   }
-  
+
   const seed = Math.abs(hash);
   const frequency1 = ((seed % 7) + 1) * 0.1;
   const frequency2 = ((seed % 11) + 1) * 0.05;
   const frequency3 = ((seed % 21) + 1) * 0.03;
-  const phase = (seed % 100) / 100 * Math.PI * 2;
-  
+  const phase = ((seed % 100) / 100) * Math.PI * 2;
+
   for (let i = 0; i < sampleCount; i++) {
     const t = i / sampleCount;
-    const value = Math.sin(t * Math.PI * 2 * frequency1 * 10 + phase) * 0.6 +
-                  Math.sin(t * Math.PI * 2 * frequency2 * 20 + phase * 2) * 0.4 +
-                  Math.sin(t * Math.PI * 2 * frequency3 * 20 + phase * 2) * 0.2;
+    const value =
+      Math.sin(t * Math.PI * 2 * frequency1 * 10 + phase) * 0.6 +
+      Math.sin(t * Math.PI * 2 * frequency2 * 20 + phase * 2) * 0.4 +
+      Math.sin(t * Math.PI * 2 * frequency3 * 20 + phase * 2) * 0.2;
     samples.push(value);
   }
-  
+
   return samples;
 }
 
@@ -34,7 +35,7 @@ export default async function handler(req: NextRequest) {
   let fontData: ArrayBuffer | null = null;
   try {
     const fontRes = await fetch(
-      'https://fonts.gstatic.com/s/inconsolata/v37/QldgNThLqRwH-OJ1UHjlKENVzkWGVkL3GZQmAwLYxYWI2qfdm7Lpp4U8aRo.ttf'
+      'https://fonts.gstatic.com/s/inconsolata/v37/QldgNThLqRwH-OJ1UHjlKENVzkWGVkL3GZQmAwLYxYWI2qfdm7Lpp4U8aRo.ttf',
     );
     if (fontRes.ok) {
       fontData = await fontRes.arrayBuffer();

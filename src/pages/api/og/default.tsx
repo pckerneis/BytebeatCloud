@@ -9,7 +9,7 @@ export default async function handler(req: NextRequest) {
   let fontData: ArrayBuffer | null = null;
   try {
     const fontRes = await fetch(
-      'https://fonts.gstatic.com/s/inconsolata/v37/QldgNThLqRwH-OJ1UHjlKENVzkWGVkL3GZQmAwLYxYWI2qfdm7Lpp4U8aRo.ttf'
+      'https://fonts.gstatic.com/s/inconsolata/v37/QldgNThLqRwH-OJ1UHjlKENVzkWGVkL3GZQmAwLYxYWI2qfdm7Lpp4U8aRo.ttf',
     );
     if (fontRes.ok) {
       fontData = await fontRes.arrayBuffer();

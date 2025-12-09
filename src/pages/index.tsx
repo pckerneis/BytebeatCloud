@@ -66,11 +66,20 @@ export default function Home() {
     <>
       <Head>
         <title>BytebeatCloud - Create and share bytebeat music</title>
-        <meta name="description" content="A platform to explore and share tiny musical expressions" />
+        <meta
+          name="description"
+          content="A platform to explore and share tiny musical expressions"
+        />
         <meta property="og:type" content="website" />
         <meta property="og:title" content="BytebeatCloud" />
-        <meta property="og:description" content="A platform to explore and share tiny musical expressions" />
-        <meta property="og:image" content={`${typeof window !== 'undefined' ? window.location.origin : ''}/api/og/default`} />
+        <meta
+          property="og:description"
+          content="A platform to explore and share tiny musical expressions"
+        />
+        <meta
+          property="og:image"
+          content={`${typeof window !== 'undefined' ? window.location.origin : ''}/api/og/default`}
+        />
         <meta property="og:image:width" content="1200" />
         <meta property="og:image:height" content="630" />
         <meta name="twitter:card" content="summary_large_image" />
@@ -91,12 +100,12 @@ export default function Home() {
           !
         </p>
 
-        { linkToDiscord && (
+        {linkToDiscord && (
           <p>
             Join the community on <Link href={linkToDiscord}>Discord</Link> to exchange about
             bytebeat techniques, suggest features or report bugs.
           </p>
-        ) }
+        )}
 
         <fieldset>
           <legend>What is bytebeat?</legend>

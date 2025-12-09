@@ -236,7 +236,10 @@ export default function EditPostPage() {
         <meta property="og:type" content="website" />
         <meta property="og:title" content="Editing - BytebeatCloud" />
         <meta property="og:description" content="Edit your bytebeat on BytebeatCloud" />
-        <meta property="og:image" content={`${typeof window !== 'undefined' ? window.location.origin : ''}/api/og/edit/${id}`} />
+        <meta
+          property="og:image"
+          content={`${typeof window !== 'undefined' ? window.location.origin : ''}/api/og/edit/${id}`}
+        />
         <meta property="og:image:width" content="1200" />
         <meta property="og:image:height" content="630" />
         <meta name="twitter:card" content="summary_large_image" />
