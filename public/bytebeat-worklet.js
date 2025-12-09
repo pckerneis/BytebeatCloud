@@ -135,8 +135,7 @@ return Number((${expression})) || 0;
             const steps = Math.floor(phase);
             phase -= steps;
             t += steps;
-            const tSeconds = t / this._targetRate;
-            const v = Number(fn(tSeconds, this._targetRate)) || 0;
+            const v = Number(fn(t, this._targetRate)) || 0;
             lastRaw = Math.max(-1, Math.min(1, v));
           }
 
