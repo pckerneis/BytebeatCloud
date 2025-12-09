@@ -2,51 +2,6 @@ import { ImageResponse } from '@vercel/og';
 import type { NextRequest } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-const expressionApi = `
-const E = Math.E;
-const LN10 = Math.LN10;
-const LN2 = Math.LN2;
-const LOG2E = Math.LOG2E;
-const PI = Math.PI;
-const SQRT1_2 = Math.SQRT1_2;
-const SQRT2 = Math.SQRT2;
-const TAU = Math.PI * 2;
-const abs = Math.abs;
-const acos = Math.acos;
-const acosh = Math.acosh;
-const asin = Math.asin;
-const asinh = Math.asinh;
-const atan = Math.atan;
-const atanh = Math.atanh;
-const cbrt = Math.cbrt;
-const ceil = Math.ceil;
-const clz32 = Math.clz32;
-const cos = Math.cos;
-const cosh = Math.cosh;
-const exp = Math.exp;
-const expm1 = Math.expm1;
-const floor = Math.floor;
-const fround = Math.fround;
-const hypot = Math.hypot;
-const imul = Math.imul;
-const log = Math.log;
-const log10 = Math.log10;
-const log1p = Math.log1p;
-const log2 = Math.log2;
-const max = Math.max;
-const min = Math.min;
-const pow = Math.pow;
-const random = Math.random;
-const round = Math.round;
-const sign = Math.sign;
-const sin = Math.sin;
-const sinh = Math.sinh;
-const sqrt = Math.sqrt;
-const tan = Math.tan;
-const tanh = Math.tanh;
-const trunc = Math.trunc;
-const SR = sr;
-`;
 
 export const config = {
   runtime: 'edge',
@@ -55,34 +10,31 @@ export const config = {
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
-// Generate waveform samples from bytebeat expression
-function generateWaveformSamples(expression: string, sampleCount: number, mode: string): number[] {
+function generateWaveformSamples(expression: string, sampleCount: number): number[] {
   const samples: number[] = [];
-  const isFloat = mode === 'float';
-
-  try {
-    const fn = new Function('t', 'sr', `${expressionApi}\nreturn ${expression}`);
-
-    for (let i = 0; i < sampleCount; i++) {
-      const t = i * 100;
-      try {
-        let value = fn(t, 44100);
-        if (typeof value === 'number' && Number.isFinite(value)) {
-          if (!isFloat) value = (value & 255) / 127.5 - 1;
-          samples.push(Math.max(-1, Math.min(1, value)));
-        } else {
-          samples.push(0);
-        }
-      } catch {
-        samples.push(0);
-      }
-    }
-  } catch {
-    for (let i = 0; i < sampleCount; i++) {
-      samples.push(0);
-    }
+  
+  // Create a simple hash from the expression
+  let hash = 0;
+  for (let i = 0; i < expression.length; i++) {
+    hash = ((hash << 5) - hash + expression.charCodeAt(i)) | 0;
   }
-
+  
+  // Use hash to seed a deterministic pattern
+  const seed = Math.abs(hash);
+  const frequency1 = ((seed % 7) + 1) * 0.1;
+  const frequency2 = ((seed % 11) + 1) * 0.05;
+  const frequency3 = ((seed % 21) + 1) * 0.03;
+  const phase = (seed % 100) / 100 * Math.PI * 2;
+  
+  for (let i = 0; i < sampleCount; i++) {
+    const t = i / sampleCount;
+    // Combine sine waves with different frequencies for visual variety
+    const value = Math.sin(t * Math.PI * 2 * frequency1 * 10 + phase) * 0.6 +
+                  Math.sin(t * Math.PI * 2 * frequency2 * 20 + phase * 2) * 0.4 +
+                  Math.sin(t * Math.PI * 2 * frequency3 * 20 + phase * 2) * 0.2;
+    samples.push(value);
+  }
+  
   return samples;
 }
 
@@ -110,8 +62,8 @@ export default async function handler(req: NextRequest) {
   const title = post.title || '(untitled)';
   const author = post.author_username ? `@${post.author_username}` : '@unknown';
 
-  // Generate waveform samples
-  const waveformSamples = generateWaveformSamples(post.expression, 80, post.mode || 'uint8');
+  // Generate waveform samples (deterministic pattern based on expression)
+  const waveformSamples = generateWaveformSamples(post.expression, 80);
 
   // Waveform bar dimensions
   const barWidth = 10;
