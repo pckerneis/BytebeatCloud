@@ -96,41 +96,41 @@ export default async function handler(req: NextRequest) {
             alignItems: 'center',
           }}
         >
-          <div
+          <span
             style={{
               fontSize: '28px',
               fontWeight: 700,
-              color: '#e94560',
+              color: '#7b34ff',
             }}
           >
             BytebeatCloud
-          </div>
+          </span>
         </div>
 
         {/* Play button circle */}
         <div
           style={{
-            width: '100px',
-            height: '100px',
-            borderRadius: '50px',
-            background: '#e94560',
+            paddingLeft: '40px',
+            paddingRight: '40px',
+            paddingTop: '20px',
+            paddingBottom: '20px',
+            borderRadius: '16px',
+            background: '#7b34ff',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             marginBottom: '30px',
           }}
         >
-          {/* Play triangle using borders */}
-          <div
+          <span
             style={{
-              width: '0',
-              height: '0',
-              borderTop: '20px solid transparent',
-              borderBottom: '20px solid transparent',
-              borderLeft: '32px solid white',
-              marginLeft: '6px',
+              fontSize: '40px',
+              fontWeight: 700,
+              color: 'white',
             }}
-          />
+          >
+            Play
+          </span>
         </div>
 
         {/* Waveform visualization using bars */}
@@ -151,7 +151,7 @@ export default async function handler(req: NextRequest) {
                 style={{
                   width: `${barWidth}px`,
                   height: `${height}px`,
-                  backgroundColor: '#e94560',
+                  backgroundColor: '#7b34ff',
                   marginLeft: i === 0 ? '0' : `${barGap}px`,
                   borderRadius: '2px',
                 }}
@@ -163,6 +163,7 @@ export default async function handler(req: NextRequest) {
         {/* Title */}
         <div
           style={{
+            display: 'flex',
             fontSize: '48px',
             fontWeight: 700,
             color: 'white',
@@ -177,6 +178,7 @@ export default async function handler(req: NextRequest) {
         {/* Author */}
         <div
           style={{
+            display: 'flex',
             fontSize: '28px',
             color: '#a0a0a0',
             textAlign: 'center',
