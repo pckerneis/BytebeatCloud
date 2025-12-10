@@ -221,7 +221,7 @@ export default function NotificationsPage() {
   return (
     <>
       <Head>
-        <title>BytebeatCloud - Notifications</title>
+        <title>Notifications - BytebeatCloud</title>
       </Head>
       <section>
         <div className="notifications-header">

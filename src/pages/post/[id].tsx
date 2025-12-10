@@ -242,13 +242,15 @@ export default function PostDetailPage({ postMeta, baseUrl }: PostDetailPageProp
               >
                 Export to WAV
               </button>
-              <button
-                type="button"
-                className="button secondary ml-10"
-                onClick={() => router.push(`/export-video/${posts[0].id}`)}
-              >
-                Export Video
-              </button>
+              {user && posts[0]?.profile_id === (user as any).id && (
+                <button
+                  type="button"
+                  className="button secondary ml-10"
+                  onClick={() => router.push(`/export-video/${posts[0].id}`)}
+                >
+                  Export Video
+                </button>
+              )}
               <button type="button" className="button secondary ml-10" onClick={handleShare}>
                 {shareButtonText}
               </button>

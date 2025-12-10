@@ -205,7 +205,7 @@ export default function ForkPostPage() {
   return (
     <>
       <Head>
-        <title>BytebeatCloud - Fork post</title>
+        <title>Fork post - BytebeatCloud</title>
         <meta name="description" content="Fork a bytebeat on BytebeatCloud" />
         <meta property="og:type" content="website" />
         <meta property="og:title" content="Forking - BytebeatCloud" />

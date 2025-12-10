@@ -231,7 +231,7 @@ export default function EditPostPage() {
   return (
     <>
       <Head>
-        <title>BytebeatCloud - Edit post</title>
+        <title>Edit post - BytebeatCloud</title>
         <meta name="description" content="Edit your bytebeat on BytebeatCloud" />
         <meta property="og:type" content="website" />
         <meta property="og:title" content="Editing - BytebeatCloud" />

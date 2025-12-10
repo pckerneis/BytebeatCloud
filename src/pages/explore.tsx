@@ -133,7 +133,7 @@ export default function ExplorePage() {
   return (
     <>
       <Head>
-        <title>BytebeatCloud - Explore</title>
+        <title>Explore - BytebeatCloud</title>
         <meta name="description" content="Explore bytebeat creations on BytebeatCloud" />
         <meta property="og:type" content="website" />
         <meta property="og:title" content="Explore - BytebeatCloud" />

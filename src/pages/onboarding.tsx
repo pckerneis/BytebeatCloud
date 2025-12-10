@@ -94,7 +94,7 @@ export default function OnboardingPage() {
   return (
     <>
       <Head>
-        <title>BytebeatCloud - Onboarding</title>
+        <title>Onboarding - BytebeatCloud</title>
       </Head>
       <section>
         <h2>Choose your username</h2>

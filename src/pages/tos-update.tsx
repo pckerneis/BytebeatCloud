@@ -84,7 +84,7 @@ export default function TosUpdatePage() {
   return (
     <>
       <Head>
-        <title>BytebeatCloud - Updated Terms of Services</title>
+        <title>Updated Terms of Services - BytebeatCloud</title>
       </Head>
       <section className="home-section">
         <h2>Updated Terms of Service</h2>

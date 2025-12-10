@@ -238,7 +238,7 @@ export default function CreatePage() {
   return (
     <>
       <Head>
-        <title>BytebeatCloud - Create</title>
+        <title>Create - BytebeatCloud</title>
         <meta name="description" content="Create a new bytebeat on BytebeatCloud" />
         <meta property="og:type" content="website" />
         <meta property="og:title" content="Create - BytebeatCloud" />
