@@ -2,17 +2,48 @@ import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import Head from 'next/head';
 import { supabase } from '../../lib/supabaseClient';
+import { enrichWithTags } from '../../utils/tags';
 import type { PostRow } from '../../components/PostList';
+import {
+  exportVideo,
+  downloadVideo,
+  isWebCodecsSupported,
+  hasWebCodecs,
+  type Orientation,
+  type Resolution,
+} from '../../utils/video-export';
+import { ModeOption } from '../../model/expression';
 
-type Orientation = 'portrait' | 'landscape' | 'square';
-type Resolution = '480p' | '720p' | '1080p';
+interface VideoTheme {
+  accentColor: string;
+  bgColor: string;
+  textColor: string;
+  codeBgColor: string;
+}
+
+function getThemeColors(): VideoTheme {
+  if (typeof window === 'undefined') {
+    return {
+      accentColor: '#7b34ff',
+      bgColor: '#0e1a2b',
+      textColor: '#dde8f5',
+      codeBgColor: '#0d1119'
+    };
+  }
+  const styles = getComputedStyle(document.body);
+  return {
+    accentColor: styles.getPropertyValue('--accent-color').trim() || '#7b34ff',
+    bgColor: styles.getPropertyValue('--bg-color').trim() || '#0e1a2b',
+    textColor: styles.getPropertyValue('--text-color').trim() || '#dde8f5',
+    codeBgColor: styles.getPropertyValue('--card-text-color').trim() || '#dde8f5',
+  };
+}
 
 interface VideoExportSettings {
   length: number;
   orientation: Orientation;
   resolution: Resolution;
   fadeOut: boolean;
-  showTags: boolean;
 }
 
 const ORIENTATION_OPTIONS: { value: Orientation; label: string }[] = [
@@ -27,7 +58,7 @@ const RESOLUTION_OPTIONS: { value: Resolution; label: string }[] = [
   { value: '1080p', label: '1080p' },
 ];
 
-const MIN_LENGTH = 30;
+const MIN_LENGTH = 10;
 const MAX_LENGTH = 300;
 
 export default function ExportVideoPage() {
@@ -43,10 +74,19 @@ export default function ExportVideoPage() {
     orientation: 'landscape',
     resolution: '720p',
     fadeOut: true,
-    showTags: true,
   });
 
   const [exporting, setExporting] = useState(false);
+  const [exportStatus, setExportStatus] = useState('');
+  const [exportProgress, setExportProgress] = useState(0);
+  const [exportError, setExportError] = useState('');
+  const [webCodecsSupported, setWebCodecsSupported] = useState(true);
+  const [usingFallback, setUsingFallback] = useState(false);
+
+  useEffect(() => {
+    setWebCodecsSupported(isWebCodecsSupported());
+    setUsingFallback(!hasWebCodecs());
+  }, []);
 
   useEffect(() => {
     if (!postId || typeof postId !== 'string') return;
@@ -80,7 +120,12 @@ export default function ExportVideoPage() {
         return;
       }
 
-      setPost(data as PostRow);
+      // Enrich with tags
+      let postWithTags = data as PostRow;
+      const enriched = await enrichWithTags([postWithTags]);
+      postWithTags = enriched[0] as PostRow;
+
+      setPost(postWithTags);
       setLoading(false);
     };
 
@@ -100,23 +145,54 @@ export default function ExportVideoPage() {
     if (!post) return;
 
     setExporting(true);
+    setExportStatus('Starting export...');
+    setExportProgress(0);
+    setExportError('');
 
-    // TODO: Implement actual video export logic
-    // For now, just simulate a delay and show settings
-    console.log('Exporting video with settings:', {
-      postId: post.id,
-      title: post.title,
-      ...settings,
-    });
+    try {
+      const mode =
+        post.mode === 'float'
+          ? ModeOption.Float
+          : post.mode === 'int8'
+            ? ModeOption.Int8
+            : ModeOption.Uint8;
 
-    // Simulate export delay
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+      const themeColors = getThemeColors();
 
-    alert(
-      `Video export started!\n\nSettings:\n- Length: ${settings.length}s\n- Orientation: ${settings.orientation}\n- Resolution: ${settings.resolution}\n- Fade out: ${settings.fadeOut ? 'Yes' : 'No'}\n- Show tags: ${settings.showTags ? 'Yes' : 'No'}`,
-    );
+      const blob = await exportVideo({
+        expression: post.expression,
+        mode,
+        sampleRate: post.sample_rate || 8000,
+        duration: settings.length,
+        orientation: settings.orientation,
+        resolution: settings.resolution,
+        fadeOut: settings.fadeOut,
+        title: post.title || '(untitled)',
+        authorUsername: post.author_username || 'unknown',
+        accentColor: themeColors.accentColor,
+        bgColor: themeColors.bgColor,
+        textColor: themeColors.textColor,
+        onProgress: (status, progress) => {
+          setExportStatus(status);
+          setExportProgress(progress);
+        },
+      });
 
-    setExporting(false);
+      const safeTitle = (post.title || 'bytebeat')
+        .replace(/[^a-z0-9]/gi, '_')
+        .substring(0, 50);
+      const extension = hasWebCodecs() ? 'mp4' : 'webm';
+      const filename = `${safeTitle}_${settings.resolution}_${settings.orientation}.${extension}`;
+
+      downloadVideo(blob, filename);
+      setExportStatus('Download started!');
+    } catch (err) {
+      console.error('Export error:', err);
+      setExportError(err instanceof Error ? err.message : 'Export failed');
+      setExportStatus('');
+    } finally {
+      setExporting(false);
+    }
   };
 
   return (
@@ -134,7 +210,19 @@ export default function ExportVideoPage() {
         {loading && <p>Loading…</p>}
         {!loading && error && <p className="error-message">{error}</p>}
 
-        {!loading && !error && post && (
+        {!webCodecsSupported && (
+          <div className="error-message">
+            <p>
+              <strong>WebCodecs API not supported</strong>
+            </p>
+            <p>
+              Video export requires the WebCodecs API which is not available in your browser.
+              Please use a recent version of Chrome, Edge, or Opera.
+            </p>
+          </div>
+        )}
+
+        {!loading && !error && post && webCodecsSupported && (
           <div className="export-video-form">
             <p className="export-video-post-title">
               Exporting: <strong>{post.title || '(untitled)'}</strong>
@@ -215,16 +303,30 @@ export default function ExportVideoPage() {
               </label>
             </div>
 
-            <div className="form-group checkbox-group">
-              <label className="checkbox-label">
-                <input
-                  type="checkbox"
-                  checked={settings.showTags}
-                  onChange={(e) => setSettings((prev) => ({ ...prev, showTags: e.target.checked }))}
-                />
-                <span>Show tags in video</span>
-              </label>
-            </div>
+            {usingFallback && (
+              <p className="export-note">
+                Note: WebCodecs not available. Export runs in real-time using MediaRecorder.
+                A {settings.length}s video will take approximately {settings.length}s to export (WebM format).
+              </p>
+            )}
+
+            {exportError && (
+              <div className="export-error">
+                <p className="error-message">{exportError}</p>
+              </div>
+            )}
+
+            {exporting && (
+              <div className="export-progress">
+                <p className="export-status">{exportStatus}</p>
+                <div className="progress-bar-container">
+                  <div
+                    className="progress-bar-fill"
+                    style={{ width: `${exportProgress}%` }}
+                  />
+                </div>
+              </div>
+            )}
 
             <div className="form-actions">
               <button
