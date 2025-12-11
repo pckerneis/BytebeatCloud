@@ -11,14 +11,14 @@ export default function AboutWeekly() {
         <h1>Bytebeat of the Week - About</h1>
 
         <p>
-          <b>Bytebeat of the Week</b> is a recurring community challenge celebrating the most creative and
-          surprising bytebeat expressions shared on Bytebeat.cloud.
+          <b>Bytebeat of the Week</b> is a recurring community challenge celebrating the most
+          creative and surprising bytebeat expressions shared on BytebeatCloud.
         </p>
 
         <p>
-          Every Monday at 00:00 UTC, a new theme is announced. The theme is optional — it’s simply
-          there to inspire ideas. Any new post created during the week and tagged for the challenge
-          automatically participates.
+          Each week, a new theme is announced. The theme is optional — it’s simply there to inspire
+          ideas. Any new post created during the week and tagged for the challenge automatically
+          participates.
         </p>
 
         <p>
@@ -31,8 +31,8 @@ export default function AboutWeekly() {
         <h3>1. A New Theme Every Monday</h3>
 
         <p>
-          Each week introduces a fresh creative prompt. Themes are suggestions only. You can follow
-          them or ignore them. No automated validation is performed.
+          Every Monday at 00:00 UTC introduces a fresh creative prompt. Themes are suggestions only.
+          You can follow them or ignore them. No automated validation is performed.
         </p>
 
         <p>The current theme appears on the homepage.</p>
@@ -93,10 +93,16 @@ export default function AboutWeekly() {
         <h2>Rules</h2>
 
         <ul>
-          <li>Posts must be <b>created during the challenge week</b>.</li>
+          <li>
+            Posts must be <b>created during the challenge week</b>.
+          </li>
           <li>They must include the week&#39;s tag.</li>
-          <li>Theme participation is <b>optional</b>.</li>
-          <li>Only <b>public posts</b> are eligible.</li>
+          <li>
+            Theme participation is <b>optional</b>.
+          </li>
+          <li>
+            Only <b>public posts</b> are eligible.
+          </li>
           <li>Multiple entries are allowed (each must be a separate post).</li>
           <li>Collaborations are welcome; list all contributors.</li>
           <li>No NSFW content.</li>

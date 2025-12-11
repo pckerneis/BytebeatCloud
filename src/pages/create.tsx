@@ -16,6 +16,7 @@ import { validateExpression } from '../utils/expression-validator';
 import { useExpressionPlayer } from '../hooks/useExpressionPlayer';
 import { PostMetadataModel } from '../model/postEditor';
 import { convertMentionsToIds } from '../utils/mentions';
+import Link from 'next/link';
 
 const CREATE_DRAFT_STORAGE_KEY = 'bytebeat-cloud-create-draft-v1';
 
@@ -38,6 +39,8 @@ export default function CreatePage() {
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'success'>('idle');
   const [saveError, setSaveError] = useState('');
   const [liveUpdateEnabled, setLiveUpdateEnabled] = useState(true);
+  const [currentWeekNumber, setCurrentWeekNumber] = useState<number | null>(null);
+  const [currentTheme, setCurrentTheme] = useState<string>('');
 
   const { validationIssue, handleExpressionChange, handlePlayClick, setValidationIssue } =
     useExpressionPlayer({
@@ -80,69 +83,110 @@ export default function CreatePage() {
 
     if (typeof window === 'undefined') return;
 
-    const { q } = router.query;
-    const qStr = typeof q === 'string' ? q : undefined;
+    try {
+      const { q } = router.query;
+      const qStr = typeof q === 'string' ? q : undefined;
 
-    if (qStr) {
+      if (qStr) {
+        try {
+          const decoded = atob(qStr);
+          const parsed = JSON.parse(decoded) as {
+            title?: string;
+            expr?: string;
+            mode?: ModeOption;
+            sr?: number;
+          } | null;
+
+          if (parsed && typeof parsed.expr === 'string') {
+            if (typeof parsed.title === 'string') {
+              setTitle(parsed.title);
+            }
+            setExpression(parsed.expr);
+
+            if (parsed.mode) {
+              setMode(parsed.mode);
+            }
+
+            if (parsed.sr && !Number.isNaN(parsed.sr)) {
+              setSampleRate(Math.min(Math.max(MIN_SAMPLE_RATE, parsed.sr), MAX_SAMPLE_RATE));
+            }
+            return;
+          }
+        } catch {
+          // ignore malformed q param
+        }
+      }
+
       try {
-        const decoded = atob(qStr);
-        const parsed = JSON.parse(decoded) as {
+        const raw = window.localStorage.getItem(CREATE_DRAFT_STORAGE_KEY);
+        if (!raw) return;
+
+        const parsed = JSON.parse(raw) as {
           title?: string;
-          expr?: string;
+          description?: string;
+          expression?: string;
+          isDraft?: boolean;
           mode?: ModeOption;
-          sr?: number;
+          sampleRate?: number;
         } | null;
 
-        if (parsed && typeof parsed.expr === 'string') {
-          if (typeof parsed.title === 'string') {
-            // eslint-disable-next-line react-hooks/set-state-in-effect
-            setTitle(parsed.title);
-          }
-          setExpression(parsed.expr);
+        if (!parsed) return;
 
-          if (parsed.mode) {
-            setMode(parsed.mode);
-          }
+        if (typeof parsed.title === 'string') setTitle(parsed.title);
+        if (typeof parsed.description === 'string') setDescription(parsed.description);
+        if (typeof parsed.expression === 'string') setExpression(parsed.expression);
+        if (typeof parsed.isDraft === 'boolean') setIsDraft(parsed.isDraft);
 
-          if (parsed.sr && !Number.isNaN(parsed.sr)) {
-            setSampleRate(Math.min(Math.max(MIN_SAMPLE_RATE, parsed.sr), MAX_SAMPLE_RATE));
-          }
-
-          return;
-        }
-      } catch {
-        // ignore malformed q param
+        if (parsed.mode) setMode(parsed.mode);
+        if (parsed.sampleRate) setSampleRate(parsed.sampleRate);
+      } catch (e) {
+        console.error(e);
       }
+    } finally {
+      setDraftLoaded(true);
     }
-
-    try {
-      const raw = window.localStorage.getItem(CREATE_DRAFT_STORAGE_KEY);
-      if (!raw) return;
-
-      const parsed = JSON.parse(raw) as {
-        title?: string;
-        description?: string;
-        expression?: string;
-        isDraft?: boolean;
-        mode?: ModeOption;
-        sampleRate?: number;
-      } | null;
-
-      if (!parsed) return;
-
-      if (typeof parsed.title === 'string') setTitle(parsed.title);
-      if (typeof parsed.description === 'string') setDescription(parsed.description);
-      if (typeof parsed.expression === 'string') setExpression(parsed.expression);
-      if (typeof parsed.isDraft === 'boolean') setIsDraft(parsed.isDraft);
-
-      if (parsed.mode) setMode(parsed.mode);
-      if (parsed.sampleRate) setSampleRate(parsed.sampleRate);
-    } catch (e) {
-      console.error(e);
-    }
-
-    setDraftLoaded(true);
   }, [router.isReady, router.query]);
+
+  useEffect(() => {
+    if (!router.isReady) return;
+    if (!draftLoaded) return;
+    if (!user) return;
+
+    const hasWeeklyParam = Object.prototype.hasOwnProperty.call(router.query, 'weekly');
+
+    let cancelled = false;
+
+    const loadCurrentWeek = async () => {
+      const { data, error } = await supabase.rpc('get_current_weekly_challenge');
+
+      if (cancelled) return;
+
+      if (!error && data) {
+        const row = Array.isArray(data) ? data[0] : data;
+        const week = (row as any)?.week_number as number | null | undefined;
+        const theme = (row as any)?.theme as string | null | undefined;
+
+        if (week && theme) {
+          setCurrentWeekNumber(week);
+          setCurrentTheme(theme);
+          const weekTag = `#week${week}`;
+
+          if (hasWeeklyParam && !description.includes(weekTag)) {
+            setDescription(
+              `Submission for ${weekTag} challenge` +
+                (description.trim() ? `\n${description}` : ''),
+            );
+          }
+        }
+      }
+    };
+
+    void loadCurrentWeek();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [router.isReady, router.query, draftLoaded, description, user]);
 
   // Persist current editor state to localStorage so unauthenticated users
   // don't lose their work.
@@ -235,6 +279,9 @@ export default function CreatePage() {
     setIsDraft(next.isDraft);
   };
 
+  const isWeeklyParticipation =
+    currentWeekNumber !== null && !isDraft && description.includes(`#week${currentWeekNumber}`);
+
   return (
     <>
       <Head>
@@ -254,9 +301,22 @@ export default function CreatePage() {
       <section>
         <h2>Create</h2>
         {!user && (
-          <p className="text-centered login-to-publish-message">
+          <p className="info-panel">
             <a href={'/login'}>Log in</a> to publish a post, or use a share link.
           </p>
+        )}
+
+        {isWeeklyParticipation && (
+          <div className="info-panel">
+            <p>
+              You are about to submit a participation for the{' '}
+              <Link href="/about-weekly" target="_blank">
+                #week{currentWeekNumber} challenge
+              </Link>
+              .
+            </p>
+            <p>This week&#39;s theme is &#34;{currentTheme}&#34;.</p>
+          </div>
         )}
 
         <form className="create-form" onSubmit={handleSubmit}>

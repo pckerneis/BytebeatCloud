@@ -849,14 +849,6 @@ main > section {
 
 /* Create page */
 
-.login-to-publish-message {
-  border: 1px solid var(--panel-border-color);
-  padding: 6px;
-  margin: 8px;
-  border-radius: 4px;
-  background: var(--card-bg-color);
-}
-
 .create-form {
   display: flex;
   flex-direction: column;
@@ -1752,11 +1744,9 @@ section h2 {
   margin: 8px 0;
 }
 
-.export-note {
-  font-size: 12px;
+.info-panel {
+  border-left: 3px solid var(--accent-color);
   color: var(--secondary-text-color);
-  margin: 0;
   padding: 8px 12px;
   background: var(--card-bg-color);
-  border-left: 3px solid var(--accent-color);
 }

@@ -19,9 +19,9 @@ test.describe('Weekly challenges - start_new_weekly_challenge', () => {
   test('creates a new weekly challenge and consumes a theme idea', async () => {
     // Seed some theme ideas
     const themes = ['Freedom', 'Tiny', 'Chaos Theory'];
-    const { error: seedError } = await supabaseAdmin.from('theme_ideas').insert(
-      themes.map((idea) => ({ idea })),
-    );
+    const { error: seedError } = await supabaseAdmin
+      .from('theme_ideas')
+      .insert(themes.map((idea) => ({ idea })));
     expect(seedError).toBeNull();
 
     // Call the function

@@ -57,6 +57,14 @@ There are a few differences with other web implementations:
 - [x] Tags
 - [x] Signed int mode
 
+**Working on**
+
+- [x] Bytebeat of the Week theme selection
+- [x] Submission mode of create page
+- [x] Explore submissions
+- [ ] Hall of Fame
+- [ ] Top Pick badge
+
 **Coming later**
 
 - [ ] Report posts or users

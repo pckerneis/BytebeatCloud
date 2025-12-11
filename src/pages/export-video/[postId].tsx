@@ -302,7 +302,7 @@ export default function ExportVideoPage() {
             </div>
 
             {usingFallback && (
-              <p className="export-note">
+              <p className="info-panel">
                 Note: WebCodecs not available. Export runs in real-time using MediaRecorder. A{' '}
                 {settings.length}s video will take approximately {settings.length}s to export (WebM
                 format).

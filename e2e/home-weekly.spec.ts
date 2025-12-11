@@ -65,7 +65,9 @@ test.describe('Home page - Bytebeat of the Week', () => {
       winner_post_id: winnerPost.id,
     });
     if (prevChallengeError) {
-      throw new Error(`[e2e] Failed to insert previous weekly challenge: ${prevChallengeError.message}`);
+      throw new Error(
+        `[e2e] Failed to insert previous weekly challenge: ${prevChallengeError.message}`,
+      );
     }
 
     // Insert current weekly challenge (no winner yet)
@@ -77,7 +79,9 @@ test.describe('Home page - Bytebeat of the Week', () => {
       ends_at: currentEndsAt.toISOString(),
     });
     if (currentChallengeError) {
-      throw new Error(`[e2e] Failed to insert current weekly challenge: ${currentChallengeError.message}`);
+      throw new Error(
+        `[e2e] Failed to insert current weekly challenge: ${currentChallengeError.message}`,
+      );
     }
   });
 
@@ -89,15 +93,13 @@ test.describe('Home page - Bytebeat of the Week', () => {
     await expect(section).toBeVisible();
 
     // Check winner text and link
-    await expect(section.getByText('Last Week\'s Top Pick is', { exact: false })).toBeVisible();
+    await expect(section.getByText("Last Week's Top Pick is", { exact: false })).toBeVisible();
     const winnerLink = section.locator('a', { hasText: 'Weekly Winner by @weekly_home_user' });
     await expect(winnerLink).toBeVisible();
     await expect(winnerLink).toHaveAttribute('href', /\/post\//);
 
     // Check week number and theme line
-    await expect(
-      section.getByText('Week #2: theme is "Freedom"', { exact: false }),
-    ).toBeVisible();
+    await expect(section.getByText('Week #2: theme is "Freedom"', { exact: false })).toBeVisible();
 
     // Ensure a PostExpressionPlayer is rendered in the section
     await expect(section.locator('.post-expression')).toBeVisible();

@@ -10,8 +10,19 @@ import Link from 'next/link';
 import { validateExpression } from '../utils/expression-validator';
 import { useTabState } from '../hooks/useTabState';
 
-const tabs = ['feed', 'recent', 'trending'] as const;
+const tabs = ['feed', 'recent', 'trending', 'weekly'] as const;
 type TabName = (typeof tabs)[number];
+
+function shuffle<T>(arr: T[]): T[] {
+  const newArr = [...arr];
+
+  for (let i = newArr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [newArr[i], newArr[j]] = [newArr[j], newArr[i]];
+  }
+
+  return newArr;
+}
 
 export default function ExplorePage() {
   const { user } = useSupabaseAuth();
@@ -49,7 +60,39 @@ export default function ExplorePage() {
       let data: PostRow[] | null = null;
       let error: any = null;
 
-      if (activeTab === 'feed') {
+      if (activeTab === 'weekly') {
+        const rpcResult = await supabase.rpc('get_current_week_data');
+        const weeklyData = rpcResult.data as any;
+        error = rpcResult.error;
+
+        if (!error && weeklyData && Array.isArray(weeklyData.participants)) {
+          const ids = weeklyData.participants
+            .map((p: any) => p.id as string | null)
+            .filter((id: string | null): id is string => !!id);
+
+          if (ids.length > 0) {
+            const result = await supabase
+              .from('posts_with_meta')
+              .select(
+                'id,title,expression,sample_rate,mode,created_at,profile_id,is_draft,fork_of_post_id,is_fork,author_username,origin_title,origin_username,favorites_count',
+              )
+              .in('id', ids);
+
+            data = shuffle(result.data ?? []) as PostRow[];
+            if (result.error) {
+              error = result.error;
+            }
+          } else {
+            data = [];
+          }
+
+          // Weekly challenge tab is a single page.
+          setHasMore(false);
+        } else {
+          data = [];
+          setHasMore(false);
+        }
+      } else if (activeTab === 'feed') {
         if (user) {
           const rpcResult = await supabase.rpc('get_personalized_feed', {
             viewer_id: (user as any).id,
@@ -166,6 +209,12 @@ export default function ExplorePage() {
             onClick={() => handleTabClick('trending')}
           >
             Trending
+          </span>
+          <span
+            className={`tab-button ${activeTab === 'weekly' ? 'active' : ''}`}
+            onClick={() => handleTabClick('weekly')}
+          >
+            Weekly Challenge
           </span>
         </div>
         {loading && <p className="text-centered">Loading posts…</p>}

@@ -255,7 +255,9 @@ export default function Home() {
                 </>
               )}
             </>
-            <p>Week #{currentWeekNumber}: theme is &quot;{currentTheme ?? 'TBA'}&quot;</p>
+            <p>
+              Week #{currentWeekNumber}: theme is &quot;{currentTheme ?? 'TBA'}&quot;
+            </p>
             <ul>
               <li>
                 <Link href="/explore?tab=weekly">View entries</Link>
