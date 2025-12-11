@@ -29,6 +29,6 @@ insert into public.theme_ideas (idea) values
   ('Ambient'),
   ('Glitch'),
   ('Noisy'),
-  ('Tiny yet powerful')
+  ('Tiny yet powerful'),
   ('FM synthesis'),
   ('Rainy vibe');
