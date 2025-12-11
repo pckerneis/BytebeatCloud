@@ -82,7 +82,7 @@ export default function PostDetailPage({ postMeta, baseUrl }: PostDetailPageProp
       const { data, error } = await supabase
         .from('posts_with_meta')
         .select(
-          'id,title,description,expression,is_draft,sample_rate,mode,created_at,profile_id,fork_of_post_id,is_fork,author_username,origin_title,origin_username,favorites_count',
+          'id,title,description,expression,is_draft,sample_rate,mode,created_at,profile_id,fork_of_post_id,is_fork,author_username,origin_title,origin_username,favorites_count,is_weekly_winner',
         )
         .eq('id', id)
         .maybeSingle();
@@ -152,7 +152,7 @@ export default function PostDetailPage({ postMeta, baseUrl }: PostDetailPageProp
       const { data: forkRows, error: forkError } = await supabase
         .from('posts_with_meta')
         .select(
-          'id,title,description,expression,is_draft,sample_rate,mode,created_at,profile_id,fork_of_post_id,is_fork,author_username,origin_title,origin_username,favorites_count',
+          'id,title,description,expression,is_draft,sample_rate,mode,created_at,profile_id,fork_of_post_id,is_fork,author_username,origin_title,origin_username,favorites_count,is_weekly_winner',
         )
         .eq('fork_of_post_id', id)
         .eq('is_draft', false)

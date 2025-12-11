@@ -19,12 +19,16 @@ create policy "Service role can manage theme ideas"
 -- Seed initial theme ideas. These are managed via migrations, not by clients.
 insert into public.theme_ideas (idea) values
   ('Freedom'),
-  ('Tiny'),
   ('Chaos Theory'),
   ('Bubbles'),
   ('Hot or cold'),
   ('Bitcrush'),
   ('Polyrhythm'),
+  ('Drone'),
+  ('No looping'),
+  ('Ambient'),
+  ('Glitch'),
+  ('Noisy'),
+  ('Tiny yet powerful')
   ('FM synthesis'),
-  ('Rainy vibe'),
-  ('Drone');
+  ('Rainy vibe');

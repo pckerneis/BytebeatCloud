@@ -224,9 +224,9 @@ export default function ForkPostPage() {
         </button>
         <h2>Fork post</h2>
         {!user && (
-          <p className="info-panel">
+          <div className="info-panel">
             <a href={'/login'}>Log in</a> to publish a post, or use a share link.
-          </p>
+          </div>
         )}
         {originalAuthor && (
           <p>

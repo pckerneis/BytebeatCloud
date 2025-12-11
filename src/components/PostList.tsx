@@ -28,6 +28,7 @@ export interface PostRow {
   fork_of_post_id?: string | null;
   is_fork?: boolean;
   tags?: string[];
+  is_weekly_winner?: boolean;
 }
 
 interface PostListProps {
@@ -226,6 +227,7 @@ export function PostList({ posts, currentUserId }: PostListProps) {
                 </div>
               )}
               <div className="chips">
+                {post.is_weekly_winner && <span className="chip top-pick-badge">Top Pick</span>}
                 {post.is_draft && <span className="chip draft-badge">Draft</span>}
                 <span className="chip mode">{post.mode}</span>
                 <span className="chip sample-rate">{formatSampleRate(post.sample_rate)}</span>

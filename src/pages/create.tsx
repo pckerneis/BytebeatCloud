@@ -301,21 +301,21 @@ export default function CreatePage() {
       <section>
         <h2>Create</h2>
         {!user && (
-          <p className="info-panel">
+          <div className="info-panel">
             <a href={'/login'}>Log in</a> to publish a post, or use a share link.
-          </p>
+          </div>
         )}
 
         {isWeeklyParticipation && (
           <div className="info-panel">
-            <p>
+            <div>
               You are about to submit a participation for the{' '}
               <Link href="/about-weekly" target="_blank">
                 #week{currentWeekNumber} challenge
               </Link>
               .
-            </p>
-            <p>This week&#39;s theme is &#34;{currentTheme}&#34;.</p>
+            </div>
+            <div>This week&#39;s theme is &#34;{currentTheme}&#34;.</div>
           </div>
         )}
 
