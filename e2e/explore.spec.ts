@@ -189,8 +189,8 @@ test.describe('Explore page - tabs', () => {
     await page.goto('/explore?tab=recent');
     await expect(page.locator('.tab-button.active')).toHaveText('Recent');
 
-    // Navigate directly to trending tab
-    await page.goto('/explore?tab=trending');
-    await expect(page.locator('.tab-button.active')).toHaveText('Trending');
+    // Navigate directly to weekly tab
+    await page.goto('/explore?tab=weekly');
+    await expect(page.locator('.tab-button.active')).toHaveText('Weekly Challenge');
   });
 });

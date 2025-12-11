@@ -121,8 +121,8 @@ test.describe('Infinite scroll - Explore page', () => {
     await scrollToLoadMore(page);
     await expect(page.locator('.post-item')).toHaveCount(30, { timeout: 10000 });
 
-    // Switch to trending tab
-    await page.locator('.tab-button', { hasText: 'Trending' }).click();
+    // Switch to weekly tab
+    await page.locator('.tab-button', { hasText: 'Feed' }).click();
 
     // Should reset to initial page size
     await expect(page.getByText('Loading posts…')).toHaveCount(0, { timeout: 10000 });

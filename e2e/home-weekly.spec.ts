@@ -3,6 +3,11 @@ import { supabaseAdmin } from './utils/supabaseAdmin';
 
 async function clearHomeWeeklyData() {
   // Order matters because of foreign keys
+  // First nullify winner_post_id to break FK dependency
+  await supabaseAdmin
+    .from('weekly_challenges')
+    .update({ winner_post_id: null })
+    .not('id', 'is', null);
   await supabaseAdmin.from('favorites').delete().not('id', 'is', null);
   await supabaseAdmin.from('post_tags').delete().not('post_id', 'is', null);
   await supabaseAdmin.from('tags').delete().not('id', 'is', null);
