@@ -7,6 +7,10 @@ import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
 import { enrichWithViewerFavorites } from '../utils/favorites';
 import { enrichWithTags } from '../utils/tags';
 import { validateExpression } from '../utils/expression-validator';
+import { PostExpressionPlayer } from '../components/PostExpressionPlayer';
+import { useBytebeatPlayer } from '../hooks/useBytebeatPlayer';
+import { usePlayerStore } from '../hooks/usePlayerStore';
+import { ModeOption } from '../model/expression';
 
 function shortenVersion(version: string | undefined): string | undefined {
   return version?.slice(0, 7);
@@ -17,6 +21,15 @@ export default function Home() {
   const [trendingPosts, setTrendingPosts] = useState<PostRow[]>([]);
   const [trendingLoading, setTrendingLoading] = useState(true);
   const [trendingError, setTrendingError] = useState('');
+  const [topPickPost, setTopPickPost] = useState<PostRow | null>(null);
+  const [topPickLoading, setTopPickLoading] = useState(false);
+  const [topPickError, setTopPickError] = useState('');
+
+  const { toggle, stop, isPlaying } = useBytebeatPlayer();
+  const { setPlaylist, setCurrentPostById } = usePlayerStore();
+  const [activeTopPickId, setActiveTopPickId] = useState<string | null>(null);
+
+  const previousWeekTopPick = '3f422308-e150-40aa-b644-418ac0ac71fe';
 
   useEffect(() => {
     let cancelled = false;
@@ -59,6 +72,86 @@ export default function Home() {
       cancelled = true;
     };
   }, [user]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadTopPick = async () => {
+      if (!previousWeekTopPick) {
+        setTopPickPost(null);
+        setTopPickLoading(false);
+        setTopPickError('');
+        return;
+      }
+
+      setTopPickLoading(true);
+      setTopPickError('');
+
+      const { data, error } = await supabase
+        .from('posts_with_meta')
+        .select(
+          'id,title,description,expression,is_draft,sample_rate,mode,created_at,profile_id,fork_of_post_id,is_fork,author_username,origin_title,origin_username,favorites_count',
+        )
+        .eq('id', previousWeekTopPick)
+        .eq('is_draft', false)
+        .maybeSingle();
+
+      if (cancelled) return;
+
+      if (error || !data) {
+        setTopPickPost(null);
+        setTopPickError('Unable to load featured post.');
+        setTopPickLoading(false);
+        return;
+      }
+
+      let row = data as PostRow;
+
+      if (!validateExpression(row.expression).valid) {
+        setTopPickPost(null);
+        setTopPickError('Featured post has an invalid expression.');
+        setTopPickLoading(false);
+        return;
+      }
+
+      setTopPickPost(row);
+      setTopPickLoading(false);
+    };
+
+    void loadTopPick();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [previousWeekTopPick, user]);
+
+  const handleTopPickPlay = async (post: PostRow) => {
+    if (isPlaying && activeTopPickId === post.id) {
+      await stop();
+      setActiveTopPickId(null);
+      setCurrentPostById(null);
+      return;
+    }
+
+    await stop();
+
+    if (!validateExpression(post.expression).valid) {
+      return;
+    }
+
+    const sr = post.sample_rate;
+    const mode: ModeOption =
+      post.mode === 'float'
+        ? ModeOption.Float
+        : post.mode === 'uint8'
+          ? ModeOption.Uint8
+          : ModeOption.Int8;
+
+    await toggle(post.expression, mode, sr);
+    setActiveTopPickId(post.id);
+    setPlaylist([post], post.id);
+    setCurrentPostById(post.id);
+  };
 
   const linkToDiscord = process.env.NEXT_PUBLIC_DISCORD_LINK;
 
@@ -106,6 +199,41 @@ export default function Home() {
             bytebeat techniques, suggest features or report bugs.
           </p>
         )}
+
+        <fieldset>
+          <legend>Bytebeat of the Week</legend>
+          <p>
+            Theme is &quot;Freedom&quot;
+          </p>
+          {previousWeekTopPick && (
+            <>
+              {topPickLoading && <p>Loading last week&apos;s top pick…</p>}
+              {!topPickLoading && topPickError && <p className="error-message">{topPickError}</p>}
+              {!topPickLoading && !topPickError && topPickPost && (
+                <>
+                  <p>
+                    Last Week&apos;s Top Pick is{' '}
+                    <Link href={`/post/${topPickPost.id}`}>
+                      {topPickPost.title || '(untitled)'} by @
+                      {topPickPost.author_username || 'unknown'}
+                    </Link>
+                  </p>
+                  <PostExpressionPlayer
+                    expression={topPickPost.expression}
+                    isActive={isPlaying && activeTopPickId === topPickPost.id}
+                    onTogglePlay={() => handleTopPickPlay(topPickPost)}
+                    height={75}
+                  />
+                </>
+              )}
+            </>
+          )}
+          <ul>
+            <li><Link href="/explore">View entries</Link></li>
+            <li><Link href="/create">Submit yours</Link></li>
+            <li><Link href="/create">About</Link></li>
+          </ul>
+        </fieldset>
 
         <fieldset>
           <legend>What is bytebeat?</legend>

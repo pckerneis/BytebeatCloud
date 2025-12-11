@@ -340,6 +340,18 @@ body {
   --post-expression-overlay-color: rgba(0, 0, 0, 0.35);
 }
 
+.flex-row {
+  display: flex;
+}
+
+.space-between {
+  justify-content: space-between;
+}
+
+.space-around {
+  justify-content: space-around;
+}
+
 .ml-5 {
   margin-left: 5px;
 }

@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useBytebeatPlayer } from '../hooks/useBytebeatPlayer';
 import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
 import { favoritePost, unfavoritePost } from '../services/favoritesClient';
-import { ReadonlyExpression } from './ExpressionEditor';
+import { PostExpressionPlayer } from './PostExpressionPlayer';
 import { usePlayerStore } from '../hooks/usePlayerStore';
 import { formatSampleRate, ModeOption } from '../model/expression';
 import { formatRelativeTime } from '../utils/time';
@@ -242,23 +242,11 @@ export function PostList({ posts, currentUserId }: PostListProps) {
                 </span>
               </div>
             </div>
-            <div className="post-expression" onClick={() => void handleExpressionClick(post)}>
-              <ReadonlyExpression expression={post.expression} />
-              {!isActive && (
-                <div className="post-expression-overlay" aria-hidden="true">
-                  <button
-                    type="button"
-                    className="post-expression-play-button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      void handleExpressionClick(post);
-                    }}
-                  >
-                    ▶
-                  </button>
-                </div>
-              )}
-            </div>
+            <PostExpressionPlayer
+              expression={post.expression}
+              isActive={isActive}
+              onTogglePlay={() => handleExpressionClick(post)}
+            />
             <div className="post-actions">
               <button
                 type="button"
