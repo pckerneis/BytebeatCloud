@@ -78,7 +78,7 @@ export default function AboutWeekly() {
             a <b>Top Pick badge</b>
           </li>
           <li>
-            a permanent spot in the <b>Hall of Fame</b>
+            a permanent spot in the <Link href="/weekly-hall-of-fame">Hall of Fame</Link>
           </li>
           <li>a notification and boosted visibility on the site</li>
           <li>may be showcased on BytebeatCloud&apos;s official social media accounts</li>

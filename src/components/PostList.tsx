@@ -227,7 +227,11 @@ export function PostList({ posts, currentUserId }: PostListProps) {
                 </div>
               )}
               <div className="chips">
-                {post.is_weekly_winner && <span className="chip top-pick-badge">Top Pick</span>}
+                {post.is_weekly_winner && (
+                  <Link href="/weekly-hall-of-fame" className="chip top-pick-badge">
+                    Top Pick
+                  </Link>
+                )}
                 {post.is_draft && <span className="chip draft-badge">Draft</span>}
                 <span className="chip mode">{post.mode}</span>
                 <span className="chip sample-rate">{formatSampleRate(post.sample_rate)}</span>

@@ -208,7 +208,16 @@ export default function ExplorePage() {
         {error && !loading && <p className="error-message">{error}</p>}
         {!loading && !error && posts.length === 0 && (
           <p className="text-centered">
-            No posts yet. Create something on the <Link href={'/create'}>Create</Link> page!
+            {activeTab === 'weekly' ? (
+              <span>
+                No submission yet.{' '}
+                <Link href={'/create?weekly'}>Participate this week&#39;s challenge!</Link>
+              </span>
+            ) : (
+              <span>
+                No posts yet. Create something on the <Link href={'/create'}>Create</Link> page!
+              </span>
+            )}
           </p>
         )}
         {!loading && !error && posts.length > 0 && (
