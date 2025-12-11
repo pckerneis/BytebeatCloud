@@ -10,7 +10,7 @@ import Link from 'next/link';
 import { validateExpression } from '../utils/expression-validator';
 import { useTabState } from '../hooks/useTabState';
 
-const tabs = ['feed', 'recent', 'trending', 'weekly'] as const;
+const tabs = ['feed', 'recent', 'weekly'] as const;
 type TabName = (typeof tabs)[number];
 
 function shuffle<T>(arr: T[]): T[] {
@@ -119,13 +119,6 @@ export default function ExplorePage() {
 
         data = (result.data ?? []) as PostRow[];
         error = result.error;
-      } else {
-        // trending
-        const rpcResult = await supabase.rpc('get_trending_feed', {
-          page,
-        });
-        data = (rpcResult.data ?? []) as PostRow[];
-        error = rpcResult.error;
       }
 
       if (cancelled) return;
@@ -203,12 +196,6 @@ export default function ExplorePage() {
             onClick={() => handleTabClick('recent')}
           >
             Recent
-          </span>
-          <span
-            className={`tab-button ${activeTab === 'trending' ? 'active' : ''}`}
-            onClick={() => handleTabClick('trending')}
-          >
-            Trending
           </span>
           <span
             className={`tab-button ${activeTab === 'weekly' ? 'active' : ''}`}

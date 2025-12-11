@@ -38,7 +38,7 @@ export default function Home() {
       setTrendingLoading(true);
       setTrendingError('');
 
-      const rpcResult = await supabase.rpc('get_trending_feed', { page: 0 });
+      const rpcResult = await supabase.rpc('get_global_feed', { page: 0 });
 
       if (cancelled) return;
 

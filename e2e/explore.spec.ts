@@ -162,7 +162,7 @@ test.describe('Explore page - tabs', () => {
     await clearSupabaseSession(page);
   });
 
-  test('can switch between feed, recent, and trending tabs', async ({ page }) => {
+  test('can switch between feed, recent, and weekly tabs', async ({ page }) => {
     await page.goto('/explore');
 
     // Default tab should be feed
@@ -174,9 +174,9 @@ test.describe('Explore page - tabs', () => {
     await expect(page).toHaveURL(/tab=recent/);
 
     // Click Trending tab
-    await page.locator('.tab-button', { hasText: 'Trending' }).click();
-    await expect(page.locator('.tab-button.active')).toHaveText('Trending');
-    await expect(page).toHaveURL(/tab=trending/);
+    await page.locator('.tab-button', { hasText: 'Weekly Challenge' }).click();
+    await expect(page.locator('.tab-button.active')).toHaveText('Weekly Challenge');
+    await expect(page).toHaveURL(/tab=weekly/);
 
     // Click Feed tab
     await page.locator('.tab-button', { hasText: 'Feed' }).click();
