@@ -1085,7 +1085,7 @@ button.chip {
   border-color: var(--accent-color);
 }
 
-.post-item .cm-editor {
+.post-expression .cm-editor {
   min-height: 56px;
 }
 
@@ -1519,7 +1519,7 @@ button.chip {
   }
 }
 
-.legal-section h2 {
+section h2 {
   font-size: 16px;
 }
 

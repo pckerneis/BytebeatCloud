@@ -6,7 +6,7 @@ export default function Privacy() {
       <Head>
         <title>Privacy Policy - BytebeatCloud</title>
       </Head>
-      <section className="legal-section">
+      <section>
         <h1>Privacy Policy — bytebeat.cloud</h1>
         <div>
           <p>Last updated: 2025-12-02</p>

@@ -27,7 +27,7 @@ function getThemeColors(): VideoTheme {
       accentColor: '#7b34ff',
       bgColor: '#0e1a2b',
       textColor: '#dde8f5',
-      codeBgColor: '#0d1119'
+      codeBgColor: '#0d1119',
     };
   }
   const styles = getComputedStyle(document.body);
@@ -178,9 +178,7 @@ export default function ExportVideoPage() {
         },
       });
 
-      const safeTitle = (post.title || 'bytebeat')
-        .replace(/[^a-z0-9]/gi, '_')
-        .substring(0, 50);
+      const safeTitle = (post.title || 'bytebeat').replace(/[^a-z0-9]/gi, '_').substring(0, 50);
       const extension = hasWebCodecs() ? 'mp4' : 'webm';
       const filename = `${safeTitle}_${settings.resolution}_${settings.orientation}.${extension}`;
 
@@ -216,8 +214,8 @@ export default function ExportVideoPage() {
               <strong>WebCodecs API not supported</strong>
             </p>
             <p>
-              Video export requires the WebCodecs API which is not available in your browser.
-              Please use a recent version of Chrome, Edge, or Opera.
+              Video export requires the WebCodecs API which is not available in your browser. Please
+              use a recent version of Chrome, Edge, or Opera.
             </p>
           </div>
         )}
@@ -305,8 +303,9 @@ export default function ExportVideoPage() {
 
             {usingFallback && (
               <p className="export-note">
-                Note: WebCodecs not available. Export runs in real-time using MediaRecorder.
-                A {settings.length}s video will take approximately {settings.length}s to export (WebM format).
+                Note: WebCodecs not available. Export runs in real-time using MediaRecorder. A{' '}
+                {settings.length}s video will take approximately {settings.length}s to export (WebM
+                format).
               </p>
             )}
 
@@ -320,10 +319,7 @@ export default function ExportVideoPage() {
               <div className="export-progress">
                 <p className="export-status">{exportStatus}</p>
                 <div className="progress-bar-container">
-                  <div
-                    className="progress-bar-fill"
-                    style={{ width: `${exportProgress}%` }}
-                  />
+                  <div className="progress-bar-fill" style={{ width: `${exportProgress}%` }} />
                 </div>
               </div>
             )}

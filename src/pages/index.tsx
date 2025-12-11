@@ -24,12 +24,12 @@ export default function Home() {
   const [topPickPost, setTopPickPost] = useState<PostRow | null>(null);
   const [topPickLoading, setTopPickLoading] = useState(false);
   const [topPickError, setTopPickError] = useState('');
+  const [currentTheme, setCurrentTheme] = useState<string | null>(null);
+  const [currentWeekNumber, setCurrentWeekNumber] = useState<number | null>(null);
 
   const { toggle, stop, isPlaying } = useBytebeatPlayer();
   const { setPlaylist, setCurrentPostById } = usePlayerStore();
   const [activeTopPickId, setActiveTopPickId] = useState<string | null>(null);
-
-  const previousWeekTopPick = '3f422308-e150-40aa-b644-418ac0ac71fe';
 
   useEffect(() => {
     let cancelled = false;
@@ -76,23 +76,54 @@ export default function Home() {
   useEffect(() => {
     let cancelled = false;
 
-    const loadTopPick = async () => {
-      if (!previousWeekTopPick) {
-        setTopPickPost(null);
-        setTopPickLoading(false);
-        setTopPickError('');
-        return;
-      }
-
+    const loadWeekly = async () => {
       setTopPickLoading(true);
       setTopPickError('');
+      setTopPickPost(null);
+
+      const nowIso = new Date().toISOString();
+
+      // Load the current weekly challenge to get the theme.
+      const { data: currentWeekly, error: currentError } = await supabase.rpc(
+        'get_current_weekly_challenge',
+      );
+
+      if (cancelled) return;
+
+      if (!currentError && currentWeekly) {
+        const challengeRow = Array.isArray(currentWeekly) ? currentWeekly[0] : currentWeekly;
+        setCurrentWeekNumber((challengeRow as any).week_number ?? null);
+        setCurrentTheme((challengeRow as any).theme ?? null);
+      } else {
+        setCurrentWeekNumber(null);
+        setCurrentTheme(null);
+      }
+
+      // Load the most recent completed challenge with a winner.
+      const { data: latestWinner, error: previousError } = await supabase.rpc(
+        'get_latest_weekly_challenge_winner',
+      );
+
+      if (cancelled) return;
+
+      const previousChallengeRow =
+        latestWinner && Array.isArray(latestWinner) ? latestWinner[0] : latestWinner;
+
+      if (previousError || !previousChallengeRow || !(previousChallengeRow as any).winner_post_id) {
+        setTopPickPost(null);
+        if (previousError) {
+          setTopPickError('Unable to load featured post.');
+        }
+        setTopPickLoading(false);
+        return;
+      }
 
       const { data, error } = await supabase
         .from('posts_with_meta')
         .select(
           'id,title,description,expression,is_draft,sample_rate,mode,created_at,profile_id,fork_of_post_id,is_fork,author_username,origin_title,origin_username,favorites_count',
         )
-        .eq('id', previousWeekTopPick)
+        .eq('id', (previousChallengeRow as any).winner_post_id)
         .eq('is_draft', false)
         .maybeSingle();
 
@@ -118,12 +149,12 @@ export default function Home() {
       setTopPickLoading(false);
     };
 
-    void loadTopPick();
+    void loadWeekly();
 
     return () => {
       cancelled = true;
     };
-  }, [previousWeekTopPick, user]);
+  }, [user]);
 
   const handleTopPickPlay = async (post: PostRow) => {
     if (isPlaying && activeTopPickId === post.id) {
@@ -200,12 +231,9 @@ export default function Home() {
           </p>
         )}
 
-        <fieldset>
-          <legend>Bytebeat of the Week</legend>
-          <p>
-            Theme is &quot;Freedom&quot;
-          </p>
-          {previousWeekTopPick && (
+        {currentTheme && (
+          <fieldset>
+            <legend>Bytebeat of the Week</legend>
             <>
               {topPickLoading && <p>Loading last week&apos;s top pick…</p>}
               {!topPickLoading && topPickError && <p className="error-message">{topPickError}</p>}
@@ -227,13 +255,20 @@ export default function Home() {
                 </>
               )}
             </>
-          )}
-          <ul>
-            <li><Link href="/explore">View entries</Link></li>
-            <li><Link href="/create">Submit yours</Link></li>
-            <li><Link href="/create">About</Link></li>
-          </ul>
-        </fieldset>
+            <p>Week #{currentWeekNumber}: theme is &quot;{currentTheme ?? 'TBA'}&quot;</p>
+            <ul>
+              <li>
+                <Link href="/explore?tab=weekly">View entries</Link>
+              </li>
+              <li>
+                <Link href="/create?weekly">Submit yours</Link>
+              </li>
+              <li>
+                <Link href="/about-weekly">About</Link>
+              </li>
+            </ul>
+          </fieldset>
+        )}
 
         <fieldset>
           <legend>What is bytebeat?</legend>

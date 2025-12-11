@@ -1,12 +1,6 @@
 import { ModeOption, minimizeExpression } from '../model/expression';
 import { renderExpressionToSamples } from './audio-render';
-import {
-  Output,
-  BufferTarget,
-  Mp4OutputFormat,
-  CanvasSource,
-  AudioBufferSource,
-} from 'mediabunny';
+import { Output, BufferTarget, Mp4OutputFormat, CanvasSource, AudioBufferSource } from 'mediabunny';
 
 export type Orientation = 'portrait' | 'landscape' | 'square';
 export type Resolution = '480p' | '720p' | '1080p';
@@ -204,7 +198,11 @@ function renderStaticFrame(
   const titleFontSize = Math.max(16, Math.floor(height * 0.045));
   ctx.fillStyle = textColor;
   ctx.font = `bold ${titleFontSize}px "Inconsolata", monospace`;
-  ctx.fillText(options.title || '(untitled)', padding, contentY + usernameFontSize + titleFontSize + 8);
+  ctx.fillText(
+    options.title || '(untitled)',
+    padding,
+    contentY + usernameFontSize + titleFontSize + 8,
+  );
 
   // === CHIPS (tags) ===
   let chipsEndY = contentY + usernameFontSize + titleFontSize + 16;

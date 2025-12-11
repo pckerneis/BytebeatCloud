@@ -8,7 +8,12 @@ interface PostExpressionPlayerProps {
   height?: number;
 }
 
-export function PostExpressionPlayer({ expression, isActive, onTogglePlay, height }: PostExpressionPlayerProps) {
+export function PostExpressionPlayer({
+  expression,
+  isActive,
+  onTogglePlay,
+  height,
+}: PostExpressionPlayerProps) {
   const handleClick = () => {
     void onTogglePlay();
   };
@@ -19,18 +24,22 @@ export function PostExpressionPlayer({ expression, isActive, onTogglePlay, heigh
   };
 
   return (
-    <div className="post-expression" onClick={handleClick} style={height ? ({
-    maxHeight: `${height}px`,
-    overflow: 'hidden'
-    }) : ({})}>
+    <div
+      className="post-expression"
+      onClick={handleClick}
+      style={
+        height
+          ? {
+              maxHeight: `${height}px`,
+              overflow: 'hidden',
+            }
+          : {}
+      }
+    >
       <ReadonlyExpression expression={expression} />
       {!isActive && (
         <div className="post-expression-overlay" aria-hidden="true">
-          <button
-            type="button"
-            className="post-expression-play-button"
-            onClick={handleButtonClick}
-          >
+          <button type="button" className="post-expression-play-button" onClick={handleButtonClick}>
             ▶
           </button>
         </div>
