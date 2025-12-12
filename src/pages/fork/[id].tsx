@@ -125,9 +125,7 @@ export default function ForkPostPage() {
     };
   }, [id]);
 
-  const handleSubmit = async (event: FormEvent) => {
-    event.preventDefault();
-
+  const savePost = async (asDraft: boolean) => {
     if (!id || typeof id !== 'string') return;
 
     const trimmedTitle = title.trim();
@@ -145,6 +143,7 @@ export default function ForkPostPage() {
       return;
     }
 
+    setIsDraft(asDraft);
     setSaveStatus('saving');
     setSaveError('');
 
@@ -158,7 +157,7 @@ export default function ForkPostPage() {
         title: trimmedTitle,
         description: storedDescription,
         expression: trimmedExpr,
-        is_draft: isDraft,
+        is_draft: asDraft,
         sample_rate: sampleRate,
         mode,
         fork_of_post_id: id,
@@ -175,9 +174,25 @@ export default function ForkPostPage() {
 
     setSaveStatus('success');
 
-    if (!isDraft) {
+    if (asDraft) {
+      // Redirect to edit page for drafts
+      await router.push(`/edit/${data.id}`);
+    } else {
       await router.push(`/post/${data.id}`);
     }
+  };
+
+  const handleSubmit = async (event: FormEvent) => {
+    event.preventDefault();
+    await savePost(false);
+  };
+
+  const handleSaveAsDraft = () => {
+    void savePost(true);
+  };
+
+  const handlePublish = () => {
+    void savePost(false);
   };
 
   const meta = {
@@ -271,6 +286,8 @@ export default function ForkPostPage() {
             isFork={true}
             liveUpdateEnabled={liveUpdateEnabled}
             onLiveUpdateChange={setLiveUpdateEnabled}
+            onSaveAsDraft={handleSaveAsDraft}
+            onPublish={handlePublish}
           />
         </form>
       </section>

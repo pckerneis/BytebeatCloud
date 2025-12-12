@@ -214,9 +214,7 @@ export default function CreatePage() {
     }
   }, [title, description, expression, isDraft, mode, sampleRate, draftLoaded]);
 
-  const handleSubmit = async (event: FormEvent) => {
-    event.preventDefault();
-
+  const savePost = async (asDraft: boolean) => {
     const trimmedTitle = title.trim();
     const trimmedExpr = expression.trim();
     const trimmedDescription = description.trim();
@@ -232,6 +230,7 @@ export default function CreatePage() {
       return;
     }
 
+    setIsDraft(asDraft);
     setSaveStatus('saving');
     setSaveError('');
 
@@ -245,7 +244,7 @@ export default function CreatePage() {
         title: trimmedTitle,
         description: storedDescription,
         expression: trimmedExpr,
-        is_draft: isDraft,
+        is_draft: asDraft,
         sample_rate: sampleRate,
         mode,
       })
@@ -259,11 +258,27 @@ export default function CreatePage() {
     }
 
     setSaveStatus('success');
+    window.localStorage.removeItem(CREATE_DRAFT_STORAGE_KEY);
 
-    if (!isDraft) {
-      window.localStorage.removeItem(CREATE_DRAFT_STORAGE_KEY);
+    if (asDraft) {
+      // Redirect to edit page for drafts
+      await router.push(`/edit/${data.id}`);
+    } else {
       await router.push(`/post/${data.id}`);
     }
+  };
+
+  const handleSubmit = async (event: FormEvent) => {
+    event.preventDefault();
+    await savePost(false);
+  };
+
+  const handleSaveAsDraft = () => {
+    void savePost(true);
+  };
+
+  const handlePublish = () => {
+    void savePost(false);
   };
 
   const meta: PostMetadataModel = {
@@ -338,6 +353,8 @@ export default function CreatePage() {
             isFork={false}
             liveUpdateEnabled={liveUpdateEnabled}
             onLiveUpdateChange={setLiveUpdateEnabled}
+            onSaveAsDraft={handleSaveAsDraft}
+            onPublish={handlePublish}
           />
         </form>
       </section>

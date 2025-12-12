@@ -142,9 +142,7 @@ export default function EditPostPage() {
     };
   }, [id, user, authLoading]);
 
-  const handleSubmit = async (event: FormEvent) => {
-    event.preventDefault();
-
+  const savePost = async (asDraft: boolean) => {
     if (!id || typeof id !== 'string') return;
 
     const trimmedTitle = title.trim();
@@ -162,6 +160,7 @@ export default function EditPostPage() {
       return;
     }
 
+    setIsDraft(asDraft);
     setSaveStatus('saving');
     setSaveError('');
 
@@ -174,7 +173,7 @@ export default function EditPostPage() {
         title: trimmedTitle,
         description: storedDescription,
         expression: trimmedExpr,
-        is_draft: isDraft,
+        is_draft: asDraft,
         sample_rate: sampleRate,
         mode,
       })
@@ -189,9 +188,22 @@ export default function EditPostPage() {
 
     setSaveStatus('success');
 
-    if (!isDraft) {
+    if (!asDraft) {
       await router.push(`/post/${id}`);
     }
+  };
+
+  const handleSubmit = async (event: FormEvent) => {
+    event.preventDefault();
+    await savePost(false);
+  };
+
+  const handleSaveAsDraft = () => {
+    void savePost(true);
+  };
+
+  const handlePublish = () => {
+    void savePost(false);
   };
 
   const handleDelete = async () => {
@@ -313,6 +325,8 @@ export default function EditPostPage() {
             isFork={false}
             liveUpdateEnabled={liveUpdateEnabled}
             onLiveUpdateChange={setLiveUpdateEnabled}
+            onSaveAsDraft={handleSaveAsDraft}
+            onPublish={handlePublish}
           />
         </form>
 
