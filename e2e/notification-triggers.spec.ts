@@ -277,7 +277,7 @@ test.describe('Notification triggers - fork', () => {
     await titleField.clear();
     await titleField.fill('My Fork');
 
-    await page.getByRole('button', { name: 'Save' }).click();
+    await page.getByRole('button', { name: 'Publish' }).click();
     await page.waitForURL(/\/post\//);
 
     // Check notification was created
@@ -322,7 +322,7 @@ test.describe('Notification triggers - fork', () => {
     await titleField.clear();
     await titleField.fill('Fork Of My Own');
 
-    await page.getByRole('button', { name: 'Save' }).click();
+    await page.getByRole('button', { name: 'Publish' }).click();
     await page.waitForURL(/\/post\//);
 
     // No notification for self
@@ -362,8 +362,7 @@ test.describe('Notification triggers - fork', () => {
     await expect(page.getByText('Loading…')).toHaveCount(0, { timeout: 10000 });
 
     // Save as draft
-    await page.getByLabel('Save as draft').check();
-    await page.getByRole('button', { name: 'Save' }).click();
+    await page.getByRole('button', { name: 'Save as draft' }).click();
 
     await expect(page.getByText('Fork saved.')).toBeVisible();
 
@@ -396,7 +395,7 @@ test.describe('Notification triggers - mention', () => {
     const descriptionField = page.getByPlaceholder('Add an optional description');
     await descriptionField.fill(`Check this out @${OTHER_USERNAME}!`);
 
-    await page.getByRole('button', { name: 'Save' }).click();
+    await page.getByRole('button', { name: 'Publish' }).click();
     await page.waitForURL(/\/post\//);
 
     // Wait a moment for the notification trigger to complete
@@ -429,7 +428,7 @@ test.describe('Notification triggers - mention', () => {
     const descriptionField = page.getByPlaceholder('Add an optional description');
     await descriptionField.fill(`I'm mentioning myself @${TEST_USERNAME}`);
 
-    await page.getByRole('button', { name: 'Save' }).click();
+    await page.getByRole('button', { name: 'Publish' }).click();
     await page.waitForURL(/\/post\//);
 
     // No notification for self-mention
@@ -459,8 +458,7 @@ test.describe('Notification triggers - mention', () => {
     await descriptionField.fill(`Draft mention @${OTHER_USERNAME}`);
 
     // Save as draft
-    await page.getByLabel('Save as draft').check();
-    await page.getByRole('button', { name: 'Save' }).click();
+    await page.getByRole('button', { name: 'Save as draft' }).click();
 
     await expect(page.getByText('Post saved.')).toBeVisible();
 
@@ -497,7 +495,7 @@ test.describe('Notification triggers - mention', () => {
     const descriptionField = page.getByPlaceholder('Add an optional description');
     await descriptionField.fill(`Hey @${OTHER_USERNAME} and @e2e_third_user!`);
 
-    await page.getByRole('button', { name: 'Save' }).click();
+    await page.getByRole('button', { name: 'Publish' }).click();
     await page.waitForURL(/\/post\//);
 
     // Check notifications for both users

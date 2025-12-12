@@ -68,8 +68,8 @@ test.describe('Weekly challenges - finalize_current_week', () => {
   test('picks the most-favorited post with the weekly tag and correct tie-breaker', async () => {
     // Create challenge row for this week
     const now = new Date();
-    const startsAt = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000); // 3 days ago
-    const endsAt = new Date(now.getTime() + 4 * 24 * 60 * 60 * 1000); // in 4 days
+    const startsAt = new Date(now.getTime() - 10 * 24 * 60 * 60 * 1000); // 10 days ago
+    const endsAt = new Date(now.getTime() - 1 * 60 * 60 * 1000); // 1 hour ago (challenge has ended)
 
     const { data: challengeInsert, error: challengeError } = await supabaseAdmin
       .from('weekly_challenges')
