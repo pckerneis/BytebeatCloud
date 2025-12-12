@@ -26,6 +26,8 @@ export default function Home() {
   const [topPickError, setTopPickError] = useState('');
   const [currentTheme, setCurrentTheme] = useState<string | null>(null);
   const [currentWeekNumber, setCurrentWeekNumber] = useState<number | null>(null);
+  const [challengeEndsAt, setChallengeEndsAt] = useState<Date | null>(null);
+  const [timeLeftText, setTimeLeftText] = useState<string | null>(null);
 
   const { toggle, stop, isPlaying } = useBytebeatPlayer();
   const { setPlaylist, setCurrentPostById } = usePlayerStore();
@@ -94,9 +96,12 @@ export default function Home() {
         const challengeRow = Array.isArray(currentWeekly) ? currentWeekly[0] : currentWeekly;
         setCurrentWeekNumber((challengeRow as any).week_number ?? null);
         setCurrentTheme((challengeRow as any).theme ?? null);
+        const endsAt = (challengeRow as any).ends_at;
+        setChallengeEndsAt(endsAt ? new Date(endsAt) : null);
       } else {
         setCurrentWeekNumber(null);
         setCurrentTheme(null);
+        setChallengeEndsAt(null);
       }
 
       // Load the most recent completed challenge with a winner.
@@ -184,6 +189,41 @@ export default function Home() {
     setCurrentPostById(post.id);
   };
 
+  // Update time left text every minute
+  useEffect(() => {
+    if (!challengeEndsAt) {
+      setTimeLeftText(null);
+      return;
+    }
+
+    const updateTimeLeft = () => {
+      const now = new Date();
+      const diff = challengeEndsAt.getTime() - now.getTime();
+
+      if (diff <= 0) {
+        setTimeLeftText(null);
+        return;
+      }
+
+      const minutes = Math.floor(diff / (1000 * 60));
+      const hours = Math.floor(diff / (1000 * 60 * 60));
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+
+      if (days >= 1) {
+        setTimeLeftText(`${days} day${days > 1 ? 's' : ''} left`);
+      } else if (hours >= 1) {
+        setTimeLeftText(`${hours} hour${hours > 1 ? 's' : ''} left`);
+      } else {
+        setTimeLeftText(`${minutes} minute${minutes > 1 ? 's' : ''} left`);
+      }
+    };
+
+    updateTimeLeft();
+    const interval = setInterval(updateTimeLeft, 60000); // Update every minute
+
+    return () => clearInterval(interval);
+  }, [challengeEndsAt]);
+
   const linkToDiscord = process.env.NEXT_PUBLIC_DISCORD_LINK;
 
   return (
@@ -257,6 +297,7 @@ export default function Home() {
             </>
             <p>
               Week #{currentWeekNumber}: theme is &quot;{currentTheme ?? 'TBA'}&quot;
+              {timeLeftText && <span className="time-left"> — {timeLeftText}</span>}
             </p>
             <ul>
               <li>

@@ -743,6 +743,11 @@ h1 {
   margin-top: 20px;
 }
 
+.time-left {
+  color: var(--secondary-text-color);
+  font-style: italic;
+}
+
 .home-footer {
   color: var(--secondary-text-color);
   display: flex;
