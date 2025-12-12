@@ -7,12 +7,14 @@ declare
     v_challenge record;
     v_winner uuid;
 begin
-    -- Find the most recent week without a winner
+    -- Find the challenge that just ended (ends_at <= now) and has no winner yet
+    -- This ensures we finalize the correct challenge even if multiple exist
     select *
       into v_challenge
     from public.weekly_challenges
     where winner_post_id is null
-    order by week_number desc
+      and ends_at <= now()
+    order by ends_at desc
     limit 1;
 
     if v_challenge is null then
