@@ -55,6 +55,7 @@ export default function EditPostPage() {
     if (authLoading) return;
 
     if (!user) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setLoadError('You must be logged in to edit a post.');
       setLoading(false);
     }

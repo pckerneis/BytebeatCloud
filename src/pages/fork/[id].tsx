@@ -260,7 +260,9 @@ export default function ForkPostPage() {
         <h2>Fork post</h2>
         {!user && (
           <div className="info-panel">
-            <span><a href={'/login'}>Log in</a> to publish a post, or use a share link.</span>
+            <span>
+              <a href={'/login'}>Log in</a> to publish a post, or use a share link.
+            </span>
           </div>
         )}
         {originalAuthor && (

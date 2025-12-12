@@ -83,8 +83,6 @@ export default function Home() {
       setTopPickError('');
       setTopPickPost(null);
 
-      const nowIso = new Date().toISOString();
-
       // Load the current weekly challenge to get the theme.
       const { data: currentWeekly, error: currentError } = await supabase.rpc(
         'get_current_weekly_challenge',
@@ -192,6 +190,7 @@ export default function Home() {
   // Update time left text every minute
   useEffect(() => {
     if (!challengeEndsAt) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setTimeLeftText(null);
       return;
     }

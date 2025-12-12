@@ -31,8 +31,8 @@ export default function AboutWeekly() {
         <h3>1. A New Theme Every Saturday</h3>
 
         <p>
-          Every Saturday at 20:00 UTC introduces a fresh creative prompt. Themes are suggestions only.
-          You can follow them or ignore them. No automated validation is performed.
+          Every Saturday at 20:00 UTC introduces a fresh creative prompt. Themes are suggestions
+          only. You can follow them or ignore them. No automated validation is performed.
         </p>
 
         <p>The current theme appears on the homepage.</p>

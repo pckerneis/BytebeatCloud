@@ -13,4 +13,3 @@ export const SAMPLE_RATE_PRESETS = [8000, 11025, 16000, 22050, 32000, 44100];
 export function formatSampleRate(sr: number): string {
   return sr / 1000 + 'kHz';
 }
-
