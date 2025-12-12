@@ -28,6 +28,46 @@ There are a few differences with other web implementations:
 
 ## Features
 
+### Audio Engine
+- **Three audio modes**: uint8 (classic bytebeat), int8 (signed), and float (-1 to 1)
+- **Configurable sample rate**: 8kHz to 48kHz
+- **Real-time expression editing**: hear changes as you type
+- **Master gain control**: adjust output volume
+
+### Creation & Sharing
+- **Create posts**: publish your bytebeat expressions with title, description, and tags
+- **Draft mode**: save work-in-progress without publishing
+- **Fork posts**: remix other users' expressions with attribution
+- **Share links**: generate shareable URLs for any expression
+- **WAV export**: export your bytebeat as a WAV file
+- **Video export**: export your bytebeat as a video with waveform visualization
+
+### Discovery
+- **Explore feed**: browse recent, trending, and weekly challenge posts
+- **Personalized feed**: see posts from users you follow
+- **Tags**: categorize and filter posts by tags
+- **Length categories**: filter by expression complexity
+
+### Social
+- **User profiles**: customize username, bio, and social links
+- **Follow system**: follow other creators
+- **Favorites**: save posts you like
+- **Mentions**: tag other users with @username
+- **In-app notifications**: get notified of follows, favorites, forks, and mentions
+
+### Weekly Challenges
+- **Bytebeat of the Week**: themed creative challenges every Saturday
+- **Hall of Fame**: browse past winners
+- **Community voting**: most-favorited entry wins
+
+### Experience
+- **Dark mode**: multiple color themes
+- **Responsive design**: works on desktop and mobile
+- **Progressive Web App**: install on your device
+- **Live waveform visualizer**: see your audio in real-time
+
+## TODO
+
 - [x] User registration and login
 - [x] Manage profile (edit username, delete account)
 - [x] Create and share musical expressions (share link)
@@ -42,7 +82,6 @@ There are a few differences with other web implementations:
 - [x] Dark mode
 - [x] Responsive design
 - [x] Progressive Web App
-- [x] Offline mode
 - [x] Length categories
 - [x] Arbitrary sample rate
 - [x] On-the-fly update of edited expressions
@@ -56,17 +95,13 @@ There are a few differences with other web implementations:
 - [x] Post description
 - [x] Tags
 - [x] Signed int mode
-
-**Working on**
-
-- [x] Bytebeat of the Week theme selection
-- [x] Submission mode of create page
-- [x] Explore submissions
-- [ ] Hall of Fame
-- [ ] Top Pick badge
+- [x] Video export
+- [x] Bytebeat of the Week
 
 **Coming later**
 
+- [ ] Change history
+- [ ] Offline mode
 - [ ] Report posts or users
 - [ ] Block/unblock users
 - [ ] Reject silent/too loud posts

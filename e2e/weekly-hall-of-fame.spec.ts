@@ -205,7 +205,7 @@ test.describe('Weekly Hall of Fame page', () => {
     const week1End = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
 
     // Current week without winner yet
-    const week2Start = new Date(now.getTime() - 1 * 24 * 60 * 60 * 1000);
+    const week2Start = new Date(now.getTime() - 24 * 60 * 60 * 1000);
     const week2End = new Date(now.getTime() + 6 * 24 * 60 * 60 * 1000);
 
     // Create profile
