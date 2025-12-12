@@ -16,6 +16,7 @@ export default function EditPostPage() {
   const { id } = router.query;
 
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [expression, setExpression] = useState('');
@@ -27,7 +28,7 @@ export default function EditPostPage() {
   });
   const { currentPost, setCurrentPostById } = usePlayerStore();
 
-  const { user } = useSupabaseAuth();
+  const { user, loading: authLoading } = useSupabaseAuth();
 
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'success'>('idle');
   const [saveError, setSaveError] = useState('');
@@ -47,6 +48,16 @@ export default function EditPostPage() {
       liveUpdateEnabled,
       updateExpression,
     });
+
+  useEffect(() => {
+    if (!router.isReady) return;
+    if (authLoading) return;
+
+    if (!user) {
+      setLoadError('You must be logged in to edit a post.');
+      setLoading(false);
+    }
+  }, [router.isReady, authLoading, user, router]);
 
   useEffect(() => {
     return () => {
@@ -71,11 +82,14 @@ export default function EditPostPage() {
 
   useEffect(() => {
     if (!id || typeof id !== 'string') return;
+    if (authLoading) return;
+    if (!user) return;
 
     let cancelled = false;
 
     const loadPost = async () => {
       setLoading(true);
+      setLoadError('');
 
       const { data, error } = await supabase
         .from('posts')
@@ -87,20 +101,20 @@ export default function EditPostPage() {
 
       if (error) {
         console.warn('Error loading post', error.message);
-        setSaveError('Unable to load post.');
+        setLoadError('Unable to load post.');
         setLoading(false);
         return;
       }
 
       if (!data) {
-        setSaveError('Post not found.');
+        setLoadError('Post not found.');
         setLoading(false);
         return;
       }
 
       // Rely on RLS to restrict access but also guard on client side
-      if (user && data.profile_id && data.profile_id !== (user as any).id) {
-        setSaveError('You do not have permission to edit this post.');
+      if (data.profile_id && data.profile_id !== (user as any).id) {
+        setLoadError('You do not have permission to edit this post.');
         setLoading(false);
         return;
       }
@@ -123,7 +137,7 @@ export default function EditPostPage() {
     return () => {
       cancelled = true;
     };
-  }, [id, user]);
+  }, [id, user, authLoading]);
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
@@ -219,11 +233,40 @@ export default function EditPostPage() {
     setIsDraft(next.isDraft);
   };
 
-  if (loading) {
+  const handleBack = () => {
+    if (typeof window !== 'undefined' && window.history.length > 1) {
+      router.back();
+      return;
+    }
+
+    if (id && typeof id === 'string') {
+      void router.push(`/post/${id}`);
+      return;
+    }
+
+    void router.push('/');
+  };
+
+  if (authLoading || loading) {
     return (
       <section>
+        <button type="button" className="button ghost" onClick={handleBack}>
+          ← Back
+        </button>
         <h2>Edit post</h2>
         <p>Loading…</p>
+      </section>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <section>
+        <button type="button" className="button ghost" onClick={handleBack}>
+          ← Back
+        </button>
+        <h2>Edit post</h2>
+        <p className="error-message">{loadError}</p>
       </section>
     );
   }
@@ -245,7 +288,7 @@ export default function EditPostPage() {
         <meta name="twitter:card" content="summary_large_image" />
       </Head>
       <section>
-        <button type="button" className="button ghost" onClick={() => router.back()}>
+        <button type="button" className="button ghost" onClick={handleBack}>
           ← Back
         </button>
         <h2>Edit post</h2>

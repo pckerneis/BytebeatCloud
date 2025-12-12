@@ -193,9 +193,26 @@ export default function ForkPostPage() {
     setIsDraft(next.isDraft);
   };
 
+  const handleBack = () => {
+    if (typeof window !== 'undefined' && window.history.length > 1) {
+      router.back();
+      return;
+    }
+
+    if (id && typeof id === 'string') {
+      void router.push(`/post/${id}`);
+      return;
+    }
+
+    void router.push('/');
+  };
+
   if (loading) {
     return (
       <section>
+        <button type="button" className="button ghost" onClick={handleBack}>
+          ← Back
+        </button>
         <h2>Fork post</h2>
         <p>Loading…</p>
       </section>
@@ -219,13 +236,13 @@ export default function ForkPostPage() {
         <meta name="twitter:card" content="summary_large_image" />
       </Head>
       <section>
-        <button type="button" className="button ghost" onClick={() => router.back()}>
+        <button type="button" className="button ghost" onClick={handleBack}>
           ← Back
         </button>
         <h2>Fork post</h2>
         {!user && (
           <div className="info-panel">
-            <a href={'/login'}>Log in</a> to publish a post, or use a share link.
+            <span><a href={'/login'}>Log in</a> to publish a post, or use a share link.</span>
           </div>
         )}
         {originalAuthor && (

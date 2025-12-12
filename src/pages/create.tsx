@@ -302,7 +302,7 @@ export default function CreatePage() {
         <h2>Create</h2>
         {!user && (
           <div className="info-panel">
-            <a href={'/login'}>Log in</a> to publish a post, or use a share link.
+            <span><a href={'/login'}>Log in</a> to publish a post, or use a share link.</span>
           </div>
         )}
 
