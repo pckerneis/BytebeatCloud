@@ -14,7 +14,7 @@ declare
         else v_this_saturday
     end;
     v_ends_at timestamptz := v_starts_at + interval '6 days 23 hours 55 minutes'; -- Next Saturday 20:00 UTC
-    v_existing_id uuid;
+    v_existing_id bigint;
 begin
     -- Guard: check if a challenge already exists for this time window
     select id into v_existing_id
