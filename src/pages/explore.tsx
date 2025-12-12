@@ -33,6 +33,7 @@ export default function ExplorePage() {
   const [hasMore, setHasMore] = useState(true);
   const loadingMoreRef = useRef(false);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
+  const [hasActiveChallenge, setHasActiveChallenge] = useState<boolean | null>(null);
 
   const resetPagination = useCallback(() => {
     setPosts([]);
@@ -43,6 +44,23 @@ export default function ExplorePage() {
   }, []);
 
   const [activeTab, setActiveTab] = useTabState(tabs, 'feed', { onTabChange: resetPagination });
+
+  // Check if there's an active weekly challenge on mount
+  useEffect(() => {
+    let cancelled = false;
+
+    const checkChallenge = async () => {
+      const { data } = await supabase.rpc('get_current_week_data');
+      if (cancelled) return;
+      setHasActiveChallenge(data !== null);
+    };
+
+    void checkChallenge();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -197,12 +215,14 @@ export default function ExplorePage() {
           >
             Recent
           </span>
-          <span
-            className={`tab-button ${activeTab === 'weekly' ? 'active' : ''}`}
-            onClick={() => handleTabClick('weekly')}
-          >
-            Weekly Challenge
-          </span>
+          {hasActiveChallenge && (
+            <span
+              className={`tab-button ${activeTab === 'weekly' ? 'active' : ''}`}
+              onClick={() => handleTabClick('weekly')}
+            >
+              Weekly Challenge
+            </span>
+          )}
         </div>
         {loading && <p className="text-centered">Loading posts…</p>}
         {error && !loading && <p className="error-message">{error}</p>}
