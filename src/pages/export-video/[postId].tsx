@@ -1,5 +1,5 @@
 import { useRouter } from 'next/router';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import Head from 'next/head';
 import { supabase } from '../../lib/supabaseClient';
 import { enrichWithTags } from '../../utils/tags';
@@ -9,6 +9,7 @@ import {
   downloadVideo,
   isWebCodecsSupported,
   hasWebCodecs,
+  renderPreviewFrame,
   type Orientation,
   type Resolution,
 } from '../../utils/video-export';
@@ -82,11 +83,39 @@ export default function ExportVideoPage() {
   const [exportError, setExportError] = useState('');
   const [webCodecsSupported, setWebCodecsSupported] = useState(true);
   const [usingFallback, setUsingFallback] = useState(false);
+  const previewContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setWebCodecsSupported(isWebCodecsSupported());
     setUsingFallback(!hasWebCodecs());
   }, []);
+
+  const updatePreview = useCallback(() => {
+    if (!post || !previewContainerRef.current) return;
+
+    const themeColors = getThemeColors();
+    const canvas = renderPreviewFrame({
+      expression: post.expression,
+      title: post.title || '(untitled)',
+      authorUsername: post.author_username || 'unknown',
+      orientation: settings.orientation,
+      resolution: settings.resolution,
+      accentColor: themeColors.accentColor,
+      bgColor: themeColors.bgColor,
+      textColor: themeColors.textColor,
+    });
+
+    // Clear previous preview and add new one
+    const container = previewContainerRef.current;
+    container.innerHTML = '';
+    canvas.style.maxWidth = '100%';
+    canvas.style.height = 'auto';
+    container.appendChild(canvas);
+  }, [post, settings.orientation, settings.resolution]);
+
+  useEffect(() => {
+    updatePreview();
+  }, [updatePreview]);
 
   useEffect(() => {
     if (!postId || typeof postId !== 'string') return;
@@ -226,6 +255,8 @@ export default function ExportVideoPage() {
               Exporting: <strong>{post.title || '(untitled)'}</strong>
               {post.author_username && <span> by @{post.author_username}</span>}
             </p>
+
+            <div className="video-preview-container" ref={previewContainerRef} />
 
             <div className="form-group">
               <label htmlFor="length">

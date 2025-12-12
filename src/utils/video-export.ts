@@ -259,7 +259,7 @@ function drawWaveform(
   const windowDuration = 0.15; // 150ms window
   const windowSamples = Math.floor(sampleRate * windowDuration);
   const currentSample = Math.floor(currentTime * sampleRate);
-  const startSample = Math.max(0, currentSample - windowSamples / 2);
+  const startSample = Math.max(0, Math.floor(currentSample - windowSamples / 2));
   const endSample = Math.min(samples.length, startSample + windowSamples);
 
   // Draw waveform
@@ -269,22 +269,84 @@ function drawWaveform(
 
   const waveformWidth = width;
   const samplesInWindow = endSample - startSample;
+
+  // Downsample for display: use min/max per pixel column to show waveform envelope
+  const samplesPerPixel = samplesInWindow / waveformWidth;
   const waveformAmplitude = (waveformHeight / 2) * 0.85;
 
-  for (let i = 0; i < samplesInWindow; i++) {
-    const sampleIndex = startSample + i;
-    const sample = samples[sampleIndex] || 0;
-    const x = (i / samplesInWindow) * waveformWidth;
-    const y = waveformY + waveformHeight / 2 - sample * waveformAmplitude;
+  for (let x = 0; x < waveformWidth; x++) {
+    const bucketStart = startSample + Math.floor(x * samplesPerPixel);
+    const bucketEnd = startSample + Math.floor((x + 1) * samplesPerPixel);
 
-    if (i === 0) {
-      ctx.moveTo(x, y);
-    } else {
-      ctx.lineTo(x, y);
+    // Find min and max in this bucket
+    let minVal = Infinity;
+    let maxVal = -Infinity;
+    for (let j = bucketStart; j < bucketEnd && j < endSample; j++) {
+      const s = samples[j] || 0;
+      if (s < minVal) minVal = s;
+      if (s > maxVal) maxVal = s;
     }
+
+    if (minVal === Infinity) {
+      minVal = 0;
+      maxVal = 0;
+    }
+
+    // Draw vertical line from min to max for this pixel column
+    const yMin = waveformY + waveformHeight / 2 - minVal * waveformAmplitude;
+    const yMax = waveformY + waveformHeight / 2 - maxVal * waveformAmplitude;
+
+    if (x === 0) {
+      ctx.moveTo(x, (yMin + yMax) / 2);
+    }
+    // Draw to the midpoint, then we'll fill in the vertical extent
+    ctx.lineTo(x, (yMin + yMax) / 2);
   }
 
   ctx.stroke();
+
+  // Draw filled waveform envelope for better visibility
+  ctx.fillStyle = accentColor + '40';
+  ctx.beginPath();
+
+  // Top edge (max values)
+  for (let x = 0; x < waveformWidth; x++) {
+    const bucketStart = startSample + Math.floor(x * samplesPerPixel);
+    const bucketEnd = startSample + Math.floor((x + 1) * samplesPerPixel);
+
+    let maxVal = -Infinity;
+    for (let j = bucketStart; j < bucketEnd && j < endSample; j++) {
+      const s = samples[j] || 0;
+      if (s > maxVal) maxVal = s;
+    }
+    if (maxVal === -Infinity) maxVal = 0;
+
+    const yMax = waveformY + waveformHeight / 2 - maxVal * waveformAmplitude;
+    if (x === 0) {
+      ctx.moveTo(x, yMax);
+    } else {
+      ctx.lineTo(x, yMax);
+    }
+  }
+
+  // Bottom edge (min values) - go backwards
+  for (let x = waveformWidth - 1; x >= 0; x--) {
+    const bucketStart = startSample + Math.floor(x * samplesPerPixel);
+    const bucketEnd = startSample + Math.floor((x + 1) * samplesPerPixel);
+
+    let minVal = Infinity;
+    for (let j = bucketStart; j < bucketEnd && j < endSample; j++) {
+      const s = samples[j] || 0;
+      if (s < minVal) minVal = s;
+    }
+    if (minVal === Infinity) minVal = 0;
+
+    const yMin = waveformY + waveformHeight / 2 - minVal * waveformAmplitude;
+    ctx.lineTo(x, yMin);
+  }
+
+  ctx.closePath();
+  ctx.fill();
 }
 
 // Create an AudioBuffer from Float32Array samples
@@ -658,4 +720,41 @@ export function downloadVideo(blob: Blob, filename: string): void {
 export function isWebCodecsSupported(): boolean {
   // Check for MediaRecorder support with video/webm
   return typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported('video/webm');
+}
+
+export interface PreviewFrameOptions {
+  expression: string;
+  title: string;
+  authorUsername: string;
+  orientation: Orientation;
+  resolution: Resolution;
+  accentColor?: string;
+  bgColor?: string;
+  textColor?: string;
+}
+
+export function renderPreviewFrame(options: PreviewFrameOptions): HTMLCanvasElement {
+  const { width, height } = getVideoDimensions(options.orientation, options.resolution);
+  const staticFrame = renderStaticFrame(width, height, {
+    title: options.title,
+    authorUsername: options.authorUsername,
+    expression: options.expression,
+    accentColor: options.accentColor || '#7b34ff',
+    bgColor: options.bgColor || '#0e1a2b',
+    textColor: options.textColor || '#ffffff',
+  });
+
+  // Draw a flat waveform line in the waveform area to show where it will be
+  const ctx = staticFrame.canvas.getContext('2d')!;
+  const { waveformY, waveformHeight } = staticFrame;
+  const accentColor = options.accentColor || '#7b34ff';
+
+  ctx.strokeStyle = accentColor + '60';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(0, waveformY + waveformHeight / 2);
+  ctx.lineTo(width, waveformY + waveformHeight / 2);
+  ctx.stroke();
+
+  return staticFrame.canvas;
 }
