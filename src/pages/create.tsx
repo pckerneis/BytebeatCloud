@@ -14,6 +14,7 @@ import {
 } from '../model/expression';
 import { validateExpression } from '../utils/expression-validator';
 import { useExpressionPlayer } from '../hooks/useExpressionPlayer';
+import { useCtrlSpacePlayShortcut } from '../hooks/useCtrlSpacePlayShortcut';
 import { PostMetadataModel } from '../model/postEditor';
 import { convertMentionsToIds } from '../utils/mentions';
 import Link from 'next/link';
@@ -64,6 +65,8 @@ export default function CreatePage() {
       }
     };
   }, [stop, currentPost]);
+
+  useCtrlSpacePlayShortcut(handlePlayClick);
 
   useEffect(() => {
     if (!liveUpdateEnabled || !isPlaying) return;

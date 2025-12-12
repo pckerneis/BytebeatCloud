@@ -9,6 +9,7 @@ import Head from 'next/head';
 import { ModeOption, DEFAULT_SAMPLE_RATE } from '../../model/expression';
 import { validateExpression } from '../../utils/expression-validator';
 import { useExpressionPlayer } from '../../hooks/useExpressionPlayer';
+import { useCtrlSpacePlayShortcut } from '../../hooks/useCtrlSpacePlayShortcut';
 import { convertMentionsToIds, convertMentionsToUsernames } from '../../utils/mentions';
 
 export default function ForkPostPage() {
@@ -56,6 +57,8 @@ export default function ForkPostPage() {
       }
     };
   }, [stop, currentPost]);
+
+  useCtrlSpacePlayShortcut(handlePlayClick);
 
   useEffect(() => {
     if (!liveUpdateEnabled || !isPlaying) return;
