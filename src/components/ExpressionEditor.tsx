@@ -1,9 +1,12 @@
 import dynamic from 'next/dynamic';
 import { javascript } from '@codemirror/lang-javascript';
 import { EditorView } from '@codemirror/view';
+import { keymap } from '@codemirror/view';
 import { linter, type Diagnostic } from '@codemirror/lint';
+import { insertNewline } from '@codemirror/commands';
+import { Prec } from '@codemirror/state';
 import { validateExpression, ValidationIssue } from '../utils/expression-validator';
-import { minimizeExpression } from '../model/expression';
+import { minimizeExpression } from '../utils/minimize-expression';
 import { memo, useMemo } from 'react';
 import { getUiTheme } from '../theme/themes';
 import { useThemeId } from '../theme/ThemeContext';
@@ -41,13 +44,26 @@ const expressionLinter = linter((view): Diagnostic[] => {
   ];
 });
 
-const editorExtensions = [javascript(), EditorView.lineWrapping, expressionLinter];
+const editorExtensions = [
+  Prec.highest(
+    keymap.of([
+      {
+        key: 'Enter',
+        run: insertNewline,
+      },
+    ]),
+  ),
+  javascript(),
+  EditorView.lineWrapping,
+  expressionLinter,
+];
 
 const editorBasicSetup = {
   lineNumbers: false,
   foldGutter: false,
   highlightActiveLine: false,
   autocompletion: false,
+  indentOnInput: false,
 } as const;
 
 export function ExpressionEditor({ value, onChange }: ExpressionEditorProps) {
