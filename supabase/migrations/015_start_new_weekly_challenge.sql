@@ -6,8 +6,8 @@ as $$
 declare
     v_theme text;
     v_week_number integer;
-    v_starts_at timestamptz := date_trunc('week', now() at time zone 'utc') + interval '0 hours'; -- Monday 00:00 UTC
-    v_ends_at timestamptz := v_starts_at + interval '7 days';
+    v_starts_at timestamptz := date_trunc('week', now() at time zone 'utc') + interval '5 days 20 hours 5 minutes'; -- Saturday 20:05 UTC
+    v_ends_at timestamptz := v_starts_at + interval '6 days 23 hours 55 minutes'; -- Next Saturday 20:00 UTC
 begin
     -- Fetch a random theme idea
     select idea into v_theme

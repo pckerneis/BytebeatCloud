@@ -28,10 +28,10 @@ export default function AboutWeekly() {
 
         <h2>How It Works</h2>
 
-        <h3>1. A New Theme Every Monday</h3>
+        <h3>1. A New Theme Every Saturday</h3>
 
         <p>
-          Every Monday at 00:00 UTC introduces a fresh creative prompt. Themes are suggestions only.
+          Every Saturday at 20:00 UTC introduces a fresh creative prompt. Themes are suggestions only.
           You can follow them or ignore them. No automated validation is performed.
         </p>
 
