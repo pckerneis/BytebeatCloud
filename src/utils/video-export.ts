@@ -1,4 +1,5 @@
-import { ModeOption, minimizeExpression } from '../model/expression';
+import { ModeOption } from '../model/expression';
+import { minimizeExpression } from './minimize-expression';
 import { renderExpressionToSamples } from './audio-render';
 import { Output, BufferTarget, Mp4OutputFormat, CanvasSource, AudioBufferSource } from 'mediabunny';
 
