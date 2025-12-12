@@ -148,7 +148,7 @@ test.describe('Fork page - saving fork', () => {
     await ensureTestUserProfile(TEST_USER_EMAIL, TEST_USERNAME);
   });
 
-  test('saving fork redirects to new post detail page', async ({ page }) => {
+  test('publishing fork redirects to new post detail page', async ({ page }) => {
     await page.goto(`/fork/${originalPostId}`);
 
     await expect(page.getByText('Loading…')).toHaveCount(0, { timeout: 10000 });
@@ -158,9 +158,9 @@ test.describe('Fork page - saving fork', () => {
     await titleField.clear();
     await titleField.fill('My Forked Post');
 
-    // Save
-    const saveButton = page.getByRole('button', { name: 'Save' });
-    await saveButton.click();
+    // Publish
+    const publishButton = page.getByRole('button', { name: 'Publish' });
+    await publishButton.click();
 
     // Should redirect to new post detail (not the original)
     await page.waitForURL(/\/post\/(?!.*originalPostId)/);
@@ -174,9 +174,9 @@ test.describe('Fork page - saving fork', () => {
 
     await expect(page.getByText('Loading…')).toHaveCount(0, { timeout: 10000 });
 
-    // Save without changes
-    const saveButton = page.getByRole('button', { name: 'Save' });
-    await saveButton.click();
+    // Publish without changes
+    const publishButton = page.getByRole('button', { name: 'Publish' });
+    await publishButton.click();
 
     await page.waitForURL(/\/post\//);
 
@@ -187,7 +187,7 @@ test.describe('Fork page - saving fork', () => {
     await expect(forkLink).toContainText(`@${OTHER_USERNAME}`);
   });
 
-  test('can modify expression before saving fork', async ({ page }) => {
+  test('can modify expression before publishing fork', async ({ page }) => {
     await page.goto(`/fork/${originalPostId}`);
 
     await expect(page.getByText('Loading…')).toHaveCount(0, { timeout: 10000 });
@@ -195,9 +195,9 @@ test.describe('Fork page - saving fork', () => {
     // Modify expression
     await clearAndTypeInExpressionEditor(page, 't * 5');
 
-    // Save
-    const saveButton = page.getByRole('button', { name: 'Save' });
-    await saveButton.click();
+    // Publish
+    const publishButton = page.getByRole('button', { name: 'Publish' });
+    await publishButton.click();
 
     await page.waitForURL(/\/post\//);
 
@@ -205,25 +205,20 @@ test.describe('Fork page - saving fork', () => {
     await expect(page.locator('.cm-content')).toContainText('t*5');
   });
 
-  test('saving fork as draft stays on fork page', async ({ page }) => {
+  test('saving fork as draft redirects to edit page', async ({ page }) => {
     await page.goto(`/fork/${originalPostId}`);
 
     await expect(page.getByText('Loading…')).toHaveCount(0, { timeout: 10000 });
 
-    // Check "Save as draft"
-    const draftCheckbox = page.getByLabel('Save as draft');
-    await draftCheckbox.check();
+    // Click "Save as draft" button
+    const draftButton = page.getByRole('button', { name: 'Save as draft' });
+    await draftButton.click();
 
-    // Save
-    const saveButton = page.getByRole('button', { name: 'Save' });
-    await saveButton.click();
-
-    // Should stay on fork page and show success
-    await expect(page).toHaveURL(/\/fork\//);
-    await expect(page.getByText('Fork saved.')).toBeVisible();
+    // Should redirect to edit page for the new draft
+    await page.waitForURL(/\/edit\/[a-f0-9-]+/);
   });
 
-  test('save button disabled with invalid expression', async ({ page }) => {
+  test('publish button disabled with invalid expression', async ({ page }) => {
     await page.goto(`/fork/${originalPostId}`);
 
     await expect(page.getByText('Loading…')).toHaveCount(0, { timeout: 10000 });
@@ -231,9 +226,9 @@ test.describe('Fork page - saving fork', () => {
     // Enter invalid expression
     await clearAndTypeInExpressionEditor(page, 't +');
 
-    // Save button should be disabled
-    const saveButton = page.getByRole('button', { name: 'Save' });
-    await expect(saveButton).toBeDisabled();
+    // Publish button should be disabled
+    const publishButton = page.getByRole('button', { name: 'Publish' });
+    await expect(publishButton).toBeDisabled();
   });
 });
 
@@ -276,7 +271,7 @@ test.describe('Fork page - forked post appears in original forks list', () => {
     await titleField.clear();
     await titleField.fill('My New Fork');
 
-    await page.getByRole('button', { name: 'Save' }).click();
+    await page.getByRole('button', { name: 'Publish' }).click();
     await page.waitForURL(/\/post\//);
 
     // Now navigate to original post
@@ -317,8 +312,8 @@ test.describe('Fork page - unauthenticated', () => {
     await expect(page.getByText('Loading…')).toHaveCount(0, { timeout: 10000 });
 
     await expect(page.getByText('Log in to publish a post')).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Save' })).toHaveCount(0);
-    await expect(page.getByLabel('Save as draft')).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Publish' })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Save as draft' })).toHaveCount(0);
   });
 
   test('can still view original post data', async ({ page }) => {
@@ -375,7 +370,7 @@ test.describe('Fork page - forking own post', () => {
     await titleField.clear();
     await titleField.fill('Fork Of My Own Post');
 
-    await page.getByRole('button', { name: 'Save' }).click();
+    await page.getByRole('button', { name: 'Publish' }).click();
     await page.waitForURL(/\/post\//);
 
     await expect(page.getByRole('link', { name: 'Fork Of My Own Post' })).toBeVisible();
