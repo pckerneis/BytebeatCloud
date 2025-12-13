@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { useRouter } from 'next/router';
 import { useBytebeatPlayer } from '../../hooks/useBytebeatPlayer';
 import { usePlayerStore } from '../../hooks/usePlayerStore';
@@ -36,6 +36,10 @@ export default function ForkPostPage() {
   const [originalAuthor, setOriginalAuthor] = useState<string | null>(null);
   const [liveUpdateEnabled, setLiveUpdateEnabled] = useState(true);
 
+  const lastLoadedPostIdRef = useRef<string | null>(null);
+  const isDirtyRef = useRef(false);
+  const isApplyingServerStateRef = useRef(false);
+
   const { validationIssue, handleExpressionChange, handlePlayClick, setValidationIssue } =
     useExpressionPlayer({
       expression,
@@ -48,6 +52,13 @@ export default function ForkPostPage() {
       liveUpdateEnabled,
       updateExpression,
     });
+
+  const handleExpressionChangeWithDirty = (value: string) => {
+    if (!isApplyingServerStateRef.current) {
+      isDirtyRef.current = true;
+    }
+    handleExpressionChange(value);
+  };
 
   useEffect(() => {
     return () => {
@@ -74,6 +85,13 @@ export default function ForkPostPage() {
 
   useEffect(() => {
     if (!id || typeof id !== 'string') return;
+
+    // If we already loaded this post and the user has unsaved local edits,
+    // don't re-load and overwrite the form state (e.g. when returning to a tab
+    // after auth refresh or visibility changes).
+    if (lastLoadedPostIdRef.current === id && isDirtyRef.current) {
+      return;
+    }
 
     let cancelled = false;
 
@@ -108,12 +126,17 @@ export default function ForkPostPage() {
       // Convert @[userId] mentions back to @username for editing
       const { text: displayDescription } = await convertMentionsToUsernames(data.description ?? '');
 
+      isApplyingServerStateRef.current = true;
       setTitle(baseTitle ?? '');
       setDescription(displayDescription);
       setExpression(data.expression ?? '');
       setIsDraft(Boolean(data.is_draft));
       setMode(data.mode);
       setSampleRate(data.sample_rate);
+      isApplyingServerStateRef.current = false;
+
+      lastLoadedPostIdRef.current = id;
+      isDirtyRef.current = false;
 
       setLoading(false);
     };
@@ -204,6 +227,9 @@ export default function ForkPostPage() {
   };
 
   const handleMetaChange = (next: typeof meta) => {
+    if (!isApplyingServerStateRef.current) {
+      isDirtyRef.current = true;
+    }
     setTitle(next.title);
     setDescription(next.description);
     setMode(next.mode);
@@ -277,7 +303,7 @@ export default function ForkPostPage() {
             meta={meta}
             onMetaChange={handleMetaChange}
             expression={expression}
-            onExpressionChange={handleExpressionChange}
+            onExpressionChange={handleExpressionChangeWithDirty}
             isPlaying={isPlaying}
             onPlayClick={handlePlayClick}
             validationIssue={validationIssue}
