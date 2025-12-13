@@ -34,6 +34,7 @@ export default function ExplorePage() {
   const loadingMoreRef = useRef(false);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
   const [hasActiveChallenge, setHasActiveChallenge] = useState<boolean | null>(null);
+  const [weekTheme, setWeekTheme] = useState('');
 
   const resetPagination = useCallback(() => {
     setPosts([]);
@@ -82,6 +83,10 @@ export default function ExplorePage() {
         const rpcResult = await supabase.rpc('get_current_week_data');
         const weeklyData = rpcResult.data as any;
         error = rpcResult.error;
+
+        if (!error) {
+          setWeekTheme(weeklyData.challenge?.theme ?? '');
+        }
 
         if (!error && weeklyData && Array.isArray(weeklyData.participants)) {
           const ids = weeklyData.participants
@@ -224,6 +229,15 @@ export default function ExplorePage() {
             </span>
           )}
         </div>
+        {activeTab === 'weekly' && (
+          <div className="info-panel">
+            <div>
+              This tab shows the participants for the{' '}
+              <Link href={'/about-weekly'}>Bytebeat of the Week challenge</Link>.
+            </div>
+            {weekTheme && <div>This week&apos;s theme is &quot;{weekTheme}&quot;</div>}
+          </div>
+        )}
         {loading && <p className="text-centered">Loading posts…</p>}
         {error && !loading && <p className="error-message">{error}</p>}
         {!loading && !error && posts.length === 0 && (
