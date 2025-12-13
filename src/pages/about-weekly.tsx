@@ -61,8 +61,8 @@ export default function AboutWeekly() {
 
         <p>
           Throughout the week, others can favorite and explore submissions. At the end of the period
-          (next Monday at 00:00 UTC), the <b>most favorited post</b> among eligible entries becomes
-          the week&#39;s winner.
+          (next Saturday at 20:00 UTC), the <b>most-favorited post</b> among eligible entries
+          becomes the week&#39;s winner.
         </p>
 
         <p>
