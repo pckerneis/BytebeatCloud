@@ -14,6 +14,7 @@ import {
   type Resolution,
 } from '../../utils/video-export';
 import { ModeOption } from '../../model/expression';
+import { useThemeId } from '../../theme/ThemeContext';
 
 interface VideoTheme {
   accentColor: string;
@@ -69,6 +70,7 @@ export default function ExportVideoPage() {
   const [post, setPost] = useState<PostRow | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const themeId = useThemeId();
 
   const [settings, setSettings] = useState<VideoExportSettings>({
     length: 60,
@@ -111,10 +113,14 @@ export default function ExportVideoPage() {
     canvas.style.maxWidth = '100%';
     canvas.style.height = 'auto';
     container.appendChild(canvas);
-  }, [post, settings.orientation, settings.resolution]);
+  }, [post, settings.orientation, settings.resolution, themeId]);
 
   useEffect(() => {
-    updatePreview();
+    // Use requestAnimationFrame to wait for CSS to be applied after theme change
+    const frameId = requestAnimationFrame(() => {
+      updatePreview();
+    });
+    return () => cancelAnimationFrame(frameId);
   }, [updatePreview]);
 
   useEffect(() => {
