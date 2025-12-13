@@ -298,7 +298,9 @@ export default function CreatePage() {
   };
 
   const isWeeklyParticipation =
-    currentWeekNumber !== null && !isDraft && description.includes(`#week${currentWeekNumber}`);
+    currentWeekNumber !== null &&
+    !isDraft &&
+    new RegExp(`(^|\\s)#week${currentWeekNumber}(?!\\w)`).test(description);
 
   const addWeekTag = () => {
     setDescription(
