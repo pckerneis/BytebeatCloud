@@ -139,6 +139,40 @@ test.describe('Notifications page - viewing', () => {
     await expect(page.getByRole('link', { name: 'My Forked Post' })).toBeVisible();
   });
 
+  test("shows weekly winner notification as Top Pick", async ({ page }) => {
+    const { data: post } = await supabaseAdmin
+      .from('posts')
+      .insert({
+        profile_id: testUserId,
+        title: 'My Winning Post',
+        expression: 't',
+        is_draft: false,
+        sample_rate: 8000,
+        mode: 'uint8',
+      })
+      .select('id')
+      .single();
+
+    await supabaseAdmin.from('notifications').insert({
+      user_id: testUserId,
+      actor_id: testUserId,
+      event_type: 'weekly_winner',
+      post_id: post!.id,
+      read: false,
+    });
+
+    await page.goto('/notifications');
+
+    await expect(page.getByText('Loading…')).toHaveCount(0, { timeout: 10000 });
+
+    await expect(page.getByText('Your post')).toBeVisible();
+    await expect(page.getByRole('link', { name: 'My Winning Post' })).toBeVisible();
+    await expect(page.getByText("is this week's Top Pick!")).toBeVisible();
+
+    // This notification should not be prefixed by an actor username
+    await expect(page.getByRole('link', { name: `@${TEST_USERNAME}` })).toHaveCount(0);
+  });
+
   test('unread notifications have unread styling', async ({ page }) => {
     await supabaseAdmin.from('notifications').insert({
       user_id: testUserId,

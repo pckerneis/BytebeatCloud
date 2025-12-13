@@ -249,34 +249,52 @@ export default function NotificationsPage() {
                   className={n.read ? 'notification-item' : 'notification-item is-unread'}
                 >
                   <span className="notification-text">
-                    {n.actor_username ? (
+                    {n.event_type === 'weekly_winner' ? (
                       <>
-                        <Link
-                          href={`/u/${n.actor_username}`}
-                          className="username"
-                          onClick={(e) =>
-                            void handleNotificationLinkClick(e, n, `/u/${n.actor_username}`)
-                          }
-                        >
-                          @{n.actor_username}
-                        </Link>{' '}
+                        Your post{' '}
+                        {n.post_id ? (
+                          <Link
+                            href={`/post/${n.post_id}`}
+                            className="post-link"
+                            onClick={(e) => void handleNotificationLinkClick(e, n, `/post/${n.post_id}`)}
+                          >
+                            {n.post_title || '(untitled)'}
+                          </Link>
+                        ) : (
+                          <>{n.post_title || '(untitled)'}</>
+                        )}{' '}
+                        is this week's Top Pick!
                       </>
                     ) : (
-                      <>Someone </>
-                    )}
-                    {formatNotificationAction(n)}
-                    {n.post_id && (
                       <>
-                        {' '}
-                        <Link
-                          href={`/post/${n.post_id}`}
-                          className="post-link"
-                          onClick={(e) =>
-                            void handleNotificationLinkClick(e, n, `/post/${n.post_id}`)
-                          }
-                        >
-                          {n.post_title || '(untitled)'}
-                        </Link>
+                        {n.actor_username ? (
+                          <>
+                            <Link
+                              href={`/u/${n.actor_username}`}
+                              className="username"
+                              onClick={(e) =>
+                                void handleNotificationLinkClick(e, n, `/u/${n.actor_username}`)
+                              }
+                            >
+                              @{n.actor_username}
+                            </Link>{' '}
+                          </>
+                        ) : (
+                          <>Someone </>
+                        )}
+                        {formatNotificationAction(n)}
+                        {n.post_id && (
+                          <>
+                            {' '}
+                            <Link
+                              href={`/post/${n.post_id}`}
+                              className="post-link"
+                              onClick={(e) => void handleNotificationLinkClick(e, n, `/post/${n.post_id}`)}
+                            >
+                              {n.post_title || '(untitled)'}
+                            </Link>
+                          </>
+                        )}
                       </>
                     )}
                   </span>
