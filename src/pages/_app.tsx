@@ -3,6 +3,7 @@ import '../styles/globals.css';
 import { Layout } from '../components/Layout';
 import Head from 'next/head';
 import { useEffect } from 'react';
+import { WeeklyChallengeProvider } from '../hooks/useCurrentWeeklyChallenge';
 
 export default function App({ Component, pageProps }: AppProps) {
   useEffect(() => {
@@ -23,9 +24,11 @@ export default function App({ Component, pageProps }: AppProps) {
       <Head>
         <title>BytebeatCloud</title>
       </Head>
-      <Layout>
-        <Component {...pageProps} />
-      </Layout>
+      <WeeklyChallengeProvider>
+        <Layout>
+          <Component {...pageProps} />
+        </Layout>
+      </WeeklyChallengeProvider>
     </>
   );
 }

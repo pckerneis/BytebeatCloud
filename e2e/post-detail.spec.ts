@@ -176,7 +176,9 @@ test.describe('Post detail page - viewing', () => {
     await page.waitForURL(`/u/${OTHER_USERNAME}`);
   });
 
-  test('weekly tag chip uses accent border and redirects to weekly explore tab', async ({ page }) => {
+  test('weekly tag chip uses accent border and redirects to weekly explore tab', async ({
+    page,
+  }) => {
     await seedActiveWeeklyChallenge({ weekNumber: 1, theme: 'Test Theme' });
 
     // Create a post tagged with #week1

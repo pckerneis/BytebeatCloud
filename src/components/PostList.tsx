@@ -3,7 +3,7 @@ import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { useBytebeatPlayer } from '../hooks/useBytebeatPlayer';
 import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
-import { supabase } from '../lib/supabaseClient';
+import { useCurrentWeeklyChallenge } from '../hooks/useCurrentWeeklyChallenge';
 import { favoritePost, unfavoritePost } from '../services/favoritesClient';
 import { PostExpressionPlayer } from './PostExpressionPlayer';
 import { usePlayerStore } from '../hooks/usePlayerStore';
@@ -52,33 +52,10 @@ export function PostList({ posts, currentUserId }: PostListProps) {
   >({});
   const { user } = useSupabaseAuth();
   const router = useRouter();
-  const [currentWeekTag, setCurrentWeekTag] = useState<string | null>(null);
+  const { tag: currentWeekTag } = useCurrentWeeklyChallenge();
   const { setPlaylist, setCurrentPostById, currentPost, updateFavoriteStateForPost } =
     usePlayerStore();
   const [favoritePending, setFavoritePending] = useState<Record<string, boolean>>({});
-
-  useEffect(() => {
-    let cancelled = false;
-
-    const loadCurrentWeek = async () => {
-      const { data, error } = await supabase.rpc('get_current_weekly_challenge');
-      if (cancelled) return;
-
-      if (!error && data) {
-        const row = Array.isArray(data) ? data[0] : data;
-        const week = (row as any)?.week_number as number | null | undefined;
-        if (week) {
-          setCurrentWeekTag(`week${week}`);
-        }
-      }
-    };
-
-    void loadCurrentWeek();
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
 
   useEffect(() => {
     if (currentPost && posts.some((p) => p.id === currentPost.id)) {

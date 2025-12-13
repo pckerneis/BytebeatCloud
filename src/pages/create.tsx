@@ -18,6 +18,7 @@ import { useCtrlSpacePlayShortcut } from '../hooks/useCtrlSpacePlayShortcut';
 import { PostMetadataModel } from '../model/postEditor';
 import { convertMentionsToIds } from '../utils/mentions';
 import Link from 'next/link';
+import { useCurrentWeeklyChallenge } from '../hooks/useCurrentWeeklyChallenge';
 
 const CREATE_DRAFT_STORAGE_KEY = 'bytebeat-cloud-create-draft-v1';
 
@@ -40,8 +41,7 @@ export default function CreatePage() {
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'success'>('idle');
   const [saveError, setSaveError] = useState('');
   const [liveUpdateEnabled, setLiveUpdateEnabled] = useState(true);
-  const [currentWeekNumber, setCurrentWeekNumber] = useState<number | null>(null);
-  const [currentTheme, setCurrentTheme] = useState<string>('');
+  const { weekNumber: currentWeekNumber, theme: currentTheme } = useCurrentWeeklyChallenge();
 
   const { validationIssue, handleExpressionChange, handlePlayClick, setValidationIssue } =
     useExpressionPlayer({
@@ -157,39 +157,18 @@ export default function CreatePage() {
 
     const hasWeeklyParam = Object.prototype.hasOwnProperty.call(router.query, 'weekly');
 
-    let cancelled = false;
+    if (!hasWeeklyParam) return;
+    if (currentWeekNumber === null) return;
 
-    const loadCurrentWeek = async () => {
-      const { data, error } = await supabase.rpc('get_current_weekly_challenge');
+    const weekTag = `#week${currentWeekNumber}`;
+    const hasExactWeekTag = new RegExp(`(^|\\s)${weekTag}(?!\\w)`).test(description);
 
-      if (cancelled) return;
-
-      if (!error && data) {
-        const row = Array.isArray(data) ? data[0] : data;
-        const week = (row as any)?.week_number as number | null | undefined;
-        const theme = (row as any)?.theme as string | null | undefined;
-
-        if (week && theme) {
-          setCurrentWeekNumber(week);
-          setCurrentTheme(theme);
-          const weekTag = `#week${week}`;
-
-          if (hasWeeklyParam && !description.includes(weekTag)) {
-            setDescription(
-              `Submission for ${weekTag} challenge` +
-                (description.trim() ? `\n${description}` : ''),
-            );
-          }
-        }
-      }
-    };
-
-    void loadCurrentWeek();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [router.isReady, router.query, draftLoaded, description, user]);
+    if (!hasExactWeekTag) {
+      setDescription(
+        `Submission for ${weekTag} challenge` + (description.trim() ? `\n${description}` : ''),
+      );
+    }
+  }, [router.isReady, router.query, draftLoaded, description, user, currentWeekNumber]);
 
   // Persist current editor state to localStorage so unauthenticated users
   // don't lose their work.

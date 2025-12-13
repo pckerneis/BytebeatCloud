@@ -11,6 +11,7 @@ import { PostExpressionPlayer } from '../components/PostExpressionPlayer';
 import { useBytebeatPlayer } from '../hooks/useBytebeatPlayer';
 import { usePlayerStore } from '../hooks/usePlayerStore';
 import { ModeOption } from '../model/expression';
+import { useCurrentWeeklyChallenge } from '../hooks/useCurrentWeeklyChallenge';
 
 function shortenVersion(version: string | undefined): string | undefined {
   return version?.slice(0, 7);
@@ -24,10 +25,12 @@ export default function Home() {
   const [topPickPost, setTopPickPost] = useState<PostRow | null>(null);
   const [topPickLoading, setTopPickLoading] = useState(false);
   const [topPickError, setTopPickError] = useState('');
-  const [currentTheme, setCurrentTheme] = useState<string | null>(null);
-  const [currentWeekNumber, setCurrentWeekNumber] = useState<number | null>(null);
-  const [challengeEndsAt, setChallengeEndsAt] = useState<Date | null>(null);
   const [timeLeftText, setTimeLeftText] = useState<string | null>(null);
+  const {
+    weekNumber: currentWeekNumber,
+    theme: currentTheme,
+    endsAt: challengeEndsAt,
+  } = useCurrentWeeklyChallenge();
 
   const { toggle, stop, isPlaying } = useBytebeatPlayer();
   const { setPlaylist, setCurrentPostById } = usePlayerStore();
@@ -82,25 +85,6 @@ export default function Home() {
       setTopPickLoading(true);
       setTopPickError('');
       setTopPickPost(null);
-
-      // Load the current weekly challenge to get the theme.
-      const { data: currentWeekly, error: currentError } = await supabase.rpc(
-        'get_current_weekly_challenge',
-      );
-
-      if (cancelled) return;
-
-      if (!currentError && currentWeekly) {
-        const challengeRow = Array.isArray(currentWeekly) ? currentWeekly[0] : currentWeekly;
-        setCurrentWeekNumber((challengeRow as any).week_number ?? null);
-        setCurrentTheme((challengeRow as any).theme ?? null);
-        const endsAt = (challengeRow as any).ends_at;
-        setChallengeEndsAt(endsAt ? new Date(endsAt) : null);
-      } else {
-        setCurrentWeekNumber(null);
-        setCurrentTheme(null);
-        setChallengeEndsAt(null);
-      }
 
       // Load the most recent completed challenge with a winner.
       const { data: latestWinner, error: previousError } = await supabase.rpc(

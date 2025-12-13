@@ -10,6 +10,7 @@ import Link from 'next/link';
 import { enrichWithViewerFavorites } from '../../utils/favorites';
 import { enrichWithTags } from '../../utils/tags';
 import { validateExpression } from '../../utils/expression-validator';
+import { useCurrentWeeklyChallenge } from '../../hooks/useCurrentWeeklyChallenge';
 import {
   renderDescriptionWithTagsAndMentions,
   extractMentionUserIds,
@@ -41,8 +42,7 @@ export default function PostDetailPage({ postMeta, baseUrl }: PostDetailPageProp
   const [mentionUserMap, setMentionUserMap] = useState<Map<string, string>>(new Map());
   const [showExportModal, setShowExportModal] = useState(false);
   const [shareButtonText, setShareButtonText] = useState('Share');
-  const [currentWeekNumber, setCurrentWeekNumber] = useState<number | null>(null);
-  const [currentWeekTheme, setCurrentWeekTheme] = useState<string>('');
+  const { weekNumber: currentWeekNumber, theme: currentWeekTheme } = useCurrentWeeklyChallenge();
 
   const { user } = useSupabaseAuth();
 
@@ -190,32 +190,6 @@ export default function PostDetailPage({ postMeta, baseUrl }: PostDetailPageProp
     };
   }, [id, user]);
 
-  useEffect(() => {
-    let cancelled = false;
-
-    const loadCurrentWeek = async () => {
-      const { data, error } = await supabase.rpc('get_current_weekly_challenge');
-      if (cancelled) return;
-
-      if (!error && data) {
-        const row = Array.isArray(data) ? data[0] : data;
-        const week = (row as any)?.week_number as number | null | undefined;
-        const theme = (row as any)?.theme as string | null | undefined;
-
-        if (week && theme) {
-          setCurrentWeekNumber(week);
-          setCurrentWeekTheme(theme);
-        }
-      }
-    };
-
-    void loadCurrentWeek();
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
   const isWeeklyParticipation =
     currentWeekNumber !== null &&
     posts.length > 0 &&
@@ -261,15 +235,11 @@ export default function PostDetailPage({ postMeta, baseUrl }: PostDetailPageProp
 
         {!loading && !error && posts.length > 0 && (
           <>
-
             {isWeeklyParticipation && currentWeekTheme && (
               <div className="info-panel">
                 <div>
                   This post participates in the{' '}
-                  <Link href="/explore?tab=weekly">
-                    #week{currentWeekNumber} challenge
-                  </Link>
-                  .
+                  <Link href="/explore?tab=weekly">#week{currentWeekNumber} challenge</Link>.
                 </div>
                 <div>This week&#39;s theme is &#34;{currentWeekTheme}&#34;.</div>
               </div>
