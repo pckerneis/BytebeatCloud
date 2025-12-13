@@ -62,7 +62,7 @@ test.describe('Mentions on create page', () => {
     const descriptionField = page.getByPlaceholder('Add an optional description');
     await descriptionField.fill(`Check out @${OTHER_USERNAME}!`);
 
-    await page.getByRole('button', { name: 'Publish' }).click();
+    await page.getByRole('button', { name: 'Publish', exact: true }).click();
     await page.waitForURL(/\/post\//);
 
     // Verify mention is displayed with username
@@ -96,7 +96,7 @@ test.describe('Mentions on create page', () => {
     const descriptionField = page.getByPlaceholder('Add an optional description');
     await descriptionField.fill(`Thanks @${OTHER_USERNAME} and @e2e_third_user!`);
 
-    await page.getByRole('button', { name: 'Publish' }).click();
+    await page.getByRole('button', { name: 'Publish', exact: true }).click();
     await page.waitForURL(/\/post\//);
 
     // Verify both mentions are displayed
@@ -127,7 +127,7 @@ test.describe('Mentions on create page', () => {
     const descriptionField = page.getByPlaceholder('Add an optional description');
     await descriptionField.fill('Hello @nonexistent_user_xyz!');
 
-    await page.getByRole('button', { name: 'Publish' }).click();
+    await page.getByRole('button', { name: 'Publish', exact: true }).click();
     await page.waitForURL(/\/post\//);
 
     // Verify stored format keeps the username (not converted)
@@ -203,7 +203,7 @@ test.describe('Mentions on edit page', () => {
     await descriptionField.clear();
     await descriptionField.fill(`Updated with @${OTHER_USERNAME}!`);
 
-    await page.getByRole('button', { name: 'Publish' }).click();
+    await page.getByRole('button', { name: 'Publish', exact: true }).click();
     await page.waitForURL(/\/post\//);
 
     // Verify stored format
@@ -241,7 +241,7 @@ test.describe('Mentions on edit page', () => {
     await titleField.clear();
     await titleField.fill('Updated Title');
 
-    await page.getByRole('button', { name: 'Publish' }).click();
+    await page.getByRole('button', { name: 'Publish', exact: true }).click();
     await page.waitForURL(/\/post\//);
 
     // Verify mention is still stored correctly
@@ -315,7 +315,7 @@ test.describe('Mentions on fork page', () => {
     await descriptionField.clear();
     await descriptionField.fill(`Forked! Thanks @${OTHER_USERNAME}!`);
 
-    await page.getByRole('button', { name: 'Publish' }).click();
+    await page.getByRole('button', { name: 'Publish', exact: true }).click();
     await page.waitForURL(/\/post\//);
 
     // Verify stored format in the fork
