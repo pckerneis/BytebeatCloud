@@ -66,50 +66,6 @@ There are a few differences with other web implementations:
 - **Progressive Web App**: install on your device
 - **Live waveform visualizer**: see your audio in real-time
 
-## TODO
-
-- [x] User registration and login
-- [x] Manage profile (edit username, delete account)
-- [x] Create and share musical expressions (share link)
-- [x] Create posts
-- [x] Edit posts
-- [x] Explore posts (recent, popular)
-- [x] Add to favorites
-- [x] Transport controls
-- [x] Visualizer
-- [x] Mobile layout
-- [x] Fork posts
-- [x] Dark mode
-- [x] Responsive design
-- [x] Progressive Web App
-- [x] Length categories
-- [x] Arbitrary sample rate
-- [x] On-the-fly update of edited expressions
-- [x] Follow users
-- [x] Feed (global and personalized)
-- [x] Recent posts
-- [x] Trending posts on last 7 days
-- [x] In-app notifications
-- [x] Master gain
-- [x] Support SR up to 48kHz
-- [x] Post description
-- [x] Tags
-- [x] Signed int mode
-- [x] Video export
-- [x] Bytebeat of the Week
-
-**Coming later**
-
-- [ ] Change history
-- [ ] Offline mode
-- [ ] Report posts or users
-- [ ] Block/unblock users
-- [ ] Reject silent/too loud posts
-- [ ] Moderator tools
-- [ ] Pin posts on profile
-- [ ] Search posts by name
-- [ ] C-compatible badge
-
 ## Run locally
 
 First, install NPM dependencies.
@@ -174,3 +130,47 @@ npm run test:e2e:ui
 ```
 
 This command will start the Supabase local instance, the front end dev server and run the tests in UI mode.
+
+## TODO
+
+- [x] User registration and login
+- [x] Manage profile (edit username, delete account)
+- [x] Create and share musical expressions (share link)
+- [x] Create posts
+- [x] Edit posts
+- [x] Explore posts (recent, popular)
+- [x] Add to favorites
+- [x] Transport controls
+- [x] Visualizer
+- [x] Mobile layout
+- [x] Fork posts
+- [x] Dark mode
+- [x] Responsive design
+- [x] Progressive Web App
+- [x] Length categories
+- [x] Arbitrary sample rate
+- [x] On-the-fly update of edited expressions
+- [x] Follow users
+- [x] Feed (global and personalized)
+- [x] Recent posts
+- [x] Trending posts on last 7 days
+- [x] In-app notifications
+- [x] Master gain
+- [x] Support SR up to 48kHz
+- [x] Post description
+- [x] Tags
+- [x] Signed int mode
+- [x] Video export
+- [x] Bytebeat of the Week
+
+**Coming later**
+
+- [ ] Change history
+- [ ] Offline mode
+- [ ] Report posts or users
+- [ ] Block/unblock users
+- [ ] Reject silent/too loud posts
+- [ ] Moderator tools
+- [ ] Pin posts on profile
+- [ ] Search posts by name
+- [ ] C-compatible badge
