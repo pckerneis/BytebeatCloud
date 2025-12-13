@@ -338,7 +338,10 @@ export default function EditPostPage() {
         <h2>Edit post</h2>
         {isDraft && (
           <div className="info-panel">
-            <span>You're editing a draft. The post won't be visible to anyone until you publish it.</span>
+            <span>
+              You&apos;re editing a draft. The post won&apos;t be visible to anyone until you
+              publish it.
+            </span>
           </div>
         )}
         <form className="create-form" onSubmit={handleSubmit}>

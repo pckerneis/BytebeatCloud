@@ -29,12 +29,14 @@ There are a few differences with other web implementations:
 ## Features
 
 ### Audio Engine
+
 - **Three audio modes**: uint8 (classic bytebeat), int8 (signed), and float (-1 to 1)
 - **Configurable sample rate**: 8kHz to 48kHz
 - **Real-time expression editing**: hear changes as you type
 - **Master gain control**: adjust output volume
 
 ### Creation & Sharing
+
 - **Create posts**: publish your bytebeat expressions with title, description, and tags
 - **Draft mode**: save work-in-progress without publishing
 - **Fork posts**: remix other users' expressions with attribution
@@ -43,12 +45,14 @@ There are a few differences with other web implementations:
 - **Video export**: export your bytebeat as a video with waveform visualization
 
 ### Discovery
+
 - **Explore feed**: browse recent, trending, and weekly challenge posts
 - **Personalized feed**: see posts from users you follow
 - **Tags**: categorize and filter posts by tags
 - **Length categories**: filter by expression complexity
 
 ### Social
+
 - **User profiles**: customize username, bio, and social links
 - **Follow system**: follow other creators
 - **Favorites**: save posts you like
@@ -56,11 +60,13 @@ There are a few differences with other web implementations:
 - **In-app notifications**: get notified of follows, favorites, forks, and mentions
 
 ### Weekly Challenges
+
 - **Bytebeat of the Week**: themed creative challenges every Saturday
 - **Hall of Fame**: browse past winners
 - **Community voting**: most-favorited entry wins
 
 ### Experience
+
 - **Dark mode**: multiple color themes
 - **Responsive design**: works on desktop and mobile
 - **Progressive Web App**: install on your device

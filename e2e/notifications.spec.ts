@@ -139,7 +139,7 @@ test.describe('Notifications page - viewing', () => {
     await expect(page.getByRole('link', { name: 'My Forked Post' })).toBeVisible();
   });
 
-  test("shows weekly winner notification as Top Pick", async ({ page }) => {
+  test('shows weekly winner notification as Top Pick', async ({ page }) => {
     const { data: post } = await supabaseAdmin
       .from('posts')
       .insert({

@@ -256,14 +256,16 @@ export default function NotificationsPage() {
                           <Link
                             href={`/post/${n.post_id}`}
                             className="post-link"
-                            onClick={(e) => void handleNotificationLinkClick(e, n, `/post/${n.post_id}`)}
+                            onClick={(e) =>
+                              void handleNotificationLinkClick(e, n, `/post/${n.post_id}`)
+                            }
                           >
                             {n.post_title || '(untitled)'}
                           </Link>
                         ) : (
                           <>{n.post_title || '(untitled)'}</>
                         )}{' '}
-                        is this week's Top Pick!
+                        is this week&apos;s Top Pick!
                       </>
                     ) : (
                       <>
@@ -289,7 +291,9 @@ export default function NotificationsPage() {
                             <Link
                               href={`/post/${n.post_id}`}
                               className="post-link"
-                              onClick={(e) => void handleNotificationLinkClick(e, n, `/post/${n.post_id}`)}
+                              onClick={(e) =>
+                                void handleNotificationLinkClick(e, n, `/post/${n.post_id}`)
+                              }
                             >
                               {n.post_title || '(untitled)'}
                             </Link>

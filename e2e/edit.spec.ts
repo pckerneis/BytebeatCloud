@@ -233,7 +233,9 @@ test.describe('Edit page - saving changes', () => {
 
     // Draft info-panel should now be visible
     await expect(
-      page.getByText("You're editing a draft. The post won't be visible to anyone until you publish it."),
+      page.getByText(
+        "You're editing a draft. The post won't be visible to anyone until you publish it.",
+      ),
     ).toBeVisible();
   });
 

@@ -113,7 +113,7 @@ export default function ExportVideoPage() {
     canvas.style.maxWidth = '100%';
     canvas.style.height = 'auto';
     container.appendChild(canvas);
-  }, [post, settings.orientation, settings.resolution, themeId]);
+  }, [post, settings.orientation, settings.resolution]);
 
   useEffect(() => {
     // Use requestAnimationFrame to wait for CSS to be applied after theme change
@@ -121,7 +121,7 @@ export default function ExportVideoPage() {
       updatePreview();
     });
     return () => cancelAnimationFrame(frameId);
-  }, [updatePreview]);
+  }, [updatePreview, themeId]);
 
   useEffect(() => {
     if (!postId || typeof postId !== 'string') return;
