@@ -4,6 +4,7 @@ import {
   clearProfilesTable,
   ensureTestUserProfile,
   supabaseAdmin,
+  waitForTagsIndexed,
 } from './utils/supabaseAdmin';
 import { clearSupabaseSession, signInAndInjectSession } from './utils/auth';
 
@@ -17,6 +18,24 @@ const OTHER_USERNAME = 'e2e_other_user';
 
 let testUserId: string;
 let otherUserId: string;
+
+async function seedActiveWeeklyChallenge(params: { weekNumber: number; theme: string }) {
+  const now = new Date();
+  const startsAt = new Date(now.getTime() - 60 * 60 * 1000).toISOString();
+  const endsAt = new Date(now.getTime() + 60 * 60 * 1000).toISOString();
+
+  await supabaseAdmin.from('weekly_challenges').delete().not('id', 'is', null);
+
+  const { error } = await supabaseAdmin.from('weekly_challenges').insert({
+    week_number: params.weekNumber,
+    theme: params.theme,
+    tag: `week${params.weekNumber}`,
+    starts_at: startsAt,
+    ends_at: endsAt,
+  });
+
+  expect(error).toBeNull();
+}
 
 test.beforeAll(async () => {
   const user = await ensureTestUser({ email: TEST_USER_EMAIL, password: TEST_USER_PASSWORD });
@@ -155,6 +174,37 @@ test.describe('Post detail page - viewing', () => {
 
     // Should navigate to user profile
     await page.waitForURL(`/u/${OTHER_USERNAME}`);
+  });
+
+  test('weekly tag chip uses accent border and redirects to weekly explore tab', async ({ page }) => {
+    await seedActiveWeeklyChallenge({ weekNumber: 1, theme: 'Test Theme' });
+
+    // Create a post tagged with #week1
+    const { data } = await supabaseAdmin
+      .from('posts')
+      .insert({
+        profile_id: testUserId,
+        title: 'Weekly Tagged Post',
+        description: 'Participating in #week1',
+        expression: 't >> 4',
+        is_draft: false,
+        sample_rate: 8000,
+        mode: 'uint8',
+      })
+      .select('id')
+      .single();
+
+    const postId = data!.id as string;
+    await waitForTagsIndexed(postId, 1);
+
+    await page.goto(`/post/${postId}`);
+    await expect(page.getByText('Loading…')).toHaveCount(0, { timeout: 10000 });
+
+    const weeklyChip = page.locator('a.chip.weekly-tag-chip', { hasText: '#week1' });
+    await expect(weeklyChip).toBeVisible();
+
+    await weeklyChip.click();
+    await page.waitForURL('/explore?tab=weekly');
   });
 });
 
