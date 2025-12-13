@@ -32,7 +32,7 @@ export default defineConfig({
   globalSetup: './e2e/utils/global-setup',
   testDir: './e2e',
   timeout: 30_000,
-  // retries: process.env.CI ? 3 : 0,
+  workers: 1,
   retries: 3,
   reporter: 'list',
   use: {
