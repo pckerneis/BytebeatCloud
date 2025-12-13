@@ -300,6 +300,14 @@ export default function CreatePage() {
   const isWeeklyParticipation =
     currentWeekNumber !== null && !isDraft && description.includes(`#week${currentWeekNumber}`);
 
+  const addWeekTag = () => {
+    setDescription(
+      description.trim()
+        ? description + `\n#week${currentWeekNumber}`
+        : `#week${currentWeekNumber}`,
+    );
+  };
+
   return (
     <>
       <Head>
@@ -326,7 +334,7 @@ export default function CreatePage() {
           </div>
         )}
 
-        {isWeeklyParticipation && (
+        {isWeeklyParticipation ? (
           <div className="info-panel">
             <div>
               You are about to submit a participation for the{' '}
@@ -337,6 +345,22 @@ export default function CreatePage() {
             </div>
             <div>This week&#39;s theme is &#34;{currentTheme}&#34;.</div>
           </div>
+        ) : (
+          currentTheme && (
+            <div className="info-panel">
+              <span>This week&#39;s theme is &#34;{currentTheme}&#34;.</span>
+              <div>
+                <span className={'link'} onClick={addWeekTag}>
+                  Add the tag &quot;#week{currentWeekNumber}&quot;
+                </span>{' '}
+                to the post description to participate the{' '}
+                <Link href="/about-weekly" target="_blank">
+                  challenge
+                </Link>
+                .
+              </div>
+            </div>
+          )
         )}
 
         <form className="create-form" onSubmit={handleSubmit}>

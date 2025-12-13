@@ -678,9 +678,11 @@ input[type='range']:focus::-moz-range-thumb {
   text-align: center;
 }
 
+.link,
 a {
   text-decoration: none;
   color: var(--accent-color);
+  cursor: pointer;
 }
 
 nav {
