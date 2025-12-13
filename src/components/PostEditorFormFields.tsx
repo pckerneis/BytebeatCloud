@@ -35,6 +35,11 @@ interface PostEditorFormFieldsProps {
 
   liveUpdateEnabled: boolean;
   onLiveUpdateChange: (enabled: boolean) => void;
+
+  onSaveAsDraft?: () => void;
+  onPublish?: () => void;
+  isEditMode?: boolean;
+  onUnpublish?: () => void;
 }
 
 function findNextPresetSampleRate(sampleRate: number): number {
@@ -67,6 +72,10 @@ export function PostEditorFormFields(props: PostEditorFormFieldsProps) {
     isFork,
     liveUpdateEnabled,
     onLiveUpdateChange,
+    onSaveAsDraft,
+    onPublish,
+    isEditMode,
+    onUnpublish,
   } = props;
 
   const expressionLength = expression.length;
@@ -267,20 +276,6 @@ export function PostEditorFormFields(props: PostEditorFormFieldsProps) {
 
       {showActions && (
         <div className="form-actions">
-          <label className="checkbox">
-            <input
-              type="checkbox"
-              checked={isDraft}
-              onChange={(e) =>
-                onMetaChange({
-                  ...meta,
-                  isDraft: e.target.checked,
-                })
-              }
-            />
-            <span>Save as draft</span>
-          </label>
-
           <div className="form-actions-buttons">
             {showDeleteButton && onDeleteClick && (
               <button
@@ -293,9 +288,35 @@ export function PostEditorFormFields(props: PostEditorFormFieldsProps) {
               </button>
             )}
 
-            <button type="submit" className="button primary" disabled={!canSubmit}>
-              {saveStatus === 'saving' ? 'Saving…' : 'Save'}
-            </button>
+            {onSaveAsDraft && (
+              <button
+                type="button"
+                className="button secondary"
+                onClick={isEditMode && !isDraft ? onUnpublish : onSaveAsDraft}
+                disabled={!canSubmit}
+              >
+                {saveStatus === 'saving' && isDraft
+                  ? 'Saving…'
+                  : isEditMode && !isDraft
+                    ? 'Unpublish'
+                    : 'Save as draft'}
+              </button>
+            )}
+
+            {onPublish ? (
+              <button
+                type="button"
+                className="button primary"
+                onClick={onPublish}
+                disabled={!canSubmit}
+              >
+                {saveStatus === 'saving' && !isDraft ? 'Publishing…' : 'Publish'}
+              </button>
+            ) : (
+              <button type="submit" className="button primary" disabled={!canSubmit}>
+                {saveStatus === 'saving' ? 'Saving…' : 'Publish'}
+              </button>
+            )}
           </div>
         </div>
       )}

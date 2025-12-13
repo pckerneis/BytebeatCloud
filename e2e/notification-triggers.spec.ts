@@ -106,6 +106,65 @@ test.describe('Notification triggers - follow', () => {
   });
 });
 
+test.describe('Notification triggers - weekly winner', () => {
+  test('finalizing a weekly challenge creates a winner notification for the author', async () => {
+    await ensureTestUserProfile(TEST_USER_EMAIL, TEST_USERNAME);
+
+    // Cleanup weekly challenges (not covered in shared beforeEach cleanup)
+    await supabaseAdmin.from('weekly_challenges').delete().not('id', 'is', null);
+
+    // Ensure tag exists
+    const tag = 'e2e_weekly';
+    await supabaseAdmin.from('tags').upsert({ name: tag });
+
+    const now = new Date();
+    const startsAt = new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000).toISOString();
+    const endsAt = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString();
+
+    // Create an ended challenge that has no winner yet
+    await supabaseAdmin.from('weekly_challenges').insert({
+      week_number: 9999,
+      theme: 'E2E theme',
+      tag,
+      starts_at: startsAt,
+      ends_at: endsAt,
+      winner_post_id: null,
+    });
+
+    // Create an eligible post for the challenge
+    const createdAt = new Date(now.getTime() - 36 * 60 * 60 * 1000).toISOString();
+    const { data: post } = await supabaseAdmin
+      .from('posts')
+      .insert({
+        profile_id: testUserId,
+        title: 'Weekly Winner Post',
+        expression: 't',
+        is_draft: false,
+        sample_rate: 8000,
+        mode: 'uint8',
+        description: `#${tag}`,
+        created_at: createdAt,
+      })
+      .select('id')
+      .single();
+
+    // Finalize should pick a winner and create the notification
+    const { error: finalizeError } = await supabaseAdmin.rpc('finalize_current_week');
+    expect(finalizeError).toBeNull();
+
+    const { data: notifications } = await supabaseAdmin
+      .from('notifications')
+      .select('*')
+      .eq('user_id', testUserId)
+      .eq('event_type', 'weekly_winner')
+      .eq('post_id', post!.id);
+
+    expect(notifications).toHaveLength(1);
+    expect(notifications![0].actor_id).toBe(testUserId);
+    expect(notifications![0].read).toBe(false);
+  });
+});
+
 test.describe('Notification triggers - favorite', () => {
   test('favoriting a post creates a notification for the author', async ({ page }) => {
     await ensureTestUserProfile(TEST_USER_EMAIL, TEST_USERNAME);
@@ -277,7 +336,7 @@ test.describe('Notification triggers - fork', () => {
     await titleField.clear();
     await titleField.fill('My Fork');
 
-    await page.getByRole('button', { name: 'Save' }).click();
+    await page.getByRole('button', { name: 'Publish' }).click();
     await page.waitForURL(/\/post\//);
 
     // Check notification was created
@@ -322,7 +381,7 @@ test.describe('Notification triggers - fork', () => {
     await titleField.clear();
     await titleField.fill('Fork Of My Own');
 
-    await page.getByRole('button', { name: 'Save' }).click();
+    await page.getByRole('button', { name: 'Publish' }).click();
     await page.waitForURL(/\/post\//);
 
     // No notification for self
@@ -362,8 +421,7 @@ test.describe('Notification triggers - fork', () => {
     await expect(page.getByText('Loading…')).toHaveCount(0, { timeout: 10000 });
 
     // Save as draft
-    await page.getByLabel('Save as draft').check();
-    await page.getByRole('button', { name: 'Save' }).click();
+    await page.getByRole('button', { name: 'Save as draft' }).click();
 
     await expect(page.getByText('Fork saved.')).toBeVisible();
 
@@ -396,7 +454,7 @@ test.describe('Notification triggers - mention', () => {
     const descriptionField = page.getByPlaceholder('Add an optional description');
     await descriptionField.fill(`Check this out @${OTHER_USERNAME}!`);
 
-    await page.getByRole('button', { name: 'Save' }).click();
+    await page.getByRole('button', { name: 'Publish' }).click();
     await page.waitForURL(/\/post\//);
 
     // Wait a moment for the notification trigger to complete
@@ -429,7 +487,7 @@ test.describe('Notification triggers - mention', () => {
     const descriptionField = page.getByPlaceholder('Add an optional description');
     await descriptionField.fill(`I'm mentioning myself @${TEST_USERNAME}`);
 
-    await page.getByRole('button', { name: 'Save' }).click();
+    await page.getByRole('button', { name: 'Publish' }).click();
     await page.waitForURL(/\/post\//);
 
     // No notification for self-mention
@@ -459,10 +517,11 @@ test.describe('Notification triggers - mention', () => {
     await descriptionField.fill(`Draft mention @${OTHER_USERNAME}`);
 
     // Save as draft
-    await page.getByLabel('Save as draft').check();
-    await page.getByRole('button', { name: 'Save' }).click();
+    await page.getByRole('button', { name: 'Save as draft' }).click();
 
-    await expect(page.getByText('Post saved.')).toBeVisible();
+    // Create flow redirects to edit page for drafts
+    await page.waitForURL(/\/edit\//);
+    await expect(page.getByText('Post saved.')).toBeVisible({ timeout: 15000 });
 
     // No notification for draft
     const { data: mentionNotifications } = await supabaseAdmin
@@ -497,7 +556,7 @@ test.describe('Notification triggers - mention', () => {
     const descriptionField = page.getByPlaceholder('Add an optional description');
     await descriptionField.fill(`Hey @${OTHER_USERNAME} and @e2e_third_user!`);
 
-    await page.getByRole('button', { name: 'Save' }).click();
+    await page.getByRole('button', { name: 'Publish' }).click();
     await page.waitForURL(/\/post\//);
 
     // Check notifications for both users

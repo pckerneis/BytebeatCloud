@@ -132,7 +132,7 @@ test.describe('Edit page - saving changes', () => {
     });
   });
 
-  test('can edit title and save', async ({ page }) => {
+  test('can edit title and publish', async ({ page }) => {
     await page.goto(`/edit/${testPostId}`);
 
     await expect(page.getByText('Loading…')).toHaveCount(0, { timeout: 10000 });
@@ -142,9 +142,9 @@ test.describe('Edit page - saving changes', () => {
     await titleField.clear();
     await titleField.fill('Updated Title');
 
-    // Save (public post redirects to detail page)
-    const saveButton = page.getByRole('button', { name: 'Save' });
-    await saveButton.click();
+    // Publish (public post redirects to detail page)
+    const publishButton = page.getByRole('button', { name: 'Publish', exact: true });
+    await publishButton.click();
 
     // Should redirect to post detail
     await page.waitForURL(/\/post\//);
@@ -153,7 +153,7 @@ test.describe('Edit page - saving changes', () => {
     await expect(page.getByRole('link', { name: 'Updated Title' })).toBeVisible();
   });
 
-  test('can edit description and save', async ({ page }) => {
+  test('can edit description and publish', async ({ page }) => {
     await page.goto(`/edit/${testPostId}`);
 
     await expect(page.getByText('Loading…')).toHaveCount(0, { timeout: 10000 });
@@ -162,9 +162,9 @@ test.describe('Edit page - saving changes', () => {
     const descriptionField = page.getByPlaceholder('Add an optional description');
     await descriptionField.fill('New description added');
 
-    // Save
-    const saveButton = page.getByRole('button', { name: 'Save' });
-    await saveButton.click();
+    // Publish
+    const publishButton = page.getByRole('button', { name: 'Publish', exact: true });
+    await publishButton.click();
 
     // Should redirect to post detail
     await page.waitForURL(/\/post\//);
@@ -173,7 +173,7 @@ test.describe('Edit page - saving changes', () => {
     await expect(page.locator('.post-description-detail')).toContainText('New description added');
   });
 
-  test('can change mode and save', async ({ page }) => {
+  test('can change mode and publish', async ({ page }) => {
     await page.goto(`/edit/${testPostId}`);
 
     await expect(page.getByText('Loading…')).toHaveCount(0, { timeout: 10000 });
@@ -182,9 +182,9 @@ test.describe('Edit page - saving changes', () => {
     await page.getByRole('button', { name: 'uint8' }).click();
     await expect(page.getByRole('button', { name: 'int8' })).toBeVisible();
 
-    // Save
-    const saveButton = page.getByRole('button', { name: 'Save' });
-    await saveButton.click();
+    // Publish
+    const publishButton = page.getByRole('button', { name: 'Publish', exact: true });
+    await publishButton.click();
 
     await page.waitForURL(/\/post\//);
 
@@ -192,7 +192,7 @@ test.describe('Edit page - saving changes', () => {
     await expect(page.locator('.chip.mode')).toHaveText('int8');
   });
 
-  test('can change expression and save', async ({ page }) => {
+  test('can change expression and publish', async ({ page }) => {
     await page.goto(`/edit/${testPostId}`);
 
     await expect(page.getByText('Loading…')).toHaveCount(0, { timeout: 10000 });
@@ -200,9 +200,9 @@ test.describe('Edit page - saving changes', () => {
     // Change expression
     await clearAndTypeInExpressionEditor(page, 't * 5');
 
-    // Save
-    const saveButton = page.getByRole('button', { name: 'Save' });
-    await saveButton.click();
+    // Publish
+    const publishButton = page.getByRole('button', { name: 'Publish', exact: true });
+    await publishButton.click();
 
     await page.waitForURL(/\/post\//);
 
@@ -215,20 +215,31 @@ test.describe('Edit page - saving changes', () => {
 
     await expect(page.getByText('Loading…')).toHaveCount(0, { timeout: 10000 });
 
-    // Check "Save as draft"
-    const draftCheckbox = page.getByLabel('Save as draft');
-    await draftCheckbox.check();
+    // Post starts as public (is_draft: false). "Save as draft" is now "Unpublish".
+    const unpublishButton = page.getByRole('button', { name: 'Unpublish', exact: true });
+    await unpublishButton.click();
 
-    // Save
-    const saveButton = page.getByRole('button', { name: 'Save' });
-    await saveButton.click();
+    // Confirm modal
+    const modal = page.locator('.modal');
+    await expect(modal.getByRole('heading', { name: 'Unpublish post' })).toBeVisible();
+    await expect(
+      modal.getByText('This public post will be made private and visible only to you.'),
+    ).toBeVisible();
+    await modal.getByRole('button', { name: 'Unpublish', exact: true }).click();
 
     // Should stay on edit page and show success message
     await expect(page).toHaveURL(/\/edit\//);
     await expect(page.getByText('Post saved.')).toBeVisible();
+
+    // Draft info-panel should now be visible
+    await expect(
+      page.getByText(
+        "You're editing a draft. The post won't be visible to anyone until you publish it.",
+      ),
+    ).toBeVisible();
   });
 
-  test('save button disabled with invalid expression', async ({ page }) => {
+  test('publish button disabled with invalid expression', async ({ page }) => {
     await page.goto(`/edit/${testPostId}`);
 
     await expect(page.getByText('Loading…')).toHaveCount(0, { timeout: 10000 });
@@ -236,9 +247,9 @@ test.describe('Edit page - saving changes', () => {
     // Enter invalid expression
     await clearAndTypeInExpressionEditor(page, 't +');
 
-    // Save button should be disabled
-    const saveButton = page.getByRole('button', { name: 'Save' });
-    await expect(saveButton).toBeDisabled();
+    // Publish button should be disabled
+    const publishButton = page.getByRole('button', { name: 'Publish', exact: true });
+    await expect(publishButton).toBeDisabled();
   });
 });
 

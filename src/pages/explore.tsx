@@ -10,8 +10,19 @@ import Link from 'next/link';
 import { validateExpression } from '../utils/expression-validator';
 import { useTabState } from '../hooks/useTabState';
 
-const tabs = ['feed', 'recent', 'trending'] as const;
+const tabs = ['feed', 'recent', 'weekly'] as const;
 type TabName = (typeof tabs)[number];
+
+function shuffle<T>(arr: T[]): T[] {
+  const newArr = [...arr];
+
+  for (let i = newArr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [newArr[i], newArr[j]] = [newArr[j], newArr[i]];
+  }
+
+  return newArr;
+}
 
 export default function ExplorePage() {
   const { user } = useSupabaseAuth();
@@ -22,6 +33,8 @@ export default function ExplorePage() {
   const [hasMore, setHasMore] = useState(true);
   const loadingMoreRef = useRef(false);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
+  const [hasActiveChallenge, setHasActiveChallenge] = useState<boolean | null>(null);
+  const [weekTheme, setWeekTheme] = useState('');
 
   const resetPagination = useCallback(() => {
     setPosts([]);
@@ -32,6 +45,23 @@ export default function ExplorePage() {
   }, []);
 
   const [activeTab, setActiveTab] = useTabState(tabs, 'feed', { onTabChange: resetPagination });
+
+  // Check if there's an active weekly challenge on mount
+  useEffect(() => {
+    let cancelled = false;
+
+    const checkChallenge = async () => {
+      const { data } = await supabase.rpc('get_current_week_data');
+      if (cancelled) return;
+      setHasActiveChallenge(data !== null);
+    };
+
+    void checkChallenge();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -49,7 +79,43 @@ export default function ExplorePage() {
       let data: PostRow[] | null = null;
       let error: any = null;
 
-      if (activeTab === 'feed') {
+      if (activeTab === 'weekly') {
+        const rpcResult = await supabase.rpc('get_current_week_data');
+        const weeklyData = rpcResult.data as any;
+        error = rpcResult.error;
+
+        if (!error) {
+          setWeekTheme(weeklyData.challenge?.theme ?? '');
+        }
+
+        if (!error && weeklyData && Array.isArray(weeklyData.participants)) {
+          const ids = weeklyData.participants
+            .map((p: any) => p.id as string | null)
+            .filter((id: string | null): id is string => !!id);
+
+          if (ids.length > 0) {
+            const result = await supabase
+              .from('posts_with_meta')
+              .select(
+                'id,title,expression,sample_rate,mode,created_at,profile_id,is_draft,fork_of_post_id,is_fork,author_username,origin_title,origin_username,favorites_count,is_weekly_winner',
+              )
+              .in('id', ids);
+
+            data = shuffle(result.data ?? []) as PostRow[];
+            if (result.error) {
+              error = result.error;
+            }
+          } else {
+            data = [];
+          }
+
+          // Weekly challenge tab is a single page.
+          setHasMore(false);
+        } else {
+          data = [];
+          setHasMore(false);
+        }
+      } else if (activeTab === 'feed') {
         if (user) {
           const rpcResult = await supabase.rpc('get_personalized_feed', {
             viewer_id: (user as any).id,
@@ -68,7 +134,7 @@ export default function ExplorePage() {
         const result = await supabase
           .from('posts_with_meta')
           .select(
-            'id,title,expression,sample_rate,mode,created_at,profile_id,is_draft,fork_of_post_id,is_fork,author_username,origin_title,origin_username,favorites_count',
+            'id,title,expression,sample_rate,mode,created_at,profile_id,is_draft,fork_of_post_id,is_fork,author_username,origin_title,origin_username,favorites_count,is_weekly_winner',
           )
           .eq('is_draft', false)
           .order('created_at', { ascending: false })
@@ -76,13 +142,6 @@ export default function ExplorePage() {
 
         data = (result.data ?? []) as PostRow[];
         error = result.error;
-      } else {
-        // trending
-        const rpcResult = await supabase.rpc('get_trending_feed', {
-          page,
-        });
-        data = (rpcResult.data ?? []) as PostRow[];
-        error = rpcResult.error;
       }
 
       if (cancelled) return;
@@ -133,7 +192,7 @@ export default function ExplorePage() {
   return (
     <>
       <Head>
-        <title>BytebeatCloud - Explore</title>
+        <title>Explore - BytebeatCloud</title>
         <meta name="description" content="Explore bytebeat creations on BytebeatCloud" />
         <meta property="og:type" content="website" />
         <meta property="og:title" content="Explore - BytebeatCloud" />
@@ -161,18 +220,38 @@ export default function ExplorePage() {
           >
             Recent
           </span>
-          <span
-            className={`tab-button ${activeTab === 'trending' ? 'active' : ''}`}
-            onClick={() => handleTabClick('trending')}
-          >
-            Trending
-          </span>
+          {hasActiveChallenge && (
+            <span
+              className={`tab-button ${activeTab === 'weekly' ? 'active' : ''}`}
+              onClick={() => handleTabClick('weekly')}
+            >
+              Weekly Challenge
+            </span>
+          )}
         </div>
+        {activeTab === 'weekly' && (
+          <div className="info-panel">
+            <div>
+              This tab shows the participants for the{' '}
+              <Link href={'/about-weekly'}>Bytebeat of the Week challenge</Link>.
+            </div>
+            {weekTheme && <div>This week&apos;s theme is &quot;{weekTheme}&quot;</div>}
+          </div>
+        )}
         {loading && <p className="text-centered">Loading posts…</p>}
         {error && !loading && <p className="error-message">{error}</p>}
         {!loading && !error && posts.length === 0 && (
           <p className="text-centered">
-            No posts yet. Create something on the <Link href={'/create'}>Create</Link> page!
+            {activeTab === 'weekly' ? (
+              <span>
+                No submission yet.{' '}
+                <Link href={'/create?weekly'}>Participate this week&#39;s challenge!</Link>
+              </span>
+            ) : (
+              <span>
+                No posts yet. Create something on the <Link href={'/create'}>Create</Link> page!
+              </span>
+            )}
           </p>
         )}
         {!loading && !error && posts.length > 0 && (

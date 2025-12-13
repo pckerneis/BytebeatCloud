@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { useRouter } from 'next/router';
 import { useBytebeatPlayer } from '../../hooks/useBytebeatPlayer';
 import { usePlayerStore } from '../../hooks/usePlayerStore';
@@ -9,6 +9,7 @@ import Head from 'next/head';
 import { ModeOption, DEFAULT_SAMPLE_RATE } from '../../model/expression';
 import { validateExpression } from '../../utils/expression-validator';
 import { useExpressionPlayer } from '../../hooks/useExpressionPlayer';
+import { useCtrlSpacePlayShortcut } from '../../hooks/useCtrlSpacePlayShortcut';
 import { convertMentionsToIds, convertMentionsToUsernames } from '../../utils/mentions';
 
 export default function ForkPostPage() {
@@ -35,6 +36,10 @@ export default function ForkPostPage() {
   const [originalAuthor, setOriginalAuthor] = useState<string | null>(null);
   const [liveUpdateEnabled, setLiveUpdateEnabled] = useState(true);
 
+  const lastLoadedPostIdRef = useRef<string | null>(null);
+  const isDirtyRef = useRef(false);
+  const isApplyingServerStateRef = useRef(false);
+
   const { validationIssue, handleExpressionChange, handlePlayClick, setValidationIssue } =
     useExpressionPlayer({
       expression,
@@ -48,6 +53,13 @@ export default function ForkPostPage() {
       updateExpression,
     });
 
+  const handleExpressionChangeWithDirty = (value: string) => {
+    if (!isApplyingServerStateRef.current) {
+      isDirtyRef.current = true;
+    }
+    handleExpressionChange(value);
+  };
+
   useEffect(() => {
     return () => {
       // Only stop if the editor's preview is playing (no post selected)
@@ -56,6 +68,8 @@ export default function ForkPostPage() {
       }
     };
   }, [stop, currentPost]);
+
+  useCtrlSpacePlayShortcut(handlePlayClick);
 
   useEffect(() => {
     if (!liveUpdateEnabled || !isPlaying) return;
@@ -71,6 +85,13 @@ export default function ForkPostPage() {
 
   useEffect(() => {
     if (!id || typeof id !== 'string') return;
+
+    // If we already loaded this post and the user has unsaved local edits,
+    // don't re-load and overwrite the form state (e.g. when returning to a tab
+    // after auth refresh or visibility changes).
+    if (lastLoadedPostIdRef.current === id && isDirtyRef.current) {
+      return;
+    }
 
     let cancelled = false;
 
@@ -105,12 +126,17 @@ export default function ForkPostPage() {
       // Convert @[userId] mentions back to @username for editing
       const { text: displayDescription } = await convertMentionsToUsernames(data.description ?? '');
 
+      isApplyingServerStateRef.current = true;
       setTitle(baseTitle ?? '');
       setDescription(displayDescription);
       setExpression(data.expression ?? '');
       setIsDraft(Boolean(data.is_draft));
       setMode(data.mode);
       setSampleRate(data.sample_rate);
+      isApplyingServerStateRef.current = false;
+
+      lastLoadedPostIdRef.current = id;
+      isDirtyRef.current = false;
 
       setLoading(false);
     };
@@ -122,9 +148,7 @@ export default function ForkPostPage() {
     };
   }, [id]);
 
-  const handleSubmit = async (event: FormEvent) => {
-    event.preventDefault();
-
+  const savePost = async (asDraft: boolean) => {
     if (!id || typeof id !== 'string') return;
 
     const trimmedTitle = title.trim();
@@ -142,6 +166,7 @@ export default function ForkPostPage() {
       return;
     }
 
+    setIsDraft(asDraft);
     setSaveStatus('saving');
     setSaveError('');
 
@@ -155,7 +180,7 @@ export default function ForkPostPage() {
         title: trimmedTitle,
         description: storedDescription,
         expression: trimmedExpr,
-        is_draft: isDraft,
+        is_draft: asDraft,
         sample_rate: sampleRate,
         mode,
         fork_of_post_id: id,
@@ -172,9 +197,25 @@ export default function ForkPostPage() {
 
     setSaveStatus('success');
 
-    if (!isDraft) {
+    if (asDraft) {
+      // Redirect to edit page for drafts
+      await router.push(`/edit/${data.id}`);
+    } else {
       await router.push(`/post/${data.id}`);
     }
+  };
+
+  const handleSubmit = async (event: FormEvent) => {
+    event.preventDefault();
+    await savePost(false);
+  };
+
+  const handleSaveAsDraft = () => {
+    void savePost(true);
+  };
+
+  const handlePublish = () => {
+    void savePost(false);
   };
 
   const meta = {
@@ -186,6 +227,9 @@ export default function ForkPostPage() {
   };
 
   const handleMetaChange = (next: typeof meta) => {
+    if (!isApplyingServerStateRef.current) {
+      isDirtyRef.current = true;
+    }
     setTitle(next.title);
     setDescription(next.description);
     setMode(next.mode);
@@ -193,9 +237,26 @@ export default function ForkPostPage() {
     setIsDraft(next.isDraft);
   };
 
+  const handleBack = () => {
+    if (typeof window !== 'undefined' && window.history.length > 1) {
+      router.back();
+      return;
+    }
+
+    if (id && typeof id === 'string') {
+      void router.push(`/post/${id}`);
+      return;
+    }
+
+    void router.push('/');
+  };
+
   if (loading) {
     return (
       <section>
+        <button type="button" className="button ghost" onClick={handleBack}>
+          ← Back
+        </button>
         <h2>Fork post</h2>
         <p>Loading…</p>
       </section>
@@ -205,7 +266,7 @@ export default function ForkPostPage() {
   return (
     <>
       <Head>
-        <title>BytebeatCloud - Fork post</title>
+        <title>Fork post - BytebeatCloud</title>
         <meta name="description" content="Fork a bytebeat on BytebeatCloud" />
         <meta property="og:type" content="website" />
         <meta property="og:title" content="Forking - BytebeatCloud" />
@@ -219,14 +280,16 @@ export default function ForkPostPage() {
         <meta name="twitter:card" content="summary_large_image" />
       </Head>
       <section>
-        <button type="button" className="button ghost" onClick={() => router.back()}>
+        <button type="button" className="button ghost" onClick={handleBack}>
           ← Back
         </button>
         <h2>Fork post</h2>
         {!user && (
-          <p className="text-centered login-to-publish-message">
-            <a href={'/login'}>Log in</a> to publish a post, or use a share link.
-          </p>
+          <div className="info-panel">
+            <span>
+              <a href={'/login'}>Log in</a> to publish a post, or use a share link.
+            </span>
+          </div>
         )}
         {originalAuthor && (
           <p>
@@ -240,7 +303,7 @@ export default function ForkPostPage() {
             meta={meta}
             onMetaChange={handleMetaChange}
             expression={expression}
-            onExpressionChange={handleExpressionChange}
+            onExpressionChange={handleExpressionChangeWithDirty}
             isPlaying={isPlaying}
             onPlayClick={handlePlayClick}
             validationIssue={validationIssue}
@@ -251,6 +314,8 @@ export default function ForkPostPage() {
             isFork={true}
             liveUpdateEnabled={liveUpdateEnabled}
             onLiveUpdateChange={setLiveUpdateEnabled}
+            onSaveAsDraft={handleSaveAsDraft}
+            onPublish={handlePublish}
           />
         </form>
       </section>

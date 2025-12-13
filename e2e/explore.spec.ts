@@ -157,12 +157,30 @@ test.describe('Explore page - play controls', () => {
   });
 });
 
-test.describe('Explore page - tabs', () => {
+test.describe('Explore page - tabs without active challenge', () => {
   test.beforeEach(async ({ page }) => {
+    // Clear any existing weekly challenges
+    await supabaseAdmin
+      .from('weekly_challenges')
+      .update({ winner_post_id: null })
+      .not('id', 'is', null);
+    await supabaseAdmin.from('weekly_challenges').delete().not('id', 'is', null);
+
     await clearSupabaseSession(page);
   });
 
-  test('can switch between feed, recent, and trending tabs', async ({ page }) => {
+  test('weekly challenge tab is hidden when no active challenge', async ({ page }) => {
+    await page.goto('/explore');
+
+    // Wait for tabs to load
+    await expect(page.locator('.tab-button', { hasText: 'Feed' })).toBeVisible();
+    await expect(page.locator('.tab-button', { hasText: 'Recent' })).toBeVisible();
+
+    // Weekly Challenge tab should not be visible
+    await expect(page.locator('.tab-button', { hasText: 'Weekly Challenge' })).toHaveCount(0);
+  });
+
+  test('can switch between feed and recent tabs', async ({ page }) => {
     await page.goto('/explore');
 
     // Default tab should be feed
@@ -172,11 +190,6 @@ test.describe('Explore page - tabs', () => {
     await page.locator('.tab-button', { hasText: 'Recent' }).click();
     await expect(page.locator('.tab-button.active')).toHaveText('Recent');
     await expect(page).toHaveURL(/tab=recent/);
-
-    // Click Trending tab
-    await page.locator('.tab-button', { hasText: 'Trending' }).click();
-    await expect(page.locator('.tab-button.active')).toHaveText('Trending');
-    await expect(page).toHaveURL(/tab=trending/);
 
     // Click Feed tab
     await page.locator('.tab-button', { hasText: 'Feed' }).click();
@@ -188,9 +201,79 @@ test.describe('Explore page - tabs', () => {
     // Navigate directly to recent tab
     await page.goto('/explore?tab=recent');
     await expect(page.locator('.tab-button.active')).toHaveText('Recent');
+  });
+});
 
-    // Navigate directly to trending tab
-    await page.goto('/explore?tab=trending');
-    await expect(page.locator('.tab-button.active')).toHaveText('Trending');
+test.describe('Explore page - tabs with active challenge', () => {
+  test.beforeEach(async ({ page }) => {
+    // Clear any existing weekly challenges first
+    await supabaseAdmin
+      .from('weekly_challenges')
+      .update({ winner_post_id: null })
+      .not('id', 'is', null);
+    await supabaseAdmin.from('weekly_challenges').delete().not('id', 'is', null);
+
+    // Create an active weekly challenge
+    const now = new Date();
+    const startsAt = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000); // 3 days ago
+    const endsAt = new Date(now.getTime() + 4 * 24 * 60 * 60 * 1000); // in 4 days
+
+    await supabaseAdmin.from('weekly_challenges').insert({
+      week_number: 999,
+      theme: 'E2E Test Theme',
+      tag: 'week999',
+      starts_at: startsAt.toISOString(),
+      ends_at: endsAt.toISOString(),
+    });
+
+    await clearSupabaseSession(page);
+  });
+
+  test.afterEach(async () => {
+    // Clean up the test challenge
+    await supabaseAdmin
+      .from('weekly_challenges')
+      .update({ winner_post_id: null })
+      .not('id', 'is', null);
+    await supabaseAdmin.from('weekly_challenges').delete().eq('week_number', 999);
+  });
+
+  test('weekly challenge tab is visible when active challenge exists', async ({ page }) => {
+    await page.goto('/explore');
+
+    // Wait for tabs to load
+    await expect(page.locator('.tab-button', { hasText: 'Feed' })).toBeVisible();
+    await expect(page.locator('.tab-button', { hasText: 'Recent' })).toBeVisible();
+
+    // Weekly Challenge tab should be visible
+    await expect(page.locator('.tab-button', { hasText: 'Weekly Challenge' })).toBeVisible();
+  });
+
+  test('can switch between all three tabs', async ({ page }) => {
+    await page.goto('/explore');
+
+    // Default tab should be feed
+    await expect(page.locator('.tab-button.active')).toHaveText('Feed');
+
+    // Click Recent tab
+    await page.locator('.tab-button', { hasText: 'Recent' }).click();
+    await expect(page.locator('.tab-button.active')).toHaveText('Recent');
+    await expect(page).toHaveURL(/tab=recent/);
+
+    // Click Weekly Challenge tab
+    await page.locator('.tab-button', { hasText: 'Weekly Challenge' }).click();
+    await expect(page.locator('.tab-button.active')).toHaveText('Weekly Challenge');
+    await expect(page).toHaveURL(/tab=weekly/);
+
+    // Click Feed tab
+    await page.locator('.tab-button', { hasText: 'Feed' }).click();
+    await expect(page.locator('.tab-button.active')).toHaveText('Feed');
+    await expect(page).toHaveURL(/tab=feed/);
+  });
+
+  test('weekly tab state persists in URL', async ({ page }) => {
+    // Navigate directly to weekly tab
+    await page.goto('/explore?tab=weekly');
+    await expect(page.locator('.tab-button.active')).toHaveText('Weekly Challenge');
   });
 });

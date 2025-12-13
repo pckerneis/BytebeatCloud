@@ -30,8 +30,8 @@ test.describe('Create page - unauthenticated', () => {
     await page.goto('/create');
 
     await expect(page.getByText('Log in to publish a post')).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Save' })).toHaveCount(0);
-    await expect(page.getByLabel('Save as draft')).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Publish' })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Save as draft' })).toHaveCount(0);
   });
 
   test('can still edit expression and use play button', async ({ page }) => {
@@ -94,54 +94,49 @@ test.describe('Create page - authenticated', () => {
     await expect(descriptionField).toHaveValue('This is a test description');
   });
 
-  test('save button is disabled when expression is empty', async ({ page }) => {
+  test('publish button is disabled when expression is empty', async ({ page }) => {
     await page.goto('/create');
 
-    const saveButton = page.getByRole('button', { name: 'Save' });
-    await expect(saveButton).toBeDisabled();
+    const publishButton = page.getByRole('button', { name: 'Publish' });
+    await expect(publishButton).toBeDisabled();
   });
 
-  test('save button is disabled when expression is invalid', async ({ page }) => {
+  test('publish button is disabled when expression is invalid', async ({ page }) => {
     await page.goto('/create');
 
     await typeInExpressionEditor(page, 't +'); // Invalid: trailing operator
 
-    const saveButton = page.getByRole('button', { name: 'Save' });
-    await expect(saveButton).toBeDisabled();
+    const publishButton = page.getByRole('button', { name: 'Publish' });
+    await expect(publishButton).toBeDisabled();
 
     // Should show validation error
     await expect(page.locator('.expression-preview')).toBeVisible();
   });
 
-  test('save button is enabled when expression is valid', async ({ page }) => {
+  test('publish button is enabled when expression is valid', async ({ page }) => {
     await page.goto('/create');
 
     await typeInExpressionEditor(page, 't');
 
-    const saveButton = page.getByRole('button', { name: 'Save' });
-    await expect(saveButton).toBeEnabled();
+    const publishButton = page.getByRole('button', { name: 'Publish' });
+    await expect(publishButton).toBeEnabled();
   });
 
-  test('saving as draft shows success message and stays on page', async ({ page }) => {
+  test('saving as draft redirects to edit page', async ({ page }) => {
     await page.goto('/create');
 
     // Fill in expression
     await typeInExpressionEditor(page, 't * 2');
 
-    // Check "Save as draft"
-    const draftCheckbox = page.getByLabel('Save as draft');
-    await draftCheckbox.check();
+    // Click "Save as draft" button
+    const draftButton = page.getByRole('button', { name: 'Save as draft' });
+    await draftButton.click();
 
-    // Save
-    const saveButton = page.getByRole('button', { name: 'Save' });
-    await saveButton.click();
-
-    // Should show success message and stay on create page
-    await expect(page.getByText('Post saved.')).toBeVisible();
-    await expect(page).toHaveURL('/create');
+    // Should redirect to edit page
+    await page.waitForURL(/\/edit\/[a-f0-9-]+/);
   });
 
-  test('saving public post redirects to post detail page', async ({ page }) => {
+  test('publishing post redirects to post detail page', async ({ page }) => {
     await page.goto('/create');
 
     // Fill in title
@@ -151,13 +146,9 @@ test.describe('Create page - authenticated', () => {
     // Fill in expression
     await typeInExpressionEditor(page, 't >> 4');
 
-    // Ensure "Save as draft" is unchecked (default)
-    const draftCheckbox = page.getByLabel('Save as draft');
-    await expect(draftCheckbox).not.toBeChecked();
-
-    // Save
-    const saveButton = page.getByRole('button', { name: 'Save' });
-    await saveButton.click();
+    // Publish
+    const publishButton = page.getByRole('button', { name: 'Publish' });
+    await publishButton.click();
 
     // Should redirect to post detail page
     await page.waitForURL(/\/post\/[a-f0-9-]+/);
@@ -210,9 +201,9 @@ test.describe('Create page - authenticated', () => {
     // Fill in expression
     await typeInExpressionEditor(page, 't * 3');
 
-    // Save
-    const saveButton = page.getByRole('button', { name: 'Save' });
-    await saveButton.click();
+    // Publish
+    const publishButton = page.getByRole('button', { name: 'Publish' });
+    await publishButton.click();
 
     // Should redirect to post detail page
     await page.waitForURL(/\/post\/[a-f0-9-]+/);

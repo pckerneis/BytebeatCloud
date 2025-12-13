@@ -4,7 +4,7 @@ export default function Terms() {
   return (
     <>
       <Head>
-        <title>BytebeatCloud - Terms of Services</title>
+        <title>Terms of Services - BytebeatCloud</title>
       </Head>
       <section className="home-section">
         <h2>Terms of Service</h2>

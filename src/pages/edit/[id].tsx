@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { useRouter } from 'next/router';
 import { useBytebeatPlayer } from '../../hooks/useBytebeatPlayer';
 import { usePlayerStore } from '../../hooks/usePlayerStore';
@@ -9,6 +9,7 @@ import Head from 'next/head';
 import { ModeOption, DEFAULT_SAMPLE_RATE } from '../../model/expression';
 import { validateExpression } from '../../utils/expression-validator';
 import { useExpressionPlayer } from '../../hooks/useExpressionPlayer';
+import { useCtrlSpacePlayShortcut } from '../../hooks/useCtrlSpacePlayShortcut';
 import { convertMentionsToIds, convertMentionsToUsernames } from '../../utils/mentions';
 
 export default function EditPostPage() {
@@ -16,6 +17,7 @@ export default function EditPostPage() {
   const { id } = router.query;
 
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [expression, setExpression] = useState('');
@@ -27,12 +29,17 @@ export default function EditPostPage() {
   });
   const { currentPost, setCurrentPostById } = usePlayerStore();
 
-  const { user } = useSupabaseAuth();
+  const { user, loading: authLoading } = useSupabaseAuth();
 
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'success'>('idle');
   const [saveError, setSaveError] = useState('');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showUnpublishConfirm, setShowUnpublishConfirm] = useState(false);
   const [liveUpdateEnabled, setLiveUpdateEnabled] = useState(true);
+
+  const lastLoadedPostIdRef = useRef<string | null>(null);
+  const isDirtyRef = useRef(false);
+  const isApplyingServerStateRef = useRef(false);
 
   const { validationIssue, handleExpressionChange, handlePlayClick, setValidationIssue } =
     useExpressionPlayer({
@@ -48,6 +55,24 @@ export default function EditPostPage() {
       updateExpression,
     });
 
+  const handleExpressionChangeWithDirty = (value: string) => {
+    if (!isApplyingServerStateRef.current) {
+      isDirtyRef.current = true;
+    }
+    handleExpressionChange(value);
+  };
+
+  useEffect(() => {
+    if (!router.isReady) return;
+    if (authLoading) return;
+
+    if (!user) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setLoadError('You must be logged in to edit a post.');
+      setLoading(false);
+    }
+  }, [router.isReady, authLoading, user, router]);
+
   useEffect(() => {
     return () => {
       // Only stop if the editor's preview is playing (no post selected)
@@ -56,6 +81,8 @@ export default function EditPostPage() {
       }
     };
   }, [stop, currentPost]);
+
+  useCtrlSpacePlayShortcut(handlePlayClick);
 
   useEffect(() => {
     if (!liveUpdateEnabled || !isPlaying) return;
@@ -71,11 +98,21 @@ export default function EditPostPage() {
 
   useEffect(() => {
     if (!id || typeof id !== 'string') return;
+    if (authLoading) return;
+    if (!user) return;
+
+    // If we already loaded this post and the user has unsaved local edits,
+    // don't re-load and overwrite the form state (e.g. when returning to a tab
+    // after auth refresh or visibility changes).
+    if (lastLoadedPostIdRef.current === id && isDirtyRef.current) {
+      return;
+    }
 
     let cancelled = false;
 
     const loadPost = async () => {
       setLoading(true);
+      setLoadError('');
 
       const { data, error } = await supabase
         .from('posts')
@@ -87,20 +124,20 @@ export default function EditPostPage() {
 
       if (error) {
         console.warn('Error loading post', error.message);
-        setSaveError('Unable to load post.');
+        setLoadError('Unable to load post.');
         setLoading(false);
         return;
       }
 
       if (!data) {
-        setSaveError('Post not found.');
+        setLoadError('Post not found.');
         setLoading(false);
         return;
       }
 
       // Rely on RLS to restrict access but also guard on client side
-      if (user && data.profile_id && data.profile_id !== (user as any).id) {
-        setSaveError('You do not have permission to edit this post.');
+      if (data.profile_id && data.profile_id !== (user as any).id) {
+        setLoadError('You do not have permission to edit this post.');
         setLoading(false);
         return;
       }
@@ -108,12 +145,17 @@ export default function EditPostPage() {
       // Convert @[userId] mentions back to @username for editing
       const { text: displayDescription } = await convertMentionsToUsernames(data.description ?? '');
 
+      isApplyingServerStateRef.current = true;
       setTitle(data.title ?? '');
       setDescription(displayDescription);
       setExpression(data.expression ?? '');
       setIsDraft(Boolean(data.is_draft));
       setMode(data.mode);
       setSampleRate(data.sample_rate);
+      isApplyingServerStateRef.current = false;
+
+      lastLoadedPostIdRef.current = id;
+      isDirtyRef.current = false;
 
       setLoading(false);
     };
@@ -123,11 +165,9 @@ export default function EditPostPage() {
     return () => {
       cancelled = true;
     };
-  }, [id, user]);
+  }, [id, user, authLoading]);
 
-  const handleSubmit = async (event: FormEvent) => {
-    event.preventDefault();
-
+  const savePost = async (asDraft: boolean) => {
     if (!id || typeof id !== 'string') return;
 
     const trimmedTitle = title.trim();
@@ -145,6 +185,7 @@ export default function EditPostPage() {
       return;
     }
 
+    setIsDraft(asDraft);
     setSaveStatus('saving');
     setSaveError('');
 
@@ -157,7 +198,7 @@ export default function EditPostPage() {
         title: trimmedTitle,
         description: storedDescription,
         expression: trimmedExpr,
-        is_draft: isDraft,
+        is_draft: asDraft,
         sample_rate: sampleRate,
         mode,
       })
@@ -171,10 +212,24 @@ export default function EditPostPage() {
     }
 
     setSaveStatus('success');
+    isDirtyRef.current = false;
 
-    if (!isDraft) {
+    if (!asDraft) {
       await router.push(`/post/${id}`);
     }
+  };
+
+  const handleSubmit = async (event: FormEvent) => {
+    event.preventDefault();
+    await savePost(false);
+  };
+
+  const handleSaveAsDraft = () => {
+    void savePost(true);
+  };
+
+  const handlePublish = () => {
+    void savePost(false);
   };
 
   const handleDelete = async () => {
@@ -212,6 +267,9 @@ export default function EditPostPage() {
   };
 
   const handleMetaChange = (next: typeof meta) => {
+    if (!isApplyingServerStateRef.current) {
+      isDirtyRef.current = true;
+    }
     setTitle(next.title);
     setDescription(next.description);
     setMode(next.mode);
@@ -219,11 +277,40 @@ export default function EditPostPage() {
     setIsDraft(next.isDraft);
   };
 
-  if (loading) {
+  const handleBack = () => {
+    if (typeof window !== 'undefined' && window.history.length > 1) {
+      router.back();
+      return;
+    }
+
+    if (id && typeof id === 'string') {
+      void router.push(`/post/${id}`);
+      return;
+    }
+
+    void router.push('/');
+  };
+
+  if (authLoading || loading) {
     return (
       <section>
+        <button type="button" className="button ghost" onClick={handleBack}>
+          ← Back
+        </button>
         <h2>Edit post</h2>
         <p>Loading…</p>
+      </section>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <section>
+        <button type="button" className="button ghost" onClick={handleBack}>
+          ← Back
+        </button>
+        <h2>Edit post</h2>
+        <p className="error-message">{loadError}</p>
       </section>
     );
   }
@@ -231,7 +318,7 @@ export default function EditPostPage() {
   return (
     <>
       <Head>
-        <title>BytebeatCloud - Edit post</title>
+        <title>Edit post - BytebeatCloud</title>
         <meta name="description" content="Edit your bytebeat on BytebeatCloud" />
         <meta property="og:type" content="website" />
         <meta property="og:title" content="Editing - BytebeatCloud" />
@@ -245,16 +332,24 @@ export default function EditPostPage() {
         <meta name="twitter:card" content="summary_large_image" />
       </Head>
       <section>
-        <button type="button" className="button ghost" onClick={() => router.back()}>
+        <button type="button" className="button ghost" onClick={handleBack}>
           ← Back
         </button>
         <h2>Edit post</h2>
+        {isDraft && (
+          <div className="info-panel">
+            <span>
+              You&apos;re editing a draft. The post won&apos;t be visible to anyone until you
+              publish it.
+            </span>
+          </div>
+        )}
         <form className="create-form" onSubmit={handleSubmit}>
           <PostEditorFormFields
             meta={meta}
             onMetaChange={handleMetaChange}
             expression={expression}
-            onExpressionChange={handleExpressionChange}
+            onExpressionChange={handleExpressionChangeWithDirty}
             isPlaying={isPlaying}
             onPlayClick={handlePlayClick}
             validationIssue={validationIssue}
@@ -267,6 +362,10 @@ export default function EditPostPage() {
             isFork={false}
             liveUpdateEnabled={liveUpdateEnabled}
             onLiveUpdateChange={setLiveUpdateEnabled}
+            onSaveAsDraft={handleSaveAsDraft}
+            onPublish={handlePublish}
+            isEditMode
+            onUnpublish={() => setShowUnpublishConfirm(true)}
           />
         </form>
 
@@ -291,6 +390,36 @@ export default function EditPostPage() {
                   disabled={saveStatus === 'saving'}
                 >
                   Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {showUnpublishConfirm && (
+          <div className="modal-backdrop">
+            <div className="modal">
+              <h3>Unpublish post</h3>
+              <p>This public post will be made private and visible only to you.</p>
+              <div className="modal-actions">
+                <button
+                  type="button"
+                  className="button secondary"
+                  onClick={() => setShowUnpublishConfirm(false)}
+                  disabled={saveStatus === 'saving'}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className="button primary"
+                  onClick={() => {
+                    setShowUnpublishConfirm(false);
+                    handleSaveAsDraft();
+                  }}
+                  disabled={saveStatus === 'saving'}
+                >
+                  Unpublish
                 </button>
               </div>
             </div>

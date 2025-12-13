@@ -4,9 +4,9 @@ export default function LegalMentions() {
   return (
     <>
       <Head>
-        <title>BytebeatCloud - Legal Notice</title>
+        <title>Legal Notice - BytebeatCloud</title>
       </Head>
-      <section className="legal-section">
+      <section>
         <h1 id="fr">Mentions légales</h1>
         <div className="box">
           <h2>1. Éditeur du site</h2>

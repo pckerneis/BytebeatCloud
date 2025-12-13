@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useBytebeatPlayer } from '../hooks/useBytebeatPlayer';
 import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
 import { favoritePost, unfavoritePost } from '../services/favoritesClient';
-import { ReadonlyExpression } from './ExpressionEditor';
+import { PostExpressionPlayer } from './PostExpressionPlayer';
 import { usePlayerStore } from '../hooks/usePlayerStore';
 import { formatSampleRate, ModeOption } from '../model/expression';
 import { formatRelativeTime } from '../utils/time';
@@ -28,6 +28,7 @@ export interface PostRow {
   fork_of_post_id?: string | null;
   is_fork?: boolean;
   tags?: string[];
+  is_weekly_winner?: boolean;
 }
 
 interface PostListProps {
@@ -226,6 +227,11 @@ export function PostList({ posts, currentUserId }: PostListProps) {
                 </div>
               )}
               <div className="chips">
+                {post.is_weekly_winner && (
+                  <Link href="/weekly-hall-of-fame" className="chip top-pick-badge">
+                    Top Pick
+                  </Link>
+                )}
                 {post.is_draft && <span className="chip draft-badge">Draft</span>}
                 <span className="chip mode">{post.mode}</span>
                 <span className="chip sample-rate">{formatSampleRate(post.sample_rate)}</span>
@@ -242,23 +248,11 @@ export function PostList({ posts, currentUserId }: PostListProps) {
                 </span>
               </div>
             </div>
-            <div className="post-expression" onClick={() => void handleExpressionClick(post)}>
-              <ReadonlyExpression expression={post.expression} />
-              {!isActive && (
-                <div className="post-expression-overlay" aria-hidden="true">
-                  <button
-                    type="button"
-                    className="post-expression-play-button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      void handleExpressionClick(post);
-                    }}
-                  >
-                    ▶
-                  </button>
-                </div>
-              )}
-            </div>
+            <PostExpressionPlayer
+              expression={post.expression}
+              isActive={isActive}
+              onTogglePlay={() => handleExpressionClick(post)}
+            />
             <div className="post-actions">
               <button
                 type="button"

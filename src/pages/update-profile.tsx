@@ -173,7 +173,7 @@ export default function UpdateProfilePage() {
   return (
     <>
       <Head>
-        <title>BytebeatCloud - Update profile</title>
+        <title>Update profile - BytebeatCloud</title>
       </Head>
       <section>
         <button type="button" className="button ghost" onClick={() => router.back()}>

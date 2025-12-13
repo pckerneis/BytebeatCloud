@@ -7,6 +7,10 @@ import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
 import { enrichWithViewerFavorites } from '../utils/favorites';
 import { enrichWithTags } from '../utils/tags';
 import { validateExpression } from '../utils/expression-validator';
+import { PostExpressionPlayer } from '../components/PostExpressionPlayer';
+import { useBytebeatPlayer } from '../hooks/useBytebeatPlayer';
+import { usePlayerStore } from '../hooks/usePlayerStore';
+import { ModeOption } from '../model/expression';
 
 function shortenVersion(version: string | undefined): string | undefined {
   return version?.slice(0, 7);
@@ -17,6 +21,17 @@ export default function Home() {
   const [trendingPosts, setTrendingPosts] = useState<PostRow[]>([]);
   const [trendingLoading, setTrendingLoading] = useState(true);
   const [trendingError, setTrendingError] = useState('');
+  const [topPickPost, setTopPickPost] = useState<PostRow | null>(null);
+  const [topPickLoading, setTopPickLoading] = useState(false);
+  const [topPickError, setTopPickError] = useState('');
+  const [currentTheme, setCurrentTheme] = useState<string | null>(null);
+  const [currentWeekNumber, setCurrentWeekNumber] = useState<number | null>(null);
+  const [challengeEndsAt, setChallengeEndsAt] = useState<Date | null>(null);
+  const [timeLeftText, setTimeLeftText] = useState<string | null>(null);
+
+  const { toggle, stop, isPlaying } = useBytebeatPlayer();
+  const { setPlaylist, setCurrentPostById } = usePlayerStore();
+  const [activeTopPickId, setActiveTopPickId] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -25,7 +40,7 @@ export default function Home() {
       setTrendingLoading(true);
       setTrendingError('');
 
-      const rpcResult = await supabase.rpc('get_trending_feed', { page: 0 });
+      const rpcResult = await supabase.rpc('get_global_feed', { page: 0 });
 
       if (cancelled) return;
 
@@ -59,6 +74,154 @@ export default function Home() {
       cancelled = true;
     };
   }, [user]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadWeekly = async () => {
+      setTopPickLoading(true);
+      setTopPickError('');
+      setTopPickPost(null);
+
+      // Load the current weekly challenge to get the theme.
+      const { data: currentWeekly, error: currentError } = await supabase.rpc(
+        'get_current_weekly_challenge',
+      );
+
+      if (cancelled) return;
+
+      if (!currentError && currentWeekly) {
+        const challengeRow = Array.isArray(currentWeekly) ? currentWeekly[0] : currentWeekly;
+        setCurrentWeekNumber((challengeRow as any).week_number ?? null);
+        setCurrentTheme((challengeRow as any).theme ?? null);
+        const endsAt = (challengeRow as any).ends_at;
+        setChallengeEndsAt(endsAt ? new Date(endsAt) : null);
+      } else {
+        setCurrentWeekNumber(null);
+        setCurrentTheme(null);
+        setChallengeEndsAt(null);
+      }
+
+      // Load the most recent completed challenge with a winner.
+      const { data: latestWinner, error: previousError } = await supabase.rpc(
+        'get_latest_weekly_challenge_winner',
+      );
+
+      if (cancelled) return;
+
+      const previousChallengeRow =
+        latestWinner && Array.isArray(latestWinner) ? latestWinner[0] : latestWinner;
+
+      if (previousError || !previousChallengeRow || !(previousChallengeRow as any).winner_post_id) {
+        setTopPickPost(null);
+        if (previousError) {
+          setTopPickError('Unable to load featured post.');
+        }
+        setTopPickLoading(false);
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from('posts_with_meta')
+        .select(
+          'id,title,description,expression,is_draft,sample_rate,mode,created_at,profile_id,fork_of_post_id,is_fork,author_username,origin_title,origin_username,favorites_count,is_weekly_winner',
+        )
+        .eq('id', (previousChallengeRow as any).winner_post_id)
+        .eq('is_draft', false)
+        .maybeSingle();
+
+      if (cancelled) return;
+
+      if (error || !data) {
+        setTopPickPost(null);
+        setTopPickError('Unable to load featured post.');
+        setTopPickLoading(false);
+        return;
+      }
+
+      let row = data as PostRow;
+
+      if (!validateExpression(row.expression).valid) {
+        setTopPickPost(null);
+        setTopPickError('Featured post has an invalid expression.');
+        setTopPickLoading(false);
+        return;
+      }
+
+      setTopPickPost(row);
+      setTopPickLoading(false);
+    };
+
+    void loadWeekly();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
+
+  const handleTopPickPlay = async (post: PostRow) => {
+    if (isPlaying && activeTopPickId === post.id) {
+      await stop();
+      setActiveTopPickId(null);
+      setCurrentPostById(null);
+      return;
+    }
+
+    await stop();
+
+    if (!validateExpression(post.expression).valid) {
+      return;
+    }
+
+    const sr = post.sample_rate;
+    const mode: ModeOption =
+      post.mode === 'float'
+        ? ModeOption.Float
+        : post.mode === 'uint8'
+          ? ModeOption.Uint8
+          : ModeOption.Int8;
+
+    await toggle(post.expression, mode, sr);
+    setActiveTopPickId(post.id);
+    setPlaylist([post], post.id);
+    setCurrentPostById(post.id);
+  };
+
+  // Update time left text every minute
+  useEffect(() => {
+    if (!challengeEndsAt) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setTimeLeftText(null);
+      return;
+    }
+
+    const updateTimeLeft = () => {
+      const now = new Date();
+      const diff = challengeEndsAt.getTime() - now.getTime();
+
+      if (diff <= 0) {
+        setTimeLeftText(null);
+        return;
+      }
+
+      const minutes = Math.floor(diff / (1000 * 60));
+      const hours = Math.floor(diff / (1000 * 60 * 60));
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+
+      if (days >= 1) {
+        setTimeLeftText(`${days} day${days > 1 ? 's' : ''} left`);
+      } else if (hours >= 1) {
+        setTimeLeftText(`${hours} hour${hours > 1 ? 's' : ''} left`);
+      } else {
+        setTimeLeftText(`${minutes} minute${minutes > 1 ? 's' : ''} left`);
+      }
+    };
+
+    updateTimeLeft();
+    const interval = setInterval(updateTimeLeft, 60000); // Update every minute
+
+    return () => clearInterval(interval);
+  }, [challengeEndsAt]);
 
   const linkToDiscord = process.env.NEXT_PUBLIC_DISCORD_LINK;
 
@@ -105,6 +268,48 @@ export default function Home() {
             Join the community on <Link href={linkToDiscord}>Discord</Link> to exchange about
             bytebeat techniques, suggest features or report bugs.
           </p>
+        )}
+
+        {currentTheme && (
+          <fieldset>
+            <legend>Bytebeat of the Week</legend>
+            <>
+              {topPickLoading && <p>Loading last week&apos;s top pick…</p>}
+              {!topPickLoading && topPickError && <p className="error-message">{topPickError}</p>}
+              {!topPickLoading && !topPickError && topPickPost && (
+                <>
+                  <p>
+                    Last Week&apos;s Top Pick is{' '}
+                    <Link href={`/post/${topPickPost.id}`}>
+                      {topPickPost.title || '(untitled)'} by @
+                      {topPickPost.author_username || 'unknown'}
+                    </Link>
+                  </p>
+                  <PostExpressionPlayer
+                    expression={topPickPost.expression}
+                    isActive={isPlaying && activeTopPickId === topPickPost.id}
+                    onTogglePlay={() => handleTopPickPlay(topPickPost)}
+                    height={75}
+                  />
+                </>
+              )}
+            </>
+            <p>
+              Week #{currentWeekNumber}: theme is &quot;{currentTheme ?? 'TBA'}&quot;
+              {timeLeftText && <span className="time-left"> — {timeLeftText}</span>}
+            </p>
+            <ul>
+              <li>
+                <Link href="/explore?tab=weekly">View entries</Link>
+              </li>
+              <li>
+                <Link href="/create?weekly">Submit yours</Link>
+              </li>
+              <li>
+                <Link href="/about-weekly">About</Link>
+              </li>
+            </ul>
+          </fieldset>
         )}
 
         <fieldset>
