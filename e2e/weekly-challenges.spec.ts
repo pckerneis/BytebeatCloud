@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { supabaseAdmin } from './utils/supabaseAdmin';
+import { ensureTestUser, ensureTestUserProfile } from './utils/supabaseAdmin';
 
 async function clearWeeklyData() {
   // Order matters because of foreign keys
@@ -8,6 +9,7 @@ async function clearWeeklyData() {
     .from('weekly_challenges')
     .update({ winner_post_id: null })
     .not('id', 'is', null);
+  await supabaseAdmin.from('notifications').delete().not('id', 'is', null);
   await supabaseAdmin.from('favorites').delete().not('id', 'is', null);
   await supabaseAdmin.from('post_tags').delete().not('post_id', 'is', null);
   await supabaseAdmin.from('tags').delete().not('id', 'is', null);
@@ -94,13 +96,12 @@ test.describe('Weekly challenges - finalize_current_week', () => {
     expect(tagError).toBeNull();
     expect(tagRow).not.toBeNull();
 
-    // Create a test profile to satisfy posts/favorites foreign keys
-    const testProfileId = crypto.randomUUID();
-    const { error: profileError } = await supabaseAdmin.from('profiles').insert({
-      id: testProfileId,
-      username: 'weekly_e2e_user',
-    });
-    expect(profileError).toBeNull();
+    // Create a real auth user + profile so notifications FK to auth.users is satisfied
+    const email = 'e2e+weekly_challenges@example.com';
+    const username = 'weekly_e2e_user';
+    const user = await ensureTestUser({ email, password: 'password123' });
+    await ensureTestUserProfile(email, username);
+    const testProfileId = user.id;
 
     // Insert two posts in the time window, both tagged with week1
     const basePost = {
