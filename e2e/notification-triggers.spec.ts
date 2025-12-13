@@ -119,7 +119,7 @@ test.describe('Notification triggers - weekly winner', () => {
 
     const now = new Date();
     const startsAt = new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000).toISOString();
-    const endsAt = new Date(now.getTime() - 1 * 24 * 60 * 60 * 1000).toISOString();
+    const endsAt = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString();
 
     // Create an ended challenge that has no winner yet
     await supabaseAdmin.from('weekly_challenges').insert({
@@ -519,7 +519,9 @@ test.describe('Notification triggers - mention', () => {
     // Save as draft
     await page.getByRole('button', { name: 'Save as draft' }).click();
 
-    await expect(page.getByText('Post saved.')).toBeVisible();
+    // Create flow redirects to edit page for drafts
+    await page.waitForURL(/\/edit\//);
+    await expect(page.getByText('Post saved.')).toBeVisible({ timeout: 15000 });
 
     // No notification for draft
     const { data: mentionNotifications } = await supabaseAdmin
