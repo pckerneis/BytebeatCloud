@@ -38,6 +38,8 @@ interface PostEditorFormFieldsProps {
 
   onSaveAsDraft?: () => void;
   onPublish?: () => void;
+  isEditMode?: boolean;
+  onUnpublish?: () => void;
 }
 
 function findNextPresetSampleRate(sampleRate: number): number {
@@ -72,6 +74,8 @@ export function PostEditorFormFields(props: PostEditorFormFieldsProps) {
     onLiveUpdateChange,
     onSaveAsDraft,
     onPublish,
+    isEditMode,
+    onUnpublish,
   } = props;
 
   const expressionLength = expression.length;
@@ -288,10 +292,14 @@ export function PostEditorFormFields(props: PostEditorFormFieldsProps) {
               <button
                 type="button"
                 className="button secondary"
-                onClick={onSaveAsDraft}
+                onClick={isEditMode && !isDraft ? onUnpublish : onSaveAsDraft}
                 disabled={!canSubmit}
               >
-                {saveStatus === 'saving' && isDraft ? 'Saving…' : 'Save as draft'}
+                {saveStatus === 'saving' && isDraft
+                  ? 'Saving…'
+                  : isEditMode && !isDraft
+                    ? 'Unpublish'
+                    : 'Save as draft'}
               </button>
             )}
 

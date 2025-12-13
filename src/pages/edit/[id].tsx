@@ -34,6 +34,7 @@ export default function EditPostPage() {
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'success'>('idle');
   const [saveError, setSaveError] = useState('');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showUnpublishConfirm, setShowUnpublishConfirm] = useState(false);
   const [liveUpdateEnabled, setLiveUpdateEnabled] = useState(true);
 
   const { validationIssue, handleExpressionChange, handlePlayClick, setValidationIssue } =
@@ -308,6 +309,11 @@ export default function EditPostPage() {
           ← Back
         </button>
         <h2>Edit post</h2>
+        {isDraft && (
+          <div className="info-panel">
+            <span>You're editing a draft. The post won't be visible to anyone until you publish it.</span>
+          </div>
+        )}
         <form className="create-form" onSubmit={handleSubmit}>
           <PostEditorFormFields
             meta={meta}
@@ -328,6 +334,8 @@ export default function EditPostPage() {
             onLiveUpdateChange={setLiveUpdateEnabled}
             onSaveAsDraft={handleSaveAsDraft}
             onPublish={handlePublish}
+            isEditMode
+            onUnpublish={() => setShowUnpublishConfirm(true)}
           />
         </form>
 
@@ -352,6 +360,36 @@ export default function EditPostPage() {
                   disabled={saveStatus === 'saving'}
                 >
                   Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {showUnpublishConfirm && (
+          <div className="modal-backdrop">
+            <div className="modal">
+              <h3>Unpublish post</h3>
+              <p>This public post will be made private and visible only to you.</p>
+              <div className="modal-actions">
+                <button
+                  type="button"
+                  className="button secondary"
+                  onClick={() => setShowUnpublishConfirm(false)}
+                  disabled={saveStatus === 'saving'}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className="button primary"
+                  onClick={() => {
+                    setShowUnpublishConfirm(false);
+                    handleSaveAsDraft();
+                  }}
+                  disabled={saveStatus === 'saving'}
+                >
+                  Unpublish
                 </button>
               </div>
             </div>
