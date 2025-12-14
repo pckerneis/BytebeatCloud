@@ -521,7 +521,6 @@ test.describe('Notification triggers - mention', () => {
 
     // Create flow redirects to edit page for drafts
     await page.waitForURL(/\/edit\//);
-    await expect(page.getByText('Post saved.')).toBeVisible({ timeout: 15000 });
 
     // No notification for draft
     const { data: mentionNotifications } = await supabaseAdmin

@@ -228,29 +228,31 @@ export function PostList({ posts, currentUserId }: PostListProps) {
                   ) : null}
                 </div>
               )}
-              <div className="chips">
-                {post.is_weekly_winner && (
-                  <Link href="/weekly-hall-of-fame" className="chip top-pick-badge">
-                    Top Pick
-                  </Link>
-                )}
-                {post.is_draft && <span className="chip draft-badge">Draft</span>}
-                <span className="chip mode">{post.mode}</span>
-                <span className="chip sample-rate">{formatSampleRate(post.sample_rate)}</span>
-                {lengthCategory && <span className="chip length-chip">{lengthCategory}</span>}
-                {sortedTags &&
-                  sortedTags.length > 0 &&
-                  sortedTags.map((tag) => {
-                    const isCurrentWeekTag = Boolean(currentWeekTag && tag === currentWeekTag);
-                    const href = isCurrentWeekTag ? '/explore?tab=weekly' : `/tags/${tag}`;
-                    const className = `chip tag-chip${isCurrentWeekTag ? ' weekly-tag-chip' : ''}`;
+              <div className="flex-row">
+                <div className="chips">
+                  {post.is_weekly_winner && (
+                    <Link href="/weekly-hall-of-fame" className="chip top-pick-badge">
+                      Top Pick
+                    </Link>
+                  )}
+                  {post.is_draft && <span className="chip draft-badge">Draft</span>}
+                  <span className="chip mode">{post.mode}</span>
+                  <span className="chip sample-rate">{formatSampleRate(post.sample_rate)}</span>
+                  {lengthCategory && <span className="chip length-chip">{lengthCategory}</span>}
+                  {sortedTags &&
+                    sortedTags.length > 0 &&
+                    sortedTags.map((tag) => {
+                      const isCurrentWeekTag = Boolean(currentWeekTag && tag === currentWeekTag);
+                      const href = isCurrentWeekTag ? '/explore?tab=weekly' : `/tags/${tag}`;
+                      const className = `chip tag-chip${isCurrentWeekTag ? ' weekly-tag-chip' : ''}`;
 
-                    return (
-                      <Link key={tag} href={href} className={className}>
-                        #{tag}
-                      </Link>
-                    );
-                  })}
+                      return (
+                        <Link key={tag} href={href} className={className}>
+                          #{tag}
+                        </Link>
+                      );
+                    })}
+                </div>
                 <span className="created" title={createdTitle}>
                   {created}
                 </span>
