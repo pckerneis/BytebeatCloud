@@ -428,6 +428,12 @@ export function UserProfileContent({
     await toggleFollow();
   };
 
+  const navigateToAnalytics = () => {
+    if (isOwnProfile) {
+      void router.push('/analytics');
+    }
+  };
+
   return (
     <section>
       <div className="profile-title-row">
@@ -448,6 +454,10 @@ export function UserProfileContent({
       </div>
 
       {bio && <p className="profile-bio">{bio}</p>}
+
+      {isOwnProfile && (
+        <button className='button secondary mb-10' onClick={navigateToAnalytics}>Creator Analytics</button>
+      )}
 
       {socialLinks.length > 0 && (
         <div className="profile-social-links">
