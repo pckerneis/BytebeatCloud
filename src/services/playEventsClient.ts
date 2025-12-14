@@ -45,3 +45,16 @@ export async function getCreatorStats(creatorId: string, periodDays = 30) {
     period_days: periodDays,
   }) as unknown as { data: CreatorStats[] | null; error: Error | null };
 }
+
+export interface ActivityHeatmapRow {
+  date: string;
+  posts_count: number;
+  favorites_count: number;
+  total_count: number;
+}
+
+export async function getUserActivityHeatmap(userId: string) {
+  return supabase.rpc('get_user_activity_heatmap', {
+    user_id: userId,
+  }) as unknown as { data: ActivityHeatmapRow[] | null; error: Error | null };
+}
