@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import { ModeOption } from '../model/expression';
 import { validateExpression, type ValidationIssue } from '../utils/expression-validator';
 import { setPreviewSource } from './previewSource';
+import { DEBOUNCE_CODE_MS } from '../constants';
 
 interface UseExpressionPlayerOptions {
   expression: string;
@@ -66,7 +67,7 @@ export function useExpressionPlayer({
       } else {
         setPreviewSource(null);
       }
-    }, 200);
+    }, DEBOUNCE_CODE_MS);
   };
 
   const handlePlayClick = () => {

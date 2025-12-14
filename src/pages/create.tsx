@@ -276,10 +276,15 @@ export default function CreatePage() {
     setIsDraft(next.isDraft);
   };
 
+  const weeklyTagRegex = currentWeekNumber !== null
+    ? new RegExp(`(^|\\s)#week${currentWeekNumber}(?!\\w)`)
+    : null;
+
   const isWeeklyParticipation =
     currentWeekNumber !== null &&
     !isDraft &&
-    new RegExp(`(^|\\s)#week${currentWeekNumber}(?!\\w)`).test(description);
+    weeklyTagRegex !== null &&
+    (weeklyTagRegex.test(description) || weeklyTagRegex.test(title));
 
   const addWeekTag = () => {
     setDescription(
@@ -315,7 +320,7 @@ export default function CreatePage() {
           </div>
         )}
 
-        {isWeeklyParticipation ? (
+        {user && isWeeklyParticipation && (
           <div className="info-panel">
             <div>
               You are about to submit a participation for the{' '}
@@ -326,7 +331,9 @@ export default function CreatePage() {
             </div>
             <div>This week&#39;s theme is &#34;{currentTheme}&#34;.</div>
           </div>
-        ) : (
+        )}
+
+        {user && !isWeeklyParticipation && (
           currentTheme && (
             <div className="info-panel">
               <span>This week&#39;s theme is &#34;{currentTheme}&#34;.</span>

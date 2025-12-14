@@ -231,8 +231,6 @@ export function useBytebeatPlayer(options?: { enableVisualizer?: boolean }): Byt
 
   const toggle = useCallback(
     async (expression: string, mode: ModeOption, sampleRate: number) => {
-      if (!expression.trim()) return;
-
       if (toggleInProgress) {
         return;
       }
