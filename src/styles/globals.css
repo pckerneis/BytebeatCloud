@@ -991,6 +991,7 @@ main > section {
   display: flex;
   gap: 6px;
   align-items: flex-end;
+  flex-wrap: wrap;
 }
 
 .chips .chip {
@@ -1031,10 +1032,11 @@ button.chip {
   cursor: pointer;
 }
 
-.chips .created {
+.created {
   font-size: 11px;
   color: var(--secondary-text-color);
   margin-left: auto;
+  flex-shrink: 0;
 }
 
 .post-actions {
