@@ -60,9 +60,10 @@ export default function AboutWeekly() {
         <h3>3. Community Voting</h3>
 
         <p>
-          Throughout the week, others can <Link href='/explore?tab=weekly'>explore and favorite</Link> submissions.
-          At the end of the period (next Saturday at 20:00 UTC), the <b>most-favorited post</b> among eligible entries
-          becomes the week&#39;s winner.
+          Throughout the week, others can{' '}
+          <Link href="/explore?tab=weekly">explore and favorite</Link> submissions. At the end of
+          the period (next Saturday at 20:00 UTC), the <b>most-favorited post</b> among eligible
+          entries becomes the week&#39;s winner.
         </p>
 
         <p>

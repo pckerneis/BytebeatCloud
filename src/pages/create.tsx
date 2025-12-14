@@ -276,9 +276,8 @@ export default function CreatePage() {
     setIsDraft(next.isDraft);
   };
 
-  const weeklyTagRegex = currentWeekNumber !== null
-    ? new RegExp(`(^|\\s)#week${currentWeekNumber}(?!\\w)`)
-    : null;
+  const weeklyTagRegex =
+    currentWeekNumber !== null ? new RegExp(`(^|\\s)#week${currentWeekNumber}(?!\\w)`) : null;
 
   const isWeeklyParticipation =
     currentWeekNumber !== null &&
@@ -333,22 +332,20 @@ export default function CreatePage() {
           </div>
         )}
 
-        {user && !isWeeklyParticipation && (
-          currentTheme && (
-            <div className="info-panel">
-              <span>This week&#39;s theme is &#34;{currentTheme}&#34;.</span>
-              <div>
-                <span className={'link'} onClick={addWeekTag}>
-                  Add the tag &quot;#week{currentWeekNumber}&quot;
-                </span>{' '}
-                to the post description to participate the{' '}
-                <Link href="/about-weekly" target="_blank">
-                  challenge
-                </Link>
-                .
-              </div>
+        {user && !isWeeklyParticipation && currentTheme && (
+          <div className="info-panel">
+            <span>This week&#39;s theme is &#34;{currentTheme}&#34;.</span>
+            <div>
+              <span className={'link'} onClick={addWeekTag}>
+                Add the tag &quot;#week{currentWeekNumber}&quot;
+              </span>{' '}
+              to the post description to participate the{' '}
+              <Link href="/about-weekly" target="_blank">
+                challenge
+              </Link>
+              .
             </div>
-          )
+          </div>
         )}
 
         <form className="create-form" onSubmit={handleSubmit}>
