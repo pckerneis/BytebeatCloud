@@ -10,5 +10,6 @@ export function validateUsername(value: string): string {
     return 'Only letters, digits, dots and hyphens and underscores are allowed';
   }
   if (trimmed.endsWith('.')) return 'Username cannot end with a dot';
+  if (trimmed.toLowerCase().includes('bytebeatcloud')) return 'Username cannot contain "bytebeatcloud"';
   return '';
 }
