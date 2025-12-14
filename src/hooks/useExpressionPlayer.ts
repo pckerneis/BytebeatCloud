@@ -42,19 +42,19 @@ export function useExpressionPlayer({
   const validationTimeoutRef = useRef<number | null>(null);
 
   const handleExpressionChange = (value: string) => {
+    setExpression(value);
+
+    const trimmed = value.trim();
+    if (!trimmed) {
+      setValidationIssue(null);
+      return;
+    }
+
     if (validationTimeoutRef.current !== null) {
       window.clearTimeout(validationTimeoutRef.current);
     }
 
     validationTimeoutRef.current = window.setTimeout(() => {
-      setExpression(value);
-
-      const trimmed = value.trim();
-      if (!trimmed) {
-        setValidationIssue(null);
-        return;
-      }
-
       const result = validateExpression(value);
       setValidationIssue(result.valid ? null : result.issues[0] ?? null);
 
