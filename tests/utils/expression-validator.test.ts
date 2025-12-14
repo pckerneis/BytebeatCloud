@@ -63,12 +63,6 @@ describe('validateExpression - disallowed node types', () => {
     expect(result.valid).toBe(false);
     expect(result.issues).toHaveLength(1);
   });
-
-  it('disallows while loops', () => {
-    const result = validateExpression('while (t < 10) t++');
-    expect(result.valid).toBe(false);
-    expect(result.issues).toHaveLength(1);
-  });
 });
 
 describe('validateExpression - dangerous calls and properties', () => {

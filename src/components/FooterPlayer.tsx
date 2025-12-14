@@ -12,7 +12,14 @@ export default function FooterPlayer() {
   const { user } = useSupabaseAuth();
   const router = useRouter();
   const { isPlaying, toggle, stop, waveform, masterGain, setMasterGain } = useBytebeatPlayer();
-  const { currentPost, next, prev, updateFavoriteStateForPost } = usePlayerStore();
+  const {
+    currentPost,
+    next,
+    prev,
+    updateFavoriteStateForPost,
+    startPlayTracking,
+    stopPlayTracking,
+  } = usePlayerStore();
   const theme = useContext(ThemeContext);
   const [footerFavoritePending, setFooterFavoritePending] = useState(false);
   const titleRef = useRef<HTMLDivElement | null>(null);
@@ -153,14 +160,17 @@ export default function FooterPlayer() {
   const playPost = async (post: PostRow | null) => {
     if (!post) return;
 
+    stopPlayTracking();
     await stop();
 
     const sr = post.sample_rate;
     await toggle(post.expression, post.mode, sr);
+    startPlayTracking(post.id);
   };
 
   const handleFooterPlayPause = async () => {
     if (isPlaying) {
+      stopPlayTracking();
       await stop();
       return;
     }

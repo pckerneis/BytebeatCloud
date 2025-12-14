@@ -53,8 +53,15 @@ export function PostList({ posts, currentUserId }: PostListProps) {
   const { user } = useSupabaseAuth();
   const router = useRouter();
   const { tag: currentWeekTag } = useCurrentWeeklyChallenge();
-  const { setPlaylist, setCurrentPostById, currentPost, updateFavoriteStateForPost } =
-    usePlayerStore();
+  const {
+    setPlaylist,
+    setCurrentPostById,
+    currentPost,
+    updateFavoriteStateForPost,
+    setCurrentUserId,
+    startPlayTracking,
+    stopPlayTracking,
+  } = usePlayerStore();
   const [favoritePending, setFavoritePending] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
@@ -64,6 +71,10 @@ export function PostList({ posts, currentUserId }: PostListProps) {
       setActivePostId(null);
     }
   }, [currentPost, posts]);
+
+  useEffect(() => {
+    setCurrentUserId(currentUserId ?? null);
+  }, [currentUserId, setCurrentUserId]);
 
   // Keep the visible row for the currently playing post in sync with
   // the global player store's favorite state (used by the footer).
@@ -91,6 +102,7 @@ export function PostList({ posts, currentUserId }: PostListProps) {
   const handleExpressionClick = async (post: PostRow) => {
     // Clicking the active post stops playback
     if (isPlaying && activePostId === post.id) {
+      stopPlayTracking();
       await stop();
       setActivePostId(null);
       setCurrentPostById(null);
@@ -98,6 +110,7 @@ export function PostList({ posts, currentUserId }: PostListProps) {
     }
 
     // Ensure any existing playback is fully stopped before starting a new one
+    stopPlayTracking();
     await stop();
 
     // Security: block playback for invalid expressions
@@ -117,6 +130,7 @@ export function PostList({ posts, currentUserId }: PostListProps) {
     setActivePostId(post.id);
     setPlaylist(posts, post.id);
     setCurrentPostById(post.id);
+    startPlayTracking(post.id);
   };
 
   const handleFavoriteClick = async (post: PostRow) => {

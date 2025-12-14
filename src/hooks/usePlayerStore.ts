@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { PostRow } from '../components/PostList';
+import { recordPlayEvent } from '../services/playEventsClient';
 
 interface PlayerStoreState {
   playlist: PostRow[];
@@ -13,6 +14,11 @@ interface PlayerStoreSnapshot extends PlayerStoreState {
 // Simple module-level store shared across the app.
 let playlist: PostRow[] = [];
 let currentIndex = -1;
+
+// Play tracking state
+let currentPlayStartTime: number | null = null;
+let currentPlayingPostId: string | null = null;
+let currentUserId: string | null = null;
 
 const listeners = new Set<(state: PlayerStoreSnapshot) => void>();
 
@@ -86,6 +92,33 @@ function updateFavoriteStateInternal(postId: string, favorited: boolean, count: 
   emit();
 }
 
+function setCurrentUserIdInternal(userId: string | null) {
+  currentUserId = userId;
+}
+
+function startPlayTrackingInternal(postId: string) {
+  // If already tracking a different post, flush it first
+  if (currentPlayingPostId && currentPlayingPostId !== postId) {
+    stopPlayTrackingInternal();
+  }
+  currentPlayingPostId = postId;
+  currentPlayStartTime = Date.now();
+}
+
+function stopPlayTrackingInternal() {
+  if (currentPlayingPostId && currentPlayStartTime) {
+    const durationMs = Date.now() - currentPlayStartTime;
+    const durationSeconds = Math.round(durationMs / 1000);
+
+    if (durationSeconds > 0) {
+      // Fire and forget - don't block on the API call
+      void recordPlayEvent(currentPlayingPostId, durationSeconds, currentUserId ?? undefined);
+    }
+  }
+  currentPlayingPostId = null;
+  currentPlayStartTime = null;
+}
+
 export function usePlayerStore() {
   const [state, setState] = useState<PlayerStoreSnapshot>(() => getSnapshot());
 
@@ -110,5 +143,8 @@ export function usePlayerStore() {
     prev: () => stepInternal(-1).currentPost,
     updateFavoriteStateForPost: (postId: string, favorited: boolean, count: number) =>
       updateFavoriteStateInternal(postId, favorited, count),
+    setCurrentUserId: (userId: string | null) => setCurrentUserIdInternal(userId),
+    startPlayTracking: (postId: string) => startPlayTrackingInternal(postId),
+    stopPlayTracking: () => stopPlayTrackingInternal(),
   };
 }

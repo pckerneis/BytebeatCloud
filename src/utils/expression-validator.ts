@@ -1,7 +1,9 @@
 import * as acorn from 'acorn';
 
 const allowedGlobals = new Set([
+  'Array',
   'E',
+  'String',
   'LN10',
   'LN2',
   'LOG2E',
@@ -50,13 +52,7 @@ const allowedGlobals = new Set([
   'trunc',
 ]);
 
-const disallowedNodes = new Set<string>([
-  'ForStatement',
-  'WhileStatement',
-  'DoWhileStatement',
-  'SwitchStatement',
-  'IfStatement',
-]);
+const disallowedNodes = new Set<string>(['SwitchStatement', 'IfStatement']);
 
 type AcornNode = acorn.Node & {
   [key: string]: unknown;
@@ -86,7 +82,7 @@ class BytebeatValidator {
     try {
       // Parse the code into an AST
       const ast = acorn.parseExpressionAt(expr, 0, {
-        ecmaVersion: 2020,
+        ecmaVersion: 2021,
         sourceType: 'script',
       });
 
@@ -200,6 +196,8 @@ class BytebeatValidator {
       for (const param of (node as any).params ?? []) {
         if (param.type === 'Identifier') {
           newScope.add(param.name);
+        } else if (param.type === 'AssignmentPattern' && param.left?.type === 'Identifier') {
+          newScope.add(param.left.name);
         }
       }
 
@@ -241,14 +239,27 @@ class BytebeatValidator {
     }
 
     // Check for property access that might be dangerous
-    if (node.type === 'MemberExpression' && !(node as any).computed) {
+    if (node.type === 'MemberExpression') {
       const property = (node as any).property;
-      if (property?.type === 'Identifier') {
+      if (!(node as any).computed && property?.type === 'Identifier') {
         const propName = property.name;
         if (['constructor', 'prototype', '__proto__'].includes(propName)) {
-          context.warnings.push(`Potentially dangerous property access: ${propName}`);
+          const message = `Dangerous property access: ${propName}`;
+          context.errors.push(message);
+          context.issues.push({
+            message,
+            start: node.start,
+            end: node.end,
+          });
         }
       }
+      // Only walk the object, not the property (for non-computed access)
+      // This prevents property names like 'map' from being flagged as undefined
+      this.walkNode((node as any).object, context);
+      if ((node as any).computed) {
+        this.walkNode((node as any).property, context);
+      }
+      return;
     }
 
     // Recursively walk all child nodes

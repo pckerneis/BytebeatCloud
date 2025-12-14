@@ -9,6 +9,7 @@ import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
 import { PostList } from './PostList';
 import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
 import { useTabState } from '../hooks/useTabState';
+import { ActivityHeatmap } from './ActivityHeatmap';
 
 // Shared constants
 const POST_SELECT_COLUMNS =
@@ -428,6 +429,12 @@ export function UserProfileContent({
     await toggleFollow();
   };
 
+  const navigateToAnalytics = () => {
+    if (isOwnProfile) {
+      void router.push('/analytics');
+    }
+  };
+
   return (
     <section>
       <div className="profile-title-row">
@@ -463,6 +470,14 @@ export function UserProfileContent({
             </a>
           ))}
         </div>
+      )}
+
+      {profileId && <ActivityHeatmap userId={profileId} />}
+
+      {isOwnProfile && (
+        <button className="button secondary mb-10" onClick={navigateToAnalytics}>
+          Creator Analytics
+        </button>
       )}
 
       <div className="tab-header">
