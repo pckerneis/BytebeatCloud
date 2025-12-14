@@ -109,7 +109,7 @@ function stopPlayTrackingInternal() {
   if (currentPlayingPostId && currentPlayStartTime) {
     const durationMs = Date.now() - currentPlayStartTime;
     const durationSeconds = Math.round(durationMs / 1000);
-    
+
     if (durationSeconds > 0) {
       // Fire and forget - don't block on the API call
       void recordPlayEvent(currentPlayingPostId, durationSeconds, currentUserId ?? undefined);

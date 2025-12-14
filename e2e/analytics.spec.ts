@@ -75,7 +75,9 @@ test.describe('Analytics page - authenticated', () => {
     await expect(page.locator('.analytics-stat-card')).toHaveCount(7, { timeout: 10000 });
 
     // Check "Published Posts" shows 1
-    const publishedPostsCard = page.locator('.analytics-stat-card').filter({ hasText: 'Published Posts' });
+    const publishedPostsCard = page
+      .locator('.analytics-stat-card')
+      .filter({ hasText: 'Published Posts' });
     await expect(publishedPostsCard.locator('.stat-value')).toHaveText('1');
   });
 
@@ -132,7 +134,9 @@ test.describe('Analytics page - authenticated', () => {
     await page.locator('#period').selectOption('7');
 
     // Check that the label updates
-    await expect(page.locator('.analytics-stat-card').filter({ hasText: 'Last 7d' })).toHaveCount(2);
+    await expect(page.locator('.analytics-stat-card').filter({ hasText: 'Last 7d' })).toHaveCount(
+      2,
+    );
   });
 
   test('shows play counts when play events exist', async ({ page }) => {
@@ -164,7 +168,9 @@ test.describe('Analytics page - authenticated', () => {
     await expect(totalPlaysCard.locator('.stat-value')).toHaveText('3');
 
     // Check total play time (30 + 45 + 15 = 90 seconds = 1m 30s)
-    const totalPlayTimeCard = page.locator('.analytics-stat-card').filter({ hasText: 'Total Play Time' });
+    const totalPlayTimeCard = page
+      .locator('.analytics-stat-card')
+      .filter({ hasText: 'Total Play Time' });
     await expect(totalPlayTimeCard.locator('.stat-value')).toHaveText('1m 30s');
   });
 
@@ -192,7 +198,9 @@ test.describe('Analytics page - authenticated', () => {
     await page.goto('/analytics');
 
     // Should show 2 unique listeners (otherUserId and testUserId)
-    const uniqueListenersCard = page.locator('.analytics-stat-card').filter({ hasText: 'Unique Listeners' });
+    const uniqueListenersCard = page
+      .locator('.analytics-stat-card')
+      .filter({ hasText: 'Unique Listeners' });
     await expect(uniqueListenersCard.locator('.stat-value')).toHaveText('2');
   });
 
@@ -232,13 +240,15 @@ test.describe('Analytics page - authenticated', () => {
       .single();
 
     // Add favorites
-    await supabaseAdmin.from('favorites').insert([
-      { profile_id: otherUserId, post_id: postData!.id },
-    ]);
+    await supabaseAdmin
+      .from('favorites')
+      .insert([{ profile_id: otherUserId, post_id: postData!.id }]);
 
     await page.goto('/analytics');
 
-    const favoritesCard = page.locator('.analytics-stat-card').filter({ hasText: 'Total Favorites' });
+    const favoritesCard = page
+      .locator('.analytics-stat-card')
+      .filter({ hasText: 'Total Favorites' });
     await expect(favoritesCard.locator('.stat-value')).toHaveText('1');
   });
 });
@@ -340,7 +350,7 @@ test.describe('Play tracking', () => {
 
   test('records play event when switching to another post', async ({ page }) => {
     // Create a second post
-    const { data: secondPost } = await supabaseAdmin
+    await supabaseAdmin
       .from('posts')
       .insert({
         profile_id: otherUserId,

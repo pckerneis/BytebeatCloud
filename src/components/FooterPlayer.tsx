@@ -12,8 +12,14 @@ export default function FooterPlayer() {
   const { user } = useSupabaseAuth();
   const router = useRouter();
   const { isPlaying, toggle, stop, waveform, masterGain, setMasterGain } = useBytebeatPlayer();
-  const { currentPost, next, prev, updateFavoriteStateForPost, startPlayTracking, stopPlayTracking } =
-    usePlayerStore();
+  const {
+    currentPost,
+    next,
+    prev,
+    updateFavoriteStateForPost,
+    startPlayTracking,
+    stopPlayTracking,
+  } = usePlayerStore();
   const theme = useContext(ThemeContext);
   const [footerFavoritePending, setFooterFavoritePending] = useState(false);
   const titleRef = useRef<HTMLDivElement | null>(null);

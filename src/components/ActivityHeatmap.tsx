@@ -136,7 +136,11 @@ export function ActivityHeatmap({ userId }: ActivityHeatmapProps) {
         const currentDate = new Date(startDate);
         currentDate.setDate(startDate.getDate() + week * 7 + day);
         const dateStr = currentDate.toISOString().split('T')[0];
-        const activity = countMap.get(dateStr) ?? { postsCount: 0, favoritesCount: 0, totalCount: 0 };
+        const activity = countMap.get(dateStr) ?? {
+          postsCount: 0,
+          favoritesCount: 0,
+          totalCount: 0,
+        };
 
         // Track month changes for labels
         if (currentDate.getMonth() !== currentMonth && currentDate <= today) {
@@ -245,15 +249,21 @@ export function ActivityHeatmap({ userId }: ActivityHeatmapProps) {
       </div>
 
       {tooltip && (
-        <div
-          className="activity-heatmap-tooltip"
-          style={{ left: tooltip.x, top: tooltip.y - 60 }}
-        >
+        <div className="activity-heatmap-tooltip" style={{ left: tooltip.x, top: tooltip.y - 60 }}>
           <strong>{formatDate(tooltip.day.date)}</strong>
           <br />
-          {tooltip.day.postsCount > 0 && <span>{tooltip.day.postsCount} post{tooltip.day.postsCount !== 1 ? 's' : ''} created</span>}
+          {tooltip.day.postsCount > 0 && (
+            <span>
+              {tooltip.day.postsCount} post{tooltip.day.postsCount !== 1 ? 's' : ''} created
+            </span>
+          )}
           {tooltip.day.postsCount > 0 && tooltip.day.favoritesCount > 0 && <br />}
-          {tooltip.day.favoritesCount > 0 && <span>{tooltip.day.favoritesCount} favorite{tooltip.day.favoritesCount !== 1 ? 's' : ''} given</span>}
+          {tooltip.day.favoritesCount > 0 && (
+            <span>
+              {tooltip.day.favoritesCount} favorite{tooltip.day.favoritesCount !== 1 ? 's' : ''}{' '}
+              given
+            </span>
+          )}
           {tooltip.day.totalCount === 0 && <span>No activity</span>}
         </div>
       )}

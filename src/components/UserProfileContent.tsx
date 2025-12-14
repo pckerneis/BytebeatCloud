@@ -475,7 +475,9 @@ export function UserProfileContent({
       {profileId && <ActivityHeatmap userId={profileId} />}
 
       {isOwnProfile && (
-        <button className='button secondary mb-10' onClick={navigateToAnalytics}>Creator Analytics</button>
+        <button className="button secondary mb-10" onClick={navigateToAnalytics}>
+          Creator Analytics
+        </button>
       )}
 
       <div className="tab-header">

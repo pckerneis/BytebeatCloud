@@ -52,10 +52,7 @@ const allowedGlobals = new Set([
   'trunc',
 ]);
 
-const disallowedNodes = new Set<string>([
-  'SwitchStatement',
-  'IfStatement',
-]);
+const disallowedNodes = new Set<string>(['SwitchStatement', 'IfStatement']);
 
 type AcornNode = acorn.Node & {
   [key: string]: unknown;
@@ -247,7 +244,13 @@ class BytebeatValidator {
       if (!(node as any).computed && property?.type === 'Identifier') {
         const propName = property.name;
         if (['constructor', 'prototype', '__proto__'].includes(propName)) {
-          context.warnings.push(`Potentially dangerous property access: ${propName}`);
+          const message = `Dangerous property access: ${propName}`;
+          context.errors.push(message);
+          context.issues.push({
+            message,
+            start: node.start,
+            end: node.end,
+          });
         }
       }
       // Only walk the object, not the property (for non-computed access)
