@@ -276,10 +276,15 @@ export default function CreatePage() {
     setIsDraft(next.isDraft);
   };
 
+  const weeklyTagRegex = currentWeekNumber !== null
+    ? new RegExp(`(^|\\s)#week${currentWeekNumber}(?!\\w)`)
+    : null;
+
   const isWeeklyParticipation =
     currentWeekNumber !== null &&
     !isDraft &&
-    new RegExp(`(^|\\s)#week${currentWeekNumber}(?!\\w)`).test(description);
+    weeklyTagRegex !== null &&
+    (weeklyTagRegex.test(description) || weeklyTagRegex.test(title));
 
   const addWeekTag = () => {
     setDescription(
