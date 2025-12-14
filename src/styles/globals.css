@@ -678,9 +678,11 @@ input[type='range']:focus::-moz-range-thumb {
   text-align: center;
 }
 
+.link,
 a {
   text-decoration: none;
   color: var(--accent-color);
+  cursor: pointer;
 }
 
 nav {
@@ -999,6 +1001,10 @@ main > section {
   border: 1px solid var(--chip-border-color);
   background: var(--chip-background-color);
   color: var(--text-color);
+}
+
+.chips .weekly-tag-chip {
+  border-color: var(--accent-color);
 }
 
 .chips .top-pick-badge {

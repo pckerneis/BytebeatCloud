@@ -1,5 +1,10 @@
 import { test, expect } from '@playwright/test';
-import { ensureTestUser, clearProfilesTable, ensureTestUserProfile } from './utils/supabaseAdmin';
+import {
+  ensureTestUser,
+  clearProfilesTable,
+  ensureTestUserProfile,
+  supabaseAdmin,
+} from './utils/supabaseAdmin';
 import { clearSupabaseSession, signInAndInjectSession } from './utils/auth';
 
 const TEST_USER_EMAIL = 'e2e+create@example.com';
@@ -11,6 +16,24 @@ async function typeInExpressionEditor(page: import('@playwright/test').Page, tex
   const editor = page.locator('.expression-input .cm-content');
   await editor.click();
   await page.keyboard.type(text);
+}
+
+async function seedActiveWeeklyChallenge(params: { weekNumber: number; theme: string }) {
+  const now = new Date();
+  const startsAt = new Date(now.getTime() - 60 * 60 * 1000).toISOString();
+  const endsAt = new Date(now.getTime() + 60 * 60 * 1000).toISOString();
+
+  await supabaseAdmin.from('weekly_challenges').delete().not('id', 'is', null);
+
+  const { error } = await supabaseAdmin.from('weekly_challenges').insert({
+    week_number: params.weekNumber,
+    theme: params.theme,
+    tag: `week${params.weekNumber}`,
+    starts_at: startsAt,
+    ends_at: endsAt,
+  });
+
+  expect(error).toBeNull();
 }
 
 test.beforeAll(async () => {
@@ -92,6 +115,50 @@ test.describe('Create page - authenticated', () => {
 
     await descriptionField.fill('This is a test description');
     await expect(descriptionField).toHaveValue('This is a test description');
+  });
+
+  test('weekly participation banner matches an exact #weekN token', async ({ page }) => {
+    await seedActiveWeeklyChallenge({ weekNumber: 1, theme: 'Test Theme' });
+    await page.goto('/create');
+
+    await expect(page.getByText('This week\'s theme is "Test Theme".')).toBeVisible();
+
+    const descriptionField = page.getByPlaceholder('Add an optional description');
+    await descriptionField.fill('Participating!\n#week1');
+
+    await expect(
+      page.getByText('You are about to submit a participation for the #week1 challenge'),
+    ).toBeVisible();
+  });
+
+  test('weekly participation banner does not match #week1a', async ({ page }) => {
+    await seedActiveWeeklyChallenge({ weekNumber: 1, theme: 'Test Theme' });
+    await page.goto('/create');
+
+    await expect(page.getByText('This week\'s theme is "Test Theme".')).toBeVisible();
+
+    const descriptionField = page.getByPlaceholder('Add an optional description');
+    await descriptionField.fill('Not a real tag: #week1a');
+
+    await expect(
+      page.getByText('You are about to submit a participation for the #week1 challenge'),
+    ).toHaveCount(0);
+    await expect(page.getByText('Add the tag "#week1"')).toBeVisible();
+  });
+
+  test('weekly participation banner does not match a#week1', async ({ page }) => {
+    await seedActiveWeeklyChallenge({ weekNumber: 1, theme: 'Test Theme' });
+    await page.goto('/create');
+
+    await expect(page.getByText('This week\'s theme is "Test Theme".')).toBeVisible();
+
+    const descriptionField = page.getByPlaceholder('Add an optional description');
+    await descriptionField.fill('Not a real tag: a#week1');
+
+    await expect(
+      page.getByText('You are about to submit a participation for the #week1 challenge'),
+    ).toHaveCount(0);
+    await expect(page.getByText('Add the tag "#week1"')).toBeVisible();
   });
 
   test('publish button is disabled when expression is empty', async ({ page }) => {

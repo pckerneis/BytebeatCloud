@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { useBytebeatPlayer } from '../hooks/useBytebeatPlayer';
 import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
+import { useCurrentWeeklyChallenge } from '../hooks/useCurrentWeeklyChallenge';
 import { favoritePost, unfavoritePost } from '../services/favoritesClient';
 import { PostExpressionPlayer } from './PostExpressionPlayer';
 import { usePlayerStore } from '../hooks/usePlayerStore';
@@ -51,6 +52,7 @@ export function PostList({ posts, currentUserId }: PostListProps) {
   >({});
   const { user } = useSupabaseAuth();
   const router = useRouter();
+  const { tag: currentWeekTag } = useCurrentWeeklyChallenge();
   const { setPlaylist, setCurrentPostById, currentPost, updateFavoriteStateForPost } =
     usePlayerStore();
   const [favoritePending, setFavoritePending] = useState<Record<string, boolean>>({});
@@ -238,11 +240,17 @@ export function PostList({ posts, currentUserId }: PostListProps) {
                 {lengthCategory && <span className="chip length-chip">{lengthCategory}</span>}
                 {sortedTags &&
                   sortedTags.length > 0 &&
-                  sortedTags.map((tag) => (
-                    <Link key={tag} href={`/tags/${tag}`} className="chip tag-chip">
-                      #{tag}
-                    </Link>
-                  ))}
+                  sortedTags.map((tag) => {
+                    const isCurrentWeekTag = Boolean(currentWeekTag && tag === currentWeekTag);
+                    const href = isCurrentWeekTag ? '/explore?tab=weekly' : `/tags/${tag}`;
+                    const className = `chip tag-chip${isCurrentWeekTag ? ' weekly-tag-chip' : ''}`;
+
+                    return (
+                      <Link key={tag} href={href} className={className}>
+                        #{tag}
+                      </Link>
+                    );
+                  })}
                 <span className="created" title={createdTitle}>
                   {created}
                 </span>
