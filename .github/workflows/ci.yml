@@ -84,7 +84,7 @@ jobs:
       - name: Run E2E tests
         env:
           CI: true
-        run: npm run test:e2e -- "${{ matrix.spec }}" --workers=1
+        run: npm run test:e2e -- ${{ matrix.spec }} --workers=1
       - name: Stop Supabase
         if: always()
         run: |
