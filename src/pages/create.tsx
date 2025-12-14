@@ -315,7 +315,7 @@ export default function CreatePage() {
           </div>
         )}
 
-        {isWeeklyParticipation ? (
+        {user && isWeeklyParticipation && (
           <div className="info-panel">
             <div>
               You are about to submit a participation for the{' '}
@@ -326,7 +326,9 @@ export default function CreatePage() {
             </div>
             <div>This week&#39;s theme is &#34;{currentTheme}&#34;.</div>
           </div>
-        ) : (
+        )}
+
+        {user && !isWeeklyParticipation && (
           currentTheme && (
             <div className="info-panel">
               <span>This week&#39;s theme is &#34;{currentTheme}&#34;.</span>
