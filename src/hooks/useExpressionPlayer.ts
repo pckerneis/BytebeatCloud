@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import { ModeOption } from '../model/expression';
 import { validateExpression, type ValidationIssue } from '../utils/expression-validator';
 import { setPreviewSource } from './previewSource';
+import { DEBOUNCE_CODE_MS } from '../constants';
 
 interface UseExpressionPlayerOptions {
   expression: string;
@@ -41,19 +42,19 @@ export function useExpressionPlayer({
   const validationTimeoutRef = useRef<number | null>(null);
 
   const handleExpressionChange = (value: string) => {
-    setExpression(value);
-
-    const trimmed = value.trim();
-    if (!trimmed) {
-      setValidationIssue(null);
-      return;
-    }
-
     if (validationTimeoutRef.current !== null) {
       window.clearTimeout(validationTimeoutRef.current);
     }
 
     validationTimeoutRef.current = window.setTimeout(() => {
+      setExpression(value);
+
+      const trimmed = value.trim();
+      if (!trimmed) {
+        setValidationIssue(null);
+        return;
+      }
+
       const result = validateExpression(value);
       setValidationIssue(result.valid ? null : result.issues[0] ?? null);
 
@@ -66,7 +67,7 @@ export function useExpressionPlayer({
       } else {
         setPreviewSource(null);
       }
-    }, 200);
+    }, DEBOUNCE_CODE_MS);
   };
 
   const handlePlayClick = () => {
