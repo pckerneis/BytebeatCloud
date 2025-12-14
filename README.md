@@ -24,7 +24,7 @@ The audio engine and expression interpreter uses Javascript. this makes this app
 There are a few differences with other web implementations:
 
 - Length is limited to 4096 characters.
-- Only a subset of JS is allowed. You cannot use `for`, `if`, `while`, `switch`, `var`, `let`, `const`... ternary operations and implicit declarations with assignment are fine though.
+- Only a subset of JS is allowed. You cannot use `if`, `var`, `let`, `const`... ternary operations and implicit declarations with assignment are fine though.
 
 ## Features
 
