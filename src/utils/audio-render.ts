@@ -3,10 +3,10 @@ import { ModeOption } from '../model/expression';
 const mathParams = Object.getOwnPropertyNames(Math);
 const mathValues = mathParams.map((k) => Math[k as keyof Math]);
 
-export function createExpressionFunction(expression: string, sr: number): (t: number) => number {
+export function createExpressionFunction(expression: string, sr: number): (t: number) => number | [number, number] {
   const params = [...mathParams, 'int', 'window', 'SR', 't'];
   const values = [...mathValues, Math.floor, globalThis, sr];
-  return new Function(...params, `return 0,\n${expression || 0};`).bind(globalThis, ...values) as (t: number) => number;
+  return new Function(...params, `return 0,\n${expression || 0};`).bind(globalThis, ...values) as (t: number) => number | [number, number];
 }
 
 export interface RenderAudioOptions {
@@ -18,7 +18,12 @@ export interface RenderAudioOptions {
   fadeOutSeconds?: number; // seconds
 }
 
-export function renderExpressionToSamples(options: RenderAudioOptions): Float32Array {
+export interface StereoSamples {
+  left: Float32Array;
+  right: Float32Array;
+}
+
+export function renderExpressionToSamples(options: RenderAudioOptions): StereoSamples {
   const { expression, mode, sampleRate, duration, fadeInSeconds = 0, fadeOutSeconds = 0 } = options;
 
   const fn = createExpressionFunction(expression, sampleRate);
@@ -26,18 +31,37 @@ export function renderExpressionToSamples(options: RenderAudioOptions): Float32A
   const fadeInSamples = Math.floor(sampleRate * fadeInSeconds);
   const fadeOutSamples = Math.floor(sampleRate * fadeOutSeconds);
 
-  const samples = new Float32Array(totalSamples);
+  const left = new Float32Array(totalSamples);
+  const right = new Float32Array(totalSamples);
 
   if (mode === ModeOption.Float) {
     for (let i = 0; i < totalSamples; i++) {
-      const v = Number(fn(i)) || 0;
-      samples[i] = Math.max(-1, Math.min(1, v));
+      const result = fn(i);
+      if (Array.isArray(result)) {
+        left[i] = Math.max(-1, Math.min(1, Number(result[0]) || 0));
+        right[i] = Math.max(-1, Math.min(1, Number(result[1]) || 0));
+      } else {
+        const v = Math.max(-1, Math.min(1, Number(result) || 0));
+        left[i] = v;
+        right[i] = v;
+      }
     }
   } else {
     for (let i = 0; i < totalSamples; i++) {
-      const raw = fn(i) | 0;
-      const byteValue = mode === ModeOption.Uint8 ? raw & 0xff : (raw + 128) & 0xff;
-      samples[i] = (byteValue - 128) / 128;
+      const result = fn(i);
+      let rawL: number;
+      let rawR: number;
+      if (Array.isArray(result)) {
+        rawL = result[0] | 0;
+        rawR = result[1] | 0;
+      } else {
+        rawL = result | 0;
+        rawR = rawL;
+      }
+      const byteL = mode === ModeOption.Uint8 ? rawL & 0xff : (rawL + 128) & 0xff;
+      const byteR = mode === ModeOption.Uint8 ? rawR & 0xff : (rawR + 128) & 0xff;
+      left[i] = (byteL - 128) / 128;
+      right[i] = (byteR - 128) / 128;
     }
   }
 
@@ -57,9 +81,10 @@ export function renderExpressionToSamples(options: RenderAudioOptions): Float32A
         gain = (totalSamples - i) / fadeOutSamples;
       }
 
-      samples[i] *= gain;
+      left[i] *= gain;
+      right[i] *= gain;
     }
   }
 
-  return samples;
+  return { left, right };
 }

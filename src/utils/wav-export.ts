@@ -12,7 +12,7 @@ interface ExportOptions {
 
 export function renderToWav(options: ExportOptions): ArrayBuffer {
   const { expression, mode, sampleRate, duration, fadeIn, fadeOut } = options;
-  const samples = renderExpressionToSamples({
+  const { left, right } = renderExpressionToSamples({
     expression,
     mode,
     sampleRate,
@@ -21,11 +21,11 @@ export function renderToWav(options: ExportOptions): ArrayBuffer {
     fadeOutSeconds: fadeOut,
   });
 
-  // Convert to 16-bit PCM WAV
+  // Convert to 16-bit PCM stereo WAV
   const bytesPerSample = 2;
-  const numChannels = 1;
-  const totalSamples = samples.length;
-  const dataSize = totalSamples * bytesPerSample;
+  const numChannels = 2;
+  const totalSamples = left.length;
+  const dataSize = totalSamples * bytesPerSample * numChannels;
   const headerSize = 44;
   const buffer = new ArrayBuffer(headerSize + dataSize);
   const view = new DataView(buffer);
@@ -51,13 +51,16 @@ export function renderToWav(options: ExportOptions): ArrayBuffer {
   writeString(36, 'data');
   view.setUint32(40, dataSize, true);
 
-  // Write samples as 16-bit PCM
+  // Write samples as interleaved 16-bit PCM stereo (L, R, L, R, ...)
   let offset = 44;
   for (let i = 0; i < totalSamples; i++) {
-    const s = Math.max(-1, Math.min(1, samples[i]));
-    const val = s < 0 ? s * 0x8000 : s * 0x7fff;
-    view.setInt16(offset, val, true);
-    offset += 2;
+    const sL = Math.max(-1, Math.min(1, left[i]));
+    const sR = Math.max(-1, Math.min(1, right[i]));
+    const valL = sL < 0 ? sL * 0x8000 : sL * 0x7fff;
+    const valR = sR < 0 ? sR * 0x8000 : sR * 0x7fff;
+    view.setInt16(offset, valL, true);
+    view.setInt16(offset + 2, valR, true);
+    offset += 4;
   }
 
   return buffer;

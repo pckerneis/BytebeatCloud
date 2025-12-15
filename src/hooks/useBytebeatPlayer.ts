@@ -88,7 +88,9 @@ async function ensureContextAndNodeBase() {
   }
 
   if (!workletNode && audioContext) {
-    workletNode = new AudioWorkletNode(audioContext, 'bytebeat-processor');
+    workletNode = new AudioWorkletNode(audioContext, 'bytebeat-processor', {
+      outputChannelCount: [2],
+    });
   }
 
   if (!globalGainNode && audioContext) {

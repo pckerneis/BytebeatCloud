@@ -57,7 +57,7 @@ function getVideoDimensions(orientation: Orientation, resolution: Resolution): D
 
 // Audio rendering is handled by renderExpressionToSamples in audio-render.ts
 
-function resampleAudio(
+function resampleChannel(
   samples: Float32Array,
   sourceSampleRate: number,
   targetSampleRate: number,
@@ -79,6 +79,23 @@ function resampleAudio(
   }
 
   return resampled;
+}
+
+interface StereoResampled {
+  left: Float32Array;
+  right: Float32Array;
+}
+
+function resampleStereo(
+  left: Float32Array,
+  right: Float32Array,
+  sourceSampleRate: number,
+  targetSampleRate: number,
+): StereoResampled {
+  return {
+    left: resampleChannel(left, sourceSampleRate, targetSampleRate),
+    right: resampleChannel(right, sourceSampleRate, targetSampleRate),
+  };
 }
 
 // Draw code with word wrapping (no syntax highlighting)
@@ -349,15 +366,16 @@ function drawWaveform(
   ctx.fill();
 }
 
-// Create an AudioBuffer from Float32Array samples
-function createAudioBuffer(
+// Create a stereo AudioBuffer from Float32Array samples
+function createStereoAudioBuffer(
   audioContext: AudioContext,
-  samples: Float32Array,
+  left: Float32Array,
+  right: Float32Array,
   sampleRate: number,
 ): AudioBuffer {
-  const audioBuffer = audioContext.createBuffer(1, samples.length, sampleRate);
-  const channelData = audioBuffer.getChannelData(0);
-  channelData.set(samples);
+  const audioBuffer = audioContext.createBuffer(2, left.length, sampleRate);
+  audioBuffer.getChannelData(0).set(left);
+  audioBuffer.getChannelData(1).set(right);
   return audioBuffer;
 }
 
@@ -395,7 +413,7 @@ async function exportVideoWithMediabunny(options: VideoExportOptions): Promise<B
 
   // Generate audio samples at bytebeat sample rate
   report('Generating audio...', 5);
-  const bytebeatSamples = renderExpressionToSamples({
+  const { left: bytebeatLeft, right: bytebeatRight } = renderExpressionToSamples({
     expression,
     mode,
     sampleRate,
@@ -406,7 +424,7 @@ async function exportVideoWithMediabunny(options: VideoExportOptions): Promise<B
 
   // Resample to standard audio sample rate for encoding
   report('Resampling audio...', 8);
-  const audioSamples = resampleAudio(bytebeatSamples, sampleRate, AUDIO_SAMPLE_RATE);
+  const { left: audioLeft, right: audioRight } = resampleStereo(bytebeatLeft, bytebeatRight, sampleRate, AUDIO_SAMPLE_RATE);
 
   // Create canvas for video frames
   const canvas = document.createElement('canvas');
@@ -444,10 +462,11 @@ async function exportVideoWithMediabunny(options: VideoExportOptions): Promise<B
 
   await output.start();
 
-  // Create AudioBuffer for audio source
-  const offlineCtx = new OfflineAudioContext(1, audioSamples.length, AUDIO_SAMPLE_RATE);
-  const audioBuffer = offlineCtx.createBuffer(1, audioSamples.length, AUDIO_SAMPLE_RATE);
-  audioBuffer.getChannelData(0).set(audioSamples);
+  // Create AudioBuffer for audio source (stereo)
+  const offlineCtx = new OfflineAudioContext(2, audioLeft.length, AUDIO_SAMPLE_RATE);
+  const audioBuffer = offlineCtx.createBuffer(2, audioLeft.length, AUDIO_SAMPLE_RATE);
+  audioBuffer.getChannelData(0).set(audioLeft);
+  audioBuffer.getChannelData(1).set(audioRight);
 
   // Add audio data
   report('Adding audio...', 12);
@@ -475,12 +494,12 @@ async function exportVideoWithMediabunny(options: VideoExportOptions): Promise<B
     const currentTime = frameIndex / VIDEO_FPS;
     const frameDuration = 1 / VIDEO_FPS;
 
-    // Draw frame (only waveform changes per frame)
+    // Draw frame (only waveform changes per frame, use left channel for visualization)
     drawWaveform(
       ctx,
       staticFrame,
       width,
-      bytebeatSamples,
+      bytebeatLeft,
       currentTime,
       sampleRate,
       resolvedAccentColor,
@@ -550,7 +569,7 @@ async function exportVideoWithMediaRecorder(options: VideoExportOptions): Promis
 
   // Generate audio samples at bytebeat sample rate
   report('Generating audio...', 5);
-  const bytebeatSamples = renderExpressionToSamples({
+  const { left: bytebeatLeft, right: bytebeatRight } = renderExpressionToSamples({
     expression,
     mode,
     sampleRate,
@@ -561,7 +580,7 @@ async function exportVideoWithMediaRecorder(options: VideoExportOptions): Promis
 
   // Resample to standard audio sample rate
   report('Resampling audio...', 10);
-  const audioSamples = resampleAudio(bytebeatSamples, sampleRate, AUDIO_SAMPLE_RATE);
+  const { left: audioLeft, right: audioRight } = resampleStereo(bytebeatLeft, bytebeatRight, sampleRate, AUDIO_SAMPLE_RATE);
 
   // Create canvas for video frames
   const canvas = document.createElement('canvas');
@@ -569,10 +588,10 @@ async function exportVideoWithMediaRecorder(options: VideoExportOptions): Promis
   canvas.height = height;
   const ctx = canvas.getContext('2d')!;
 
-  // Create audio context and buffer
+  // Create audio context and buffer (stereo)
   report('Preparing audio...', 15);
   const audioContext = new AudioContext({ sampleRate: AUDIO_SAMPLE_RATE });
-  const audioBuffer = createAudioBuffer(audioContext, audioSamples, AUDIO_SAMPLE_RATE);
+  const audioBuffer = createStereoAudioBuffer(audioContext, audioLeft, audioRight, AUDIO_SAMPLE_RATE);
 
   // Create a MediaStreamDestination for audio
   const audioDestination = audioContext.createMediaStreamDestination();
@@ -657,12 +676,12 @@ async function exportVideoWithMediaRecorder(options: VideoExportOptions): Promis
 
         const currentTime = frameIndex / VIDEO_FPS;
 
-        // Draw frame (only waveform changes per frame)
+        // Draw frame (only waveform changes per frame, use left channel for visualization)
         drawWaveform(
           ctx,
           staticFrame,
           width,
-          bytebeatSamples,
+          bytebeatLeft,
           currentTime,
           sampleRate,
           resolvedAccentColor,
