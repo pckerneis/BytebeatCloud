@@ -56,8 +56,8 @@ class BytebeatProcessor extends AudioWorkletProcessor {
             this._targetRate = targetSampleRate;
           }
           const sr = this._targetRate;
-          const params = [...mathParams, 'int', 'window', 'SR', 't'];
-          const values = [...mathValues, Math.floor, globalThis, sr];
+          const params = [...mathParams, 'int', 'window', 'SR', 'TAU', 't'];
+          const values = [...mathValues, Math.floor, globalThis, sr, Math.PI * 2];
           this._fn = new Function(...params, `return 0,\n${expression || 0};`).bind(globalThis, ...values);
           if (this._levelSampleCount >= this._levelTargetSamples) {
             const rms = Math.sqrt(this._levelSumSquares / this._levelSampleCount) || 0;
