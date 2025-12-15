@@ -76,9 +76,10 @@ class BytebeatProcessor extends AudioWorkletProcessor {
           });
         }
       } else if (type === 'reset') {
-        // Explicit reset from main thread (e.g. on Play)
         this._t = 0;
         this._phase = 0;
+        this._fn = () => 0;
+        this._lastGoodFn = this._fn;
       }
     };
   }
@@ -93,9 +94,8 @@ class BytebeatProcessor extends AudioWorkletProcessor {
       let t = this._t | 0;
       let phase = this._phase;
       let lastRaw = this._lastRaw;
-      const ratio = this._targetRate / sampleRate; // target samples per device sample
+      const ratio = this._targetRate / sampleRate;
 
-      // Ensure fn(0) is called on first sample for t||(init) patterns
       if (t === 0 && phase === 0) {
         if (this._mode === 'float') {
           const v = Number(fn(0)) || 0;
@@ -143,8 +143,6 @@ class BytebeatProcessor extends AudioWorkletProcessor {
       this._phase = phase;
       this._lastRaw = lastRaw;
 
-      // If we reach here without throwing, remember this function as the
-      // last known-good implementation.
       if (this._fn) {
         this._lastGoodFn = this._fn;
       }
