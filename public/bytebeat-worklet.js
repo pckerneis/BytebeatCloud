@@ -54,7 +54,6 @@ class BytebeatProcessor extends AudioWorkletProcessor {
           if (hasTarget) {
             this._targetRate = targetSampleRate;
           }
-          deleteUserGlobals();
           const sr = this._targetRate;
           const params = [...mathParams, 'int', 'window', 'SR', 't'];
           const values = [...mathValues, Math.floor, globalThis, sr];
@@ -80,6 +79,7 @@ class BytebeatProcessor extends AudioWorkletProcessor {
         this._phase = 0;
         this._fn = () => 0;
         this._lastGoodFn = this._fn;
+        deleteUserGlobals();
       }
     };
   }

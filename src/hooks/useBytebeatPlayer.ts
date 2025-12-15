@@ -288,7 +288,6 @@ export function useBytebeatPlayer(options?: { enableVisualizer?: boolean }): Byt
           setLastError(null);
           const sr = Number.isFinite(sampleRate) && sampleRate > 0 ? sampleRate : 8000;
           
-          node.port.postMessage({ type: 'reset' });
           node.port.postMessage({
             type: 'setExpression',
             expression,
@@ -303,6 +302,8 @@ export function useBytebeatPlayer(options?: { enableVisualizer?: boolean }): Byt
           if (ctx.state === 'running') {
             await ctx.suspend();
           }
+
+          node.port.postMessage({type: 'reset'});
           setGlobalIsPlaying(false);
         }
       } finally {
@@ -347,7 +348,6 @@ export function useBytebeatPlayer(options?: { enableVisualizer?: boolean }): Byt
       const node = workletNode;
 
       if (node) {
-        // Tell the worklet to reset its internal state.
         try {
           node.port.postMessage({ type: 'reset' });
         } catch {
