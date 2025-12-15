@@ -424,7 +424,12 @@ async function exportVideoWithMediabunny(options: VideoExportOptions): Promise<B
 
   // Resample to standard audio sample rate for encoding
   report('Resampling audio...', 8);
-  const { left: audioLeft, right: audioRight } = resampleStereo(bytebeatLeft, bytebeatRight, sampleRate, AUDIO_SAMPLE_RATE);
+  const { left: audioLeft, right: audioRight } = resampleStereo(
+    bytebeatLeft,
+    bytebeatRight,
+    sampleRate,
+    AUDIO_SAMPLE_RATE,
+  );
 
   // Create canvas for video frames
   const canvas = document.createElement('canvas');
@@ -580,7 +585,12 @@ async function exportVideoWithMediaRecorder(options: VideoExportOptions): Promis
 
   // Resample to standard audio sample rate
   report('Resampling audio...', 10);
-  const { left: audioLeft, right: audioRight } = resampleStereo(bytebeatLeft, bytebeatRight, sampleRate, AUDIO_SAMPLE_RATE);
+  const { left: audioLeft, right: audioRight } = resampleStereo(
+    bytebeatLeft,
+    bytebeatRight,
+    sampleRate,
+    AUDIO_SAMPLE_RATE,
+  );
 
   // Create canvas for video frames
   const canvas = document.createElement('canvas');
@@ -591,7 +601,12 @@ async function exportVideoWithMediaRecorder(options: VideoExportOptions): Promis
   // Create audio context and buffer (stereo)
   report('Preparing audio...', 15);
   const audioContext = new AudioContext({ sampleRate: AUDIO_SAMPLE_RATE });
-  const audioBuffer = createStereoAudioBuffer(audioContext, audioLeft, audioRight, AUDIO_SAMPLE_RATE);
+  const audioBuffer = createStereoAudioBuffer(
+    audioContext,
+    audioLeft,
+    audioRight,
+    AUDIO_SAMPLE_RATE,
+  );
 
   // Create a MediaStreamDestination for audio
   const audioDestination = audioContext.createMediaStreamDestination();
@@ -637,7 +652,7 @@ async function exportVideoWithMediaRecorder(options: VideoExportOptions): Promis
       const blob = new Blob(chunks, { type: mimeType });
       resolve(blob);
     };
-    mediaRecorder.onerror = (e) => {
+    mediaRecorder.onerror = () => {
       reject(new Error('Recording failed'));
     };
   });

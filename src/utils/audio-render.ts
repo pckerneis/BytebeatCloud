@@ -3,10 +3,15 @@ import { ModeOption } from '../model/expression';
 const mathParams = Object.getOwnPropertyNames(Math);
 const mathValues = mathParams.map((k) => Math[k as keyof Math]);
 
-export function createExpressionFunction(expression: string, sr: number): (t: number) => number | [number, number] {
+export function createExpressionFunction(
+  expression: string,
+  sr: number,
+): (t: number) => number | [number, number] {
   const params = [...mathParams, 'int', 'window', 'SR', 'TAU', 't'];
   const values = [...mathValues, Math.floor, globalThis, sr, Math.PI * 2];
-  return new Function(...params, `return 0,\n${expression || 0};`).bind(globalThis, ...values) as (t: number) => number | [number, number];
+  return new Function(...params, `return 0,\n${expression || 0};`).bind(globalThis, ...values) as (
+    t: number,
+  ) => number | [number, number];
 }
 
 export interface RenderAudioOptions {

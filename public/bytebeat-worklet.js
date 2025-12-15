@@ -1,5 +1,5 @@
 const mathParams = Object.getOwnPropertyNames(Math);
-const mathValues = mathParams.map(k => Math[k]);
+const mathValues = mathParams.map((k) => Math[k]);
 
 // Whitelist of built-in globalThis properties captured at module init
 const builtinGlobals = new Set(Object.getOwnPropertyNames(globalThis));
@@ -37,7 +37,7 @@ class BytebeatProcessor extends AudioWorkletProcessor {
     this._phase = 0;
     this._lastRawL = 0;
     this._lastRawR = 0;
-    
+
     // For lightweight RMS metering
     this._levelSumSquares = 0;
     this._levelSampleCount = 0;
@@ -58,7 +58,10 @@ class BytebeatProcessor extends AudioWorkletProcessor {
           const sr = this._targetRate;
           const params = [...mathParams, 'int', 'window', 'SR', 'TAU', 't'];
           const values = [...mathValues, Math.floor, globalThis, sr, Math.PI * 2];
-          this._fn = new Function(...params, `return 0,\n${expression || 0};`).bind(globalThis, ...values);
+          this._fn = new Function(...params, `return 0,\n${expression || 0};`).bind(
+            globalThis,
+            ...values,
+          );
           if (this._levelSampleCount >= this._levelTargetSamples) {
             const rms = Math.sqrt(this._levelSumSquares / this._levelSampleCount) || 0;
             this.port.postMessage({ type: 'level', rms });

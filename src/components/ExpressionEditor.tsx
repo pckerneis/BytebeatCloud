@@ -103,13 +103,16 @@ export const ReadonlyExpression = memo(function ReadonlyExpression({
   const uiThemeId = useThemeId();
   const codeMirrorTheme = getUiTheme(uiThemeId).codeMirrorTheme;
 
-  const handleCopy = useCallback((event: React.MouseEvent) => {
-    event.stopPropagation();
-    navigator.clipboard.writeText(expression).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 3000);
-    });
-  }, [expression]);
+  const handleCopy = useCallback(
+    (event: React.MouseEvent) => {
+      event.stopPropagation();
+      navigator.clipboard.writeText(expression).then(() => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 3000);
+      });
+    },
+    [expression],
+  );
 
   return (
     <div style={{ position: 'relative', width: '100%' }}>
