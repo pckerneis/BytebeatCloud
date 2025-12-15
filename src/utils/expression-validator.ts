@@ -212,21 +212,6 @@ class BytebeatValidator {
       return; // Don't walk children again
     }
 
-    // Check identifier usage
-    if (node.type === 'Identifier' && !this.isInDeclarationPosition(node)) {
-      const isDeclared = context.scope.some((scope) => scope.has((node as any).name));
-
-      if (!isDeclared) {
-        const message = `Undefined variable: '${(node as any).name}'`;
-        context.errors.push(message);
-        context.issues.push({
-          message,
-          start: (node as any).start ?? 0,
-          end: (node as any).end ?? (node as any).start ?? 0,
-        });
-      }
-    }
-
     // Check for dangerous patterns
     if (node.type === 'CallExpression') {
       const callee = (node as any).callee;
@@ -253,8 +238,7 @@ class BytebeatValidator {
           });
         }
       }
-      // Only walk the object, not the property (for non-computed access)
-      // This prevents property names like 'map' from being flagged as undefined
+
       this.walkNode((node as any).object, context);
       if ((node as any).computed) {
         this.walkNode((node as any).property, context);
