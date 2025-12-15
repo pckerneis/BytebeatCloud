@@ -88,7 +88,9 @@ async function ensureContextAndNodeBase() {
   }
 
   if (!workletNode && audioContext) {
-    workletNode = new AudioWorkletNode(audioContext, 'bytebeat-processor');
+    workletNode = new AudioWorkletNode(audioContext, 'bytebeat-processor', {
+      outputChannelCount: [2],
+    });
   }
 
   if (!globalGainNode && audioContext) {
@@ -287,13 +289,13 @@ export function useBytebeatPlayer(options?: { enableVisualizer?: boolean }): Byt
 
           setLastError(null);
           const sr = Number.isFinite(sampleRate) && sampleRate > 0 ? sampleRate : 8000;
+
           node.port.postMessage({
             type: 'setExpression',
             expression,
             sampleRate: sr,
             mode,
           });
-          node.port.postMessage({ type: 'reset' });
           if (ctx.state === 'suspended') {
             await ctx.resume();
           }
@@ -302,6 +304,8 @@ export function useBytebeatPlayer(options?: { enableVisualizer?: boolean }): Byt
           if (ctx.state === 'running') {
             await ctx.suspend();
           }
+
+          node.port.postMessage({ type: 'reset' });
           setGlobalIsPlaying(false);
         }
       } finally {
@@ -346,7 +350,6 @@ export function useBytebeatPlayer(options?: { enableVisualizer?: boolean }): Byt
       const node = workletNode;
 
       if (node) {
-        // Tell the worklet to reset its internal state.
         try {
           node.port.postMessage({ type: 'reset' });
         } catch {

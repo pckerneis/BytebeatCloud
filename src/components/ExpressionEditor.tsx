@@ -7,7 +7,7 @@ import { insertNewline } from '@codemirror/commands';
 import { Prec } from '@codemirror/state';
 import { validateExpression, ValidationIssue } from '../utils/expression-validator';
 import { minimizeExpression } from '../utils/minimize-expression';
-import { memo, useMemo } from 'react';
+import { memo, useMemo, useState, useCallback } from 'react';
 import { getUiTheme } from '../theme/themes';
 import { useThemeId } from '../theme/ThemeContext';
 
@@ -98,20 +98,56 @@ export const ReadonlyExpression = memo(function ReadonlyExpression({
   expression,
 }: ReadonlyExpressionProps) {
   const minimized = useMemo(() => minimizeExpression(expression), [expression]);
+  const [copied, setCopied] = useState(false);
 
   const uiThemeId = useThemeId();
   const codeMirrorTheme = getUiTheme(uiThemeId).codeMirrorTheme;
 
+  const handleCopy = useCallback(
+    (event: React.MouseEvent) => {
+      event.stopPropagation();
+      navigator.clipboard.writeText(expression).then(() => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 3000);
+      });
+    },
+    [expression],
+  );
+
   return (
-    <CodeMirror
-      value={minimized}
-      height="auto"
-      editable={false}
-      extensions={readonlyExtensions}
-      basicSetup={readonlyBasicSetup}
-      theme={codeMirrorTheme}
-      onChange={() => {}}
-    />
+    <div style={{ position: 'relative', width: '100%' }}>
+      <CodeMirror
+        value={minimized}
+        height="auto"
+        editable={false}
+        extensions={readonlyExtensions}
+        basicSetup={readonlyBasicSetup}
+        theme={codeMirrorTheme}
+        onChange={() => {}}
+      />
+      <button
+        onClick={handleCopy}
+        style={{
+          position: 'absolute',
+          top: '4px',
+          right: '4px',
+          padding: '4px 8px',
+          fontSize: '12px',
+          background: 'rgba(0, 0, 0, 0.6)',
+          color: '#fff',
+          border: 'none',
+          borderRadius: '4px',
+          cursor: 'pointer',
+          opacity: 0.8,
+          transition: 'opacity 0.2s',
+          zIndex: 10,
+        }}
+        onMouseEnter={(e) => (e.currentTarget.style.opacity = '1')}
+        onMouseLeave={(e) => (e.currentTarget.style.opacity = '0.8')}
+      >
+        {copied ? 'Copied to clipboard' : 'Copy'}
+      </button>
+    </div>
   );
 });
 

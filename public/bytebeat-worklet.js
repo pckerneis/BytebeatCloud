@@ -1,48 +1,16 @@
-const expressionApi = `
-const E = Math.E;
-const LN10 = Math.LN10;
-const LN2 = Math.LN2;
-const LOG2E = Math.LOG2E;
-const PI = Math.PI;
-const SQRT1_2 = Math.SQRT1_2;
-const SQRT2 = Math.SQRT2;
-const TAU = Math.PI * 2;
-const abs = Math.abs;
-const acos = Math.acos;
-const acosh = Math.acosh;
-const asin = Math.asin;
-const asinh = Math.asinh;
-const atan = Math.atan;
-const atanh = Math.atanh;
-const cbrt = Math.cbrt;
-const ceil = Math.ceil;
-const clz32 = Math.clz32;
-const cos = Math.cos;
-const cosh = Math.cosh;
-const exp = Math.exp;
-const expm1 = Math.expm1;
-const floor = Math.floor;
-const fround = Math.fround;
-const hypot = Math.hypot;
-const imul = Math.imul;
-const log = Math.log;
-const log10 = Math.log10;
-const log1p = Math.log1p;
-const log2 = Math.log2;
-const max = Math.max;
-const min = Math.min;
-const pow = Math.pow;
-const random = Math.random;
-const round = Math.round;
-const sign = Math.sign;
-const sin = Math.sin;
-const sinh = Math.sinh;
-const sqrt = Math.sqrt;
-const tan = Math.tan;
-const tanh = Math.tanh;
-const trunc = Math.trunc;
-const SR = sr;
-`;
+const mathParams = Object.getOwnPropertyNames(Math);
+const mathValues = mathParams.map((k) => Math[k]);
+
+// Whitelist of built-in globalThis properties captured at module init
+const builtinGlobals = new Set(Object.getOwnPropertyNames(globalThis));
+
+function deleteUserGlobals() {
+  for (const key of Object.getOwnPropertyNames(globalThis)) {
+    if (!builtinGlobals.has(key)) {
+      delete globalThis[key];
+    }
+  }
+}
 
 function checkMode(mode) {
   switch (mode) {
@@ -67,7 +35,8 @@ class BytebeatProcessor extends AudioWorkletProcessor {
     this._mode = 'uint8';
     this._targetRate = 8000;
     this._phase = 0;
-    this._lastRaw = 0;
+    this._lastRawL = 0;
+    this._lastRawR = 0;
 
     // For lightweight RMS metering
     this._levelSumSquares = 0;
@@ -78,13 +47,7 @@ class BytebeatProcessor extends AudioWorkletProcessor {
       const { type, expression, sampleRate: targetSampleRate, mode } = event.data || {};
       if (type === 'setExpression' && typeof expression === 'string') {
         try {
-          const fnBody = `
-${expressionApi}
-return Number((${expression})) || 0;
-`;
-          // Install the newly compiled function; it will be promoted to
-          // _lastGoodFn only after a process() block runs without error.
-          this._fn = new Function('t', 'sr', fnBody);
+          // Update target rate first so SR gets the right value
           const hasTarget =
             typeof targetSampleRate === 'number' &&
             isFinite(targetSampleRate) &&
@@ -92,6 +55,13 @@ return Number((${expression})) || 0;
           if (hasTarget) {
             this._targetRate = targetSampleRate;
           }
+          const sr = this._targetRate;
+          const params = [...mathParams, 'int', 'window', 'SR', 'TAU', 't'];
+          const values = [...mathValues, Math.floor, globalThis, sr, Math.PI * 2];
+          this._fn = new Function(...params, `return 0,\n${expression || 0};`).bind(
+            globalThis,
+            ...values,
+          );
           if (this._levelSampleCount >= this._levelTargetSamples) {
             const rms = Math.sqrt(this._levelSumSquares / this._levelSampleCount) || 0;
             this.port.postMessage({ type: 'level', rms });
@@ -109,9 +79,11 @@ return Number((${expression})) || 0;
           });
         }
       } else if (type === 'reset') {
-        // Explicit reset from main thread (e.g. on Play)
         this._t = 0;
         this._phase = 0;
+        this._fn = () => 0;
+        this._lastGoodFn = this._fn;
+        deleteUserGlobals();
       }
     };
   }
@@ -120,66 +92,106 @@ return Number((${expression})) || 0;
     const output = outputs[0];
     if (!output || output.length === 0) return true;
 
-    const channel = output[0];
+    const channelL = output[0];
+    const channelR = output[1] || channelL;
+    const stereo = output.length > 1;
     const fn = this._fn;
     try {
       let t = this._t | 0;
       let phase = this._phase;
-      let lastRaw = this._lastRaw;
-      const ratio = this._targetRate / sampleRate; // target samples per device sample
+      let lastRawL = this._lastRawL;
+      let lastRawR = this._lastRawR;
+      const ratio = this._targetRate / sampleRate;
+
+      if (t === 0 && phase === 0) {
+        const result = fn(0);
+        if (this._mode === 'float') {
+          if (Array.isArray(result)) {
+            lastRawL = Math.max(-1, Math.min(1, Number(result[0]) || 0));
+            lastRawR = Math.max(-1, Math.min(1, Number(result[1]) || 0));
+          } else {
+            const v = Math.max(-1, Math.min(1, Number(result) || 0));
+            lastRawL = v;
+            lastRawR = v;
+          }
+        } else {
+          if (Array.isArray(result)) {
+            lastRawL = result[0] | 0;
+            lastRawR = result[1] | 0;
+          } else {
+            lastRawL = result | 0;
+            lastRawR = lastRawL;
+          }
+        }
+      }
 
       if (this._mode === 'float') {
-        for (let i = 0; i < channel.length; i += 1) {
+        for (let i = 0; i < channelL.length; i += 1) {
           phase += ratio;
           if (phase >= 1) {
             const steps = Math.floor(phase);
             phase -= steps;
             t += steps;
-            const v = Number(fn(t, this._targetRate)) || 0;
-            lastRaw = Math.max(-1, Math.min(1, v));
+            const result = fn(t);
+            if (Array.isArray(result)) {
+              lastRawL = Math.max(-1, Math.min(1, Number(result[0]) || 0));
+              lastRawR = Math.max(-1, Math.min(1, Number(result[1]) || 0));
+            } else {
+              const v = Math.max(-1, Math.min(1, Number(result) || 0));
+              lastRawL = v;
+              lastRawR = v;
+            }
           }
 
-          const sample = lastRaw;
-          channel[i] = sample;
-          this._levelSumSquares += sample * sample;
+          channelL[i] = lastRawL;
+          if (stereo) channelR[i] = lastRawR;
+          this._levelSumSquares += lastRawL * lastRawL;
           this._levelSampleCount += 1;
         }
       } else {
-        for (let i = 0; i < channel.length; i += 1) {
+        for (let i = 0; i < channelL.length; i += 1) {
           phase += ratio;
           if (phase >= 1) {
             const steps = Math.floor(phase);
             phase -= steps;
             t += steps;
-            lastRaw = fn(t, this._targetRate) | 0;
+            const result = fn(t);
+            if (Array.isArray(result)) {
+              lastRawL = result[0] | 0;
+              lastRawR = result[1] | 0;
+            } else {
+              lastRawL = result | 0;
+              lastRawR = lastRawL;
+            }
           }
 
-          const byteValue = this._mode === 'uint8' ? lastRaw & 0xff : (lastRaw + 128) & 0xff;
-          const sample = (byteValue - 128) / 128;
-          channel[i] = sample;
-          this._levelSumSquares += sample * sample;
+          const byteL = this._mode === 'uint8' ? lastRawL & 0xff : (lastRawL + 128) & 0xff;
+          const byteR = this._mode === 'uint8' ? lastRawR & 0xff : (lastRawR + 128) & 0xff;
+          const sampleL = (byteL - 128) / 128;
+          const sampleR = (byteR - 128) / 128;
+          channelL[i] = sampleL;
+          if (stereo) channelR[i] = sampleR;
+          this._levelSumSquares += sampleL * sampleL;
           this._levelSampleCount += 1;
         }
       }
 
       this._t = t;
       this._phase = phase;
-      this._lastRaw = lastRaw;
+      this._lastRawL = lastRawL;
+      this._lastRawR = lastRawR;
 
-      // If we reach here without throwing, remember this function as the
-      // last known-good implementation.
       if (this._fn) {
         this._lastGoodFn = this._fn;
       }
     } catch (e) {
-      // If the expression throws (e.g. ReferenceError during editing),
-      // silence this buffer but keep the last valid function and report error
-      for (let i = 0; i < channel.length; i += 1) {
-        channel[i] = 0;
+      for (let i = 0; i < channelL.length; i += 1) {
+        channelL[i] = 0;
+        if (stereo) channelR[i] = 0;
       }
       this.port.postMessage({
         type: 'runtimeError',
-        message: String(e && e.message ? e.message : e),
+        message: `Runtime error at t=${this._t}: ${String(e && e.message ? e.message : e)}`,
       });
       // Revert to last known-good function for subsequent blocks
       if (this._lastGoodFn) {
