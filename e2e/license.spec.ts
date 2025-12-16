@@ -282,7 +282,7 @@ test.describe('License behavior on post detail', () => {
         expression: 't',
         is_draft: false,
         license: 'all-rights-reserved',
-        mode: 'uint8'
+        mode: 'uint8',
       })
       .select('id')
       .single();
@@ -290,7 +290,7 @@ test.describe('License behavior on post detail', () => {
     // Sign out so we see the Fork button (not Edit)
     await clearSupabaseSession(page);
     await page.goto(`/post/${data!.id}`);
-    
+
     // Fork link should be disabled for all-rights-reserved
     await expect(page.locator('.edit-link.disabled')).toContainText('Fork');
   });
@@ -304,7 +304,7 @@ test.describe('License behavior on post detail', () => {
         expression: 't',
         is_draft: false,
         license: 'cc-by',
-        mode: 'uint8'
+        mode: 'uint8',
       })
       .select('id')
       .single();
@@ -312,7 +312,7 @@ test.describe('License behavior on post detail', () => {
     // Sign out so we see the Fork button (not Edit)
     await clearSupabaseSession(page);
     await page.goto(`/post/${data!.id}`);
-    
+
     // Fork link should be enabled (not disabled)
     const forkLink = page.locator('a.edit-link').filter({ hasText: 'Fork' });
     await expect(forkLink).toBeVisible();
@@ -328,7 +328,7 @@ test.describe('License behavior on post detail', () => {
         expression: 't',
         is_draft: false,
         license: 'cc0',
-        mode: 'uint8'
+        mode: 'uint8',
       })
       .select('id')
       .single();
@@ -336,7 +336,7 @@ test.describe('License behavior on post detail', () => {
     // Sign out so we see the Fork button (not Edit)
     await clearSupabaseSession(page);
     await page.goto(`/post/${data!.id}`);
-    
+
     // Fork link should be enabled
     const forkLink = page.locator('a.edit-link').filter({ hasText: 'Fork' });
     await expect(forkLink).toBeVisible();
@@ -352,7 +352,7 @@ test.describe('License behavior on post detail', () => {
         expression: 't',
         is_draft: false,
         license: 'cc-by-sa',
-        mode: 'uint8'
+        mode: 'uint8',
       })
       .select('id')
       .single();
@@ -360,7 +360,7 @@ test.describe('License behavior on post detail', () => {
     // Sign out so we see the Fork button (not Edit)
     await clearSupabaseSession(page);
     await page.goto(`/post/${data!.id}`);
-    
+
     // Fork link should be enabled
     const forkLink = page.locator('a.edit-link').filter({ hasText: 'Fork' });
     await expect(forkLink).toBeVisible();

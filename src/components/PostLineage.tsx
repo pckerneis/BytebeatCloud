@@ -70,7 +70,12 @@ function LineageItem({
       {node.children.length > 0 && (
         <ul className="lineage-children">
           {node.children.map((child) => (
-            <LineageItem key={child.id} node={child} depth={depth + 1} currentPostId={currentPostId} />
+            <LineageItem
+              key={child.id}
+              node={child}
+              depth={depth + 1}
+              currentPostId={currentPostId}
+            />
           ))}
         </ul>
       )}

@@ -76,13 +76,15 @@ export default function UpdateProfilePage() {
       created_at: string;
       notes: { id: string; content: string; created_at: string }[];
     }[]
-  >([]); 
+  >([]);
   const [commentReportsLoading, setCommentReportsLoading] = useState(false);
   const [commentReportsError, setCommentReportsError] = useState('');
   const [expandedCommentReport, setExpandedCommentReport] = useState<string | null>(null);
   const [newCommentReportNote, setNewCommentReportNote] = useState('');
   const [addingCommentReportNote, setAddingCommentReportNote] = useState(false);
-  const [commentReportMentionUserMap, setCommentReportMentionUserMap] = useState<Map<string, string>>(new Map());
+  const [commentReportMentionUserMap, setCommentReportMentionUserMap] = useState<
+    Map<string, string>
+  >(new Map());
 
   useEffect(() => {
     if (loadedUsername) {
@@ -110,7 +112,9 @@ export default function UpdateProfilePage() {
       setBlockedError('');
       const { data, error } = await supabase
         .from('blocked_users')
-        .select('blocked_id,created_at,blocked_profile:profiles!blocked_users_blocked_id_fkey(username)')
+        .select(
+          'blocked_id,created_at,blocked_profile:profiles!blocked_users_blocked_id_fkey(username)',
+        )
         .eq('blocker_id', (user as any).id)
         .order('created_at', { ascending: false });
       if (error) {
@@ -139,7 +143,7 @@ export default function UpdateProfilePage() {
       const { data, error } = await supabase
         .from('user_reports')
         .select(
-          'id,reported_id,reason,details,status,created_at,reported_profile:profiles!user_reports_reported_id_fkey(username),report_notes(id,content,created_at)'
+          'id,reported_id,reason,details,status,created_at,reported_profile:profiles!user_reports_reported_id_fkey(username),report_notes(id,content,created_at)',
         )
         .eq('reporter_id', (user as any).id)
         .order('created_at', { ascending: false });
@@ -178,7 +182,7 @@ export default function UpdateProfilePage() {
       const { data, error } = await supabase
         .from('post_reports')
         .select(
-          'id,post_id,reason,details,status,created_at,post:posts!post_reports_post_id_fkey(title),post_report_notes(id,content,created_at)'
+          'id,post_id,reason,details,status,created_at,post:posts!post_reports_post_id_fkey(title),post_report_notes(id,content,created_at)',
         )
         .eq('reporter_id', (user as any).id)
         .order('created_at', { ascending: false });
@@ -217,7 +221,7 @@ export default function UpdateProfilePage() {
       const { data, error } = await supabase
         .from('comment_reports')
         .select(
-          'id,comment_id,reason,details,status,created_at,comment:comments!comment_reports_comment_id_fkey(content,author:profiles!comments_author_id_fkey(username)),comment_report_notes(id,content,created_at)'
+          'id,comment_id,reason,details,status,created_at,comment:comments!comment_reports_comment_id_fkey(content,author:profiles!comments_author_id_fkey(username)),comment_report_notes(id,content,created_at)',
         )
         .eq('reporter_id', (user as any).id)
         .order('created_at', { ascending: false });
@@ -244,32 +248,32 @@ export default function UpdateProfilePage() {
       }));
       setCommentReports(rows);
 
-        // Extract mention user IDs from all comment contents and fetch usernames
-        const allMentionIds = new Set<string>();
-        for (const r of rows) {
-          if (r.comment_content) {
-            for (const uid of extractMentionUserIds(r.comment_content)) {
-              allMentionIds.add(uid);
-            }
+      // Extract mention user IDs from all comment contents and fetch usernames
+      const allMentionIds = new Set<string>();
+      for (const r of rows) {
+        if (r.comment_content) {
+          for (const uid of extractMentionUserIds(r.comment_content)) {
+            allMentionIds.add(uid);
           }
         }
-        if (allMentionIds.size > 0) {
-          const { data: profiles } = await supabase
-            .from('profiles')
-            .select('id, username')
-            .in('id', [...allMentionIds]);
-          if (profiles) {
-            const userMap = new Map<string, string>();
-            for (const p of profiles) {
-              userMap.set(p.id, p.username);
-            }
-            setCommentReportMentionUserMap(userMap);
+      }
+      if (allMentionIds.size > 0) {
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('id, username')
+          .in('id', [...allMentionIds]);
+        if (profiles) {
+          const userMap = new Map<string, string>();
+          for (const p of profiles) {
+            userMap.set(p.id, p.username);
           }
-        } else {
-          setCommentReportMentionUserMap(new Map());
+          setCommentReportMentionUserMap(userMap);
         }
+      } else {
+        setCommentReportMentionUserMap(new Map());
+      }
 
-        setCommentReportsLoading(false);
+      setCommentReportsLoading(false);
     };
     void loadCommentReports();
   }, [user]);
@@ -462,8 +466,8 @@ export default function UpdateProfilePage() {
                 { id: data.id, content: data.content, created_at: data.created_at },
               ],
             }
-          : r
-      )
+          : r,
+      ),
     );
     setNewNote('');
     setAddingNote(false);
@@ -496,8 +500,8 @@ export default function UpdateProfilePage() {
                 { id: data.id, content: data.content, created_at: data.created_at },
               ],
             }
-          : r
-      )
+          : r,
+      ),
     );
     setNewPostReportNote('');
     setAddingPostReportNote(false);
@@ -530,8 +534,8 @@ export default function UpdateProfilePage() {
                 { id: data.id, content: data.content, created_at: data.created_at },
               ],
             }
-          : r
-      )
+          : r,
+      ),
     );
     setNewCommentReportNote('');
     setAddingCommentReportNote(false);
@@ -611,29 +615,29 @@ export default function UpdateProfilePage() {
                 {blockedLoading && <p className="text-centered">Loading…</p>}
                 {!blockedLoading && blockedError && <p className="error-message">{blockedError}</p>}
                 {!blockedLoading && !blockedError && (
-              <ul className="notifications-list">
-                {blocked.map((b) => (
-                  <li key={b.blocked_id} className="notification-item">
-                    <div className="post-header">
-                      <div>
-                        <span>You blocked </span>
-                        <strong>@{b.username || 'unknown'}</strong>
-                        <span className="secondary-text" style={{ marginLeft: 8 }}>
-                          on {new Date(b.created_at).toLocaleDateString()}
-                        </span>
-                      </div>
-                      <button
-                        style={{marginTop: '5px'}}
-                        type="button"
-                        className="button secondary"
-                        onClick={() => void handleUnblock(b.blocked_id)}
-                      >
-                        Unblock
-                      </button>
-                    </div>
-                  </li>
-                ))}
-              </ul>
+                  <ul className="notifications-list">
+                    {blocked.map((b) => (
+                      <li key={b.blocked_id} className="notification-item">
+                        <div className="post-header">
+                          <div>
+                            <span>You blocked </span>
+                            <strong>@{b.username || 'unknown'}</strong>
+                            <span className="secondary-text" style={{ marginLeft: 8 }}>
+                              on {new Date(b.created_at).toLocaleDateString()}
+                            </span>
+                          </div>
+                          <button
+                            style={{ marginTop: '5px' }}
+                            type="button"
+                            className="button secondary"
+                            onClick={() => void handleUnblock(b.blocked_id)}
+                          >
+                            Unblock
+                          </button>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
                 )}
               </>
             )}
@@ -641,98 +645,110 @@ export default function UpdateProfilePage() {
             {reports.length > 0 && (
               <>
                 <h3>My user reports</h3>
-            {reportsLoading && <p className="text-centered">Loading…</p>}
+                {reportsLoading && <p className="text-centered">Loading…</p>}
                 {!reportsLoading && reportsError && <p className="error-message">{reportsError}</p>}
                 {!reportsLoading && !reportsError && (
-              <ul className="notifications-list">
-                {reports.map((r) => (
-                  <li key={r.id} className="notification-item">
-                    <div className="post-header">
-                      <div style={{ flex: 1 }}>
-                        <div>
-                          <strong>@{r.reported_username || 'unknown'}</strong>
-                          <span className="secondary-text" style={{ marginLeft: 8 }}>
-                            {new Date(r.created_at).toLocaleDateString()}
-                          </span>
-                        </div>
-                        <div style={{ marginTop: 4 }}>
-                          <span>Reason: {r.reason}</span>
-                          {r.details && (
-                            <span className="secondary-text"> — {r.details}</span>
-                          )}
-                        </div>
-                        <div style={{ marginTop: 4 }}>
-                          Status: <span
-                            style={{
-                              padding: '2px 6px',
-                              borderRadius: 4,
-                              fontSize: '12px',
-                              border: '1px solid var(--chip-border-color)',
-                              background:
-                                r.status === 'action_taken'
-                                  ? 'var(--success-color, #4caf50)'
-                                  : r.status === 'under_review'
-                                  ? 'var(--warning-color, #ff9800)'
-                                  : 'var(--chip-bg-color)',
-                            }}
-                          >
-                            {formatStatus(r.status)}
-                          </span>
-                        </div>
-                        <button
-                          type="button"
-                          className="button ghost"
-                          style={{ marginTop: 8, padding: '4px 8px', fontSize: '12px' }}
-                          onClick={() =>
-                            setExpandedReport(expandedReport === r.id ? null : r.id)
-                          }
-                        >
-                          {expandedReport === r.id ? '▼ Hide notes' : '▶ Notes'} ({r.notes.length})
-                        </button>
-                        {expandedReport === r.id && (
-                          <div style={{ marginTop: 8, paddingLeft: 12, borderLeft: '2px solid var(--chip-border-color)' }}>
-                            {r.notes.length === 0 && (
-                              <p className="secondary-text" style={{ fontSize: '13px' }}>
-                                No notes yet.
-                              </p>
-                            )}
-                            {r.notes
-                              .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
-                              .map((n) => (
-                                <div key={n.id} style={{ marginBottom: 8 }}>
-                                  <span className="secondary-text" style={{ fontSize: '11px' }}>
-                                    {new Date(n.created_at).toLocaleString()}
-                                  </span>
-                                  <p style={{ margin: '2px 0 0 0', fontSize: '13px' }}>{n.content}</p>
-                                </div>
-                              ))}
-                            <div style={{ marginTop: 8 }}>
-                              <textarea
-                                value={newNote}
-                                onChange={(e) => setNewNote(e.target.value)}
-                                placeholder="Add a note..."
-                                rows={2}
-                                className="border-bottom-accent-focus"
-                                style={{ width: '100%', resize: 'vertical', fontSize: '13px' }}
-                                disabled={addingNote}
-                              />
-                              <button
-                                type="button"
-                                className="button secondary"
-                                style={{ marginTop: 4, padding: '4px 8px', fontSize: '12px' }}
-                                onClick={() => void handleAddNote(r.id)}
-                                disabled={addingNote || !newNote.trim()}
-                              >
-                                {addingNote ? 'Adding…' : 'Add note'}
-                              </button>
+                  <ul className="notifications-list">
+                    {reports.map((r) => (
+                      <li key={r.id} className="notification-item">
+                        <div className="post-header">
+                          <div style={{ flex: 1 }}>
+                            <div>
+                              <strong>@{r.reported_username || 'unknown'}</strong>
+                              <span className="secondary-text" style={{ marginLeft: 8 }}>
+                                {new Date(r.created_at).toLocaleDateString()}
+                              </span>
                             </div>
+                            <div style={{ marginTop: 4 }}>
+                              <span>Reason: {r.reason}</span>
+                              {r.details && <span className="secondary-text"> — {r.details}</span>}
+                            </div>
+                            <div style={{ marginTop: 4 }}>
+                              Status:{' '}
+                              <span
+                                style={{
+                                  padding: '2px 6px',
+                                  borderRadius: 4,
+                                  fontSize: '12px',
+                                  border: '1px solid var(--chip-border-color)',
+                                  background:
+                                    r.status === 'action_taken'
+                                      ? 'var(--success-color, #4caf50)'
+                                      : r.status === 'under_review'
+                                        ? 'var(--warning-color, #ff9800)'
+                                        : 'var(--chip-bg-color)',
+                                }}
+                              >
+                                {formatStatus(r.status)}
+                              </span>
+                            </div>
+                            <button
+                              type="button"
+                              className="button ghost"
+                              style={{ marginTop: 8, padding: '4px 8px', fontSize: '12px' }}
+                              onClick={() =>
+                                setExpandedReport(expandedReport === r.id ? null : r.id)
+                              }
+                            >
+                              {expandedReport === r.id ? '▼ Hide notes' : '▶ Notes'} (
+                              {r.notes.length})
+                            </button>
+                            {expandedReport === r.id && (
+                              <div
+                                style={{
+                                  marginTop: 8,
+                                  paddingLeft: 12,
+                                  borderLeft: '2px solid var(--chip-border-color)',
+                                }}
+                              >
+                                {r.notes.length === 0 && (
+                                  <p className="secondary-text" style={{ fontSize: '13px' }}>
+                                    No notes yet.
+                                  </p>
+                                )}
+                                {r.notes
+                                  .sort(
+                                    (a, b) =>
+                                      new Date(a.created_at).getTime() -
+                                      new Date(b.created_at).getTime(),
+                                  )
+                                  .map((n) => (
+                                    <div key={n.id} style={{ marginBottom: 8 }}>
+                                      <span className="secondary-text" style={{ fontSize: '11px' }}>
+                                        {new Date(n.created_at).toLocaleString()}
+                                      </span>
+                                      <p style={{ margin: '2px 0 0 0', fontSize: '13px' }}>
+                                        {n.content}
+                                      </p>
+                                    </div>
+                                  ))}
+                                <div style={{ marginTop: 8 }}>
+                                  <textarea
+                                    value={newNote}
+                                    onChange={(e) => setNewNote(e.target.value)}
+                                    placeholder="Add a note..."
+                                    rows={2}
+                                    className="border-bottom-accent-focus"
+                                    style={{ width: '100%', resize: 'vertical', fontSize: '13px' }}
+                                    disabled={addingNote}
+                                  />
+                                  <button
+                                    type="button"
+                                    className="button secondary"
+                                    style={{ marginTop: 4, padding: '4px 8px', fontSize: '12px' }}
+                                    onClick={() => void handleAddNote(r.id)}
+                                    disabled={addingNote || !newNote.trim()}
+                                  >
+                                    {addingNote ? 'Adding…' : 'Add note'}
+                                  </button>
+                                </div>
+                              </div>
+                            )}
                           </div>
-                        )}
-                      </div>
-                    </div>
-                  </li>
-                ))}
-              </ul>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
                 )}
               </>
             )}
@@ -745,98 +761,109 @@ export default function UpdateProfilePage() {
                   <p className="error-message">{postReportsError}</p>
                 )}
                 {!postReportsLoading && !postReportsError && (
-              <ul className="notifications-list">
-                {postReports.map((r) => (
-                  <li key={r.id} className="notification-item">
-                    <div className="post-header">
-                      <div style={{ flex: 1 }}>
-                        <div>
-                          <a href={`/post/${r.post_id}`} style={{ fontWeight: 'bold' }}>
-                            {r.post_title || '(untitled post)'}
-                          </a>
-                          <span className="secondary-text" style={{ marginLeft: 8 }}>
-                            {new Date(r.created_at).toLocaleDateString()}
-                          </span>
-                        </div>
-                        <div style={{ marginTop: 4 }}>
-                          <span>Reason: {r.reason}</span>
-                          {r.details && (
-                            <span className="secondary-text"> — {r.details}</span>
-                          )}
-                        </div>
-                        <div style={{ marginTop: 4 }}>
-                          Status:{' '}
-                          <span
-                            style={{
-                              padding: '2px 6px',
-                              borderRadius: 4,
-                              fontSize: '12px',
-                              border: '1px solid var(--chip-border-color)',
-                              background:
-                                r.status === 'action_taken'
-                                  ? 'var(--success-color, #4caf50)'
-                                  : r.status === 'under_review'
-                                  ? 'var(--warning-color, #ff9800)'
-                                  : 'var(--chip-bg-color)',
-                            }}
-                          >
-                            {formatStatus(r.status)}
-                          </span>
-                        </div>
-                        <button
-                          type="button"
-                          className="button ghost"
-                          style={{ marginTop: 8, padding: '4px 8px', fontSize: '12px' }}
-                          onClick={() =>
-                            setExpandedPostReport(expandedPostReport === r.id ? null : r.id)
-                          }
-                        >
-                          {expandedPostReport === r.id ? '▼ Hide notes' : '▶ Notes'} ({r.notes.length})
-                        </button>
-                        {expandedPostReport === r.id && (
-                          <div style={{ marginTop: 8, paddingLeft: 12, borderLeft: '2px solid var(--chip-border-color)' }}>
-                            {r.notes.length === 0 && (
-                              <p className="secondary-text" style={{ fontSize: '13px' }}>
-                                No notes yet.
-                              </p>
-                            )}
-                            {r.notes
-                              .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
-                              .map((n) => (
-                                <div key={n.id} style={{ marginBottom: 8 }}>
-                                  <span className="secondary-text" style={{ fontSize: '11px' }}>
-                                    {new Date(n.created_at).toLocaleString()}
-                                  </span>
-                                  <p style={{ margin: '2px 0 0 0', fontSize: '13px' }}>{n.content}</p>
-                                </div>
-                              ))}
-                            <div style={{ marginTop: 8 }}>
-                              <textarea
-                                value={newPostReportNote}
-                                onChange={(e) => setNewPostReportNote(e.target.value)}
-                                placeholder="Add a note..."
-                                rows={2}
-                                className="border-bottom-accent-focus"
-                                style={{ width: '100%', resize: 'vertical', fontSize: '13px' }}
-                                disabled={addingPostReportNote}
-                              />
-                              <button
-                                type="button"
-                                className="button secondary"
-                                style={{ marginTop: 4, padding: '4px 8px', fontSize: '12px' }}
-                                onClick={() => void handleAddPostReportNote(r.id)}
-                                disabled={addingPostReportNote || !newPostReportNote.trim()}
-                              >
-                                {addingPostReportNote ? 'Adding…' : 'Add note'}
-                              </button>
+                  <ul className="notifications-list">
+                    {postReports.map((r) => (
+                      <li key={r.id} className="notification-item">
+                        <div className="post-header">
+                          <div style={{ flex: 1 }}>
+                            <div>
+                              <a href={`/post/${r.post_id}`} style={{ fontWeight: 'bold' }}>
+                                {r.post_title || '(untitled post)'}
+                              </a>
+                              <span className="secondary-text" style={{ marginLeft: 8 }}>
+                                {new Date(r.created_at).toLocaleDateString()}
+                              </span>
                             </div>
+                            <div style={{ marginTop: 4 }}>
+                              <span>Reason: {r.reason}</span>
+                              {r.details && <span className="secondary-text"> — {r.details}</span>}
+                            </div>
+                            <div style={{ marginTop: 4 }}>
+                              Status:{' '}
+                              <span
+                                style={{
+                                  padding: '2px 6px',
+                                  borderRadius: 4,
+                                  fontSize: '12px',
+                                  border: '1px solid var(--chip-border-color)',
+                                  background:
+                                    r.status === 'action_taken'
+                                      ? 'var(--success-color, #4caf50)'
+                                      : r.status === 'under_review'
+                                        ? 'var(--warning-color, #ff9800)'
+                                        : 'var(--chip-bg-color)',
+                                }}
+                              >
+                                {formatStatus(r.status)}
+                              </span>
+                            </div>
+                            <button
+                              type="button"
+                              className="button ghost"
+                              style={{ marginTop: 8, padding: '4px 8px', fontSize: '12px' }}
+                              onClick={() =>
+                                setExpandedPostReport(expandedPostReport === r.id ? null : r.id)
+                              }
+                            >
+                              {expandedPostReport === r.id ? '▼ Hide notes' : '▶ Notes'} (
+                              {r.notes.length})
+                            </button>
+                            {expandedPostReport === r.id && (
+                              <div
+                                style={{
+                                  marginTop: 8,
+                                  paddingLeft: 12,
+                                  borderLeft: '2px solid var(--chip-border-color)',
+                                }}
+                              >
+                                {r.notes.length === 0 && (
+                                  <p className="secondary-text" style={{ fontSize: '13px' }}>
+                                    No notes yet.
+                                  </p>
+                                )}
+                                {r.notes
+                                  .sort(
+                                    (a, b) =>
+                                      new Date(a.created_at).getTime() -
+                                      new Date(b.created_at).getTime(),
+                                  )
+                                  .map((n) => (
+                                    <div key={n.id} style={{ marginBottom: 8 }}>
+                                      <span className="secondary-text" style={{ fontSize: '11px' }}>
+                                        {new Date(n.created_at).toLocaleString()}
+                                      </span>
+                                      <p style={{ margin: '2px 0 0 0', fontSize: '13px' }}>
+                                        {n.content}
+                                      </p>
+                                    </div>
+                                  ))}
+                                <div style={{ marginTop: 8 }}>
+                                  <textarea
+                                    value={newPostReportNote}
+                                    onChange={(e) => setNewPostReportNote(e.target.value)}
+                                    placeholder="Add a note..."
+                                    rows={2}
+                                    className="border-bottom-accent-focus"
+                                    style={{ width: '100%', resize: 'vertical', fontSize: '13px' }}
+                                    disabled={addingPostReportNote}
+                                  />
+                                  <button
+                                    type="button"
+                                    className="button secondary"
+                                    style={{ marginTop: 4, padding: '4px 8px', fontSize: '12px' }}
+                                    onClick={() => void handleAddPostReportNote(r.id)}
+                                    disabled={addingPostReportNote || !newPostReportNote.trim()}
+                                  >
+                                    {addingPostReportNote ? 'Adding…' : 'Add note'}
+                                  </button>
+                                </div>
+                              </div>
+                            )}
                           </div>
-                        )}
-                      </div>
-                    </div>
-                  </li>
-                ))}
-              </ul>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
                 )}
               </>
             )}
@@ -850,110 +877,124 @@ export default function UpdateProfilePage() {
                   <p className="secondary-text">You have not reported any comments.</p>
                 )}
                 {!commentReportsLoading && !commentReportsError && commentReports.length > 0 && (
-              <ul style={{ listStyle: 'none', padding: 0 }}>
-                {commentReports.map((r) => (
-                  <li key={r.id} style={{ marginBottom: 16 }}>
-                    <div
-                      style={{
-                        padding: 12,
-                        border: '1px solid var(--chip-border-color)',
-                        borderRadius: 8,
-                      }}
-                    >
-                      <div>
-                        <a
-                          href={`/u/${r.comment_author_username}`}
-                          style={{ fontWeight: 'bold' }}
-                        >
-                          @{r.comment_author_username || 'unknown'}
-                        </a>
-                        <span className="secondary-text" style={{ marginLeft: 8 }}>
-                          {new Date(r.created_at).toLocaleDateString()}
-                        </span>
-                      </div>
-                      <div style={{ marginTop: 4, fontSize: '13px', opacity: 0.9 }}>
-                        {r.comment_content
-                          ? renderDescriptionWithTagsAndMentions(r.comment_content, commentReportMentionUserMap)
-                          : '(deleted comment)'}
-                      </div>
-                      <div style={{ marginTop: 4 }}>
-                        <span>Reason: {r.reason}</span>
-                        {r.details && (
-                          <span className="secondary-text"> — {r.details}</span>
-                        )}
-                      </div>
-                      <div style={{ marginTop: 4 }}>
-                        Status:{' '}
-                        <span
+                  <ul style={{ listStyle: 'none', padding: 0 }}>
+                    {commentReports.map((r) => (
+                      <li key={r.id} style={{ marginBottom: 16 }}>
+                        <div
                           style={{
-                            padding: '2px 6px',
-                            borderRadius: 4,
-                            fontSize: '12px',
+                            padding: 12,
                             border: '1px solid var(--chip-border-color)',
-                            background:
-                              r.status === 'action_taken'
-                                ? 'var(--success-color, #4caf50)'
-                                : r.status === 'under_review'
-                                ? 'var(--warning-color, #ff9800)'
-                                : 'var(--chip-bg-color)',
+                            borderRadius: 8,
                           }}
                         >
-                          {formatStatus(r.status)}
-                        </span>
-                      </div>
-                      <button
-                        type="button"
-                        className="button ghost"
-                        style={{ marginTop: 8, padding: '4px 8px', fontSize: '12px' }}
-                        onClick={() =>
-                          setExpandedCommentReport(expandedCommentReport === r.id ? null : r.id)
-                        }
-                      >
-                        {expandedCommentReport === r.id ? '▼ Hide notes' : '▶ Notes'} ({r.notes.length})
-                      </button>
-                      {expandedCommentReport === r.id && (
-                        <div style={{ marginTop: 8, paddingLeft: 12, borderLeft: '2px solid var(--chip-border-color)' }}>
-                          {r.notes.length === 0 && (
-                            <p className="secondary-text" style={{ fontSize: '13px' }}>
-                              No notes yet.
-                            </p>
-                          )}
-                          {r.notes
-                            .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
-                            .map((n) => (
-                              <div key={n.id} style={{ marginBottom: 8 }}>
-                                <span className="secondary-text" style={{ fontSize: '11px' }}>
-                                  {new Date(n.created_at).toLocaleString()}
-                                </span>
-                                <p style={{ margin: '2px 0 0 0', fontSize: '13px' }}>{n.content}</p>
-                              </div>
-                            ))}
-                          <div style={{ marginTop: 8 }}>
-                            <textarea
-                              value={newCommentReportNote}
-                              onChange={(e) => setNewCommentReportNote(e.target.value)}
-                              placeholder="Add a note..."
-                              rows={2}
-                              className="border-bottom-accent-focus"
-                              style={{ width: '100%', resize: 'vertical', fontSize: '13px' }}
-                              disabled={addingCommentReportNote}
-                            />
-                            <button
-                              type="button"
-                              className="button secondary"
-                              style={{ marginTop: 4, padding: '4px 8px', fontSize: '12px' }}
-                              onClick={() => void handleAddCommentReportNote(r.id)}
-                              disabled={addingCommentReportNote || !newCommentReportNote.trim()}
+                          <div>
+                            <a
+                              href={`/u/${r.comment_author_username}`}
+                              style={{ fontWeight: 'bold' }}
                             >
-                              {addingCommentReportNote ? 'Adding…' : 'Add note'}
-                            </button>
+                              @{r.comment_author_username || 'unknown'}
+                            </a>
+                            <span className="secondary-text" style={{ marginLeft: 8 }}>
+                              {new Date(r.created_at).toLocaleDateString()}
+                            </span>
                           </div>
+                          <div style={{ marginTop: 4, fontSize: '13px', opacity: 0.9 }}>
+                            {r.comment_content
+                              ? renderDescriptionWithTagsAndMentions(
+                                  r.comment_content,
+                                  commentReportMentionUserMap,
+                                )
+                              : '(deleted comment)'}
+                          </div>
+                          <div style={{ marginTop: 4 }}>
+                            <span>Reason: {r.reason}</span>
+                            {r.details && <span className="secondary-text"> — {r.details}</span>}
+                          </div>
+                          <div style={{ marginTop: 4 }}>
+                            Status:{' '}
+                            <span
+                              style={{
+                                padding: '2px 6px',
+                                borderRadius: 4,
+                                fontSize: '12px',
+                                border: '1px solid var(--chip-border-color)',
+                                background:
+                                  r.status === 'action_taken'
+                                    ? 'var(--success-color, #4caf50)'
+                                    : r.status === 'under_review'
+                                      ? 'var(--warning-color, #ff9800)'
+                                      : 'var(--chip-bg-color)',
+                              }}
+                            >
+                              {formatStatus(r.status)}
+                            </span>
+                          </div>
+                          <button
+                            type="button"
+                            className="button ghost"
+                            style={{ marginTop: 8, padding: '4px 8px', fontSize: '12px' }}
+                            onClick={() =>
+                              setExpandedCommentReport(expandedCommentReport === r.id ? null : r.id)
+                            }
+                          >
+                            {expandedCommentReport === r.id ? '▼ Hide notes' : '▶ Notes'} (
+                            {r.notes.length})
+                          </button>
+                          {expandedCommentReport === r.id && (
+                            <div
+                              style={{
+                                marginTop: 8,
+                                paddingLeft: 12,
+                                borderLeft: '2px solid var(--chip-border-color)',
+                              }}
+                            >
+                              {r.notes.length === 0 && (
+                                <p className="secondary-text" style={{ fontSize: '13px' }}>
+                                  No notes yet.
+                                </p>
+                              )}
+                              {r.notes
+                                .sort(
+                                  (a, b) =>
+                                    new Date(a.created_at).getTime() -
+                                    new Date(b.created_at).getTime(),
+                                )
+                                .map((n) => (
+                                  <div key={n.id} style={{ marginBottom: 8 }}>
+                                    <span className="secondary-text" style={{ fontSize: '11px' }}>
+                                      {new Date(n.created_at).toLocaleString()}
+                                    </span>
+                                    <p style={{ margin: '2px 0 0 0', fontSize: '13px' }}>
+                                      {n.content}
+                                    </p>
+                                  </div>
+                                ))}
+                              <div style={{ marginTop: 8 }}>
+                                <textarea
+                                  value={newCommentReportNote}
+                                  onChange={(e) => setNewCommentReportNote(e.target.value)}
+                                  placeholder="Add a note..."
+                                  rows={2}
+                                  className="border-bottom-accent-focus"
+                                  style={{ width: '100%', resize: 'vertical', fontSize: '13px' }}
+                                  disabled={addingCommentReportNote}
+                                />
+                                <button
+                                  type="button"
+                                  className="button secondary"
+                                  style={{ marginTop: 4, padding: '4px 8px', fontSize: '12px' }}
+                                  onClick={() => void handleAddCommentReportNote(r.id)}
+                                  disabled={addingCommentReportNote || !newCommentReportNote.trim()}
+                                >
+                                  {addingCommentReportNote ? 'Adding…' : 'Add note'}
+                                </button>
+                              </div>
+                            </div>
+                          )}
                         </div>
-                      )}
-                    </div>
-                  </li>
-                ))}
-              </ul>
+                      </li>
+                    ))}
+                  </ul>
                 )}
               </>
             )}

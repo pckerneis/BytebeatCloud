@@ -305,7 +305,10 @@ test.describe('Reporting posts', () => {
     await notesButtons.last().click();
 
     // Add a note
-    await page.locator('textarea[placeholder="Add a note..."]').last().fill('More info about violation');
+    await page
+      .locator('textarea[placeholder="Add a note..."]')
+      .last()
+      .fill('More info about violation');
     await page.getByRole('button', { name: 'Add note' }).last().click();
 
     // Note should appear

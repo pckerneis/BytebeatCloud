@@ -1,10 +1,6 @@
 import { ModeOption } from './expression';
 
-export type LicenseOption =
-  | 'all-rights-reserved'
-  | 'cc-by'
-  | 'cc0'
-  | 'cc-by-sa';
+export type LicenseOption = 'all-rights-reserved' | 'cc-by' | 'cc0' | 'cc-by-sa';
 
 export const LICENSE_OPTIONS: { value: LicenseOption; label: string; description: string }[] = [
   {

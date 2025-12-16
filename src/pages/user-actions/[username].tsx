@@ -105,10 +105,10 @@ export default function UserActionPage() {
         // Create block relationship; ignore duplicates
         const { error: insErr } = await supabase
           .from('blocked_users')
-          .upsert(
-            { blocker_id: blockerId, blocked_id: targetId },
-            { onConflict: 'blocker_id,blocked_id', ignoreDuplicates: true } as any,
-          );
+          .upsert({ blocker_id: blockerId, blocked_id: targetId }, {
+            onConflict: 'blocker_id,blocked_id',
+            ignoreDuplicates: true,
+          } as any);
         if (insErr) {
           // Fall back: insert may not support ignoreDuplicates depending on adapter
           // Try plain insert and ignore unique violation
@@ -189,10 +189,10 @@ export default function UserActionPage() {
       if (reportAlsoBlock && !isBlocked) {
         const { error: blockErr } = await supabase
           .from('blocked_users')
-          .upsert(
-            { blocker_id: reporterId, blocked_id: targetId },
-            { onConflict: 'blocker_id,blocked_id', ignoreDuplicates: true } as any,
-          );
+          .upsert({ blocker_id: reporterId, blocked_id: targetId }, {
+            onConflict: 'blocker_id,blocked_id',
+            ignoreDuplicates: true,
+          } as any);
         if (blockErr && (blockErr as any).code !== '23505') {
           // Non-critical, report was still submitted
           console.error('Failed to block user:', blockErr);
@@ -269,7 +269,12 @@ export default function UserActionPage() {
                 : 'Unblocking will restore mutual visibility: profiles and posts will be visible again, and notifications can resume.'}
             </p>
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
-              <button type="button" className="button secondary" onClick={closeConfirm} disabled={pending}>
+              <button
+                type="button"
+                className="button secondary"
+                onClick={closeConfirm}
+                disabled={pending}
+              >
                 Cancel
               </button>
               <button
@@ -298,10 +303,12 @@ export default function UserActionPage() {
           }}
         >
           <div className="modal" style={{ maxWidth: 520 }}>
-            <h2 style={{ marginTop: 0, marginBottom: '8px', fontSize: '16px' }}>Report @{username}</h2>
+            <h2 style={{ marginTop: 0, marginBottom: '8px', fontSize: '16px' }}>
+              Report @{username}
+            </h2>
             <p style={{ marginTop: 0, marginBottom: '12px', fontSize: '13px', opacity: 0.9 }}>
-              Reports are confidential. The reported user will not know who reported them. 
-              Reports are reviewed by moderators.
+              Reports are confidential. The reported user will not know who reported them. Reports
+              are reviewed by moderators.
             </p>
             <select
               value={reportCategory}
@@ -331,7 +338,9 @@ export default function UserActionPage() {
               disabled={pending}
             />
             {!isBlocked && (
-              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+              <label
+                style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}
+              >
                 <input
                   type="checkbox"
                   checked={reportAlsoBlock}
@@ -342,14 +351,21 @@ export default function UserActionPage() {
               </label>
             )}
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
-              <button type="button" className="button secondary" onClick={closeReport} disabled={pending}>
+              <button
+                type="button"
+                className="button secondary"
+                onClick={closeReport}
+                disabled={pending}
+              >
                 Cancel
               </button>
               <button
                 type="button"
                 className="button danger"
                 onClick={() => void submitReport()}
-                disabled={pending || !reportCategory || (reportCategory === 'Other' && !reportReason.trim())}
+                disabled={
+                  pending || !reportCategory || (reportCategory === 'Other' && !reportReason.trim())
+                }
               >
                 Submit report
               </button>

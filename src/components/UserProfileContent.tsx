@@ -437,7 +437,7 @@ export function UserProfileContent({
 
   const navigateToUserActions = async () => {
     void router.push(`/user-actions/${username}`);
-  }
+  };
 
   return (
     <section>
@@ -455,7 +455,7 @@ export function UserProfileContent({
                 {isFollowed ? 'Followed' : 'Follow'}
               </button>
               <button
-                style={{marginLeft: '10px'}}
+                style={{ marginLeft: '10px' }}
                 type="button"
                 className={'button secondary'}
                 disabled={loadingFollow}

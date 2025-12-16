@@ -256,7 +256,6 @@ export function PostEditorFormFields(props: PostEditorFormFieldsProps) {
       )}
       {lastError ? <p className="error-message">{lastError}</p> : null}
 
-      
       <label className="field">
         <AutocompleteTextarea
           value={description}
@@ -282,32 +281,32 @@ export function PostEditorFormFields(props: PostEditorFormFieldsProps) {
       {showActions && (
         <>
           <div className="field license-field">
-              {props.lockLicense ? (
-                <span className="license-locked-hint">
-                  License inherited from original post (Share Alike)
-                </span>
-              ) : (
-                <details className="license-helper">
-                  <summary>License: {currentLicenseLabel}</summary>
-                  <div className="radio-group">
-                    {LICENSE_OPTIONS.map((opt) => (
-                      <label key={opt.value} className="radio-option">
-                        <input
-                          type="radio"
-                          name="license"
-                          value={opt.value}
-                          checked={license === opt.value}
-                          onChange={() => onMetaChange({ ...meta, license: opt.value })}
-                        />
-                        <span className="radio-label">
-                          <strong>{opt.label}</strong> — {opt.description}
-                        </span>
-                      </label>
-                    ))}
-                  </div>
-                </details>
-              )}
-            </div>
+            {props.lockLicense ? (
+              <span className="license-locked-hint">
+                License inherited from original post (Share Alike)
+              </span>
+            ) : (
+              <details className="license-helper">
+                <summary>License: {currentLicenseLabel}</summary>
+                <div className="radio-group">
+                  {LICENSE_OPTIONS.map((opt) => (
+                    <label key={opt.value} className="radio-option">
+                      <input
+                        type="radio"
+                        name="license"
+                        value={opt.value}
+                        checked={license === opt.value}
+                        onChange={() => onMetaChange({ ...meta, license: opt.value })}
+                      />
+                      <span className="radio-label">
+                        <strong>{opt.label}</strong> — {opt.description}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </details>
+            )}
+          </div>
 
           <div className="form-actions">
             <div className="form-actions-buttons">

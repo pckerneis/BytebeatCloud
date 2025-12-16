@@ -49,7 +49,7 @@ export default function PostDetailPage({ postMeta, baseUrl }: PostDetailPageProp
   const [posts, setPosts] = useState<PostRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-    const [mentionUserMap, setMentionUserMap] = useState<Map<string, string>>(new Map());
+  const [mentionUserMap, setMentionUserMap] = useState<Map<string, string>>(new Map());
   const [showExportModal, setShowExportModal] = useState(false);
   const [shareButtonText, setShareButtonText] = useState('Share');
   const [reportOpen, setReportOpen] = useState(false);
@@ -63,7 +63,9 @@ export default function PostDetailPage({ postMeta, baseUrl }: PostDetailPageProp
   const [commentsLoading, setCommentsLoading] = useState(false);
   const [newComment, setNewComment] = useState('');
   const [commentPending, setCommentPending] = useState(false);
-  const [commentMentionUserMap, setCommentMentionUserMap] = useState<Map<string, string>>(new Map());
+  const [commentMentionUserMap, setCommentMentionUserMap] = useState<Map<string, string>>(
+    new Map(),
+  );
   const [reportedCommentIds, setReportedCommentIds] = useState<Set<string>>(new Set());
   const [commentReportOpen, setCommentReportOpen] = useState<string | null>(null);
   const [commentReportCategory, setCommentReportCategory] = useState('');
@@ -258,7 +260,9 @@ export default function PostDetailPage({ postMeta, baseUrl }: PostDetailPageProp
       setCommentsLoading(true);
       const { data, error } = await supabase
         .from('comments')
-        .select('id, content, created_at, author_id, author:profiles!comments_author_id_fkey(username)')
+        .select(
+          'id, content, created_at, author_id, author:profiles!comments_author_id_fkey(username)',
+        )
         .eq('post_id', id)
         .is('deleted_at', null)
         .order('created_at', { ascending: true });
@@ -515,7 +519,10 @@ export default function PostDetailPage({ postMeta, baseUrl }: PostDetailPageProp
             )}
 
             <div className="post-detail-actions">
-              {!(posts[0]?.license === 'all-rights-reserved' && posts[0]?.profile_id !== (user as any)?.id) && (
+              {!(
+                posts[0]?.license === 'all-rights-reserved' &&
+                posts[0]?.profile_id !== (user as any)?.id
+              ) && (
                 <button
                   type="button"
                   className="button secondary"
@@ -590,25 +597,29 @@ export default function PostDetailPage({ postMeta, baseUrl }: PostDetailPageProp
                           <span className="comment-date">
                             {new Date(c.created_at).toLocaleDateString()}
                           </span>
-                          {user && ((user as any).id === c.author_id || posts[0]?.profile_id === (user as any).id) && (
-                            <button
-                              type="button"
-                              className="button ghost comment-delete"
-                              onClick={() => handleOpenDeleteConfirm(c.id, c.author_id)}
-                            >
-                              Delete
-                            </button>
-                          )}
-                          {user && (user as any).id !== c.author_id && posts[0]?.profile_id !== (user as any).id && (
-                            <button
-                              type="button"
-                              className="button ghost comment-report"
-                              onClick={() => handleOpenCommentReport(c.id)}
-                              disabled={reportedCommentIds.has(c.id)}
-                            >
-                              {reportedCommentIds.has(c.id) ? 'Reported' : 'Report'}
-                            </button>
-                          )}
+                          {user &&
+                            ((user as any).id === c.author_id ||
+                              posts[0]?.profile_id === (user as any).id) && (
+                              <button
+                                type="button"
+                                className="button ghost comment-delete"
+                                onClick={() => handleOpenDeleteConfirm(c.id, c.author_id)}
+                              >
+                                Delete
+                              </button>
+                            )}
+                          {user &&
+                            (user as any).id !== c.author_id &&
+                            posts[0]?.profile_id !== (user as any).id && (
+                              <button
+                                type="button"
+                                className="button ghost comment-report"
+                                onClick={() => handleOpenCommentReport(c.id)}
+                                disabled={reportedCommentIds.has(c.id)}
+                              >
+                                {reportedCommentIds.has(c.id) ? 'Reported' : 'Report'}
+                              </button>
+                            )}
                         </div>
                         <p className="comment-content">
                           {renderDescriptionWithTagsAndMentions(c.content, commentMentionUserMap)}
@@ -667,9 +678,7 @@ export default function PostDetailPage({ postMeta, baseUrl }: PostDetailPageProp
           }}
         >
           <div className="modal" style={{ maxWidth: 520 }}>
-            <h2 style={{ marginTop: 0, marginBottom: '8px', fontSize: '16px' }}>
-              Delete comment?
-            </h2>
+            <h2 style={{ marginTop: 0, marginBottom: '8px', fontSize: '16px' }}>Delete comment?</h2>
             <p style={{ marginTop: 0, marginBottom: '12px', fontSize: '13px', opacity: 0.9 }}>
               This action cannot be undone.
             </p>
@@ -738,12 +747,10 @@ export default function PostDetailPage({ postMeta, baseUrl }: PostDetailPageProp
           }}
         >
           <div className="modal" style={{ maxWidth: 520 }}>
-            <h2 style={{ marginTop: 0, marginBottom: '8px', fontSize: '16px' }}>
-              Report comment
-            </h2>
+            <h2 style={{ marginTop: 0, marginBottom: '8px', fontSize: '16px' }}>Report comment</h2>
             <p style={{ marginTop: 0, marginBottom: '12px', fontSize: '13px', opacity: 0.9 }}>
-              Reports are confidential. The comment author will not know who reported them.
-              Reports are reviewed by moderators.
+              Reports are confidential. The comment author will not know who reported them. Reports
+              are reviewed by moderators.
             </p>
             <select
               value={commentReportCategory}
@@ -810,12 +817,10 @@ export default function PostDetailPage({ postMeta, baseUrl }: PostDetailPageProp
           }}
         >
           <div className="modal" style={{ maxWidth: 520 }}>
-            <h2 style={{ marginTop: 0, marginBottom: '8px', fontSize: '16px' }}>
-              Report post
-            </h2>
+            <h2 style={{ marginTop: 0, marginBottom: '8px', fontSize: '16px' }}>Report post</h2>
             <p style={{ marginTop: 0, marginBottom: '12px', fontSize: '13px', opacity: 0.9 }}>
-              Reports are confidential. The post author will not know who reported them.
-              Reports are reviewed by moderators.
+              Reports are confidential. The post author will not know who reported them. Reports are
+              reviewed by moderators.
             </p>
             <select
               value={reportCategory}

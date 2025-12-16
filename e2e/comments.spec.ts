@@ -182,7 +182,9 @@ test.describe('Comments - basic functionality', () => {
     await page.getByRole('button', { name: 'Post comment' }).click();
 
     // Count should update to 1
-    await expect(page.locator('.tab-button.active')).toContainText('Comments (1)', { timeout: 5000 });
+    await expect(page.locator('.tab-button.active')).toContainText('Comments (1)', {
+      timeout: 5000,
+    });
   });
 
   test('can switch between Comments and Lineage tabs', async ({ page }) => {
@@ -269,7 +271,7 @@ test.describe('Comments - mentions', () => {
 test.describe('Comments - notifications', () => {
   let testPostId: string;
 
-  test.beforeEach(async ({ page }) => {
+  test.beforeEach(async () => {
     await ensureTestUserProfile(OTHER_USER_EMAIL, OTHER_USERNAME);
     await ensureTestUserProfile(TEST_USER_EMAIL, TEST_USERNAME);
 
