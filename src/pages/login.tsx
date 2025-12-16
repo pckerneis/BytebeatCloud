@@ -49,7 +49,7 @@ export default function LoginPage() {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="post-title-input"
+              className="border-bottom-accent-focus"
               placeholder="you@example.com"
               required
             />

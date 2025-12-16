@@ -1,0 +1,40 @@
+/* Modal */
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: var(--modal-overlay-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal {
+  background: var(--bg-color);
+  border-radius: 6px;
+  padding: 16px 18px;
+  max-width: 360px;
+  width: 90%;
+  box-shadow: 0 10px 30px var(--shadow-soft-color);
+}
+
+.modal h3 {
+  margin: 0 0 8px 0;
+}
+
+.modal p {
+  margin: 0 0 16px 0;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.export-wav-modal {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}

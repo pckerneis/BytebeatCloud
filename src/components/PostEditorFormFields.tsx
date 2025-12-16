@@ -190,7 +190,7 @@ export function PostEditorFormFields(props: PostEditorFormFieldsProps) {
               e.preventDefault();
             }
           }}
-          className="post-title-input"
+          className="border-bottom-accent-focus"
           placeholder="Name your bytebeat expression"
         />
       </label>
@@ -199,7 +199,7 @@ export function PostEditorFormFields(props: PostEditorFormFieldsProps) {
         <AutocompleteTextarea
           value={description}
           onChange={(val) => onMetaChange({ ...meta, description: val })}
-          className="post-description-input"
+          className="border-bottom-accent-focus"
           placeholder="Add an optional description"
           rows={3}
         />

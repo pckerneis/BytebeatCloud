@@ -197,7 +197,7 @@ export default function UpdateProfilePage() {
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                className="post-title-input"
+                className="border-bottom-accent-focus"
                 placeholder="Choose a username"
                 maxLength={32}
               />
@@ -208,7 +208,7 @@ export default function UpdateProfilePage() {
               <textarea
                 value={bio}
                 onChange={(e) => setBio(e.target.value)}
-                className="post-title-input"
+                className="border-bottom-accent-focus"
                 placeholder="Tell us about yourself"
                 maxLength={500}
                 rows={4}
@@ -224,7 +224,7 @@ export default function UpdateProfilePage() {
                   type="url"
                   value={url}
                   onChange={(e) => handleSocialLinkChange(index, e.target.value)}
-                  className="post-title-input"
+                  className="border-bottom-accent-focus"
                   placeholder={`social link ${index + 1}`}
                 />
               </label>

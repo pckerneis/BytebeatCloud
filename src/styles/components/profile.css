@@ -1,0 +1,43 @@
+/* Profile page */
+
+.profile-title-row {
+  display: flex;
+  align-items: center;
+}
+
+.profile-title-row h2 {
+  flex: 1;
+}
+
+/* Profile display bio and social links */
+.profile-bio {
+  color: var(--secondary-text-color);
+  margin: 0 0 12px 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.profile-social-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.profile-social-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--chip-border-color);
+  background: var(--chip-background-color);
+  font-size: 12px;
+  color: var(--text-color);
+  text-decoration: none;
+}
+
+.profile-social-link:hover {
+  border-color: var(--accent-color);
+  color: var(--accent-color);
+}

@@ -105,7 +105,7 @@ export default function OnboardingPage() {
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              className="post-title-input"
+              className="border-bottom-accent-focus"
               placeholder="Choose a username"
               maxLength={32}
             />

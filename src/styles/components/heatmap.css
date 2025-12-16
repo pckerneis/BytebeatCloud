@@ -1,0 +1,133 @@
+/* Activity Heatmap */
+.activity-heatmap {
+  position: relative;
+  margin: 1rem 0;
+  padding: 1rem;
+  background: var(--card-bg-color);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.activity-heatmap-header {
+  margin-bottom: 0.75rem;
+}
+
+.activity-heatmap-title {
+  font-size: 0.9rem;
+  color: var(--text-color);
+}
+
+.activity-heatmap-loading {
+  padding: 1rem;
+  text-align: center;
+  color: var(--secondary-text-color);
+}
+
+.activity-heatmap-container {
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  max-width: 100%;
+}
+
+.activity-heatmap-days {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  padding-top: 20px;
+}
+
+.activity-heatmap-day-label {
+  font-size: 9px;
+  color: var(--secondary-text-color);
+  height: 10px;
+  line-height: 10px;
+}
+
+.activity-heatmap-grid-wrapper {
+  flex: 1;
+  min-width: 0;
+}
+
+.activity-heatmap-months {
+  display: grid;
+  grid-template-columns: repeat(53, 10px);
+  margin-bottom: 4px;
+  height: 16px;
+}
+
+.activity-heatmap-month-label {
+  font-size: 9px;
+  color: var(--secondary-text-color);
+}
+
+.activity-heatmap-grid {
+  display: flex;
+}
+
+.activity-heatmap-week {
+  display: flex;
+  flex-direction: column;
+}
+
+.activity-heatmap-cell {
+  width: 10px;
+  height: 10px;
+  cursor: default;
+}
+
+.activity-heatmap-cell.level--1 {
+  visibility: hidden;
+}
+
+.activity-heatmap-cell.level-0 {
+  background-color: var(--border-color);
+}
+
+.activity-heatmap-cell.level-1 {
+  background-color: color-mix(in srgb, var(--accent-color) 25%, var(--border-color));
+}
+
+.activity-heatmap-cell.level-2 {
+  background-color: color-mix(in srgb, var(--accent-color) 50%, var(--border-color));
+}
+
+.activity-heatmap-cell.level-3 {
+  background-color: color-mix(in srgb, var(--accent-color) 75%, var(--border-color));
+}
+
+.activity-heatmap-cell.level-4 {
+  background-color: var(--accent-color);
+}
+
+.activity-heatmap-legend {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  margin-top: 0.5rem;
+}
+
+.activity-heatmap-legend-label {
+  font-size: 10px;
+  color: var(--secondary-text-color);
+}
+
+.activity-heatmap-tooltip {
+  position: absolute;
+  background: var(--card-bg-color);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 6px 10px;
+  font-size: 12px;
+  color: var(--text-color);
+  text-align: left;
+  white-space: nowrap;
+  z-index: 10;
+  pointer-events: none;
+  transform: translateX(-50%);
+}

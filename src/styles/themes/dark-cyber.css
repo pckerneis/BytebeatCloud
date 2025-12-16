@@ -1,0 +1,39 @@
+/* Dark Cyber Theme */
+.theme-dark-cyber {
+  --bg-color: #0a0a0f;
+  --sidebar-bg-color: #0f0f15;
+  --sidebar-bg-gradient-color: #16322a;
+  --card-bg-color: #13131a;
+  --border-color: #24242e;
+
+  --text-color: #e4e4ef;
+  --secondary-text-color: #9a9ab3;
+
+  --code-bg-color: #050510;
+  --code-text-color: #cfdcff;
+
+  --accent-color-rgb: 78 230 165;
+  --danger-color: #ff5f6a;
+  --danger-background-color: #513a3c;
+
+  --button-primary-text-color: #0f0f15;
+  --button-border-color: #3a3a45;
+  --button-bg-color: #4ee6a5;
+  --button-secondary-bg-color: #1b1b25;
+
+  --error-text-color: #fca5a5;
+  --error-bg-color: #4c1111;
+
+  --shadow-soft-color: #000000aa;
+  --modal-overlay-color: rgba(0, 0, 0, 0.65);
+
+  --tab-active-bg-color: #1b1b25;
+  --panel-border-color: var(--border-color);
+
+  --chip-border-color: #31313d;
+  --chip-background-color: #1a1a22;
+
+  --post-expression-background-color: #13131a;
+  --post-expression-playing-background-color: #1a1a22;
+  --post-expression-overlay-color: rgba(0, 0, 0, 0.36);
+}
