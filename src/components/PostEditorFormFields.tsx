@@ -1,5 +1,7 @@
 import { useState, useRef } from 'react';
 import { ExpressionEditor, ExpressionErrorSnippet } from './ExpressionEditor';
+import { AutocompleteTextarea } from './AutocompleteTextarea';
+import { AutocompleteInput } from './AutocompleteInput';
 import {
   ModeOption,
   SAMPLE_RATE_PRESETS,
@@ -179,11 +181,10 @@ export function PostEditorFormFields(props: PostEditorFormFieldsProps) {
   return (
     <>
       <label className="field">
-        <input
-          type="text"
+        <AutocompleteInput
           maxLength={64}
           value={title}
-          onChange={(e) => onMetaChange({ ...meta, title: e.target.value })}
+          onChange={(val) => onMetaChange({ ...meta, title: val })}
           onKeyDown={(e) => {
             if (e.key === 'Enter') {
               e.preventDefault();
@@ -195,9 +196,9 @@ export function PostEditorFormFields(props: PostEditorFormFieldsProps) {
       </label>
 
       <label className="field">
-        <textarea
+        <AutocompleteTextarea
           value={description}
-          onChange={(e) => onMetaChange({ ...meta, description: e.target.value })}
+          onChange={(val) => onMetaChange({ ...meta, description: val })}
           className="post-description-input"
           placeholder="Add an optional description"
           rows={3}
