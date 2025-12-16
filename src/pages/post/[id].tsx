@@ -40,9 +40,60 @@ export default function PostDetailPage({ postMeta, baseUrl }: PostDetailPageProp
     const [mentionUserMap, setMentionUserMap] = useState<Map<string, string>>(new Map());
   const [showExportModal, setShowExportModal] = useState(false);
   const [shareButtonText, setShareButtonText] = useState('Share');
+  const [reportOpen, setReportOpen] = useState(false);
+  const [reportCategory, setReportCategory] = useState('');
+  const [reportDetails, setReportDetails] = useState('');
+  const [hasReported, setHasReported] = useState(false);
+  const [reportPending, setReportPending] = useState(false);
+  const [reportError, setReportError] = useState('');
   const { weekNumber: currentWeekNumber, theme: currentWeekTheme } = useCurrentWeeklyChallenge();
 
   const { user } = useSupabaseAuth();
+
+  const handleReportPost = () => {
+    if (!user) {
+      void router.push('/login');
+      return;
+    }
+    if (hasReported || posts.length === 0) return;
+    setReportCategory('');
+    setReportDetails('');
+    setReportError('');
+    setReportOpen(true);
+  };
+
+  const closeReport = () => setReportOpen(false);
+
+  const submitReport = async () => {
+    if (!user || posts.length === 0 || !reportCategory) return;
+    if (reportCategory === 'Other' && !reportDetails.trim()) return;
+    setReportPending(true);
+    setReportError('');
+    try {
+      const { error: reportErr } = await supabase.from('post_reports').insert({
+        reporter_id: (user as any).id,
+        post_id: posts[0].id,
+        reason: reportCategory,
+        details: reportDetails.trim() || null,
+      });
+
+      if (reportErr) {
+        if ((reportErr as any).code === '23505') {
+          setHasReported(true);
+          setReportOpen(false);
+          return;
+        }
+        throw reportErr;
+      }
+
+      setHasReported(true);
+      setReportOpen(false);
+    } catch (e) {
+      setReportError('Failed to submit report. Please try again.');
+    } finally {
+      setReportPending(false);
+    }
+  };
 
   const handleShare = async () => {
     const shareUrl = `${baseUrl}/post/${id}`;
@@ -127,6 +178,17 @@ export default function PostDetailPage({ postMeta, baseUrl }: PostDetailPageProp
 
       // Attach tags for the main post.
       [rowWithCount] = (await enrichWithTags([rowWithCount])) as PostRow[];
+
+      // Check if user has already reported this post
+      if (user) {
+        const { data: reportRow } = await supabase
+          .from('post_reports')
+          .select('id')
+          .eq('reporter_id', (user as any).id)
+          .eq('post_id', rowWithCount.id)
+          .maybeSingle();
+        if (!cancelled) setHasReported(!!reportRow);
+      }
 
       // Fetch usernames for mentions in description
       const mentionUserIds = extractMentionUserIds(rowWithCount.description ?? '');
@@ -239,6 +301,16 @@ export default function PostDetailPage({ postMeta, baseUrl }: PostDetailPageProp
               <button type="button" className="button secondary ml-10" onClick={handleShare}>
                 {shareButtonText}
               </button>
+              {user && posts[0]?.profile_id !== (user as any).id && (
+                <button
+                  type="button"
+                  className="button secondary ml-10"
+                  onClick={handleReportPost}
+                  disabled={hasReported}
+                >
+                  {hasReported ? 'Reported' : 'Report'}
+                </button>
+              )}
             </div>
 
             {showExportModal && posts[0] && (
@@ -256,6 +328,79 @@ export default function PostDetailPage({ postMeta, baseUrl }: PostDetailPageProp
           </>
         )}
       </section>
+      {reportOpen && (
+        <div
+          className="modal-backdrop"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.4)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+          }}
+        >
+          <div className="modal" style={{ maxWidth: 520 }}>
+            <h2 style={{ marginTop: 0, marginBottom: '8px', fontSize: '16px' }}>
+              Report post
+            </h2>
+            <p style={{ marginTop: 0, marginBottom: '12px', fontSize: '13px', opacity: 0.9 }}>
+              Reports are confidential. The post author will not know who reported them.
+              Reports are reviewed by moderators.
+            </p>
+            <select
+              value={reportCategory}
+              onChange={(e) => setReportCategory(e.target.value)}
+              style={{ width: '100%', marginBottom: '12px' }}
+              disabled={reportPending}
+            >
+              <option value="" disabled>
+                Select a reason
+              </option>
+              <option value="Spam">Spam</option>
+              <option value="Harassment">Harassment</option>
+              <option value="Hate">Hate</option>
+              <option value="Sexual content">Sexual content</option>
+              <option value="Copyright violation">Copyright violation</option>
+              <option value="Malicious code">Malicious code</option>
+              <option value="Other">Other</option>
+            </select>
+            <textarea
+              value={reportDetails}
+              onChange={(e) => setReportDetails(e.target.value)}
+              placeholder="Additional details..."
+              rows={4}
+              className="border-bottom-accent-focus"
+              style={{ width: '100%', marginBottom: '12px', resize: 'vertical' }}
+              disabled={reportPending}
+            />
+            {reportError && <p className="error-message">{reportError}</p>}
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+              <button
+                type="button"
+                className="button secondary"
+                onClick={closeReport}
+                disabled={reportPending}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="button danger"
+                onClick={() => void submitReport()}
+                disabled={
+                  reportPending ||
+                  !reportCategory ||
+                  (reportCategory === 'Other' && !reportDetails.trim())
+                }
+              >
+                Submit report
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
