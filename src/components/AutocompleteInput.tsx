@@ -88,6 +88,7 @@ export function AutocompleteInput({
 
   useEffect(() => {
     if (!triggerInfo || debouncedQuery.length < 2) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSuggestions([]);
       return;
     }
@@ -135,7 +136,7 @@ export function AutocompleteInput({
     return () => {
       cancelled = true;
     };
-  }, [debouncedQuery, triggerInfo?.type]);
+  }, [debouncedQuery, triggerInfo, triggerInfo?.type]);
 
   const insertSuggestion = useCallback(
     (item: AutocompleteItem) => {
