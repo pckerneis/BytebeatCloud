@@ -12,7 +12,7 @@ import {
 import { ValidationIssue } from '../utils/expression-validator';
 import type { PostMetadataModel, LicenseOption } from '../model/postEditor';
 import { LICENSE_OPTIONS } from '../model/postEditor';
-import { EXPRESSION_MAX } from '../constants';
+import { EXPRESSION_MAX, POST_DESCRIPTION_MAX } from '../constants';
 
 interface PostEditorFormFieldsProps {
   meta: PostMetadataModel;
@@ -263,6 +263,7 @@ export function PostEditorFormFields(props: PostEditorFormFieldsProps) {
           onChange={(val) => onMetaChange({ ...meta, description: val })}
           className="border-bottom-accent-focus"
           placeholder="Add an optional description"
+          maxLength={POST_DESCRIPTION_MAX}
           rows={3}
         />
         <details className="syntax-helper">

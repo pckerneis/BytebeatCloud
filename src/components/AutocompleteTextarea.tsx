@@ -13,6 +13,7 @@ interface AutocompleteTextareaProps {
   className?: string;
   placeholder?: string;
   rows?: number;
+  maxLength?: number;
 }
 
 // Debounce helper
@@ -33,6 +34,7 @@ export function AutocompleteTextarea({
   className,
   placeholder,
   rows,
+  maxLength,
 }: AutocompleteTextareaProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -231,6 +233,7 @@ export function AutocompleteTextarea({
         className={className}
         placeholder={placeholder}
         rows={rows}
+        maxLength={maxLength}
       />
       {suggestions.length > 0 && (
         <div ref={dropdownRef} className="autocomplete-dropdown">

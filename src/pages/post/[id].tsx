@@ -4,6 +4,7 @@ import { ExportWavModal } from '../../components/ExportWavModal';
 import { ModeOption } from '../../model/expression';
 import { supabase } from '../../lib/supabaseClient';
 import { useSupabaseAuth } from '../../hooks/useSupabaseAuth';
+import { useCurrentUserProfile } from '../../hooks/useCurrentUserProfile';
 import { PostList, type PostRow } from '../../components/PostList';
 import { PostLineage } from '../../components/PostLineage';
 import Head from 'next/head';
@@ -17,6 +18,17 @@ import {
 } from '../../utils/description-renderer';
 import type { GetServerSideProps } from 'next';
 import { createClient } from '@supabase/supabase-js';
+import { COMMENT_MAX } from '../../constants';
+import { AutocompleteTextarea } from '../../components/AutocompleteTextarea';
+import { convertMentionsToIds } from '../../utils/mentions';
+
+interface Comment {
+  id: string;
+  content: string;
+  created_at: string;
+  author_id: string;
+  author_username: string | null;
+}
 
 interface PostMeta {
   id: string;
@@ -46,9 +58,16 @@ export default function PostDetailPage({ postMeta, baseUrl }: PostDetailPageProp
   const [hasReported, setHasReported] = useState(false);
   const [reportPending, setReportPending] = useState(false);
   const [reportError, setReportError] = useState('');
+  const [activeTab, setActiveTab] = useState<'comments' | 'lineage'>('comments');
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [commentsLoading, setCommentsLoading] = useState(false);
+  const [newComment, setNewComment] = useState('');
+  const [commentPending, setCommentPending] = useState(false);
+  const [commentMentionUserMap, setCommentMentionUserMap] = useState<Map<string, string>>(new Map());
   const { weekNumber: currentWeekNumber, theme: currentWeekTheme } = useCurrentWeeklyChallenge();
 
   const { user } = useSupabaseAuth();
+  const { username: currentUsername } = useCurrentUserProfile();
 
   const handleReportPost = () => {
     if (!user) {
@@ -218,6 +237,136 @@ export default function PostDetailPage({ postMeta, baseUrl }: PostDetailPageProp
     };
   }, [id, user]);
 
+  // Load comments when post is loaded or tab changes to comments
+  useEffect(() => {
+    if (!id || typeof id !== 'string' || posts.length === 0) return;
+    if (activeTab !== 'comments') return;
+
+    let cancelled = false;
+
+    const loadComments = async () => {
+      setCommentsLoading(true);
+      const { data, error } = await supabase
+        .from('comments')
+        .select('id, content, created_at, author_id, author:profiles!comments_author_id_fkey(username)')
+        .eq('post_id', id)
+        .order('created_at', { ascending: true });
+
+      if (cancelled) return;
+
+      if (error) {
+        console.warn('Error loading comments', error.message);
+        setComments([]);
+      } else {
+        const rows = (data ?? []).map((c: any) => ({
+          id: c.id as string,
+          content: c.content as string,
+          created_at: c.created_at as string,
+          author_id: c.author_id as string,
+          author_username: (c.author?.username as string) ?? null,
+        }));
+        setComments(rows);
+
+        // Extract mention user IDs from all comments and fetch usernames
+        const allMentionIds = new Set<string>();
+        for (const c of rows) {
+          for (const uid of extractMentionUserIds(c.content)) {
+            allMentionIds.add(uid);
+          }
+        }
+        if (allMentionIds.size > 0) {
+          const { data: profiles } = await supabase
+            .from('profiles')
+            .select('id, username')
+            .in('id', [...allMentionIds]);
+          if (profiles && !cancelled) {
+            const userMap = new Map<string, string>();
+            for (const p of profiles) {
+              userMap.set(p.id, p.username);
+            }
+            setCommentMentionUserMap(userMap);
+          }
+        } else {
+          setCommentMentionUserMap(new Map());
+        }
+      }
+      setCommentsLoading(false);
+    };
+
+    void loadComments();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [id, posts.length, activeTab]);
+
+  const handleSubmitComment = async () => {
+    if (!user || !newComment.trim() || posts.length === 0) return;
+    setCommentPending(true);
+
+    // Convert @username mentions to @[userId] format for storage
+    const contentWithIds = await convertMentionsToIds(newComment.trim());
+
+    const { data, error } = await supabase
+      .from('comments')
+      .insert({
+        post_id: posts[0].id,
+        author_id: (user as any).id,
+        content: contentWithIds,
+      })
+      .select('id, content, created_at, author_id')
+      .single();
+
+    if (error) {
+      console.warn('Error adding comment', error.message);
+      setCommentPending(false);
+      return;
+    }
+
+    // Update mention user map for the new comment
+    const newMentionIds = extractMentionUserIds(data.content);
+    if (newMentionIds.length > 0) {
+      const missingIds = newMentionIds.filter((id) => !commentMentionUserMap.has(id));
+      if (missingIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('id, username')
+          .in('id', missingIds);
+        if (profiles) {
+          setCommentMentionUserMap((prev) => {
+            const newMap = new Map(prev);
+            for (const p of profiles) {
+              newMap.set(p.id, p.username);
+            }
+            return newMap;
+          });
+        }
+      }
+    }
+
+    setComments((prev) => [
+      ...prev,
+      {
+        id: data.id,
+        content: data.content,
+        created_at: data.created_at,
+        author_id: data.author_id,
+        author_username: currentUsername ?? null,
+      },
+    ]);
+    setNewComment('');
+    setCommentPending(false);
+  };
+
+  const handleDeleteComment = async (commentId: string) => {
+    const { error } = await supabase.from('comments').delete().eq('id', commentId);
+    if (error) {
+      console.warn('Error deleting comment', error.message);
+      return;
+    }
+    setComments((prev) => prev.filter((c) => c.id !== commentId));
+  };
+
   const isWeeklyParticipation =
     currentWeekNumber !== null &&
     posts.length > 0 &&
@@ -325,8 +474,88 @@ export default function PostDetailPage({ postMeta, baseUrl }: PostDetailPageProp
               />
             )}
 
-            <h3>Lineage</h3>
-            <PostLineage postId={posts[0].id} />
+            <div className="tab-header">
+              <span
+                className={`tab-button ${activeTab === 'comments' ? 'active' : ''}`}
+                onClick={() => setActiveTab('comments')}
+              >
+                Comments ({comments.length})
+              </span>
+              <span
+                className={`tab-button ${activeTab === 'lineage' ? 'active' : ''}`}
+                onClick={() => setActiveTab('lineage')}
+              >
+                Lineage
+              </span>
+            </div>
+
+            {activeTab === 'comments' && (
+              <div className="comments-section">
+                {commentsLoading && <p className="text-centered">Loading comments…</p>}
+                {!commentsLoading && comments.length === 0 && (
+                  <p className="secondary-text">No comments yet. Be the first to comment!</p>
+                )}
+                {!commentsLoading && comments.length > 0 && (
+                  <ul className="comments-list">
+                    {comments.map((c) => (
+                      <li key={c.id} className="comment-item">
+                        <div className="comment-header">
+                          <Link href={`/u/${c.author_username}`} className="comment-author">
+                            @{c.author_username || 'unknown'}
+                          </Link>
+                          <span className="comment-date">
+                            {new Date(c.created_at).toLocaleDateString()}
+                          </span>
+                          {user && (user as any).id === c.author_id && (
+                            <button
+                              type="button"
+                              className="button ghost comment-delete"
+                              onClick={() => void handleDeleteComment(c.id)}
+                            >
+                              Delete
+                            </button>
+                          )}
+                        </div>
+                        <p className="comment-content">
+                          {renderDescriptionWithTagsAndMentions(c.content, commentMentionUserMap)}
+                        </p>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                {user ? (
+                  <div className="comment-form">
+                    <AutocompleteTextarea
+                      value={newComment}
+                      onChange={setNewComment}
+                      placeholder="Add a comment..."
+                      rows={2}
+                      maxLength={COMMENT_MAX}
+                      className="border-bottom-accent-focus"
+                    />
+                    <div className="comment-form-footer">
+                      <span className="secondary-text" style={{ fontSize: '12px' }}>
+                        {newComment.length}/{COMMENT_MAX}
+                      </span>
+                      <button
+                        type="button"
+                        className="button secondary"
+                        onClick={() => void handleSubmitComment()}
+                        disabled={commentPending || !newComment.trim()}
+                      >
+                        {commentPending ? 'Posting…' : 'Post comment'}
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="secondary-text">
+                    <Link href="/login">Log in</Link> to leave a comment.
+                  </p>
+                )}
+              </div>
+            )}
+
+            {activeTab === 'lineage' && <PostLineage postId={posts[0].id} />}
           </>
         )}
       </section>
