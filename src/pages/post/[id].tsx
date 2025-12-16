@@ -282,13 +282,15 @@ export default function PostDetailPage({ postMeta, baseUrl }: PostDetailPageProp
             )}
 
             <div className="post-detail-actions">
-              <button
-                type="button"
-                className="button secondary"
-                onClick={() => setShowExportModal(true)}
-              >
-                Export to WAV
-              </button>
+              {!(posts[0]?.license === 'all-rights-reserved' && posts[0]?.profile_id !== (user as any)?.id) && (
+                <button
+                  type="button"
+                  className="button secondary"
+                  onClick={() => setShowExportModal(true)}
+                >
+                  Export to WAV
+                </button>
+              )}
               {user && posts[0]?.profile_id === (user as any).id && (
                 <button
                   type="button"
