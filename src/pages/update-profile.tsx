@@ -21,6 +21,11 @@ export default function UpdateProfilePage() {
   const [error, setError] = useState('');
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving'>('idle');
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [blocked, setBlocked] = useState<
+    { blocked_id: string; created_at: string; username: string | null }[]
+  >([]);
+  const [blockedLoading, setBlockedLoading] = useState(false);
+  const [blockedError, setBlockedError] = useState('');
 
   useEffect(() => {
     if (loadedUsername) {
@@ -39,6 +44,34 @@ export default function UpdateProfilePage() {
       ]);
     }
   }, [loadedUsername, loadedBio, loadedSocialLinks]);
+
+  // Load blocked users for current user
+  useEffect(() => {
+    const loadBlocked = async () => {
+      if (!user) return;
+      setBlockedLoading(true);
+      setBlockedError('');
+      const { data, error } = await supabase
+        .from('blocked_users')
+        .select('blocked_id,created_at,blocked_profile:profiles!blocked_users_blocked_id_fkey(username)')
+        .eq('blocker_id', (user as any).id)
+        .order('created_at', { ascending: false });
+      if (error) {
+        setBlockedError(error.message);
+        setBlocked([]);
+        setBlockedLoading(false);
+        return;
+      }
+      const rows = (data ?? []).map((r: any) => ({
+        blocked_id: r.blocked_id as string,
+        created_at: r.created_at as string,
+        username: (r.blocked_profile?.username as string) ?? null,
+      }));
+      setBlocked(rows);
+      setBlockedLoading(false);
+    };
+    void loadBlocked();
+  }, [user]);
 
   const handleSave = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -170,6 +203,21 @@ export default function UpdateProfilePage() {
     setSocialLinks(updated);
   };
 
+  const handleUnblock = async (blockedId: string) => {
+    if (!user) return;
+    setBlockedError('');
+    const { error } = await supabase
+      .from('blocked_users')
+      .delete()
+      .eq('blocker_id', (user as any).id)
+      .eq('blocked_id', blockedId);
+    if (error) {
+      setBlockedError(error.message);
+      return;
+    }
+    setBlocked((prev) => prev.filter((b) => b.blocked_id !== blockedId));
+  };
+
   return (
     <>
       <Head>
@@ -237,6 +285,38 @@ export default function UpdateProfilePage() {
             >
               {saveStatus === 'saving' ? 'Saving…' : 'Save profile'}
             </button>
+
+            <h3>Blocked users</h3>
+            {blockedLoading && <p className="text-centered">Loading…</p>}
+            {!blockedLoading && blockedError && <p className="error-message">{blockedError}</p>}
+            {!blockedLoading && !blockedError && blocked.length === 0 && (
+              <p>You have not blocked any user.</p>
+            )}
+            {!blockedLoading && !blockedError && blocked.length > 0 && (
+              <ul className="notifications-list">
+                {blocked.map((b) => (
+                  <li key={b.blocked_id} className="notification-item">
+                    <div className="post-header">
+                      <div>
+                        <span>You blocked </span>
+                        <strong>@{b.username || 'unknown'}</strong>
+                        <span className="secondary-text" style={{ marginLeft: 8 }}>
+                          on {new Date(b.created_at).toLocaleDateString()}
+                        </span>
+                      </div>
+                      <button
+                        style={{marginTop: '5px'}}
+                        type="button"
+                        className="button secondary"
+                        onClick={() => void handleUnblock(b.blocked_id)}
+                      >
+                        Unblock
+                      </button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
 
             <h3>Delete account</h3>
 
