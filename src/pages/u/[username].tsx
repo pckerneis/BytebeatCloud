@@ -15,52 +15,30 @@ export default function UserPage() {
 
   const notFound = !loading && !profileId && uname;
   const { user } = useSupabaseAuth();
-  const [loading, setLoading] = useState(true);
   const [isBlockedByViewer, setIsBlockedByViewer] = useState(false);
   const [targetExists, setTargetExists] = useState(true);
 
   useEffect(() => {
-    if (!uname) return;
+    if (!profileId) return;
     let cancelled = false;
 
     const load = async () => {
-      setLoading(true);
-      setIsBlockedByViewer(false);
-      setTargetExists(true);
-
-      // Resolve target profile id (publicly visible usernames)
-      const { data: profile, error: pErr } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('username', uname)
-        .maybeSingle();
-
-      if (cancelled) return;
-
-      if (pErr || !profile) {
-        setTargetExists(false);
-        setLoading(false);
-        return;
-      }
-
       if (user) {
         const { data: row } = await supabase
           .from('blocked_users')
           .select('blocked_id')
           .eq('blocker_id', (user as any).id)
-          .eq('blocked_id', profile.id)
+          .eq('blocked_id', profileId)
           .maybeSingle();
         if (!cancelled) setIsBlockedByViewer(!!row);
       }
-
-      if (!cancelled) setLoading(false);
     };
 
     void load();
     return () => {
       cancelled = true;
     };
-  }, [uname, user]);
+  }, [profileId, user]);
 
   return (
     <>
