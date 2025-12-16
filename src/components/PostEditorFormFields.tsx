@@ -355,16 +355,18 @@ export function PostEditorFormFields(props: PostEditorFormFieldsProps) {
         </>
       )}
 
-      <div className="form-actions-buttons" style={{ marginTop: '8px' }}>
-        <button
-          type="button"
-          className="button secondary"
-          disabled={!expression.trim()}
-          onClick={handleCopyShareLink}
-        >
-          {shareLinkCopied ? 'Link copied' : 'Copy share link'}
-        </button>
-      </div>
+      {!showActions && (
+        <div className="form-actions-buttons" style={{ marginTop: '8px' }}>
+          <button
+            type="button"
+            className="button secondary"
+            disabled={!expression.trim()}
+            onClick={handleCopyShareLink}
+          >
+            {shareLinkCopied ? 'Link copied' : 'Copy share link'}
+          </button>
+        </div>
+      )}
 
       {saveError && <p className="error-message">{saveError}</p>}
       {saveStatus === 'success' && !saveError && (
