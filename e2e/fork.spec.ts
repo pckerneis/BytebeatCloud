@@ -232,7 +232,7 @@ test.describe('Fork page - saving fork', () => {
   });
 });
 
-test.describe('Fork page - forked post appears in original forks list', () => {
+test.describe('Fork page - forked post appears in lineage', () => {
   let originalPostId: string;
 
   test.beforeEach(async ({ page }) => {
@@ -260,7 +260,7 @@ test.describe('Fork page - forked post appears in original forks list', () => {
     await ensureTestUserProfile(TEST_USER_EMAIL, TEST_USERNAME);
   });
 
-  test('forked post appears in original post forks section', async ({ page }) => {
+  test('forked post appears in original post lineage as descendant', async ({ page }) => {
     // First, create the fork
     await page.goto(`/fork/${originalPostId}`);
 
@@ -277,8 +277,71 @@ test.describe('Fork page - forked post appears in original forks list', () => {
     // Now navigate to original post
     await page.goto(`/post/${originalPostId}`);
 
-    // Forks section should show the fork
-    await expect(page.getByRole('link', { name: 'My New Fork' })).toBeVisible({ timeout: 10000 });
+    // Lineage section should show the fork as a descendant
+    await expect(page.getByRole('heading', { name: 'Lineage' })).toBeVisible({ timeout: 10000 });
+    const lineageTree = page.locator('.lineage-tree');
+    await expect(lineageTree.getByRole('link', { name: /My New Fork/ })).toBeVisible();
+  });
+
+  test('forked post shows original in lineage as ancestor', async ({ page }) => {
+    // First, create the fork
+    await page.goto(`/fork/${originalPostId}`);
+
+    const titleField = page.getByPlaceholder('Name your bytebeat expression');
+    await expect(titleField).toBeVisible({ timeout: 10000 });
+
+    await titleField.clear();
+    await titleField.fill('Child Fork Post');
+
+    await page.getByRole('button', { name: 'Publish' }).click();
+    await page.waitForURL(/\/post\//);
+
+    // We're now on the forked post's detail page
+    // Lineage should show the original as an ancestor
+    await expect(page.getByRole('heading', { name: 'Lineage' })).toBeVisible({ timeout: 10000 });
+    const lineageTree = page.locator('.lineage-tree');
+    await expect(lineageTree.getByRole('link', { name: /Original With Forks/ })).toBeVisible();
+    // Current post should also be in the tree
+    await expect(lineageTree.getByRole('link', { name: /Child Fork Post/ })).toBeVisible();
+  });
+
+  test('lineage shows multi-level fork chain', async ({ page }) => {
+    // Create first fork
+    await page.goto(`/fork/${originalPostId}`);
+
+    let titleField = page.getByPlaceholder('Name your bytebeat expression');
+    await expect(titleField).toBeVisible({ timeout: 10000 });
+
+    await titleField.clear();
+    await titleField.fill('First Generation Fork');
+
+    await page.getByRole('button', { name: 'Publish' }).click();
+    await page.waitForURL(/\/post\//);
+
+    // Get the first fork's ID from URL
+    const firstForkUrl = page.url();
+    const firstForkId = firstForkUrl.split('/post/')[1];
+
+    // Create second fork (fork of fork)
+    await page.goto(`/fork/${firstForkId}`);
+
+    titleField = page.getByPlaceholder('Name your bytebeat expression');
+    await expect(titleField).toBeVisible({ timeout: 10000 });
+
+    await titleField.clear();
+    await titleField.fill('Second Generation Fork');
+
+    await page.getByRole('button', { name: 'Publish' }).click();
+    await page.waitForURL(/\/post\//);
+
+    // We're on the second fork's page - lineage should show full chain
+    await expect(page.getByRole('heading', { name: 'Lineage' })).toBeVisible({ timeout: 10000 });
+    const lineageTree = page.locator('.lineage-tree');
+
+    // Should show: Original -> First Gen -> Second Gen (current)
+    await expect(lineageTree.getByRole('link', { name: /Original With Forks/ })).toBeVisible();
+    await expect(lineageTree.getByRole('link', { name: /First Generation Fork/ })).toBeVisible();
+    await expect(lineageTree.getByRole('link', { name: /Second Generation Fork/ })).toBeVisible();
   });
 });
 

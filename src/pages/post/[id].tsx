@@ -5,9 +5,9 @@ import { ModeOption } from '../../model/expression';
 import { supabase } from '../../lib/supabaseClient';
 import { useSupabaseAuth } from '../../hooks/useSupabaseAuth';
 import { PostList, type PostRow } from '../../components/PostList';
+import { PostLineage } from '../../components/PostLineage';
 import Head from 'next/head';
 import Link from 'next/link';
-import { enrichWithViewerFavorites } from '../../utils/favorites';
 import { enrichWithTags } from '../../utils/tags';
 import { validateExpression } from '../../utils/expression-validator';
 import { useCurrentWeeklyChallenge } from '../../hooks/useCurrentWeeklyChallenge';
@@ -37,9 +37,7 @@ export default function PostDetailPage({ postMeta, baseUrl }: PostDetailPageProp
   const [posts, setPosts] = useState<PostRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [forks, setForks] = useState<PostRow[]>([]);
-  const [forksError, setForksError] = useState('');
-  const [mentionUserMap, setMentionUserMap] = useState<Map<string, string>>(new Map());
+    const [mentionUserMap, setMentionUserMap] = useState<Map<string, string>>(new Map());
   const [showExportModal, setShowExportModal] = useState(false);
   const [shareButtonText, setShareButtonText] = useState('Share');
   const { weekNumber: currentWeekNumber, theme: currentWeekTheme } = useCurrentWeeklyChallenge();
@@ -79,8 +77,6 @@ export default function PostDetailPage({ postMeta, baseUrl }: PostDetailPageProp
       setLoading(true);
       setError('');
       setPosts([]);
-      setForks([]);
-      setForksError('');
 
       const { data, error } = await supabase
         .from('posts_with_meta')
@@ -150,36 +146,6 @@ export default function PostDetailPage({ postMeta, baseUrl }: PostDetailPageProp
       }
 
       setPosts([rowWithCount]);
-
-      // Load published forks of this post
-      const { data: forkRows, error: forkError } = await supabase
-        .from('posts_with_meta')
-        .select(
-          'id,title,description,expression,is_draft,sample_rate,mode,created_at,profile_id,fork_of_post_id,is_fork,author_username,origin_title,origin_username,favorites_count,is_weekly_winner',
-        )
-        .eq('fork_of_post_id', id)
-        .eq('is_draft', false)
-        .order('created_at', { ascending: false });
-
-      if (forkError) {
-        console.warn('Error loading forks for post', forkError.message);
-        setForksError('Unable to load forks.');
-      } else {
-        let rows = (forkRows ?? []) as PostRow[];
-
-        if (user && rows.length > 0) {
-          rows = (await enrichWithViewerFavorites((user as any).id as string, rows)) as PostRow[];
-        }
-
-        if (rows.length > 0) {
-          rows = (await enrichWithTags(rows)) as PostRow[];
-        }
-
-        // Filter out forks with invalid expressions
-        rows = rows.filter((r) => validateExpression(r.expression).valid);
-        setForks(rows);
-      }
-
       setLoading(false);
     };
 
@@ -285,12 +251,8 @@ export default function PostDetailPage({ postMeta, baseUrl }: PostDetailPageProp
               />
             )}
 
-            <h3>Forks</h3>
-            {forksError && <p className="error-message">{forksError}</p>}
-            {!forksError && forks.length === 0 && <p>No forks yet.</p>}
-            {!forksError && forks.length > 0 && (
-              <PostList posts={forks} currentUserId={user ? (user as any).id : undefined} />
-            )}
+            <h3>Lineage</h3>
+            <PostLineage postId={posts[0].id} />
           </>
         )}
       </section>

@@ -124,14 +124,14 @@ test.describe('Post detail page - viewing', () => {
     await expect(page).toHaveURL(/\/explore/);
   });
 
-  test('shows forks section', async ({ page }) => {
+  test('shows lineage section', async ({ page }) => {
     await page.goto(`/post/${testPostId}`);
 
     await expect(page.getByText('Loading…')).toHaveCount(0, { timeout: 10000 });
 
-    // Forks section should be visible
-    await expect(page.getByRole('heading', { name: 'Forks' })).toBeVisible();
-    await expect(page.getByText('No forks yet.')).toBeVisible();
+    // Lineage section should be visible
+    await expect(page.getByRole('heading', { name: 'Lineage' })).toBeVisible();
+    await expect(page.getByText('No lineage yet.')).toBeVisible();
   });
 
   test('shows error for non-existent post', async ({ page }) => {
