@@ -88,7 +88,7 @@ test.describe('Comments - basic functionality', () => {
     await expect(page.locator('.comment-author').getByText(`@${TEST_USERNAME}`)).toBeVisible();
   });
 
-  test('can delete own comment', async ({ page }) => {
+  test('can delete own comment with confirmation', async ({ page }) => {
     // Pre-create a comment
     await supabaseAdmin.from('comments').insert({
       post_id: testPostId,
@@ -109,8 +109,44 @@ test.describe('Comments - basic functionality', () => {
 
     await deleteButton.click();
 
+    // Confirmation modal should appear
+    await expect(page.getByText('Delete comment?')).toBeVisible();
+    await expect(page.getByText('This action cannot be undone.')).toBeVisible();
+
+    // Confirm deletion
+    await page.locator('.modal').getByRole('button', { name: 'Delete' }).click();
+
     // Comment should disappear
     await expect(page.getByText('Comment to delete')).not.toBeVisible({ timeout: 5000 });
+  });
+
+  test('can cancel comment deletion', async ({ page }) => {
+    // Pre-create a comment
+    await supabaseAdmin.from('comments').insert({
+      post_id: testPostId,
+      author_id: testUserId,
+      content: 'Comment to keep',
+    });
+
+    await page.goto(`/post/${testPostId}`);
+
+    await expect(page.getByText('Loading…')).toHaveCount(0, { timeout: 10000 });
+
+    // Comment should be visible
+    await expect(page.getByText('Comment to keep')).toBeVisible({ timeout: 5000 });
+
+    // Click delete
+    await page.getByRole('button', { name: 'Delete' }).click();
+
+    // Confirmation modal should appear
+    await expect(page.getByText('Delete comment?')).toBeVisible();
+
+    // Cancel deletion
+    await page.getByRole('button', { name: 'Cancel' }).click();
+
+    // Modal should close and comment should still be visible
+    await expect(page.getByText('Delete comment?')).not.toBeVisible();
+    await expect(page.getByText('Comment to keep')).toBeVisible();
   });
 
   test('cannot delete other user comment', async ({ page }) => {
@@ -335,6 +371,262 @@ test.describe('Comments - notifications', () => {
       .eq('post_id', testPostId);
 
     expect(notifications).toHaveLength(1);
+  });
+});
+
+test.describe('Comments - post owner can delete others comments', () => {
+  let testPostId: string;
+
+  test.beforeEach(async ({ page }) => {
+    await ensureTestUserProfile(OTHER_USER_EMAIL, OTHER_USERNAME);
+    await ensureTestUserProfile(TEST_USER_EMAIL, TEST_USERNAME);
+
+    // Create a post by TEST user (they are the post owner)
+    const { data } = await supabaseAdmin
+      .from('posts')
+      .insert({
+        profile_id: testUserId,
+        title: 'My Post With Comments',
+        expression: 't',
+        is_draft: false,
+        sample_rate: 8000,
+        mode: 'uint8',
+      })
+      .select('id')
+      .single();
+
+    testPostId = data!.id;
+
+    await signInAndInjectSession(page, {
+      email: TEST_USER_EMAIL,
+      password: TEST_USER_PASSWORD,
+    });
+  });
+
+  test('post owner can delete other users comment', async ({ page }) => {
+    // Pre-create a comment by OTHER user on TEST user's post
+    await supabaseAdmin.from('comments').insert({
+      post_id: testPostId,
+      author_id: otherUserId,
+      content: 'Comment from other user',
+    });
+
+    await page.goto(`/post/${testPostId}`);
+
+    await expect(page.getByText('Loading…')).toHaveCount(0, { timeout: 10000 });
+
+    // Comment should be visible
+    await expect(page.getByText('Comment from other user')).toBeVisible({ timeout: 5000 });
+
+    // Delete button should be visible for post owner
+    const deleteButton = page.getByRole('button', { name: 'Delete' });
+    await expect(deleteButton).toBeVisible();
+
+    await deleteButton.click();
+
+    // Confirmation modal should appear with report option
+    await expect(page.getByText('Delete comment?')).toBeVisible();
+    await expect(page.getByText('Also report this comment')).toBeVisible();
+
+    // Confirm deletion without reporting
+    await page.locator('.modal').getByRole('button', { name: 'Delete' }).click();
+
+    // Comment should disappear
+    await expect(page.getByText('Comment from other user')).not.toBeVisible({ timeout: 5000 });
+  });
+
+  test('post owner can delete and report comment', async ({ page }) => {
+    // Pre-create a comment by OTHER user
+    await supabaseAdmin.from('comments').insert({
+      post_id: testPostId,
+      author_id: otherUserId,
+      content: 'Spam comment to report',
+    });
+
+    await page.goto(`/post/${testPostId}`);
+
+    await expect(page.getByText('Loading…')).toHaveCount(0, { timeout: 10000 });
+
+    // Comment should be visible
+    await expect(page.getByText('Spam comment to report')).toBeVisible({ timeout: 5000 });
+
+    // Click delete
+    await page.getByRole('button', { name: 'Delete' }).click();
+
+    // Check the "Also report" checkbox
+    await page.getByText('Also report this comment').click();
+
+    // Select a reason
+    await page.locator('.modal select').selectOption('Spam');
+
+    // Confirm deletion
+    await page.locator('.modal').getByRole('button', { name: 'Delete' }).click();
+
+    // Comment should disappear
+    await expect(page.getByText('Spam comment to report')).not.toBeVisible({ timeout: 5000 });
+
+    // Verify report was created
+    const { data: reports } = await supabaseAdmin
+      .from('comment_reports')
+      .select('*')
+      .eq('reporter_id', testUserId)
+      .eq('reason', 'Spam');
+
+    expect(reports).toHaveLength(1);
+  });
+
+  test('report checkbox not shown when deleting own comment', async ({ page }) => {
+    // Pre-create a comment by TEST user (post owner's own comment)
+    await supabaseAdmin.from('comments').insert({
+      post_id: testPostId,
+      author_id: testUserId,
+      content: 'My own comment',
+    });
+
+    await page.goto(`/post/${testPostId}`);
+
+    await expect(page.getByText('Loading…')).toHaveCount(0, { timeout: 10000 });
+
+    // Comment should be visible
+    await expect(page.getByText('My own comment')).toBeVisible({ timeout: 5000 });
+
+    // Click delete
+    await page.getByRole('button', { name: 'Delete' }).click();
+
+    // Confirmation modal should appear but WITHOUT report option
+    await expect(page.getByText('Delete comment?')).toBeVisible();
+    await expect(page.getByText('Also report this comment')).not.toBeVisible();
+  });
+});
+
+test.describe('Comments - reporting', () => {
+  let testPostId: string;
+
+  test.beforeEach(async ({ page }) => {
+    await ensureTestUserProfile(OTHER_USER_EMAIL, OTHER_USERNAME);
+    await ensureTestUserProfile(TEST_USER_EMAIL, TEST_USERNAME);
+
+    // Clean up comment reports
+    await supabaseAdmin.from('comment_reports').delete().not('id', 'is', null);
+
+    // Create a post by OTHER user
+    const { data } = await supabaseAdmin
+      .from('posts')
+      .insert({
+        profile_id: otherUserId,
+        title: 'Post For Report Test',
+        expression: 't',
+        is_draft: false,
+        sample_rate: 8000,
+        mode: 'uint8',
+      })
+      .select('id')
+      .single();
+
+    testPostId = data!.id;
+
+    await signInAndInjectSession(page, {
+      email: TEST_USER_EMAIL,
+      password: TEST_USER_PASSWORD,
+    });
+  });
+
+  test('can report other users comment', async ({ page }) => {
+    // Pre-create a comment by OTHER user
+    await supabaseAdmin.from('comments').insert({
+      post_id: testPostId,
+      author_id: otherUserId,
+      content: 'Comment to report',
+    });
+
+    await page.goto(`/post/${testPostId}`);
+
+    await expect(page.getByText('Loading…')).toHaveCount(0, { timeout: 10000 });
+
+    // Comment should be visible
+    await expect(page.getByText('Comment to report')).toBeVisible({ timeout: 5000 });
+
+    // Report button should be visible (use comment-report class to distinguish from post report)
+    const reportButton = page.locator('.comment-report');
+    await expect(reportButton).toBeVisible();
+
+    await reportButton.click();
+
+    // Report modal should appear
+    await expect(page.getByText('Report comment')).toBeVisible();
+    await expect(page.getByText('Reports are confidential')).toBeVisible();
+
+    // Select a reason
+    await page.locator('.modal select').selectOption('Harassment');
+
+    // Submit report
+    await page.getByRole('button', { name: 'Submit report' }).click();
+
+    // Modal should close
+    await expect(page.getByText('Report comment')).not.toBeVisible({ timeout: 5000 });
+
+    // Report button should now show "Reported"
+    await expect(page.locator('.comment-report')).toHaveText('Reported');
+    await expect(page.locator('.comment-report')).toBeDisabled();
+
+    // Verify report was created
+    const { data: reports } = await supabaseAdmin
+      .from('comment_reports')
+      .select('*')
+      .eq('reporter_id', testUserId)
+      .eq('reason', 'Harassment');
+
+    expect(reports).toHaveLength(1);
+  });
+
+  test('cannot report own comment', async ({ page }) => {
+    // Pre-create a comment by TEST user
+    await supabaseAdmin.from('comments').insert({
+      post_id: testPostId,
+      author_id: testUserId,
+      content: 'My own comment',
+    });
+
+    await page.goto(`/post/${testPostId}`);
+
+    await expect(page.getByText('Loading…')).toHaveCount(0, { timeout: 10000 });
+
+    // Comment should be visible
+    await expect(page.getByText('My own comment')).toBeVisible({ timeout: 5000 });
+
+    // Report button should NOT be visible for own comment (only delete button)
+    await expect(page.locator('.comment-report')).not.toBeVisible();
+  });
+
+  test('already reported comment shows Reported button', async ({ page }) => {
+    // Pre-create a comment by OTHER user
+    const { data: comment } = await supabaseAdmin
+      .from('comments')
+      .insert({
+        post_id: testPostId,
+        author_id: otherUserId,
+        content: 'Already reported comment',
+      })
+      .select('id')
+      .single();
+
+    // Pre-create a report
+    await supabaseAdmin.from('comment_reports').insert({
+      reporter_id: testUserId,
+      comment_id: comment!.id,
+      reason: 'Spam',
+    });
+
+    await page.goto(`/post/${testPostId}`);
+
+    await expect(page.getByText('Loading…')).toHaveCount(0, { timeout: 10000 });
+
+    // Comment should be visible
+    await expect(page.getByText('Already reported comment')).toBeVisible({ timeout: 5000 });
+
+    // Report button should show "Reported" and be disabled
+    await expect(page.locator('.comment-report')).toHaveText('Reported');
+    await expect(page.locator('.comment-report')).toBeDisabled();
   });
 });
 
