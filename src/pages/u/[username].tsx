@@ -16,7 +16,6 @@ export default function UserPage() {
   const notFound = !loading && !profileId && uname;
   const { user } = useSupabaseAuth();
   const [isBlockedByViewer, setIsBlockedByViewer] = useState(false);
-  const [targetExists, setTargetExists] = useState(true);
 
   useEffect(() => {
     if (!profileId) return;
@@ -61,7 +60,7 @@ export default function UserPage() {
         {error && !loading && <p className="error-message">{error}</p>}
         {notFound && !error && <p className="error-message">User not found.</p>}
       </section>
-      {uname && !loading && targetExists && isBlockedByViewer && (
+      {uname && !loading && !notFound && isBlockedByViewer && (
         <section>
           <h2>@{uname}</h2>
           <p className="text-centered">
@@ -75,7 +74,7 @@ export default function UserPage() {
           </div>
         </section>
       )}
-      {uname && !loading && targetExists && !isBlockedByViewer && (
+      {uname && !loading && !notFound && !isBlockedByViewer && (
         <UserProfileContent profileId={profileId} username={uname} />
       )}
     </>

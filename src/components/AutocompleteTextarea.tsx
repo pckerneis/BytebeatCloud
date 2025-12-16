@@ -96,6 +96,7 @@ export function AutocompleteTextarea({
   // Fetch suggestions when debounced query changes
   useEffect(() => {
     if (!triggerInfo || debouncedQuery.length < 1) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSuggestions([]);
       return;
     }
@@ -143,7 +144,7 @@ export function AutocompleteTextarea({
     return () => {
       cancelled = true;
     };
-  }, [debouncedQuery, triggerInfo?.type]);
+  }, [debouncedQuery, triggerInfo, triggerInfo?.type]);
 
   // Insert selected suggestion
   const insertSuggestion = useCallback(

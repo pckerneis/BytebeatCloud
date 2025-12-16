@@ -39,6 +39,7 @@
   color: var(--secondary-text-color);
 }
 
+.comment-report,
 .comment-delete {
   margin-left: auto;
   font-size: 12px;

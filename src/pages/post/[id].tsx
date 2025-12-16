@@ -64,6 +64,16 @@ export default function PostDetailPage({ postMeta, baseUrl }: PostDetailPageProp
   const [newComment, setNewComment] = useState('');
   const [commentPending, setCommentPending] = useState(false);
   const [commentMentionUserMap, setCommentMentionUserMap] = useState<Map<string, string>>(new Map());
+  const [reportedCommentIds, setReportedCommentIds] = useState<Set<string>>(new Set());
+  const [commentReportOpen, setCommentReportOpen] = useState<string | null>(null);
+  const [commentReportCategory, setCommentReportCategory] = useState('');
+  const [commentReportDetails, setCommentReportDetails] = useState('');
+  const [commentReportPending, setCommentReportPending] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState<string | null>(null);
+  const [deleteConfirmAuthorId, setDeleteConfirmAuthorId] = useState<string | null>(null);
+  const [deleteAlsoReport, setDeleteAlsoReport] = useState(false);
+  const [deleteReportCategory, setDeleteReportCategory] = useState('');
+  const [deletePending, setDeletePending] = useState(false);
   const { weekNumber: currentWeekNumber, theme: currentWeekTheme } = useCurrentWeeklyChallenge();
 
   const { user } = useSupabaseAuth();
@@ -250,6 +260,7 @@ export default function PostDetailPage({ postMeta, baseUrl }: PostDetailPageProp
         .from('comments')
         .select('id, content, created_at, author_id, author:profiles!comments_author_id_fkey(username)')
         .eq('post_id', id)
+        .is('deleted_at', null)
         .order('created_at', { ascending: true });
 
       if (cancelled) return;
@@ -289,6 +300,19 @@ export default function PostDetailPage({ postMeta, baseUrl }: PostDetailPageProp
         } else {
           setCommentMentionUserMap(new Map());
         }
+
+        // Load already-reported comment IDs
+        if (user) {
+          const commentIds = rows.map((c) => c.id);
+          const { data: reports } = await supabase
+            .from('comment_reports')
+            .select('comment_id')
+            .eq('reporter_id', (user as any).id)
+            .in('comment_id', commentIds);
+          if (reports && !cancelled) {
+            setReportedCommentIds(new Set(reports.map((r: any) => r.comment_id)));
+          }
+        }
       }
       setCommentsLoading(false);
     };
@@ -298,7 +322,7 @@ export default function PostDetailPage({ postMeta, baseUrl }: PostDetailPageProp
     return () => {
       cancelled = true;
     };
-  }, [id, posts.length, activeTab]);
+  }, [id, posts.length, activeTab, user]);
 
   const handleSubmitComment = async () => {
     if (!user || !newComment.trim() || posts.length === 0) return;
@@ -358,13 +382,73 @@ export default function PostDetailPage({ postMeta, baseUrl }: PostDetailPageProp
     setCommentPending(false);
   };
 
-  const handleDeleteComment = async (commentId: string) => {
-    const { error } = await supabase.from('comments').delete().eq('id', commentId);
+  const handleOpenDeleteConfirm = (commentId: string, authorId: string) => {
+    setDeleteConfirmOpen(commentId);
+    setDeleteConfirmAuthorId(authorId);
+    setDeleteAlsoReport(false);
+    setDeleteReportCategory('');
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!user || !deleteConfirmOpen) return;
+    setDeletePending(true);
+
+    // If also reporting (only when deleting someone else's comment)
+    if (deleteAlsoReport && deleteReportCategory && deleteConfirmAuthorId !== (user as any).id) {
+      await supabase.from('comment_reports').insert({
+        reporter_id: (user as any).id,
+        comment_id: deleteConfirmOpen,
+        reason: deleteReportCategory,
+      });
+      setReportedCommentIds((prev) => new Set([...prev, deleteConfirmOpen]));
+    }
+
+    // Soft delete - set deleted_at timestamp
+    const { error } = await supabase
+      .from('comments')
+      .update({ deleted_at: new Date().toISOString() })
+      .eq('id', deleteConfirmOpen);
     if (error) {
       console.warn('Error deleting comment', error.message);
+      setDeletePending(false);
       return;
     }
-    setComments((prev) => prev.filter((c) => c.id !== commentId));
+    setComments((prev) => prev.filter((c) => c.id !== deleteConfirmOpen));
+    setDeleteConfirmOpen(null);
+    setDeleteConfirmAuthorId(null);
+    setDeletePending(false);
+  };
+
+  const handleOpenCommentReport = (commentId: string) => {
+    if (!user) {
+      void router.push('/login');
+      return;
+    }
+    setCommentReportOpen(commentId);
+    setCommentReportCategory('');
+    setCommentReportDetails('');
+  };
+
+  const handleSubmitCommentReport = async () => {
+    if (!user || !commentReportOpen || !commentReportCategory) return;
+    setCommentReportPending(true);
+
+    const { error } = await supabase.from('comment_reports').insert({
+      reporter_id: (user as any).id,
+      comment_id: commentReportOpen,
+      reason: commentReportCategory,
+      details: commentReportDetails || null,
+    });
+
+    if (error) {
+      console.warn('Error reporting comment', error.message);
+      setCommentReportPending(false);
+      return;
+    }
+
+    setReportedCommentIds((prev) => new Set([...prev, commentReportOpen]));
+    setCommentReportOpen(null);
+    setCommentReportPending(false);
   };
 
   const isWeeklyParticipation =
@@ -506,13 +590,23 @@ export default function PostDetailPage({ postMeta, baseUrl }: PostDetailPageProp
                           <span className="comment-date">
                             {new Date(c.created_at).toLocaleDateString()}
                           </span>
-                          {user && (user as any).id === c.author_id && (
+                          {user && ((user as any).id === c.author_id || posts[0]?.profile_id === (user as any).id) && (
                             <button
                               type="button"
                               className="button ghost comment-delete"
-                              onClick={() => void handleDeleteComment(c.id)}
+                              onClick={() => handleOpenDeleteConfirm(c.id, c.author_id)}
                             >
                               Delete
+                            </button>
+                          )}
+                          {user && (user as any).id !== c.author_id && posts[0]?.profile_id !== (user as any).id && (
+                            <button
+                              type="button"
+                              className="button ghost comment-report"
+                              onClick={() => handleOpenCommentReport(c.id)}
+                              disabled={reportedCommentIds.has(c.id)}
+                            >
+                              {reportedCommentIds.has(c.id) ? 'Reported' : 'Report'}
                             </button>
                           )}
                         </div>
@@ -559,6 +653,149 @@ export default function PostDetailPage({ postMeta, baseUrl }: PostDetailPageProp
           </>
         )}
       </section>
+      {deleteConfirmOpen && (
+        <div
+          className="modal-backdrop"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.4)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+          }}
+        >
+          <div className="modal" style={{ maxWidth: 520 }}>
+            <h2 style={{ marginTop: 0, marginBottom: '8px', fontSize: '16px' }}>
+              Delete comment?
+            </h2>
+            <p style={{ marginTop: 0, marginBottom: '12px', fontSize: '13px', opacity: 0.9 }}>
+              This action cannot be undone.
+            </p>
+            {user && deleteConfirmAuthorId && deleteConfirmAuthorId !== (user as any).id && (
+              <div style={{ marginBottom: '12px' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+                  <input
+                    type="checkbox"
+                    checked={deleteAlsoReport}
+                    onChange={(e) => setDeleteAlsoReport(e.target.checked)}
+                    disabled={deletePending}
+                  />
+                  <span style={{ fontSize: '13px' }}>Also report this comment</span>
+                </label>
+                {deleteAlsoReport && (
+                  <select
+                    value={deleteReportCategory}
+                    onChange={(e) => setDeleteReportCategory(e.target.value)}
+                    style={{ width: '100%', marginTop: '8px' }}
+                    disabled={deletePending}
+                  >
+                    <option value="" disabled>
+                      Select a reason
+                    </option>
+                    <option value="Spam">Spam</option>
+                    <option value="Harassment">Harassment</option>
+                    <option value="Hate">Hate</option>
+                    <option value="Sexual content">Sexual content</option>
+                    <option value="Other">Other</option>
+                  </select>
+                )}
+              </div>
+            )}
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+              <button
+                type="button"
+                className="button secondary"
+                onClick={() => setDeleteConfirmOpen(null)}
+                disabled={deletePending}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="button danger"
+                onClick={() => void handleConfirmDelete()}
+                disabled={deletePending || (deleteAlsoReport && !deleteReportCategory)}
+              >
+                {deletePending ? 'Deleting…' : 'Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {commentReportOpen && (
+        <div
+          className="modal-backdrop"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.4)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+          }}
+        >
+          <div className="modal" style={{ maxWidth: 520 }}>
+            <h2 style={{ marginTop: 0, marginBottom: '8px', fontSize: '16px' }}>
+              Report comment
+            </h2>
+            <p style={{ marginTop: 0, marginBottom: '12px', fontSize: '13px', opacity: 0.9 }}>
+              Reports are confidential. The comment author will not know who reported them.
+              Reports are reviewed by moderators.
+            </p>
+            <select
+              value={commentReportCategory}
+              onChange={(e) => setCommentReportCategory(e.target.value)}
+              style={{ width: '100%', marginBottom: '12px' }}
+              disabled={commentReportPending}
+            >
+              <option value="" disabled>
+                Select a reason
+              </option>
+              <option value="Spam">Spam</option>
+              <option value="Harassment">Harassment</option>
+              <option value="Hate">Hate</option>
+              <option value="Sexual content">Sexual content</option>
+              <option value="Other">Other</option>
+            </select>
+            {commentReportCategory === 'Other' && (
+              <textarea
+                value={commentReportDetails}
+                onChange={(e) => setCommentReportDetails(e.target.value)}
+                placeholder="Please provide details..."
+                rows={3}
+                className="border-bottom-accent-focus"
+                style={{ width: '100%', marginBottom: '12px', resize: 'vertical' }}
+                disabled={commentReportPending}
+              />
+            )}
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+              <button
+                type="button"
+                className="button secondary"
+                onClick={() => setCommentReportOpen(null)}
+                disabled={commentReportPending}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="button danger"
+                onClick={() => void handleSubmitCommentReport()}
+                disabled={
+                  commentReportPending ||
+                  !commentReportCategory ||
+                  (commentReportCategory === 'Other' && !commentReportDetails.trim())
+                }
+              >
+                Submit report
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {reportOpen && (
         <div
           className="modal-backdrop"

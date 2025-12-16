@@ -10,7 +10,7 @@ import {
   formatSampleRate,
 } from '../model/expression';
 import { ValidationIssue } from '../utils/expression-validator';
-import type { PostMetadataModel, LicenseOption } from '../model/postEditor';
+import type { PostMetadataModel } from '../model/postEditor';
 import { LICENSE_OPTIONS } from '../model/postEditor';
 import { EXPRESSION_MAX, POST_DESCRIPTION_MAX } from '../constants';
 

@@ -4,6 +4,10 @@ import { supabase } from '../lib/supabaseClient';
 import { validateUsername } from '../utils/username-validator';
 import Head from 'next/head';
 import { useCurrentUserProfile } from '../hooks/useCurrentUserProfile';
+import {
+  renderDescriptionWithTagsAndMentions,
+  extractMentionUserIds,
+} from '../utils/description-renderer';
 
 export default function UpdateProfilePage() {
   const router = useRouter();
@@ -60,6 +64,25 @@ export default function UpdateProfilePage() {
   const [expandedPostReport, setExpandedPostReport] = useState<string | null>(null);
   const [newPostReportNote, setNewPostReportNote] = useState('');
   const [addingPostReportNote, setAddingPostReportNote] = useState(false);
+  const [commentReports, setCommentReports] = useState<
+    {
+      id: string;
+      comment_id: string;
+      comment_content: string | null;
+      comment_author_username: string | null;
+      reason: string;
+      details: string | null;
+      status: string;
+      created_at: string;
+      notes: { id: string; content: string; created_at: string }[];
+    }[]
+  >([]); 
+  const [commentReportsLoading, setCommentReportsLoading] = useState(false);
+  const [commentReportsError, setCommentReportsError] = useState('');
+  const [expandedCommentReport, setExpandedCommentReport] = useState<string | null>(null);
+  const [newCommentReportNote, setNewCommentReportNote] = useState('');
+  const [addingCommentReportNote, setAddingCommentReportNote] = useState(false);
+  const [commentReportMentionUserMap, setCommentReportMentionUserMap] = useState<Map<string, string>>(new Map());
 
   useEffect(() => {
     if (loadedUsername) {
@@ -183,6 +206,72 @@ export default function UpdateProfilePage() {
       setPostReportsLoading(false);
     };
     void loadPostReports();
+  }, [user]);
+
+  // Load comment reports for current user
+  useEffect(() => {
+    const loadCommentReports = async () => {
+      if (!user) return;
+      setCommentReportsLoading(true);
+      setCommentReportsError('');
+      const { data, error } = await supabase
+        .from('comment_reports')
+        .select(
+          'id,comment_id,reason,details,status,created_at,comment:comments!comment_reports_comment_id_fkey(content,author:profiles!comments_author_id_fkey(username)),comment_report_notes(id,content,created_at)'
+        )
+        .eq('reporter_id', (user as any).id)
+        .order('created_at', { ascending: false });
+      if (error) {
+        setCommentReportsError(error.message);
+        setCommentReports([]);
+        setCommentReportsLoading(false);
+        return;
+      }
+      const rows = (data ?? []).map((r: any) => ({
+        id: r.id as string,
+        comment_id: r.comment_id as string,
+        comment_content: (r.comment?.content as string) ?? null,
+        comment_author_username: (r.comment?.author?.username as string) ?? null,
+        reason: r.reason as string,
+        details: r.details as string | null,
+        status: r.status as string,
+        created_at: r.created_at as string,
+        notes: ((r.comment_report_notes as any[]) ?? []).map((n: any) => ({
+          id: n.id as string,
+          content: n.content as string,
+          created_at: n.created_at as string,
+        })),
+      }));
+      setCommentReports(rows);
+
+        // Extract mention user IDs from all comment contents and fetch usernames
+        const allMentionIds = new Set<string>();
+        for (const r of rows) {
+          if (r.comment_content) {
+            for (const uid of extractMentionUserIds(r.comment_content)) {
+              allMentionIds.add(uid);
+            }
+          }
+        }
+        if (allMentionIds.size > 0) {
+          const { data: profiles } = await supabase
+            .from('profiles')
+            .select('id, username')
+            .in('id', [...allMentionIds]);
+          if (profiles) {
+            const userMap = new Map<string, string>();
+            for (const p of profiles) {
+              userMap.set(p.id, p.username);
+            }
+            setCommentReportMentionUserMap(userMap);
+          }
+        } else {
+          setCommentReportMentionUserMap(new Map());
+        }
+
+        setCommentReportsLoading(false);
+    };
+    void loadCommentReports();
   }, [user]);
 
   const handleSave = async (event: React.FormEvent) => {
@@ -412,6 +501,40 @@ export default function UpdateProfilePage() {
     );
     setNewPostReportNote('');
     setAddingPostReportNote(false);
+  };
+
+  const handleAddCommentReportNote = async (reportId: string) => {
+    if (!user || !newCommentReportNote.trim()) return;
+    setAddingCommentReportNote(true);
+    const { data, error } = await supabase
+      .from('comment_report_notes')
+      .insert({
+        report_id: reportId,
+        author_id: (user as any).id,
+        content: newCommentReportNote.trim(),
+      })
+      .select('id,content,created_at')
+      .single();
+    if (error) {
+      setCommentReportsError(error.message);
+      setAddingCommentReportNote(false);
+      return;
+    }
+    setCommentReports((prev) =>
+      prev.map((r) =>
+        r.id === reportId
+          ? {
+              ...r,
+              notes: [
+                ...r.notes,
+                { id: data.id, content: data.content, created_at: data.created_at },
+              ],
+            }
+          : r
+      )
+    );
+    setNewCommentReportNote('');
+    setAddingCommentReportNote(false);
   };
 
   return (
@@ -710,6 +833,123 @@ export default function UpdateProfilePage() {
                           </div>
                         )}
                       </div>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+                )}
+              </>
+            )}
+
+            {commentReports.length > 0 && (
+              <>
+                <h3>My comment reports</h3>
+                {commentReportsLoading && <p className="text-centered">Loading comment reports…</p>}
+                {commentReportsError && <p className="error-message">{commentReportsError}</p>}
+                {!commentReportsLoading && !commentReportsError && commentReports.length === 0 && (
+                  <p className="secondary-text">You have not reported any comments.</p>
+                )}
+                {!commentReportsLoading && !commentReportsError && commentReports.length > 0 && (
+              <ul style={{ listStyle: 'none', padding: 0 }}>
+                {commentReports.map((r) => (
+                  <li key={r.id} style={{ marginBottom: 16 }}>
+                    <div
+                      style={{
+                        padding: 12,
+                        border: '1px solid var(--chip-border-color)',
+                        borderRadius: 8,
+                      }}
+                    >
+                      <div>
+                        <a
+                          href={`/u/${r.comment_author_username}`}
+                          style={{ fontWeight: 'bold' }}
+                        >
+                          @{r.comment_author_username || 'unknown'}
+                        </a>
+                        <span className="secondary-text" style={{ marginLeft: 8 }}>
+                          {new Date(r.created_at).toLocaleDateString()}
+                        </span>
+                      </div>
+                      <div style={{ marginTop: 4, fontSize: '13px', opacity: 0.9 }}>
+                        {r.comment_content
+                          ? renderDescriptionWithTagsAndMentions(r.comment_content, commentReportMentionUserMap)
+                          : '(deleted comment)'}
+                      </div>
+                      <div style={{ marginTop: 4 }}>
+                        <span>Reason: {r.reason}</span>
+                        {r.details && (
+                          <span className="secondary-text"> — {r.details}</span>
+                        )}
+                      </div>
+                      <div style={{ marginTop: 4 }}>
+                        Status:{' '}
+                        <span
+                          style={{
+                            padding: '2px 6px',
+                            borderRadius: 4,
+                            fontSize: '12px',
+                            border: '1px solid var(--chip-border-color)',
+                            background:
+                              r.status === 'action_taken'
+                                ? 'var(--success-color, #4caf50)'
+                                : r.status === 'under_review'
+                                ? 'var(--warning-color, #ff9800)'
+                                : 'var(--chip-bg-color)',
+                          }}
+                        >
+                          {formatStatus(r.status)}
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        className="button ghost"
+                        style={{ marginTop: 8, padding: '4px 8px', fontSize: '12px' }}
+                        onClick={() =>
+                          setExpandedCommentReport(expandedCommentReport === r.id ? null : r.id)
+                        }
+                      >
+                        {expandedCommentReport === r.id ? '▼ Hide notes' : '▶ Notes'} ({r.notes.length})
+                      </button>
+                      {expandedCommentReport === r.id && (
+                        <div style={{ marginTop: 8, paddingLeft: 12, borderLeft: '2px solid var(--chip-border-color)' }}>
+                          {r.notes.length === 0 && (
+                            <p className="secondary-text" style={{ fontSize: '13px' }}>
+                              No notes yet.
+                            </p>
+                          )}
+                          {r.notes
+                            .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+                            .map((n) => (
+                              <div key={n.id} style={{ marginBottom: 8 }}>
+                                <span className="secondary-text" style={{ fontSize: '11px' }}>
+                                  {new Date(n.created_at).toLocaleString()}
+                                </span>
+                                <p style={{ margin: '2px 0 0 0', fontSize: '13px' }}>{n.content}</p>
+                              </div>
+                            ))}
+                          <div style={{ marginTop: 8 }}>
+                            <textarea
+                              value={newCommentReportNote}
+                              onChange={(e) => setNewCommentReportNote(e.target.value)}
+                              placeholder="Add a note..."
+                              rows={2}
+                              className="border-bottom-accent-focus"
+                              style={{ width: '100%', resize: 'vertical', fontSize: '13px' }}
+                              disabled={addingCommentReportNote}
+                            />
+                            <button
+                              type="button"
+                              className="button secondary"
+                              style={{ marginTop: 4, padding: '4px 8px', fontSize: '12px' }}
+                              onClick={() => void handleAddCommentReportNote(r.id)}
+                              disabled={addingCommentReportNote || !newCommentReportNote.trim()}
+                            >
+                              {addingCommentReportNote ? 'Adding…' : 'Add note'}
+                            </button>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </li>
                 ))}
