@@ -26,4 +26,6 @@
   --post-expression-background-color: var(--card-bg-color);
   --post-expression-playing-background-color: #faf7ff;
   --post-expression-overlay-color: rgba(255, 255, 255, 0.45);
+  --warning-color: #ff9800;
+  --success-color: #48cd4c;
 }

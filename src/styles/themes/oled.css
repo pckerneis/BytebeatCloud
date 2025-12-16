@@ -37,4 +37,7 @@
   --post-expression-background-color: rgba(255, 255, 255, 0.03);
   --post-expression-playing-background-color: #09060c;
   --post-expression-overlay-color: rgba(0, 0, 0, 0.35);
+
+  --warning-color: #a16307;
+  --success-color: #07810b;
 }

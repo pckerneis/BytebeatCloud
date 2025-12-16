@@ -36,4 +36,7 @@
   --post-expression-background-color: var(--card-bg-color);
   --post-expression-playing-background-color: #f3f4ff;
   --post-expression-overlay-color: rgba(0, 0, 0, 0.25);
+
+  --warning-color: #ff9800;
+  --success-color: #48cd4c;
 }

@@ -26,6 +26,23 @@ export default function UpdateProfilePage() {
   >([]);
   const [blockedLoading, setBlockedLoading] = useState(false);
   const [blockedError, setBlockedError] = useState('');
+  const [reports, setReports] = useState<
+    {
+      id: string;
+      reported_id: string;
+      reported_username: string | null;
+      reason: string;
+      details: string | null;
+      status: string;
+      created_at: string;
+      notes: { id: string; content: string; created_at: string }[];
+    }[]
+  >([]);
+  const [reportsLoading, setReportsLoading] = useState(false);
+  const [reportsError, setReportsError] = useState('');
+  const [expandedReport, setExpandedReport] = useState<string | null>(null);
+  const [newNote, setNewNote] = useState('');
+  const [addingNote, setAddingNote] = useState(false);
 
   useEffect(() => {
     if (loadedUsername) {
@@ -71,6 +88,45 @@ export default function UpdateProfilePage() {
       setBlockedLoading(false);
     };
     void loadBlocked();
+  }, [user]);
+
+  // Load user reports
+  useEffect(() => {
+    const loadReports = async () => {
+      if (!user) return;
+      setReportsLoading(true);
+      setReportsError('');
+      const { data, error } = await supabase
+        .from('user_reports')
+        .select(
+          'id,reported_id,reason,details,status,created_at,reported_profile:profiles!user_reports_reported_id_fkey(username),report_notes(id,content,created_at)'
+        )
+        .eq('reporter_id', (user as any).id)
+        .order('created_at', { ascending: false });
+      if (error) {
+        setReportsError(error.message);
+        setReports([]);
+        setReportsLoading(false);
+        return;
+      }
+      const rows = (data ?? []).map((r: any) => ({
+        id: r.id as string,
+        reported_id: r.reported_id as string,
+        reported_username: (r.reported_profile?.username as string) ?? null,
+        reason: r.reason as string,
+        details: r.details as string | null,
+        status: r.status as string,
+        created_at: r.created_at as string,
+        notes: ((r.report_notes as any[]) ?? []).map((n: any) => ({
+          id: n.id as string,
+          content: n.content as string,
+          created_at: n.created_at as string,
+        })),
+      }));
+      setReports(rows);
+      setReportsLoading(false);
+    };
+    void loadReports();
   }, [user]);
 
   const handleSave = async (event: React.FormEvent) => {
@@ -218,6 +274,56 @@ export default function UpdateProfilePage() {
     setBlocked((prev) => prev.filter((b) => b.blocked_id !== blockedId));
   };
 
+  const formatStatus = (status: string) => {
+    switch (status) {
+      case 'received':
+        return 'Received';
+      case 'under_review':
+        return 'Under review';
+      case 'action_taken':
+        return 'Action taken';
+      case 'closed_no_action':
+        return 'Closed - no action';
+      default:
+        return status;
+    }
+  };
+
+  const handleAddNote = async (reportId: string) => {
+    if (!user || !newNote.trim()) return;
+    setAddingNote(true);
+    const { data, error } = await supabase
+      .from('report_notes')
+      .insert({
+        report_id: reportId,
+        author_id: (user as any).id,
+        content: newNote.trim(),
+      })
+      .select('id,content,created_at')
+      .single();
+    if (error) {
+      setReportsError(error.message);
+      setAddingNote(false);
+      return;
+    }
+    // Add note to the report in state
+    setReports((prev) =>
+      prev.map((r) =>
+        r.id === reportId
+          ? {
+              ...r,
+              notes: [
+                ...r.notes,
+                { id: data.id, content: data.content, created_at: data.created_at },
+              ],
+            }
+          : r
+      )
+    );
+    setNewNote('');
+    setAddingNote(false);
+  };
+
   return (
     <>
       <Head>
@@ -312,6 +418,104 @@ export default function UpdateProfilePage() {
                       >
                         Unblock
                       </button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            <h3>My reports</h3>
+            {reportsLoading && <p className="text-centered">Loading…</p>}
+            {!reportsLoading && reportsError && <p className="error-message">{reportsError}</p>}
+            {!reportsLoading && !reportsError && reports.length === 0 && (
+              <p>You have not submitted any reports.</p>
+            )}
+            {!reportsLoading && !reportsError && reports.length > 0 && (
+              <ul className="notifications-list">
+                {reports.map((r) => (
+                  <li key={r.id} className="notification-item">
+                    <div className="post-header">
+                      <div style={{ flex: 1 }}>
+                        <div>
+                          <strong>@{r.reported_username || 'unknown'}</strong>
+                          <span className="secondary-text" style={{ marginLeft: 8 }}>
+                            {new Date(r.created_at).toLocaleDateString()}
+                          </span>
+                        </div>
+                        <div style={{ marginTop: 4 }}>
+                          <span>Reason: {r.reason}</span>
+                          {r.details && (
+                            <span className="secondary-text"> — {r.details}</span>
+                          )}
+                        </div>
+                        <div style={{ marginTop: 4 }}>
+                          Status: <span
+                            style={{
+                              padding: '2px 6px',
+                              borderRadius: 4,
+                              fontSize: '12px',
+                              border: '1px solid var(--chip-border-color)',
+                              background:
+                                r.status === 'action_taken'
+                                  ? 'var(--success-color, #4caf50)'
+                                  : r.status === 'under_review'
+                                  ? 'var(--warning-color, #ff9800)'
+                                  : 'var(--chip-bg-color)',
+                            }}
+                          >
+                            {formatStatus(r.status)}
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          className="button ghost"
+                          style={{ marginTop: 8, padding: '4px 8px', fontSize: '12px' }}
+                          onClick={() =>
+                            setExpandedReport(expandedReport === r.id ? null : r.id)
+                          }
+                        >
+                          {expandedReport === r.id ? '▼ Hide notes' : '▶ Notes'} ({r.notes.length})
+                        </button>
+                        {expandedReport === r.id && (
+                          <div style={{ marginTop: 8, paddingLeft: 12, borderLeft: '2px solid var(--chip-border-color)' }}>
+                            {r.notes.length === 0 && (
+                              <p className="secondary-text" style={{ fontSize: '13px' }}>
+                                No notes yet.
+                              </p>
+                            )}
+                            {r.notes
+                              .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+                              .map((n) => (
+                                <div key={n.id} style={{ marginBottom: 8 }}>
+                                  <span className="secondary-text" style={{ fontSize: '11px' }}>
+                                    {new Date(n.created_at).toLocaleString()}
+                                  </span>
+                                  <p style={{ margin: '2px 0 0 0', fontSize: '13px' }}>{n.content}</p>
+                                </div>
+                              ))}
+                            <div style={{ marginTop: 8 }}>
+                              <textarea
+                                value={newNote}
+                                onChange={(e) => setNewNote(e.target.value)}
+                                placeholder="Add a note..."
+                                rows={2}
+                                className="border-bottom-accent-focus"
+                                style={{ width: '100%', resize: 'vertical', fontSize: '13px' }}
+                                disabled={addingNote}
+                              />
+                              <button
+                                type="button"
+                                className="button secondary"
+                                style={{ marginTop: 4, padding: '4px 8px', fontSize: '12px' }}
+                                onClick={() => void handleAddNote(r.id)}
+                                disabled={addingNote || !newNote.trim()}
+                              >
+                                {addingNote ? 'Adding…' : 'Add note'}
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </li>
                 ))}
