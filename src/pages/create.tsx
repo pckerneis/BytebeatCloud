@@ -15,7 +15,7 @@ import {
 import { validateExpression } from '../utils/expression-validator';
 import { useExpressionPlayer } from '../hooks/useExpressionPlayer';
 import { useCtrlSpacePlayShortcut } from '../hooks/useCtrlSpacePlayShortcut';
-import { PostMetadataModel } from '../model/postEditor';
+import { PostMetadataModel, LicenseOption, DEFAULT_LICENSE } from '../model/postEditor';
 import { convertMentionsToIds } from '../utils/mentions';
 import Link from 'next/link';
 import { useCurrentWeeklyChallenge } from '../hooks/useCurrentWeeklyChallenge';
@@ -30,6 +30,7 @@ export default function CreatePage() {
   const [isDraft, setIsDraft] = useState(false);
   const [mode, setMode] = useState<ModeOption>(ModeOption.Uint8);
   const [sampleRate, setSampleRate] = useState<number>(DEFAULT_SAMPLE_RATE);
+  const [license, setLicense] = useState<LicenseOption>(DEFAULT_LICENSE);
   const [draftLoaded, setDraftLoaded] = useState(false);
   const { isPlaying, toggle, lastError, stop, updateExpression } = useBytebeatPlayer({
     enableVisualizer: false,
@@ -131,6 +132,7 @@ export default function CreatePage() {
           isDraft?: boolean;
           mode?: ModeOption;
           sampleRate?: number;
+          license?: LicenseOption;
         } | null;
 
         if (!parsed) return;
@@ -142,6 +144,7 @@ export default function CreatePage() {
 
         if (parsed.mode) setMode(parsed.mode);
         if (parsed.sampleRate) setSampleRate(parsed.sampleRate);
+        if (parsed.license) setLicense(parsed.license);
       } catch (e) {
         console.error(e);
       }
@@ -186,12 +189,13 @@ export default function CreatePage() {
           isDraft,
           mode,
           sampleRate,
+          license,
         }),
       );
     } catch (e) {
       console.error(e);
     }
-  }, [title, description, expression, isDraft, mode, sampleRate, draftLoaded]);
+  }, [title, description, expression, isDraft, mode, sampleRate, license, draftLoaded]);
 
   const savePost = async (asDraft: boolean) => {
     const trimmedTitle = title.trim();
@@ -226,6 +230,7 @@ export default function CreatePage() {
         is_draft: asDraft,
         sample_rate: sampleRate,
         mode,
+        license,
       })
       .select('id')
       .single();
@@ -266,6 +271,7 @@ export default function CreatePage() {
     mode,
     sampleRate,
     isDraft,
+    license,
   };
 
   const handleMetaChange = (next: typeof meta) => {
@@ -274,6 +280,7 @@ export default function CreatePage() {
     setMode(next.mode);
     setSampleRate(next.sampleRate);
     setIsDraft(next.isDraft);
+    setLicense(next.license);
   };
 
   const weeklyTagRegex =

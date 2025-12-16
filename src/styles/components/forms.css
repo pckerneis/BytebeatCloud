@@ -265,3 +265,51 @@ input[type='range']:focus::-moz-range-thumb {
   padding: 1px 4px;
   font-size: 11px;
 }
+
+/* License field */
+.license-field {
+  margin-top: 4px;
+}
+
+.license-helper {
+  font-size: 12px;
+  color: var(--secondary-text-color);
+}
+
+.license-helper summary {
+  cursor: pointer;
+  user-select: none;
+  opacity: 0.7;
+  transition: opacity 120ms ease-out;
+  margin-bottom: 0.5rem;
+}
+
+.license-helper summary:hover {
+  opacity: 1;
+}
+
+.license-helper[open] summary {
+  opacity: 1;
+}
+
+.license-locked-hint {
+  font-size: 12px;
+  color: var(--secondary-text-color);
+  font-style: italic;
+}
+
+.radio-group {
+  display: flex;
+  flex-direction: column;
+  padding-left: 1rem;
+}
+
+.radio-option {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.2rem;
+}
+
+.radio-label {
+  margin-left: 0.2rem;
+}

@@ -146,6 +146,7 @@ export default function WeeklyHallOfFamePage() {
                     isActive={isPlaying && row.id === currentPost?.id}
                     onTogglePlay={() => handleExpressionClick(row)}
                     height={75}
+                    disableCopy={row.license === 'all-rights-reserved'}
                   />
                 </div>
               </li>

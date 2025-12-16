@@ -8,6 +8,7 @@ import { favoritePost, unfavoritePost } from '../services/favoritesClient';
 import { PostExpressionPlayer } from './PostExpressionPlayer';
 import { usePlayerStore } from '../hooks/usePlayerStore';
 import { formatSampleRate, ModeOption } from '../model/expression';
+import type { LicenseOption } from '../model/postEditor';
 import { formatRelativeTime } from '../utils/time';
 import { validateExpression } from '../utils/expression-validator';
 
@@ -30,6 +31,7 @@ export interface PostRow {
   is_fork?: boolean;
   tags?: string[];
   is_weekly_winner?: boolean;
+  license?: LicenseOption;
 }
 
 interface PostListProps {
@@ -276,6 +278,7 @@ export function PostList({ posts, currentUserId }: PostListProps) {
               expression={post.expression}
               isActive={isActive}
               onTogglePlay={() => handleExpressionClick(post)}
+              disableCopy={post.license === 'all-rights-reserved'}
             />
             <div className="post-actions">
               <button
@@ -294,6 +297,10 @@ export function PostList({ posts, currentUserId }: PostListProps) {
                 <Link href={`/edit/${post.id}`} className="edit-link">
                   Edit
                 </Link>
+              ) : post.license === 'all-rights-reserved' ? (
+                <span className="edit-link disabled" title="This post is all rights reserved">
+                  Fork
+                </span>
               ) : (
                 <Link href={`/fork/${post.id}`} className="edit-link">
                   Fork
