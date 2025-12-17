@@ -131,6 +131,32 @@ export async function ensureTestUserProfile(email: string, username: string) {
 }
 
 /**
+ * Create a comment directly via admin (bypasses RLS).
+ * Use this for seeding test data, not for testing the comment creation flow.
+ */
+export async function createCommentAsAdmin(params: {
+  postId: string;
+  authorId: string;
+  content: string;
+}) {
+  const { data, error } = await supabaseAdmin
+    .from('comments')
+    .insert({
+      post_id: params.postId,
+      author_id: params.authorId,
+      content: params.content,
+    })
+    .select('id')
+    .single();
+
+  if (error) {
+    throw new Error(`[e2e] Failed to create comment: ${error.message}`);
+  }
+
+  return data;
+}
+
+/**
  * Wait for tags to be indexed by the database trigger after inserting a post.
  * The trigger runs synchronously but there can be transaction visibility delays.
  */

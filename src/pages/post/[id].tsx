@@ -64,6 +64,7 @@ export default function PostDetailPage({ postMeta, baseUrl }: PostDetailPageProp
   const [commentsLoading, setCommentsLoading] = useState(false);
   const [newComment, setNewComment] = useState('');
   const [commentPending, setCommentPending] = useState(false);
+  const [commentError, setCommentError] = useState('');
   const [commentMentionUserMap, setCommentMentionUserMap] = useState<Map<string, string>>(
     new Map(),
   );
@@ -332,22 +333,26 @@ export default function PostDetailPage({ postMeta, baseUrl }: PostDetailPageProp
   const handleSubmitComment = async () => {
     if (!user || !newComment.trim() || posts.length === 0) return;
     setCommentPending(true);
+    setCommentError('');
 
     // Convert @username mentions to @[userId] format for storage
     const contentWithIds = await convertMentionsToIds(newComment.trim());
 
-    const { data, error } = await supabase
-      .from('comments')
-      .insert({
-        post_id: posts[0].id,
-        author_id: (user as any).id,
-        content: contentWithIds,
-      })
-      .select('id, content, created_at, author_id')
-      .single();
+    const { data, error } = await supabase.rpc('create_comment', {
+      p_post_id: posts[0].id,
+      p_content: contentWithIds,
+    });
 
     if (error) {
       console.warn('Error adding comment', error.message);
+      setCommentError('Failed to add comment. Please try again.');
+      setCommentPending(false);
+      return;
+    }
+
+    // RPC returns JSON with either error or comment data
+    if (data?.error) {
+      setCommentError(data.error);
       setCommentPending(false);
       return;
     }
@@ -679,6 +684,11 @@ export default function PostDetailPage({ postMeta, baseUrl }: PostDetailPageProp
                         {commentPending ? 'Posting…' : 'Post comment'}
                       </button>
                     </div>
+                    {commentError && (
+                      <p className="error-message" style={{ marginTop: '8px' }}>
+                        {commentError}
+                      </p>
+                    )}
                   </div>
                 ) : (
                   <p className="secondary-text">
