@@ -617,7 +617,7 @@ export default function PostDetailPage({ postMeta, baseUrl }: PostDetailPageProp
               <div className="comments-section">
                 {commentsLoading && <p className="text-centered">Loading comments…</p>}
                 {!commentsLoading && comments.length === 0 && (
-                  <p className="secondary-text">No comments yet. Be the first to comment!</p>
+                  <p className="secondary-text text-centered">No comments yet. Be the first to comment!</p>
                 )}
                 {!commentsLoading && comments.length > 0 && (
                   <ul className="comments-list">
