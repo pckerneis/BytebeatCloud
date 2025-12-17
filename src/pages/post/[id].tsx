@@ -2,7 +2,7 @@ import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { ExportWavModal } from '../../components/ExportWavModal';
 import { ModeOption } from '../../model/expression';
-import { LICENSE_OPTIONS, LicenseOption } from '../../model/postEditor';
+import { LICENSE_OPTIONS } from '../../model/postEditor';
 import { supabase } from '../../lib/supabaseClient';
 import { useSupabaseAuth } from '../../hooks/useSupabaseAuth';
 import { useCurrentUserProfile } from '../../hooks/useCurrentUserProfile';
@@ -524,32 +524,31 @@ export default function PostDetailPage({ postMeta, baseUrl }: PostDetailPageProp
               </p>
             )}
 
-            {posts[0]?.license && (() => {
-              const licenseInfo = LICENSE_OPTIONS.find(
-                (opt) => opt.value === posts[0].license
-              );
-              if (!licenseInfo) return null;
-              const requiresAttribution =
-                posts[0].license === 'cc-by' || posts[0].license === 'cc-by-sa';
-              return (
-                <div className="post-license">
-                  <p>
-                    {licenseInfo.url ? (
-                      <a href={licenseInfo.url} target="_blank" rel="noopener noreferrer">
-                        {licenseInfo.label}
-                      </a>
-                    ) : (
-                      <span>{licenseInfo.label}</span>
-                    )}
-                  </p>
-                  {requiresAttribution && posts[0].author_username && (
-                    <p className="post-license-attribution">
-                      Attribution: credit @{posts[0].author_username} and link to this page.
+            {posts[0]?.license &&
+              (() => {
+                const licenseInfo = LICENSE_OPTIONS.find((opt) => opt.value === posts[0].license);
+                if (!licenseInfo) return null;
+                const requiresAttribution =
+                  posts[0].license === 'cc-by' || posts[0].license === 'cc-by-sa';
+                return (
+                  <div className="post-license">
+                    <p>
+                      {licenseInfo.url ? (
+                        <a href={licenseInfo.url} target="_blank" rel="noopener noreferrer">
+                          {licenseInfo.label}
+                        </a>
+                      ) : (
+                        <span>{licenseInfo.label}</span>
+                      )}
                     </p>
-                  )}
-                </div>
-              );
-            })()}
+                    {requiresAttribution && posts[0].author_username && (
+                      <p className="post-license-attribution">
+                        Attribution: credit @{posts[0].author_username} and link to this page.
+                      </p>
+                    )}
+                  </div>
+                );
+              })()}
 
             <div className="post-detail-actions">
               {!(
@@ -617,7 +616,9 @@ export default function PostDetailPage({ postMeta, baseUrl }: PostDetailPageProp
               <div className="comments-section">
                 {commentsLoading && <p className="text-centered">Loading comments…</p>}
                 {!commentsLoading && comments.length === 0 && (
-                  <p className="secondary-text text-centered">No comments yet. Be the first to comment!</p>
+                  <p className="secondary-text text-centered">
+                    No comments yet. Be the first to comment!
+                  </p>
                 )}
                 {!commentsLoading && comments.length > 0 && (
                   <ul className="comments-list">

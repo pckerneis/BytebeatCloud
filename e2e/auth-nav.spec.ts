@@ -130,9 +130,7 @@ test('redirection to TOS update page for user with outdated TOS version', async 
 
   // Verify the TOS update page content
   await expect(page.getByRole('heading', { name: 'Updated Terms of Service' })).toBeVisible();
-  await expect(
-    page.getByText('Our Terms of Service have changed'),
-  ).toBeVisible();
+  await expect(page.getByText('Our Terms of Service have changed')).toBeVisible();
 
   // Try to submit without accepting - should show error
   await page.getByRole('button', { name: 'Confirm' }).click();

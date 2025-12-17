@@ -96,7 +96,9 @@ test.describe('Comment rate limiting - thread spam', () => {
     });
 
     // The 4th comment should NOT appear in the comments list
-    await expect(page.locator('.comments-list').getByText('Comment 4 - should fail')).not.toBeVisible();
+    await expect(
+      page.locator('.comments-list').getByText('Comment 4 - should fail'),
+    ).not.toBeVisible();
   });
 });
 
@@ -306,7 +308,7 @@ test.describe('Comment rate limiting - notification emission limit', () => {
       .select('*')
       .eq('actor_id', testUserId)
       .eq('post_id', postIds[1]);
-    
+
     expect(notifs20).toHaveLength(1);
 
     // Now create another comment on a different post - should NOT create notification (over limit)
@@ -324,7 +326,7 @@ test.describe('Comment rate limiting - notification emission limit', () => {
       .select('*')
       .eq('actor_id', testUserId)
       .eq('post_id', postIds[2]);
-    
+
     expect(notifs21).toHaveLength(0);
 
     // Total notifications should be exactly 20
@@ -332,7 +334,7 @@ test.describe('Comment rate limiting - notification emission limit', () => {
       .from('notifications')
       .select('*')
       .eq('actor_id', testUserId);
-    
+
     expect(allNotifs).toHaveLength(20);
   });
 });

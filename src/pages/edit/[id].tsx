@@ -119,7 +119,9 @@ export default function EditPostPage() {
 
       const { data, error } = await supabase
         .from('posts')
-        .select('title,description,expression,is_draft,sample_rate,mode,profile_id,license,published_at')
+        .select(
+          'title,description,expression,is_draft,sample_rate,mode,profile_id,license,published_at',
+        )
         .eq('id', id)
         .maybeSingle();
 

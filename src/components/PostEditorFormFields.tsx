@@ -312,7 +312,13 @@ export function PostEditorFormFields(props: PostEditorFormFieldsProps) {
             )}
           </div>
 
-          <p className='secondary-text smaller'>By publishing, you agree to the <Link href='/terms' target='_blank'>Terms of Service</Link>.</p>
+          <p className="secondary-text smaller">
+            By publishing, you agree to the{' '}
+            <Link href="/terms" target="_blank">
+              Terms of Service
+            </Link>
+            .
+          </p>
 
           <div className="form-actions">
             <div className="form-actions-buttons">

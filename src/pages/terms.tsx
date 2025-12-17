@@ -56,7 +56,9 @@ export default function Terms() {
           <li>use copies or thumbnails for previews, search, feed, or promotional material</li>
         </ul>
         <p>This is necessary for the platform to function.</p>
-        <p>If you select a reuse license, you grant other users the rights defined by that license.</p>
+        <p>
+          If you select a reuse license, you grant other users the rights defined by that license.
+        </p>
         <p>
           You are responsible for making sure your content does not violate copyright or other laws.
         </p>
