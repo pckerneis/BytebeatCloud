@@ -276,9 +276,13 @@ test.describe('Fork page - forked post appears in lineage', () => {
 
     // Now navigate to original post
     await page.goto(`/post/${originalPostId}`);
+    await expect(page.getByText('Loading…')).toHaveCount(0, { timeout: 10000 });
+
+    // Click on Lineage tab to view lineage
+    const lineageTab = page.locator('.tab-button', { hasText: 'Lineage' });
+    await lineageTab.click();
 
     // Lineage section should show the fork as a descendant
-    await expect(page.getByRole('heading', { name: 'Lineage' })).toBeVisible({ timeout: 10000 });
     const lineageTree = page.locator('.lineage-tree');
     await expect(lineageTree.getByRole('link', { name: /My New Fork/ })).toBeVisible();
   });
@@ -297,8 +301,13 @@ test.describe('Fork page - forked post appears in lineage', () => {
     await page.waitForURL(/\/post\//);
 
     // We're now on the forked post's detail page
+    await expect(page.getByText('Loading…')).toHaveCount(0, { timeout: 10000 });
+
+    // Click on Lineage tab to view lineage
+    const lineageTab = page.locator('.tab-button', { hasText: 'Lineage' });
+    await lineageTab.click();
+
     // Lineage should show the original as an ancestor
-    await expect(page.getByRole('heading', { name: 'Lineage' })).toBeVisible({ timeout: 10000 });
     const lineageTree = page.locator('.lineage-tree');
     await expect(lineageTree.getByRole('link', { name: /Original With Forks/ })).toBeVisible();
     // Current post should also be in the tree
@@ -335,7 +344,12 @@ test.describe('Fork page - forked post appears in lineage', () => {
     await page.waitForURL(/\/post\//);
 
     // We're on the second fork's page - lineage should show full chain
-    await expect(page.getByRole('heading', { name: 'Lineage' })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText('Loading…')).toHaveCount(0, { timeout: 10000 });
+
+    // Click on Lineage tab to view lineage
+    const lineageTab = page.locator('.tab-button', { hasText: 'Lineage' });
+    await lineageTab.click();
+
     const lineageTree = page.locator('.lineage-tree');
 
     // Should show: Original -> First Gen -> Second Gen (current)

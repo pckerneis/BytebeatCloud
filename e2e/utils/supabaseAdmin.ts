@@ -66,6 +66,38 @@ export async function ensureTestUser(params: { email: string; password?: string 
   return createTestUser({ email, password });
 }
 
+export async function ensureTestUserProfileWithOutdatedTos(email: string, username: string) {
+  // Find the user by email
+  const { data: list, error: listError } = await supabaseAdmin.auth.admin.listUsers({
+    page: 1,
+    perPage: 1000,
+  });
+
+  if (listError) {
+    throw new Error(`[e2e] Failed to list users: ${listError.message}`);
+  }
+
+  const user = list.users.find((u) => u.email === email);
+  if (!user) {
+    throw new Error(`[e2e] User with email ${email} not found`);
+  }
+
+  // Upsert profile with username and OUTDATED tos_version
+  const { error } = await supabaseAdmin.from('profiles').upsert(
+    {
+      id: user.id,
+      username,
+      tos_version: 'outdated-version',
+      tos_accepted_at: new Date().toISOString(),
+    },
+    { onConflict: 'id' },
+  );
+
+  if (error) {
+    throw new Error(`[e2e] Failed to create profile: ${error.message}`);
+  }
+}
+
 export async function ensureTestUserProfile(email: string, username: string) {
   // Find the user by email
   const { data: list, error: listError } = await supabaseAdmin.auth.admin.listUsers({
@@ -87,7 +119,7 @@ export async function ensureTestUserProfile(email: string, username: string) {
     {
       id: user.id,
       username,
-      tos_version: '2025-11-30-v1',
+      tos_version: '2025-12-17-v1',
       tos_accepted_at: new Date().toISOString(),
     },
     { onConflict: 'id' },
