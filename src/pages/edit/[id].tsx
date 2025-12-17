@@ -26,6 +26,7 @@ export default function EditPostPage() {
   const [mode, setMode] = useState<ModeOption>(ModeOption.Float);
   const [sampleRate, setSampleRate] = useState<number>(DEFAULT_SAMPLE_RATE);
   const [license, setLicense] = useState<LicenseOption>(DEFAULT_LICENSE);
+  const [publishedAt, setPublishedAt] = useState<string | null>(null);
   const { isPlaying, toggle, lastError, stop, updateExpression } = useBytebeatPlayer({
     enableVisualizer: false,
   });
@@ -118,7 +119,7 @@ export default function EditPostPage() {
 
       const { data, error } = await supabase
         .from('posts')
-        .select('title,description,expression,is_draft,sample_rate,mode,profile_id,license')
+        .select('title,description,expression,is_draft,sample_rate,mode,profile_id,license,published_at')
         .eq('id', id)
         .maybeSingle();
 
@@ -155,6 +156,7 @@ export default function EditPostPage() {
       setMode(data.mode);
       setSampleRate(data.sample_rate);
       setLicense(data.license ?? DEFAULT_LICENSE);
+      setPublishedAt(data.published_at ?? null);
       isApplyingServerStateRef.current = false;
 
       lastLoadedPostIdRef.current = id;
@@ -372,6 +374,7 @@ export default function EditPostPage() {
             onPublish={handlePublish}
             isEditMode
             onUnpublish={() => setShowUnpublishConfirm(true)}
+            lockLicense={!!publishedAt}
           />
         </form>
 

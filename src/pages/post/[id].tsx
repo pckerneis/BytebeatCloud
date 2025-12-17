@@ -2,6 +2,7 @@ import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { ExportWavModal } from '../../components/ExportWavModal';
 import { ModeOption } from '../../model/expression';
+import { LICENSE_OPTIONS, LicenseOption } from '../../model/postEditor';
 import { supabase } from '../../lib/supabaseClient';
 import { useSupabaseAuth } from '../../hooks/useSupabaseAuth';
 import { useCurrentUserProfile } from '../../hooks/useCurrentUserProfile';
@@ -517,6 +518,33 @@ export default function PostDetailPage({ postMeta, baseUrl }: PostDetailPageProp
                 {renderDescriptionWithTagsAndMentions(posts[0].description, mentionUserMap)}
               </p>
             )}
+
+            {posts[0]?.license && (() => {
+              const licenseInfo = LICENSE_OPTIONS.find(
+                (opt) => opt.value === posts[0].license
+              );
+              if (!licenseInfo) return null;
+              const requiresAttribution =
+                posts[0].license === 'cc-by' || posts[0].license === 'cc-by-sa';
+              return (
+                <div className="post-license">
+                  <p>
+                    {licenseInfo.url ? (
+                      <a href={licenseInfo.url} target="_blank" rel="noopener noreferrer">
+                        {licenseInfo.label}
+                      </a>
+                    ) : (
+                      <span>{licenseInfo.label}</span>
+                    )}
+                  </p>
+                  {requiresAttribution && posts[0].author_username && (
+                    <p className="post-license-attribution">
+                      Attribution: credit @{posts[0].author_username} and link to this page.
+                    </p>
+                  )}
+                </div>
+              );
+            })()}
 
             <div className="post-detail-actions">
               {!(

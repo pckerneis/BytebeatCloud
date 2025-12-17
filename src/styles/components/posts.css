@@ -158,6 +158,30 @@
   text-decoration: underline;
 }
 
+.post-license {
+  font-size: 12px;
+  color: var(--secondary-text-color);
+  margin-top: 0;
+}
+
+.post-license p {
+  margin: 0;
+}
+
+.post-license a {
+  color: var(--secondary-text-color);
+  text-decoration: underline;
+}
+
+.post-license a:hover {
+  color: var(--accent-color);
+}
+
+.post-license-attribution {
+  font-style: italic;
+  opacity: 0.8;
+}
+
 .edit-link {
   color: var(--secondary-text-color);
   text-decoration: none;

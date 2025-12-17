@@ -13,6 +13,7 @@ import { ValidationIssue } from '../utils/expression-validator';
 import type { PostMetadataModel } from '../model/postEditor';
 import { LICENSE_OPTIONS } from '../model/postEditor';
 import { EXPRESSION_MAX, POST_DESCRIPTION_MAX } from '../constants';
+import Link from 'next/link';
 
 interface PostEditorFormFieldsProps {
   meta: PostMetadataModel;
@@ -282,9 +283,12 @@ export function PostEditorFormFields(props: PostEditorFormFieldsProps) {
         <>
           <div className="field license-field">
             {props.lockLicense ? (
-              <span className="license-locked-hint">
-                License inherited from original post (Share Alike)
-              </span>
+              <div className="license-locked">
+                <span className="license-locked-label">License: {currentLicenseLabel}</span>
+                <span className="license-locked-hint">
+                  Reuse permissions are locked to protect people who may already be using this work.
+                </span>
+              </div>
             ) : (
               <details className="license-helper">
                 <summary>License: {currentLicenseLabel}</summary>
@@ -307,6 +311,8 @@ export function PostEditorFormFields(props: PostEditorFormFieldsProps) {
               </details>
             )}
           </div>
+
+          <p className='secondary-text smaller'>By publishing, you agree to the <Link href='/terms' target='_blank'>Terms of Service</Link>.</p>
 
           <div className="form-actions">
             <div className="form-actions-buttons">
