@@ -629,9 +629,7 @@ export default function PostDetailPage({ postMeta, baseUrl }: PostDetailPageProp
                           <Link href={`/u/${c.author_username}`} className="comment-author">
                             @{c.author_username || 'unknown'}
                           </Link>
-                          <span className="comment-date">
-                            {formatRelativeTime(c.created_at)}
-                          </span>
+                          <span className="comment-date">{formatRelativeTime(c.created_at)}</span>
                           {user &&
                             ((user as any).id === c.author_id ||
                               posts[0]?.profile_id === (user as any).id) && (
