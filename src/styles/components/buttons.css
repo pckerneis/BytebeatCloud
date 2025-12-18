@@ -37,3 +37,8 @@
   opacity: 0.5;
   cursor: default;
 }
+
+.button.small {
+  padding: 6px 8px;
+  font-size: small;
+}

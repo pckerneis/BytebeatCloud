@@ -22,6 +22,7 @@ import { createClient } from '@supabase/supabase-js';
 import { COMMENT_MAX } from '../../constants';
 import { AutocompleteTextarea } from '../../components/AutocompleteTextarea';
 import { convertMentionsToIds } from '../../utils/mentions';
+import { formatRelativeTime } from '../../utils/time';
 
 interface Comment {
   id: string;
@@ -557,7 +558,7 @@ export default function PostDetailPage({ postMeta, baseUrl }: PostDetailPageProp
               ) && (
                 <button
                   type="button"
-                  className="button secondary"
+                  className="button secondary small"
                   onClick={() => setShowExportModal(true)}
                 >
                   Export to WAV
@@ -566,19 +567,19 @@ export default function PostDetailPage({ postMeta, baseUrl }: PostDetailPageProp
               {user && posts[0]?.profile_id === (user as any).id && (
                 <button
                   type="button"
-                  className="button secondary ml-10"
+                  className="button secondary small ml-10"
                   onClick={() => router.push(`/export-video/${posts[0].id}`)}
                 >
                   Export Video
                 </button>
               )}
-              <button type="button" className="button secondary ml-10" onClick={handleShare}>
+              <button type="button" className="button secondary small ml-10" onClick={handleShare}>
                 {shareButtonText}
               </button>
               {user && posts[0]?.profile_id !== (user as any).id && (
                 <button
                   type="button"
-                  className="button secondary ml-10"
+                  className="button secondary small ml-auto"
                   onClick={handleReportPost}
                   disabled={hasReported}
                 >
@@ -597,7 +598,7 @@ export default function PostDetailPage({ postMeta, baseUrl }: PostDetailPageProp
               />
             )}
 
-            <div className="tab-header">
+            <div className="tab-header mt-30">
               <span
                 className={`tab-button ${activeTab === 'comments' ? 'active' : ''}`}
                 onClick={() => setActiveTab('comments')}
@@ -629,14 +630,14 @@ export default function PostDetailPage({ postMeta, baseUrl }: PostDetailPageProp
                             @{c.author_username || 'unknown'}
                           </Link>
                           <span className="comment-date">
-                            {new Date(c.created_at).toLocaleDateString()}
+                            {formatRelativeTime(c.created_at)}
                           </span>
                           {user &&
                             ((user as any).id === c.author_id ||
                               posts[0]?.profile_id === (user as any).id) && (
                               <button
                                 type="button"
-                                className="button ghost comment-delete"
+                                className="button ghost small ml-auto"
                                 onClick={() => handleOpenDeleteConfirm(c.id, c.author_id)}
                               >
                                 Delete
@@ -647,7 +648,7 @@ export default function PostDetailPage({ postMeta, baseUrl }: PostDetailPageProp
                             posts[0]?.profile_id !== (user as any).id && (
                               <button
                                 type="button"
-                                className="button ghost comment-report"
+                                className="button ghost small ml-auto"
                                 onClick={() => handleOpenCommentReport(c.id)}
                                 disabled={reportedCommentIds.has(c.id)}
                               >
