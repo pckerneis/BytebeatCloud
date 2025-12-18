@@ -1,0 +1,42 @@
+/* Indigo Theme */
+.theme-indigo {
+  --bg-color: #ffffff;
+  --sidebar-bg-color: #f7f7fb;
+  --sidebar-bg-gradient-color: #dfe1f9;
+  --card-bg-color: #fcfcfe;
+  --border-color: #e4e6f0;
+
+  --text-color: #1b1d2a;
+  --secondary-text-color: #767a8b;
+
+  --code-bg-color: #0d1024;
+  --code-text-color: #e2e5ff;
+
+  --accent-color-rgb: 88 101 242;
+  --danger-color: #f27678;
+  --danger-background-color: #ffeced;
+
+  --button-primary-text-color: #ffffff;
+  --button-border-color: #d1d3e2;
+  --button-bg-color: #ffffff;
+  --button-secondary-bg-color: #f1f1f8;
+
+  --error-text-color: #b91c1c;
+  --error-bg-color: #fee2e2;
+
+  --shadow-soft-color: #00000026;
+  --modal-overlay-color: rgba(0, 0, 0, 0.35);
+
+  --tab-active-bg-color: #ebeefe;
+  --panel-border-color: var(--border-color);
+
+  --chip-border-color: var(--border-color);
+  --chip-background-color: var(--card-bg-color);
+
+  --post-expression-background-color: var(--card-bg-color);
+  --post-expression-playing-background-color: #f3f4ff;
+  --post-expression-overlay-color: rgba(0, 0, 0, 0.25);
+
+  --warning-color: #ff9800;
+  --success-color: #48cd4c;
+}

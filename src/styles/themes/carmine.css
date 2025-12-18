@@ -1,0 +1,42 @@
+/* Carmine Theme */
+.theme-carmine {
+  --bg-color: #fcfcfc;
+  --sidebar-bg-color: #f4f4f4;
+  --sidebar-bg-gradient-color: #f3c6c7;
+  --card-bg-color: #ffffff;
+  --border-color: #e1e1e1;
+
+  --text-color: #111111;
+  --secondary-text-color: #555555;
+
+  --code-bg-color: #07111f;
+  --code-text-color: #e3ecf9;
+
+  --accent-color-rgb: 175 10 12;
+  --danger-color: #e34749;
+  --danger-background-color: #ffeced;
+
+  --button-primary-text-color: #ffffff;
+  --button-border-color: #c5c5c5;
+  --button-bg-color: #ffffff;
+  --button-secondary-bg-color: #f3f3f3;
+
+  --error-text-color: #b91c1c;
+  --error-bg-color: #fee2e2;
+
+  --shadow-soft-color: #00000025;
+  --modal-overlay-color: rgba(0, 0, 0, 0.35);
+
+  --tab-active-bg-color: #f3f3f3;
+  --panel-border-color: var(--border-color);
+
+  --chip-border-color: var(--border-color);
+  --chip-background-color: var(--card-bg-color);
+
+  --post-expression-background-color: var(--card-bg-color);
+  --post-expression-playing-background-color: #f7f1f1;
+  --post-expression-overlay-color: rgba(0, 0, 0, 0.25);
+
+  --warning-color: #ff9800;
+  --success-color: #48cd4c;
+}

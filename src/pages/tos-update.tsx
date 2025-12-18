@@ -3,8 +3,7 @@ import { useRouter } from 'next/router';
 import { supabase } from '../lib/supabaseClient';
 import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
 import Head from 'next/head';
-
-const CURRENT_TOS_VERSION = '2025-11-30-v1';
+import { CURRENT_TOS_VERSION } from '../constants';
 
 export default function TosUpdatePage() {
   const { user, loading } = useSupabaseAuth();
@@ -76,6 +75,10 @@ export default function TosUpdatePage() {
       setError(updateError.message);
       setStatus('idle');
       return;
+    }
+
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('user:profile-updated'));
     }
 
     void router.replace('/');

@@ -1,0 +1,62 @@
+/* Post Lineage Tree */
+
+.lineage-tree {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.lineage-item {
+  position: relative;
+  padding-left: 16px;
+}
+
+.lineage-item::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--border-color);
+}
+
+.lineage-item::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 10px;
+  width: 10px;
+  height: 2px;
+  background: var(--border-color);
+}
+
+.lineage-item:last-child::before {
+  height: 12px;
+}
+
+.lineage-link {
+  display: inline-block;
+  padding: 4px 0;
+  color: var(--text-color);
+  text-decoration: none;
+}
+
+.lineage-link:hover {
+  color: var(--accent-color);
+}
+
+.lineage-link .secondary-text {
+  font-size: 0.9rem;
+}
+
+.lineage-children {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 0 8px;
+}
+
+.lineage-item.is-current > .lineage-link {
+  font-weight: bold;
+  color: var(--accent-color);
+}

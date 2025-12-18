@@ -57,14 +57,17 @@ export default function Terms() {
         </ul>
         <p>This is necessary for the platform to function.</p>
         <p>
+          If you select a reuse license, you grant other users the rights defined by that license.
+        </p>
+        <p>
           You are responsible for making sure your content does not violate copyright or other laws.
         </p>
 
         <h4>4. Forking & Derivatives</h4>
 
         <p>
-          Users may “fork” or remix your bytebeat expressions unless you explicitly mark your post
-          as non-forkable.
+          Users may “fork” or remix your bytebeat expressions unless you choose a license that
+          prohibits it (all rights reserved).
         </p>
         <p>Forks:</p>
         <ul>

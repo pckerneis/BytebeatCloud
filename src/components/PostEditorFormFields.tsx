@@ -1,5 +1,7 @@
 import { useState, useRef } from 'react';
 import { ExpressionEditor, ExpressionErrorSnippet } from './ExpressionEditor';
+import { AutocompleteTextarea } from './AutocompleteTextarea';
+import { AutocompleteInput } from './AutocompleteInput';
 import {
   ModeOption,
   SAMPLE_RATE_PRESETS,
@@ -9,7 +11,9 @@ import {
 } from '../model/expression';
 import { ValidationIssue } from '../utils/expression-validator';
 import type { PostMetadataModel } from '../model/postEditor';
-import { EXPRESSION_MAX } from '../constants';
+import { LICENSE_OPTIONS } from '../model/postEditor';
+import { EXPRESSION_MAX, POST_DESCRIPTION_MAX } from '../constants';
+import Link from 'next/link';
 
 interface PostEditorFormFieldsProps {
   meta: PostMetadataModel;
@@ -40,6 +44,7 @@ interface PostEditorFormFieldsProps {
   onPublish?: () => void;
   isEditMode?: boolean;
   onUnpublish?: () => void;
+  lockLicense?: boolean;
 }
 
 function findNextPresetSampleRate(sampleRate: number): number {
@@ -82,12 +87,13 @@ export function PostEditorFormFields(props: PostEditorFormFieldsProps) {
   const isExpressionTooLong = expressionLength > EXPRESSION_MAX;
   const canSubmit = Boolean(expression.trim()) && !validationIssue && saveStatus !== 'saving';
 
-  const { title, description, mode, sampleRate, isDraft } = meta;
+  const { title, description, mode, sampleRate, isDraft, license } = meta;
   const [shareLinkCopied, setShareLinkCopied] = useState(false);
   const [sampleRateModalOpen, setSampleRateModalOpen] = useState(false);
   const [sampleRateInput, setSampleRateInput] = useState(sampleRate.toString());
   const longPressTimeoutRef = useRef<number | null>(null);
   const longPressTriggeredRef = useRef(false);
+  const currentLicenseLabel = LICENSE_OPTIONS.find((opt) => opt.value === license)?.label;
 
   const openSampleRateModal = () => {
     setSampleRateInput(sampleRate.toString());
@@ -179,41 +185,18 @@ export function PostEditorFormFields(props: PostEditorFormFieldsProps) {
   return (
     <>
       <label className="field">
-        <input
-          type="text"
+        <AutocompleteInput
           maxLength={64}
           value={title}
-          onChange={(e) => onMetaChange({ ...meta, title: e.target.value })}
+          onChange={(val) => onMetaChange({ ...meta, title: val })}
           onKeyDown={(e) => {
             if (e.key === 'Enter') {
               e.preventDefault();
             }
           }}
-          className="post-title-input"
+          className="border-bottom-accent-focus"
           placeholder="Name your bytebeat expression"
         />
-      </label>
-
-      <label className="field">
-        <textarea
-          value={description}
-          onChange={(e) => onMetaChange({ ...meta, description: e.target.value })}
-          className="post-description-input"
-          placeholder="Add an optional description"
-          rows={3}
-        />
-        <details className="syntax-helper">
-          <summary>Formatting tips</summary>
-          <ul>
-            <li>
-              <strong>#tags</strong> — add hashtags like <code>#chiptune</code> or{' '}
-              <code>#ambient</code>
-            </li>
-            <li>
-              <strong>@mentions</strong> — mention users like <code>@username</code>
-            </li>
-          </ul>
-        </details>
       </label>
 
       <div className="chips">
@@ -274,63 +257,128 @@ export function PostEditorFormFields(props: PostEditorFormFieldsProps) {
       )}
       {lastError ? <p className="error-message">{lastError}</p> : null}
 
+      <label className="field">
+        <AutocompleteTextarea
+          value={description}
+          onChange={(val) => onMetaChange({ ...meta, description: val })}
+          className="border-bottom-accent-focus"
+          placeholder="Add an optional description"
+          maxLength={POST_DESCRIPTION_MAX}
+          rows={3}
+        />
+        <details className="syntax-helper">
+          <summary>Formatting tips</summary>
+          <ul>
+            <li>
+              <strong>#tags</strong> — add hashtags like <code>#chiptune</code> or{' '}
+              <code>#ambient</code>
+            </li>
+            <li>
+              <strong>@mentions</strong> — mention users like <code>@username</code>
+            </li>
+          </ul>
+        </details>
+      </label>
       {showActions && (
-        <div className="form-actions">
-          <div className="form-actions-buttons">
-            {showDeleteButton && onDeleteClick && (
-              <button
-                type="button"
-                className="button danger"
-                onClick={onDeleteClick}
-                disabled={saveStatus === 'saving'}
-              >
-                Delete
-              </button>
-            )}
-
-            {onSaveAsDraft && (
-              <button
-                type="button"
-                className="button secondary"
-                onClick={isEditMode && !isDraft ? onUnpublish : onSaveAsDraft}
-                disabled={!canSubmit}
-              >
-                {saveStatus === 'saving' && isDraft
-                  ? 'Saving…'
-                  : isEditMode && !isDraft
-                    ? 'Unpublish'
-                    : 'Save as draft'}
-              </button>
-            )}
-
-            {onPublish ? (
-              <button
-                type="button"
-                className="button primary"
-                onClick={onPublish}
-                disabled={!canSubmit}
-              >
-                {saveStatus === 'saving' && !isDraft ? 'Publishing…' : 'Publish'}
-              </button>
+        <>
+          <div className="field license-field">
+            {props.lockLicense ? (
+              <div className="license-locked">
+                <span className="license-locked-label">License: {currentLicenseLabel}</span>
+                <span className="license-locked-hint">
+                  Reuse permissions are locked to protect people who may already be using this work.
+                </span>
+              </div>
             ) : (
-              <button type="submit" className="button primary" disabled={!canSubmit}>
-                {saveStatus === 'saving' ? 'Saving…' : 'Publish'}
-              </button>
+              <details className="license-helper">
+                <summary>License: {currentLicenseLabel}</summary>
+                <div className="radio-group">
+                  {LICENSE_OPTIONS.map((opt) => (
+                    <label key={opt.value} className="radio-option">
+                      <input
+                        type="radio"
+                        name="license"
+                        value={opt.value}
+                        checked={license === opt.value}
+                        onChange={() => onMetaChange({ ...meta, license: opt.value })}
+                      />
+                      <span className="radio-label">
+                        <strong>{opt.label}</strong> — {opt.description}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </details>
             )}
           </div>
-        </div>
+
+          <p className="secondary-text smaller">
+            By publishing, you agree to the{' '}
+            <Link href="/terms" target="_blank">
+              Terms of Service
+            </Link>
+            .
+          </p>
+
+          <div className="form-actions">
+            <div className="form-actions-buttons">
+              {showDeleteButton && onDeleteClick && (
+                <button
+                  type="button"
+                  className="button danger"
+                  onClick={onDeleteClick}
+                  disabled={saveStatus === 'saving'}
+                >
+                  Delete
+                </button>
+              )}
+
+              {onSaveAsDraft && (
+                <button
+                  type="button"
+                  className="button secondary"
+                  onClick={isEditMode && !isDraft ? onUnpublish : onSaveAsDraft}
+                  disabled={!canSubmit}
+                >
+                  {saveStatus === 'saving' && isDraft
+                    ? 'Saving…'
+                    : isEditMode && !isDraft
+                      ? 'Unpublish'
+                      : 'Save as draft'}
+                </button>
+              )}
+
+              {onPublish ? (
+                <button
+                  type="button"
+                  className="button primary"
+                  onClick={onPublish}
+                  disabled={!canSubmit}
+                >
+                  {saveStatus === 'saving' && !isDraft ? 'Publishing…' : 'Publish'}
+                </button>
+              ) : (
+                <button type="submit" className="button primary" disabled={!canSubmit}>
+                  {saveStatus === 'saving' ? 'Saving…' : 'Publish'}
+                </button>
+              )}
+            </div>
+          </div>
+        </>
       )}
 
-      <div className="form-actions-buttons" style={{ marginTop: '8px' }}>
-        <button
-          type="button"
-          className="button secondary"
-          disabled={!expression.trim()}
-          onClick={handleCopyShareLink}
-        >
-          {shareLinkCopied ? 'Link copied' : 'Copy share link'}
-        </button>
-      </div>
+      {!showActions && (
+        <div className="form-actions-buttons" style={{ marginTop: '8px' }}>
+          <button
+            type="button"
+            className="button secondary"
+            disabled={!expression.trim()}
+            onClick={handleCopyShareLink}
+          >
+            {shareLinkCopied ? 'Link copied' : 'Copy share link'}
+          </button>
+        </div>
+      )}
 
       {saveError && <p className="error-message">{saveError}</p>}
       {saveStatus === 'success' && !saveError && (

@@ -1,0 +1,132 @@
+/* Transport/player controls */
+
+.visualizer {
+  background: var(--card-bg-color);
+  height: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.transport-buttons {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+}
+
+.transport-button {
+  border-radius: 50%;
+  border: 1px solid var(--chip-border-color);
+  background-color: var(--chip-background-color);
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--text-color);
+}
+
+.transport-button.play {
+  width: 25px;
+  height: 25px;
+}
+
+.transport-button.play:not(.playing) {
+  padding-right: 4px;
+}
+
+.played-post-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 120px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.played-post-author {
+  color: var(--secondary-text-color);
+  font-size: 10px;
+}
+
+.played-post-name {
+  font-size: 10px;
+  overflow: hidden;
+  position: relative;
+  white-space: nowrap;
+}
+
+.played-post-name-text {
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.played-post-name-text.is-overflowing {
+  animation: marquee-slide var(--marquee-duration, 10s) linear infinite;
+}
+
+.footer-volume {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.volume-button {
+  border-radius: 50%;
+  border: 1px solid var(--chip-border-color);
+  background-color: var(--chip-background-color);
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.volume-slider-backdrop {
+  height: 96px;
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  opacity: 0;
+  transition: opacity 120ms ease-out;
+  pointer-events: none;
+}
+
+.volume-slider-container {
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: var(--card-bg-color);
+  border: 1px solid var(--panel-border-color);
+  box-shadow: 0 6px 18px var(--shadow-soft-color);
+}
+
+.footer-volume:hover .volume-slider-backdrop {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.volume-slider {
+  width: 120px;
+}
+
+@keyframes marquee-slide {
+  0% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(0);
+  }
+  80% {
+    transform: translateX(var(--marquee-offset, 0px));
+  }
+  100% {
+    transform: translateX(var(--marquee-offset, 0px));
+  }
+}

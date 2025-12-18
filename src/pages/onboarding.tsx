@@ -4,8 +4,7 @@ import { supabase } from '../lib/supabaseClient';
 import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
 import { USERNAME_FORMAT_MESSAGE, validateUsername } from '../utils/username-validator';
 import Head from 'next/head';
-
-const CURRENT_TOS_VERSION = '2025-11-30-v1';
+import { CURRENT_TOS_VERSION } from '../constants';
 
 export default function OnboardingPage() {
   const { user, loading } = useSupabaseAuth();
@@ -105,7 +104,7 @@ export default function OnboardingPage() {
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              className="post-title-input"
+              className="border-bottom-accent-focus"
               placeholder="Choose a username"
               maxLength={32}
             />

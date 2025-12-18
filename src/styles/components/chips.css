@@ -1,0 +1,53 @@
+/* Chips and tags */
+
+.chips {
+  display: flex;
+  gap: 6px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+
+.chips .chip {
+  font-family: inherit;
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 1rem;
+  border: 1px solid var(--chip-border-color);
+  background: var(--chip-background-color);
+  color: var(--text-color);
+}
+
+.chips .weekly-tag-chip {
+  border-color: var(--accent-color);
+}
+
+.chips .top-pick-badge {
+  background: linear-gradient(120deg, #f6ee85, #ffc65b, #fcec90, #f6ee85);
+  background-size: 220% 220%;
+  color: black;
+  font-weight: bold;
+  animation: top-pick-shimmer 5s linear infinite;
+}
+
+@keyframes top-pick-shimmer {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+button.chip {
+  cursor: pointer;
+}
+
+.created {
+  font-size: 11px;
+  color: var(--secondary-text-color);
+  margin-left: auto;
+  flex-shrink: 0;
+}

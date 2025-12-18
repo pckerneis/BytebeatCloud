@@ -28,8 +28,8 @@ async function scrollToLoadMore(page: import('@playwright/test').Page) {
   // Scroll the sentinel element into view to trigger IntersectionObserver
   const sentinel = page.getByTestId('scroll-sentinel');
   await sentinel.scrollIntoViewIfNeeded();
-  // Wait for intersection observer to fire and data to load
-  await page.waitForTimeout(200);
+  // Small delay to let IntersectionObserver fire
+  await page.waitForTimeout(100);
 }
 
 // Helper to create multiple posts
@@ -199,9 +199,12 @@ test.describe('Infinite scroll - Profile page', () => {
 
     await expect(page.getByText('Loading…')).toHaveCount(0, { timeout: 10000 });
 
-    // Scroll to load all
+    // Initial load should show 20 posts
+    await expect(page.locator('.post-item')).toHaveCount(20, { timeout: 10000 });
+
+    // Scroll to load remaining posts
     await scrollToLoadMore(page);
-    await expect(page.locator('.post-item')).toHaveCount(25, { timeout: 10000 });
+    await expect(page.locator('.post-item')).toHaveCount(25, { timeout: 15000 });
 
     // Should show end message after all loaded
     await expect(page.getByText('You reached the end!')).toBeVisible({ timeout: 5000 });

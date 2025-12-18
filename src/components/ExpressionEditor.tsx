@@ -84,6 +84,7 @@ export function ExpressionEditor({ value, onChange }: ExpressionEditorProps) {
 
 interface ReadonlyExpressionProps {
   expression: string;
+  disableCopy?: boolean;
 }
 
 const readonlyExtensions = [javascript(), EditorView.lineWrapping];
@@ -96,6 +97,7 @@ const readonlyBasicSetup = {
 
 export const ReadonlyExpression = memo(function ReadonlyExpression({
   expression,
+  disableCopy,
 }: ReadonlyExpressionProps) {
   const minimized = useMemo(() => minimizeExpression(expression), [expression]);
   const [copied, setCopied] = useState(false);
@@ -125,28 +127,30 @@ export const ReadonlyExpression = memo(function ReadonlyExpression({
         theme={codeMirrorTheme}
         onChange={() => {}}
       />
-      <button
-        onClick={handleCopy}
-        style={{
-          position: 'absolute',
-          top: '4px',
-          right: '4px',
-          padding: '4px 8px',
-          fontSize: '12px',
-          background: 'rgba(0, 0, 0, 0.6)',
-          color: '#fff',
-          border: 'none',
-          borderRadius: '4px',
-          cursor: 'pointer',
-          opacity: 0.8,
-          transition: 'opacity 0.2s',
-          zIndex: 10,
-        }}
-        onMouseEnter={(e) => (e.currentTarget.style.opacity = '1')}
-        onMouseLeave={(e) => (e.currentTarget.style.opacity = '0.8')}
-      >
-        {copied ? 'Copied to clipboard' : 'Copy'}
-      </button>
+      {!disableCopy && (
+        <button
+          onClick={handleCopy}
+          style={{
+            position: 'absolute',
+            top: '4px',
+            right: '4px',
+            padding: '4px 8px',
+            fontSize: '12px',
+            background: 'rgba(0, 0, 0, 0.6)',
+            color: '#fff',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            opacity: 0.8,
+            transition: 'opacity 0.2s',
+            zIndex: 10,
+          }}
+          onMouseEnter={(e) => (e.currentTarget.style.opacity = '1')}
+          onMouseLeave={(e) => (e.currentTarget.style.opacity = '0.8')}
+        >
+          {copied ? 'Copied to clipboard' : 'Copy'}
+        </button>
+      )}
     </div>
   );
 });

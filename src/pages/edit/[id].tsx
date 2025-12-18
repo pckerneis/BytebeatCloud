@@ -7,6 +7,7 @@ import { supabase } from '../../lib/supabaseClient';
 import { PostEditorFormFields } from '../../components/PostEditorFormFields';
 import Head from 'next/head';
 import { ModeOption, DEFAULT_SAMPLE_RATE } from '../../model/expression';
+import { LicenseOption, DEFAULT_LICENSE } from '../../model/postEditor';
 import { validateExpression } from '../../utils/expression-validator';
 import { useExpressionPlayer } from '../../hooks/useExpressionPlayer';
 import { useCtrlSpacePlayShortcut } from '../../hooks/useCtrlSpacePlayShortcut';
@@ -24,6 +25,8 @@ export default function EditPostPage() {
   const [isDraft, setIsDraft] = useState(false);
   const [mode, setMode] = useState<ModeOption>(ModeOption.Float);
   const [sampleRate, setSampleRate] = useState<number>(DEFAULT_SAMPLE_RATE);
+  const [license, setLicense] = useState<LicenseOption>(DEFAULT_LICENSE);
+  const [publishedAt, setPublishedAt] = useState<string | null>(null);
   const { isPlaying, toggle, lastError, stop, updateExpression } = useBytebeatPlayer({
     enableVisualizer: false,
   });
@@ -116,7 +119,9 @@ export default function EditPostPage() {
 
       const { data, error } = await supabase
         .from('posts')
-        .select('title,description,expression,is_draft,sample_rate,mode,profile_id')
+        .select(
+          'title,description,expression,is_draft,sample_rate,mode,profile_id,license,published_at',
+        )
         .eq('id', id)
         .maybeSingle();
 
@@ -152,6 +157,8 @@ export default function EditPostPage() {
       setIsDraft(Boolean(data.is_draft));
       setMode(data.mode);
       setSampleRate(data.sample_rate);
+      setLicense(data.license ?? DEFAULT_LICENSE);
+      setPublishedAt(data.published_at ?? null);
       isApplyingServerStateRef.current = false;
 
       lastLoadedPostIdRef.current = id;
@@ -201,6 +208,7 @@ export default function EditPostPage() {
         is_draft: asDraft,
         sample_rate: sampleRate,
         mode,
+        license,
       })
       .eq('id', id)
       .eq('profile_id', (user as any).id);
@@ -264,6 +272,7 @@ export default function EditPostPage() {
     mode,
     sampleRate,
     isDraft,
+    license,
   };
 
   const handleMetaChange = (next: typeof meta) => {
@@ -275,6 +284,7 @@ export default function EditPostPage() {
     setMode(next.mode);
     setSampleRate(next.sampleRate);
     setIsDraft(next.isDraft);
+    setLicense(next.license);
   };
 
   const handleBack = () => {
@@ -366,6 +376,7 @@ export default function EditPostPage() {
             onPublish={handlePublish}
             isEditMode
             onUnpublish={() => setShowUnpublishConfirm(true)}
+            lockLicense={!!publishedAt}
           />
         </form>
 

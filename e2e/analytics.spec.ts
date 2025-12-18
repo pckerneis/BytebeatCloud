@@ -140,6 +140,9 @@ test.describe('Analytics page - authenticated', () => {
   });
 
   test('shows play counts when play events exist', async ({ page }) => {
+    // Ensure other user profile exists for play events
+    await ensureTestUserProfile(OTHER_USER_EMAIL, OTHER_USERNAME);
+
     // Create a post
     const { data: postData } = await supabaseAdmin
       .from('posts')
@@ -165,16 +168,19 @@ test.describe('Analytics page - authenticated', () => {
 
     // Check total plays
     const totalPlaysCard = page.locator('.analytics-stat-card').filter({ hasText: 'Total Plays' });
-    await expect(totalPlaysCard.locator('.stat-value')).toHaveText('3');
+    await expect(totalPlaysCard.locator('.stat-value')).toHaveText('3', { timeout: 10000 });
 
     // Check total play time (30 + 45 + 15 = 90 seconds = 1m 30s)
     const totalPlayTimeCard = page
       .locator('.analytics-stat-card')
       .filter({ hasText: 'Total Play Time' });
-    await expect(totalPlayTimeCard.locator('.stat-value')).toHaveText('1m 30s');
+    await expect(totalPlayTimeCard.locator('.stat-value')).toHaveText('1m 30s', { timeout: 10000 });
   });
 
   test('shows unique listeners count', async ({ page }) => {
+    // Ensure other user profile exists for play events
+    await ensureTestUserProfile(OTHER_USER_EMAIL, OTHER_USERNAME);
+
     const { data: postData } = await supabaseAdmin
       .from('posts')
       .insert({
@@ -201,7 +207,7 @@ test.describe('Analytics page - authenticated', () => {
     const uniqueListenersCard = page
       .locator('.analytics-stat-card')
       .filter({ hasText: 'Unique Listeners' });
-    await expect(uniqueListenersCard.locator('.stat-value')).toHaveText('2');
+    await expect(uniqueListenersCard.locator('.stat-value')).toHaveText('2', { timeout: 10000 });
   });
 
   test('post link navigates to post detail', async ({ page }) => {
@@ -239,6 +245,9 @@ test.describe('Analytics page - authenticated', () => {
       .select('id')
       .single();
 
+    // Ensure other user profile exists for favorites
+    await ensureTestUserProfile(OTHER_USER_EMAIL, OTHER_USERNAME);
+
     // Add favorites
     await supabaseAdmin
       .from('favorites')
@@ -249,7 +258,7 @@ test.describe('Analytics page - authenticated', () => {
     const favoritesCard = page
       .locator('.analytics-stat-card')
       .filter({ hasText: 'Total Favorites' });
-    await expect(favoritesCard.locator('.stat-value')).toHaveText('1');
+    await expect(favoritesCard.locator('.stat-value')).toHaveText('1', { timeout: 10000 });
   });
 });
 

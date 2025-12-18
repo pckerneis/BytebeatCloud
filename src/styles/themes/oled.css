@@ -1,0 +1,43 @@
+/* OLED Absolute Black Theme */
+.theme-oled {
+  --bg-color: #000000;
+  --sidebar-bg-color: rgb(2, 2, 2);
+  --sidebar-bg-gradient-color: #271743;
+  --card-bg-color: #0d0d0d;
+  --border-color: rgb(12, 12, 12);
+
+  --text-color: #e4e4e4;
+  --secondary-text-color: #9c9c9c;
+
+  --code-bg-color: #000000;
+  --code-text-color: #d8e2ff;
+
+  --accent-color-rgb: 168 121 255;
+  --accent-color: rgb(var(--accent-color-rgb));
+  --danger-color: #ff5460;
+  --danger-background-color: #513a3c;
+
+  --button-primary-text-color: #000000;
+  --button-border-color: rgb(16, 16, 16);
+  --button-bg-color: #7b34ff;
+  --button-secondary-bg-color: rgb(16, 16, 16);
+
+  --error-text-color: #ffb3b3;
+  --error-bg-color: rgba(255, 0, 0, 0.1);
+
+  --shadow-soft-color: rgba(0, 0, 0, 0);
+  --modal-overlay-color: rgba(0, 0, 0, 0.75);
+
+  --tab-active-bg-color: rgba(255, 255, 255, 0.06);
+  --panel-border-color: var(--border-color);
+
+  --chip-border-color: rgba(255, 255, 255, 0.1);
+  --chip-background-color: rgb(7, 7, 7);
+
+  --post-expression-background-color: rgba(255, 255, 255, 0.03);
+  --post-expression-playing-background-color: #09060c;
+  --post-expression-overlay-color: rgba(0, 0, 0, 0.35);
+
+  --warning-color: #a16307;
+  --success-color: #07810b;
+}

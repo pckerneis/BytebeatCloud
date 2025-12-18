@@ -7,6 +7,7 @@ import { supabase } from '../../lib/supabaseClient';
 import { PostEditorFormFields } from '../../components/PostEditorFormFields';
 import Head from 'next/head';
 import { ModeOption, DEFAULT_SAMPLE_RATE } from '../../model/expression';
+import { LicenseOption, DEFAULT_LICENSE } from '../../model/postEditor';
 import { validateExpression } from '../../utils/expression-validator';
 import { useExpressionPlayer } from '../../hooks/useExpressionPlayer';
 import { useCtrlSpacePlayShortcut } from '../../hooks/useCtrlSpacePlayShortcut';
@@ -23,6 +24,7 @@ export default function ForkPostPage() {
   const [isDraft, setIsDraft] = useState(false);
   const [mode, setMode] = useState<ModeOption>(ModeOption.Float);
   const [sampleRate, setSampleRate] = useState<number>(DEFAULT_SAMPLE_RATE);
+  const [license, setLicense] = useState<LicenseOption>(DEFAULT_LICENSE);
   const { isPlaying, toggle, lastError, stop, updateExpression } = useBytebeatPlayer({
     enableVisualizer: false,
   });
@@ -34,6 +36,7 @@ export default function ForkPostPage() {
   const [saveError, setSaveError] = useState('');
   const [originalTitle, setOriginalTitle] = useState<string>('');
   const [originalAuthor, setOriginalAuthor] = useState<string | null>(null);
+  const [isShareAlike, setIsShareAlike] = useState(false);
   const [liveUpdateEnabled, setLiveUpdateEnabled] = useState(true);
 
   const lastLoadedPostIdRef = useRef<string | null>(null);
@@ -100,7 +103,7 @@ export default function ForkPostPage() {
 
       const { data, error } = await supabase
         .from('posts')
-        .select('title,description,expression,is_draft,sample_rate,mode,profiles(username)')
+        .select('title,description,expression,is_draft,sample_rate,mode,license,profiles(username)')
         .eq('id', id)
         .maybeSingle();
 
@@ -119,6 +122,17 @@ export default function ForkPostPage() {
         return;
       }
 
+      // Block forking posts with all-rights-reserved license
+      if (data.license === 'all-rights-reserved') {
+        setSaveError('This post is all rights reserved and cannot be forked.');
+        setLoading(false);
+        return;
+      }
+
+      // If original post is share-alike, fork must also be share-alike
+      const originalIsShareAlike = data.license === 'cc-by-sa';
+      setIsShareAlike(originalIsShareAlike);
+
       const baseTitle = data.title ?? '';
       setOriginalTitle(baseTitle);
       setOriginalAuthor((data as any).profiles?.username ?? null);
@@ -133,6 +147,8 @@ export default function ForkPostPage() {
       setIsDraft(Boolean(data.is_draft));
       setMode(data.mode);
       setSampleRate(data.sample_rate);
+      // Set license to share-alike if original is share-alike, otherwise use default
+      setLicense(originalIsShareAlike ? 'cc-by-sa' : DEFAULT_LICENSE);
       isApplyingServerStateRef.current = false;
 
       lastLoadedPostIdRef.current = id;
@@ -183,6 +199,7 @@ export default function ForkPostPage() {
         is_draft: asDraft,
         sample_rate: sampleRate,
         mode,
+        license,
         fork_of_post_id: id,
         is_fork: true,
       })
@@ -224,6 +241,7 @@ export default function ForkPostPage() {
     mode,
     sampleRate,
     isDraft,
+    license,
   };
 
   const handleMetaChange = (next: typeof meta) => {
@@ -235,6 +253,10 @@ export default function ForkPostPage() {
     setMode(next.mode);
     setSampleRate(next.sampleRate);
     setIsDraft(next.isDraft);
+    // Only allow license change if not forking a share-alike post
+    if (!isShareAlike) {
+      setLicense(next.license);
+    }
   };
 
   const handleBack = () => {
@@ -316,6 +338,7 @@ export default function ForkPostPage() {
             onLiveUpdateChange={setLiveUpdateEnabled}
             onSaveAsDraft={handleSaveAsDraft}
             onPublish={handlePublish}
+            lockLicense={isShareAlike}
           />
         </form>
       </section>

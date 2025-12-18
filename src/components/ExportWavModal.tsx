@@ -63,7 +63,7 @@ export function ExportWavModal({
             max={300}
             value={duration}
             onChange={(e) => setDuration(Math.max(1, Number(e.target.value) || 1))}
-            className="post-title-input"
+            className="border-bottom-accent-focus"
           />
         </label>
 
@@ -76,7 +76,7 @@ export function ExportWavModal({
             step={0.1}
             value={fadeIn}
             onChange={(e) => setFadeIn(Math.max(0, Number(e.target.value) || 0))}
-            className="post-title-input"
+            className="border-bottom-accent-focus"
           />
         </label>
 
@@ -89,7 +89,7 @@ export function ExportWavModal({
             step={0.1}
             value={fadeOut}
             onChange={(e) => setFadeOut(Math.max(0, Number(e.target.value) || 0))}
-            className="post-title-input"
+            className="border-bottom-accent-focus"
           />
         </label>
 

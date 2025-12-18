@@ -1,0 +1,31 @@
+.theme-default {
+  --bg-color: #ffffff;
+  --sidebar-bg-color: #f5f6f7;
+  --sidebar-bg-gradient-color: #e3d8f8;
+  --card-bg-color: #fafafa;
+  --border-color: #e3e6e8;
+  --text-color: #1a1c1e;
+  --secondary-text-color: #6a6f73;
+  --code-bg-color: #0e1a2b;
+  --code-text-color: #dde8f5;
+  --accent-color-rgb: 91 16 230;
+  --danger-color: #ff5f6a;
+  --danger-background-color: #ffeced;
+  --button-primary-text-color: #ffffff;
+  --button-border-color: #c5c5c5;
+  --button-bg-color: #ffffff;
+  --button-secondary-bg-color: #f5f5f5;
+  --error-text-color: #b91c1c;
+  --error-bg-color: #fee2e2;
+  --shadow-soft-color: #00000033;
+  --modal-overlay-color: rgba(0, 0, 0, 0.35);
+  --tab-active-bg-color: #efefef;
+  --panel-border-color: var(--border-color);
+  --chip-border-color: var(--border-color);
+  --chip-background-color: var(--card-bg-color);
+  --post-expression-background-color: var(--card-bg-color);
+  --post-expression-playing-background-color: #faf7ff;
+  --post-expression-overlay-color: rgba(255, 255, 255, 0.45);
+  --warning-color: #ff9800;
+  --success-color: #48cd4c;
+}

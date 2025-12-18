@@ -13,7 +13,7 @@ import { ActivityHeatmap } from './ActivityHeatmap';
 
 // Shared constants
 const POST_SELECT_COLUMNS =
-  'id,title,expression,is_draft,sample_rate,mode,created_at,profile_id,fork_of_post_id,is_fork,author_username,origin_title,origin_username,favorites_count,is_weekly_winner';
+  'id,title,expression,is_draft,sample_rate,mode,created_at,profile_id,fork_of_post_id,is_fork,author_username,origin_title,origin_username,favorites_count,is_weekly_winner,license';
 
 // Shared enrichment pipeline
 async function enrichPosts(rows: PostRow[], currentUserId?: string | null): Promise<PostRow[]> {
@@ -435,20 +435,35 @@ export function UserProfileContent({
     }
   };
 
+  const navigateToUserActions = async () => {
+    void router.push(`/user-actions/${username}`);
+  };
+
   return (
     <section>
       <div className="profile-title-row">
         <h2>{username ? `@${username}` : 'User'}</h2>
         <div className="profile-title-actions">
           {!hideFollowButton && !isOwnProfile && (
-            <button
-              type="button"
-              className={isFollowed ? 'button primary' : 'button secondary'}
-              disabled={loadingFollow}
-              onClick={handleToggleFollow}
-            >
-              {isFollowed ? 'Followed' : 'Follow'}
-            </button>
+            <>
+              <button
+                type="button"
+                className={isFollowed ? 'button primary' : 'button secondary'}
+                disabled={loadingFollow}
+                onClick={handleToggleFollow}
+              >
+                {isFollowed ? 'Followed' : 'Follow'}
+              </button>
+              <button
+                style={{ marginLeft: '10px' }}
+                type="button"
+                className={'button secondary'}
+                disabled={loadingFollow}
+                onClick={() => void navigateToUserActions()}
+              >
+                <span>⁝</span>
+              </button>
+            </>
           )}
           {extraHeader}
         </div>

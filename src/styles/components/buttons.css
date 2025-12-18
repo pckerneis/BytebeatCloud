@@ -1,0 +1,44 @@
+/* Button styles */
+
+.button {
+  font-family: inherit;
+  font-size: 13px;
+  padding: 6px 10px;
+  border-radius: 4px;
+  border: 1px solid var(--button-border-color);
+  background: var(--button-bg-color);
+  cursor: pointer;
+}
+
+.button.secondary {
+  background: var(--button-secondary-bg-color);
+  color: var(--text-color);
+}
+
+.button.primary {
+  background: var(--accent-color);
+  color: var(--button-primary-text-color);
+}
+
+.button.ghost {
+  background: transparent;
+  border-color: transparent;
+  padding: 0;
+  cursor: pointer;
+}
+
+.button.danger {
+  background: var(--danger-background-color);
+  border-color: var(--danger-color);
+  color: var(--danger-color);
+}
+
+.button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.button.small {
+  padding: 6px 8px;
+  font-size: small;
+}

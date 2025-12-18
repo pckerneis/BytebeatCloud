@@ -33,7 +33,11 @@ function formatNotificationAction(n: NotificationRow): string {
   }
 
   if (n.event_type === 'comment') {
-    return 'commented on one of your posts';
+    return 'commented on your post';
+  }
+
+  if (n.event_type === 'comment_mention') {
+    return 'mentioned you in a comment';
   }
 
   if (n.event_type === 'mention') {

@@ -1,0 +1,35 @@
+/* Notifications page */
+
+.notifications-list {
+  padding: 5px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.notification-item {
+  list-style: none;
+  border-left: 3px solid grey;
+  margin: 0;
+  padding: 5px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.notification-item.is-unread {
+  border-left-color: var(--accent-color);
+}
+
+.notifications-count {
+  background: var(--accent-color);
+  color: var(--button-primary-text-color);
+  width: 20px;
+  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-size: 11px;
+  margin-left: 8px;
+}

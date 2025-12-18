@@ -1,0 +1,43 @@
+/* Autocomplete textarea and input */
+
+.autocomplete-textarea-wrapper,
+.autocomplete-input-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.autocomplete-textarea-wrapper textarea,
+.autocomplete-input-wrapper input {
+  width: 100%;
+}
+
+.autocomplete-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  max-height: 200px;
+  overflow-y: auto;
+  background: var(--card-bg-color);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  box-shadow: 0 4px 12px var(--shadow-soft-color);
+  z-index: 100;
+  margin-top: 4px;
+}
+
+.autocomplete-item {
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--text-color);
+}
+
+.autocomplete-item:hover,
+.autocomplete-item.selected {
+  background: var(--tab-active-bg-color);
+}
+
+.autocomplete-item.selected {
+  color: var(--accent-color);
+}
