@@ -548,8 +548,9 @@ test.describe('Comments - reporting', () => {
     // Comment should be visible
     await expect(page.getByText('Comment to report')).toBeVisible({ timeout: 5000 });
 
-    // Report button should be visible (use comment-report class to distinguish from post report)
-    const reportButton = page.locator('.comment-report');
+    // Report button should be visible within the comment item
+    const commentItem = page.locator('.comment-item').filter({ hasText: 'Comment to report' });
+    const reportButton = commentItem.getByRole('button', { name: 'Report' });
     await expect(reportButton).toBeVisible();
 
     await reportButton.click();
@@ -568,8 +569,8 @@ test.describe('Comments - reporting', () => {
     await expect(page.getByText('Report comment')).not.toBeVisible({ timeout: 5000 });
 
     // Report button should now show "Reported"
-    await expect(page.locator('.comment-report')).toHaveText('Reported');
-    await expect(page.locator('.comment-report')).toBeDisabled();
+    await expect(commentItem.getByRole('button', { name: 'Reported' })).toBeVisible();
+    await expect(commentItem.getByRole('button', { name: 'Reported' })).toBeDisabled();
 
     // Verify report was created
     const { data: reports } = await supabaseAdmin
@@ -597,7 +598,8 @@ test.describe('Comments - reporting', () => {
     await expect(page.getByText('My own comment')).toBeVisible({ timeout: 5000 });
 
     // Report button should NOT be visible for own comment (only delete button)
-    await expect(page.locator('.comment-report')).not.toBeVisible();
+    const commentItem = page.locator('.comment-item').filter({ hasText: 'My own comment' });
+    await expect(commentItem.getByRole('button', { name: 'Report' })).not.toBeVisible();
   });
 
   test('already reported comment shows Reported button', async ({ page }) => {
@@ -627,8 +629,9 @@ test.describe('Comments - reporting', () => {
     await expect(page.getByText('Already reported comment')).toBeVisible({ timeout: 5000 });
 
     // Report button should show "Reported" and be disabled
-    await expect(page.locator('.comment-report')).toHaveText('Reported');
-    await expect(page.locator('.comment-report')).toBeDisabled();
+    const commentItem = page.locator('.comment-item').filter({ hasText: 'Already reported comment' });
+    await expect(commentItem.getByRole('button', { name: 'Reported' })).toBeVisible();
+    await expect(commentItem.getByRole('button', { name: 'Reported' })).toBeDisabled();
   });
 });
 

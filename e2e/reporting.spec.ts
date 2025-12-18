@@ -241,7 +241,7 @@ test.describe('Reporting posts', () => {
     await expect(submitButton).toBeDisabled();
 
     // Add details
-    await page.locator('textarea').fill('Custom reason details');
+    await page.getByPlaceholder('Additional details...').fill('Custom reason details');
 
     // Now submit should be enabled
     await expect(submitButton).toBeEnabled();

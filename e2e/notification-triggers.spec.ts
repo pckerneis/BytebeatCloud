@@ -423,7 +423,8 @@ test.describe('Notification triggers - fork', () => {
     // Save as draft
     await page.getByRole('button', { name: 'Save as draft' }).click();
 
-    await expect(page.getByText('Fork saved.')).toBeVisible();
+    // Wait for redirection to edit page
+    await page.waitForURL(/\/edit\//);
 
     // No notification for draft
     const { data: notifications } = await supabaseAdmin

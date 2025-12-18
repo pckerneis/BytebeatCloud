@@ -85,7 +85,7 @@ test.describe('Blocking users', () => {
     await expect(page.getByRole('heading', { name: 'Unblock this user?' })).toBeVisible();
 
     // Confirm the action
-    await page.getByRole('button', { name: 'Unblock' }).click();
+    await page.getByRole('button', { name: 'Unblock', exact: true }).click();
 
     // Button should change back to "Block user"
     await expect(page.getByRole('button', { name: 'Block user' })).toBeVisible({ timeout: 5000 });
