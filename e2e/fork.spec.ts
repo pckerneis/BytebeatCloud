@@ -202,7 +202,7 @@ test.describe('Fork page - saving fork', () => {
     await page.waitForURL(/\/post\//);
 
     // Verify modified expression
-    await expect(page.locator('.cm-content')).toContainText('t*5');
+    await expect(page.locator('.cm-content')).toContainText('t * 5');
   });
 
   test('saving fork as draft redirects to edit page', async ({ page }) => {
