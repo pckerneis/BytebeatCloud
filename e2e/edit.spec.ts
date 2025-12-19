@@ -207,7 +207,7 @@ test.describe('Edit page - saving changes', () => {
     await page.waitForURL(/\/post\//);
 
     // Verify expression is updated
-    await expect(page.locator('.cm-content')).toContainText('t*5');
+    await expect(page.locator('.cm-content')).toContainText('t * 5');
   });
 
   test('saving as draft stays on edit page', async ({ page }) => {

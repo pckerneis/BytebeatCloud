@@ -12,6 +12,7 @@ import { useBytebeatPlayer } from '../hooks/useBytebeatPlayer';
 import { usePlayerStore } from '../hooks/usePlayerStore';
 import { ModeOption } from '../model/expression';
 import { useCurrentWeeklyChallenge } from '../hooks/useCurrentWeeklyChallenge';
+import { formatPostByAuthor } from '../utils/post-format';
 
 function shortenVersion(version: string | undefined): string | undefined {
   return version?.slice(0, 7);
@@ -108,7 +109,7 @@ export default function Home() {
       const { data, error } = await supabase
         .from('posts_with_meta')
         .select(
-          'id,title,description,expression,is_draft,sample_rate,mode,created_at,profile_id,fork_of_post_id,is_fork,author_username,origin_title,origin_username,favorites_count,is_weekly_winner,license',
+          'id,title,description,expression,is_draft,sample_rate,mode,created_at,profile_id,fork_of_post_id,is_fork,author_username,origin_title,origin_username,favorites_count,is_weekly_winner,license,comments_count',
         )
         .eq('id', (previousChallengeRow as any).winner_post_id)
         .eq('is_draft', false)
@@ -265,8 +266,7 @@ export default function Home() {
                   <p>
                     Last Week&apos;s Top Pick is{' '}
                     <Link href={`/post/${topPickPost.id}`}>
-                      {topPickPost.title || '(untitled)'} by @
-                      {topPickPost.author_username || 'unknown'}
+                      {formatPostByAuthor(topPickPost.title, topPickPost.author_username)}
                     </Link>
                   </p>
                   <PostExpressionPlayer

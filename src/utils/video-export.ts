@@ -2,6 +2,7 @@ import { ModeOption } from '../model/expression';
 import { minimizeExpression } from './minimize-expression';
 import { renderExpressionToSamples } from './audio-render';
 import { Output, BufferTarget, Mp4OutputFormat, CanvasSource, AudioBufferSource } from 'mediabunny';
+import { formatPostTitle, formatAuthorUsername } from './post-format';
 
 export type Orientation = 'portrait' | 'landscape' | 'square';
 export type Resolution = '480p' | '720p' | '1080p';
@@ -210,14 +211,18 @@ function renderStaticFrame(
   ctx.fillStyle = secondaryTextColor;
   ctx.font = `${usernameFontSize}px "Inconsolata", monospace`;
   ctx.textAlign = 'left';
-  ctx.fillText(`@${options.authorUsername || 'unknown'}`, padding, contentY + usernameFontSize);
+  ctx.fillText(
+    `@${formatAuthorUsername(options.authorUsername)}`,
+    padding,
+    contentY + usernameFontSize,
+  );
 
   // Title
   const titleFontSize = Math.max(16, Math.floor(height * 0.045));
   ctx.fillStyle = textColor;
   ctx.font = `bold ${titleFontSize}px "Inconsolata", monospace`;
   ctx.fillText(
-    options.title || '(untitled)',
+    formatPostTitle(options.title),
     padding,
     contentY + usernameFontSize + titleFontSize + 8,
   );

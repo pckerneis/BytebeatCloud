@@ -9,6 +9,7 @@ import {
   CreatorStats,
 } from '../services/playEventsClient';
 import { router } from 'next/client';
+import { formatPostTitle } from '../utils/post-format';
 
 function formatDuration(seconds: number): string {
   if (seconds < 60) return `${seconds}s`;
@@ -172,7 +173,7 @@ export default function AnalyticsPage() {
                       <tr key={row.post_id}>
                         <td>
                           <Link href={`/post/${row.post_id}`} className="analytics-post-link">
-                            {row.post_title || '(untitled)'}
+                            {formatPostTitle(row.post_title)}
                           </Link>
                         </td>
                         <td>{row.total_plays}</td>

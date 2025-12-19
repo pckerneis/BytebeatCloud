@@ -5,6 +5,7 @@ import { useRouter } from 'next/router';
 import { supabase } from '../lib/supabaseClient';
 import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
 import { formatRelativeTime } from '../utils/time';
+import { formatPostTitle } from '../utils/post-format';
 
 type NotificationRow = {
   id: number;
@@ -264,10 +265,10 @@ export default function NotificationsPage() {
                               void handleNotificationLinkClick(e, n, `/post/${n.post_id}`)
                             }
                           >
-                            {n.post_title || '(untitled)'}
+                            {formatPostTitle(n.post_title)}
                           </Link>
                         ) : (
-                          <>{n.post_title || '(untitled)'}</>
+                          <>{formatPostTitle(n.post_title)}</>
                         )}{' '}
                         is this week&apos;s Top Pick!
                       </>
@@ -299,7 +300,7 @@ export default function NotificationsPage() {
                                 void handleNotificationLinkClick(e, n, `/post/${n.post_id}`)
                               }
                             >
-                              {n.post_title || '(untitled)'}
+                              {formatPostTitle(n.post_title)}
                             </Link>
                           </>
                         )}

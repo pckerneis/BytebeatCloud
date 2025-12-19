@@ -1,6 +1,7 @@
 import { ImageResponse } from '@vercel/og';
 import type { NextRequest } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { formatPostTitle, formatAuthorUsername } from '../../../utils/post-format';
 
 export const config = {
   runtime: 'edge',
@@ -72,8 +73,8 @@ export default async function handler(req: NextRequest) {
     return new Response('Post not found', { status: 404 });
   }
 
-  const title = post.title || '(untitled)';
-  const author = post.author_username ? `@${post.author_username}` : '@unknown';
+  const title = formatPostTitle(post.title);
+  const author = `@${formatAuthorUsername(post.author_username)}`;
 
   // Generate waveform samples (deterministic pattern based on expression)
   const waveformSamples = generateWaveformSamples(post.expression, 80);

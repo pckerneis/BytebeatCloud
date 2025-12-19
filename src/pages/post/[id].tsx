@@ -16,7 +16,10 @@ import { useCurrentWeeklyChallenge } from '../../hooks/useCurrentWeeklyChallenge
 import {
   renderDescriptionWithTagsAndMentions,
   extractMentionUserIds,
+  extractPostIds,
+  type PostInfo,
 } from '../../utils/description-renderer';
+import { formatPostTitle, formatAuthorUsername } from '../../utils/post-format';
 import type { GetServerSideProps } from 'next';
 import { createClient } from '@supabase/supabase-js';
 import { COMMENT_MAX } from '../../constants';
@@ -52,6 +55,7 @@ export default function PostDetailPage({ postMeta, baseUrl }: PostDetailPageProp
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [mentionUserMap, setMentionUserMap] = useState<Map<string, string>>(new Map());
+  const [postMap, setPostMap] = useState<Map<string, PostInfo>>(new Map());
   const [showExportModal, setShowExportModal] = useState(false);
   const [shareButtonText, setShareButtonText] = useState('Share');
   const [reportOpen, setReportOpen] = useState(false);
@@ -69,6 +73,7 @@ export default function PostDetailPage({ postMeta, baseUrl }: PostDetailPageProp
   const [commentMentionUserMap, setCommentMentionUserMap] = useState<Map<string, string>>(
     new Map(),
   );
+  const [commentPostMap, setCommentPostMap] = useState<Map<string, PostInfo>>(new Map());
   const [reportedCommentIds, setReportedCommentIds] = useState<Set<string>>(new Set());
   const [commentReportOpen, setCommentReportOpen] = useState<string | null>(null);
   const [commentReportCategory, setCommentReportCategory] = useState('');
@@ -166,7 +171,7 @@ export default function PostDetailPage({ postMeta, baseUrl }: PostDetailPageProp
       const { data, error } = await supabase
         .from('posts_with_meta')
         .select(
-          'id,title,description,expression,is_draft,sample_rate,mode,created_at,profile_id,fork_of_post_id,is_fork,author_username,origin_title,origin_username,favorites_count,is_weekly_winner,license',
+          'id,title,description,expression,is_draft,sample_rate,mode,created_at,profile_id,fork_of_post_id,is_fork,author_username,origin_title,origin_username,favorites_count,is_weekly_winner,license,comments_count',
         )
         .eq('id', id)
         .maybeSingle();
@@ -241,6 +246,26 @@ export default function PostDetailPage({ postMeta, baseUrl }: PostDetailPageProp
         }
       }
 
+      // Fetch post info for post URLs in description
+      const postIds = extractPostIds(rowWithCount.description ?? '');
+      if (postIds.length > 0) {
+        const { data: linkedPosts } = await supabase
+          .from('posts')
+          .select('id, title, author:profiles!posts_profile_id_fkey(username)')
+          .in('id', postIds);
+
+        if (linkedPosts) {
+          const pMap = new Map<string, PostInfo>();
+          for (const p of linkedPosts) {
+            pMap.set(p.id, {
+              title: formatPostTitle(p.title),
+              authorUsername: formatAuthorUsername((p.author as any)?.username),
+            });
+          }
+          setPostMap(pMap);
+        }
+      }
+
       setPosts([rowWithCount]);
       setLoading(false);
     };
@@ -306,6 +331,32 @@ export default function PostDetailPage({ postMeta, baseUrl }: PostDetailPageProp
           }
         } else {
           setCommentMentionUserMap(new Map());
+        }
+
+        // Extract post IDs from all comments and fetch post info
+        const allPostIds = new Set<string>();
+        for (const c of rows) {
+          for (const pid of extractPostIds(c.content)) {
+            allPostIds.add(pid);
+          }
+        }
+        if (allPostIds.size > 0) {
+          const { data: linkedPosts } = await supabase
+            .from('posts')
+            .select('id, title, author:profiles!posts_profile_id_fkey(username)')
+            .in('id', [...allPostIds]);
+          if (linkedPosts && !cancelled) {
+            const pMap = new Map<string, PostInfo>();
+            for (const p of linkedPosts) {
+              pMap.set(p.id, {
+                title: formatPostTitle(p.title),
+                authorUsername: formatAuthorUsername((p.author as any)?.username),
+              });
+            }
+            setCommentPostMap(pMap);
+          }
+        } else {
+          setCommentPostMap(new Map());
         }
 
         // Load already-reported comment IDs
@@ -517,11 +568,19 @@ export default function PostDetailPage({ postMeta, baseUrl }: PostDetailPageProp
               </div>
             )}
 
-            <PostList posts={posts} currentUserId={user ? (user as any).id : undefined} />
+            <PostList
+              posts={posts}
+              currentUserId={user ? (user as any).id : undefined}
+              skipMinification={true}
+            />
 
             {posts[0]?.description && (
               <p className="post-description-detail">
-                {renderDescriptionWithTagsAndMentions(posts[0].description, mentionUserMap)}
+                {renderDescriptionWithTagsAndMentions(
+                  posts[0].description,
+                  mentionUserMap,
+                  postMap,
+                )}
               </p>
             )}
 
@@ -614,7 +673,7 @@ export default function PostDetailPage({ postMeta, baseUrl }: PostDetailPageProp
             </div>
 
             {activeTab === 'comments' && (
-              <div className="comments-section">
+              <div id="comments" className="comments-section">
                 {commentsLoading && <p className="text-centered">Loading comments…</p>}
                 {!commentsLoading && comments.length === 0 && (
                   <p className="secondary-text text-centered">
@@ -655,7 +714,11 @@ export default function PostDetailPage({ postMeta, baseUrl }: PostDetailPageProp
                             )}
                         </div>
                         <p className="comment-content">
-                          {renderDescriptionWithTagsAndMentions(c.content, commentMentionUserMap)}
+                          {renderDescriptionWithTagsAndMentions(
+                            c.content,
+                            commentMentionUserMap,
+                            commentPostMap,
+                          )}
                         </p>
                       </li>
                     ))}

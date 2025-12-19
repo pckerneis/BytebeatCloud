@@ -49,6 +49,19 @@
   font-size: medium;
 }
 
+.comment-content .tag-link,
+.comment-content .mention-link,
+.comment-content .post-link {
+  color: var(--accent-color);
+  text-decoration: none;
+}
+
+.comment-content .tag-link:hover,
+.comment-content .mention-link:hover,
+.comment-content .post-link:hover {
+  text-decoration: underline;
+}
+
 .comment-form {
   margin-top: 16px;
 }

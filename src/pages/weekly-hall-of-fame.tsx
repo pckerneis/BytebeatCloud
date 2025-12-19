@@ -8,6 +8,7 @@ import { usePlayerStore } from '../hooks/usePlayerStore';
 import { validateExpression } from '../utils/expression-validator';
 import { ModeOption } from '../model/expression';
 import { PostRow } from '../components/PostList';
+import { formatPostByAuthor } from '../utils/post-format';
 
 interface HallOfFameRow extends PostRow {
   week_number: number;
@@ -138,7 +139,7 @@ export default function WeeklyHallOfFamePage() {
                   </div>
                   <h3>
                     <Link href={`/post/${row.id}`} className="post-title">
-                      {row.title || '(untitled)'} by @{row.author_username ?? 'unknown'}
+                      {formatPostByAuthor(row.title, row.author_username)}
                     </Link>
                   </h3>
                   <PostExpressionPlayer

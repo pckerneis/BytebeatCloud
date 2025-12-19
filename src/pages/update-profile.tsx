@@ -7,7 +7,10 @@ import { useCurrentUserProfile } from '../hooks/useCurrentUserProfile';
 import {
   renderDescriptionWithTagsAndMentions,
   extractMentionUserIds,
+  extractPostIds,
+  type PostInfo,
 } from '../utils/description-renderer';
+import { formatPostTitle, formatAuthorUsername } from '../utils/post-format';
 
 export default function UpdateProfilePage() {
   const router = useRouter();
@@ -85,6 +88,9 @@ export default function UpdateProfilePage() {
   const [commentReportMentionUserMap, setCommentReportMentionUserMap] = useState<
     Map<string, string>
   >(new Map());
+  const [commentReportPostMap, setCommentReportPostMap] = useState<Map<string, PostInfo>>(
+    new Map(),
+  );
 
   useEffect(() => {
     if (loadedUsername) {
@@ -271,6 +277,34 @@ export default function UpdateProfilePage() {
         }
       } else {
         setCommentReportMentionUserMap(new Map());
+      }
+
+      // Extract post IDs from all comment contents and fetch post info
+      const allPostIds = new Set<string>();
+      for (const r of rows) {
+        if (r.comment_content) {
+          for (const pid of extractPostIds(r.comment_content)) {
+            allPostIds.add(pid);
+          }
+        }
+      }
+      if (allPostIds.size > 0) {
+        const { data: linkedPosts } = await supabase
+          .from('posts')
+          .select('id, title, author:profiles!posts_profile_id_fkey(username)')
+          .in('id', [...allPostIds]);
+        if (linkedPosts) {
+          const pMap = new Map<string, PostInfo>();
+          for (const p of linkedPosts) {
+            pMap.set(p.id, {
+              title: formatPostTitle(p.title),
+              authorUsername: formatAuthorUsername((p.author as any)?.username),
+            });
+          }
+          setCommentReportPostMap(pMap);
+        }
+      } else {
+        setCommentReportPostMap(new Map());
       }
 
       setCommentReportsLoading(false);
@@ -768,7 +802,7 @@ export default function UpdateProfilePage() {
                           <div style={{ flex: 1 }}>
                             <div>
                               <a href={`/post/${r.post_id}`} style={{ fontWeight: 'bold' }}>
-                                {r.post_title || '(untitled post)'}
+                                {formatPostTitle(r.post_title)}
                               </a>
                               <span className="secondary-text" style={{ marginLeft: 8 }}>
                                 {new Date(r.created_at).toLocaleDateString()}
@@ -903,6 +937,7 @@ export default function UpdateProfilePage() {
                               ? renderDescriptionWithTagsAndMentions(
                                   r.comment_content,
                                   commentReportMentionUserMap,
+                                  commentReportPostMap,
                                 )
                               : '(deleted comment)'}
                           </div>

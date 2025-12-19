@@ -13,7 +13,7 @@ import { ActivityHeatmap } from './ActivityHeatmap';
 
 // Shared constants
 const POST_SELECT_COLUMNS =
-  'id,title,expression,is_draft,sample_rate,mode,created_at,profile_id,fork_of_post_id,is_fork,author_username,origin_title,origin_username,favorites_count,is_weekly_winner,license';
+  'id,title,expression,is_draft,sample_rate,mode,created_at,profile_id,fork_of_post_id,is_fork,author_username,origin_title,origin_username,favorites_count,is_weekly_winner,license,comments_count';
 
 // Shared enrichment pipeline
 async function enrichPosts(rows: PostRow[], currentUserId?: string | null): Promise<PostRow[]> {

@@ -85,6 +85,7 @@ export function ExpressionEditor({ value, onChange }: ExpressionEditorProps) {
 interface ReadonlyExpressionProps {
   expression: string;
   disableCopy?: boolean;
+  skipMinification?: boolean;
 }
 
 const readonlyExtensions = [javascript(), EditorView.lineWrapping];
@@ -98,6 +99,7 @@ const readonlyBasicSetup = {
 export const ReadonlyExpression = memo(function ReadonlyExpression({
   expression,
   disableCopy,
+  skipMinification,
 }: ReadonlyExpressionProps) {
   const minimized = useMemo(() => minimizeExpression(expression), [expression]);
   const [copied, setCopied] = useState(false);
@@ -119,7 +121,7 @@ export const ReadonlyExpression = memo(function ReadonlyExpression({
   return (
     <div style={{ position: 'relative', width: '100%' }}>
       <CodeMirror
-        value={minimized}
+        value={skipMinification ? expression : minimized}
         height="auto"
         editable={false}
         extensions={readonlyExtensions}

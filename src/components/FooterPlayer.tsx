@@ -6,6 +6,7 @@ import { useContext, useEffect, useRef, useState } from 'react';
 import { ThemeContext } from '../theme/ThemeContext';
 import { getPreviewSource, subscribePreviewSource } from '../hooks/previewSource';
 import { PostRow } from './PostList';
+import { formatPostTitle } from '../utils/post-format';
 import { favoritePost, unfavoritePost } from '../services/favoritesClient';
 
 export default function FooterPlayer() {
@@ -360,7 +361,7 @@ export default function FooterPlayer() {
         </div>
         <div className="played-post-name" ref={titleRef}>
           <span className={`played-post-name-text${isTitleOverflowing ? ' is-overflowing' : ''}`}>
-            {currentPost ? currentPost.title || '(untitled)' : '-'}
+            {currentPost ? formatPostTitle(currentPost.title) : '-'}
           </span>
         </div>
       </div>
