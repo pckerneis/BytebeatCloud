@@ -39,6 +39,7 @@ export interface PostRow {
 interface PostListProps {
   posts: PostRow[];
   currentUserId?: string;
+  skipMinification?: boolean;
 }
 
 function getLengthCategoryChip(expression: string): string | null {
@@ -48,7 +49,7 @@ function getLengthCategoryChip(expression: string): string | null {
   return null;
 }
 
-export function PostList({ posts, currentUserId }: PostListProps) {
+export function PostList({ posts, currentUserId, skipMinification }: PostListProps) {
   const { toggle, stop, isPlaying } = useBytebeatPlayer();
   const [activePostId, setActivePostId] = useState<string | null>(null);
   const [favoriteState, setFavoriteState] = useState<
@@ -280,6 +281,7 @@ export function PostList({ posts, currentUserId }: PostListProps) {
               isActive={isActive}
               onTogglePlay={() => handleExpressionClick(post)}
               disableCopy={post.license === 'all-rights-reserved'}
+              skipMinification={skipMinification}
             />
             <div className="post-actions">
               <button

@@ -7,6 +7,7 @@ interface PostExpressionPlayerProps {
   onTogglePlay: () => void | Promise<void>;
   height?: number;
   disableCopy?: boolean;
+  skipMinification?: boolean;
 }
 
 export function PostExpressionPlayer({
@@ -15,6 +16,7 @@ export function PostExpressionPlayer({
   onTogglePlay,
   height,
   disableCopy,
+  skipMinification,
 }: PostExpressionPlayerProps) {
   const handleClick = () => {
     void onTogglePlay();
@@ -38,7 +40,7 @@ export function PostExpressionPlayer({
           : {}
       }
     >
-      <ReadonlyExpression expression={expression} disableCopy={disableCopy} />
+      <ReadonlyExpression expression={expression} disableCopy={disableCopy} skipMinification={skipMinification} />
       {!isActive && (
         <div className="post-expression-overlay" aria-hidden="true">
           <button type="button" className="post-expression-play-button" onClick={handleButtonClick}>
