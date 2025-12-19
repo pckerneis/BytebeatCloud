@@ -171,7 +171,7 @@ export default function PostDetailPage({ postMeta, baseUrl }: PostDetailPageProp
       const { data, error } = await supabase
         .from('posts_with_meta')
         .select(
-          'id,title,description,expression,is_draft,sample_rate,mode,created_at,profile_id,fork_of_post_id,is_fork,author_username,origin_title,origin_username,favorites_count,is_weekly_winner,license',
+          'id,title,description,expression,is_draft,sample_rate,mode,created_at,profile_id,fork_of_post_id,is_fork,author_username,origin_title,origin_username,favorites_count,is_weekly_winner,license,comments_count',
         )
         .eq('id', id)
         .maybeSingle();
@@ -669,7 +669,7 @@ export default function PostDetailPage({ postMeta, baseUrl }: PostDetailPageProp
             </div>
 
             {activeTab === 'comments' && (
-              <div className="comments-section">
+              <div id="comments" className="comments-section">
                 {commentsLoading && <p className="text-centered">Loading comments…</p>}
                 {!commentsLoading && comments.length === 0 && (
                   <p className="secondary-text text-centered">
