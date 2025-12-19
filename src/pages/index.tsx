@@ -12,6 +12,7 @@ import { useBytebeatPlayer } from '../hooks/useBytebeatPlayer';
 import { usePlayerStore } from '../hooks/usePlayerStore';
 import { ModeOption } from '../model/expression';
 import { useCurrentWeeklyChallenge } from '../hooks/useCurrentWeeklyChallenge';
+import { formatPostByAuthor } from '../utils/post-format';
 
 function shortenVersion(version: string | undefined): string | undefined {
   return version?.slice(0, 7);
@@ -265,8 +266,7 @@ export default function Home() {
                   <p>
                     Last Week&apos;s Top Pick is{' '}
                     <Link href={`/post/${topPickPost.id}`}>
-                      {topPickPost.title || '(untitled)'} by @
-                      {topPickPost.author_username || 'unknown'}
+                      {formatPostByAuthor(topPickPost.title, topPickPost.author_username)}
                     </Link>
                   </p>
                   <PostExpressionPlayer

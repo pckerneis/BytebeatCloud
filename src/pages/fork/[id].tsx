@@ -12,6 +12,7 @@ import { validateExpression } from '../../utils/expression-validator';
 import { useExpressionPlayer } from '../../hooks/useExpressionPlayer';
 import { useCtrlSpacePlayShortcut } from '../../hooks/useCtrlSpacePlayShortcut';
 import { convertMentionsToIds, convertMentionsToUsernames } from '../../utils/mentions';
+import { formatPostTitle } from '../../utils/post-format';
 
 export default function ForkPostPage() {
   const router = useRouter();
@@ -315,7 +316,7 @@ export default function ForkPostPage() {
         )}
         {originalAuthor && (
           <p>
-            Fork from <a href={`/post/${id}`}>{originalTitle || '(untitled)'}</a> by{' '}
+            Fork from <a href={`/post/${id}`}>{formatPostTitle(originalTitle)}</a> by{' '}
             <a href={`/u/${originalAuthor}`}>@{originalAuthor}</a>
           </p>
         )}

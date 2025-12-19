@@ -148,13 +148,15 @@
 }
 
 .post-description-detail .tag-link,
-.post-description-detail .mention-link {
+.post-description-detail .mention-link,
+.post-description-detail .post-link {
   color: var(--accent-color);
   text-decoration: none;
 }
 
 .post-description-detail .tag-link:hover,
-.post-description-detail .mention-link:hover {
+.post-description-detail .mention-link:hover,
+.post-description-detail .post-link:hover {
   text-decoration: underline;
 }
 

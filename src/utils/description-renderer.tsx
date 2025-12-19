@@ -1,27 +1,49 @@
 import Link from 'next/link';
 import type { JSX } from 'react';
+import { formatPostTitle, formatAuthorUsername } from './post-format';
 
-type MatchType = 'tag' | 'mention';
+/**
+ * Build a regex to match post URLs for the current app domain.
+ * Returns null if running server-side.
+ */
+function buildPostUrlRegex(): RegExp | null {
+  if (typeof window === 'undefined') return null;
+  const escapedOrigin = window.location.origin.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return new RegExp(
+    `${escapedOrigin}/post/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})`,
+    'gi',
+  );
+}
+
+type MatchType = 'tag' | 'mention' | 'postLink';
 
 interface Match {
   type: MatchType;
   fullMatch: string;
-  value: string; // tag name or userId
+  value: string; // tag name, userId, or postId
   start: number;
   end: number;
+}
+
+export interface PostInfo {
+  title: string;
+  authorUsername: string;
 }
 
 /**
  * Renders a description string with clickable #tags and @[userId] mentions.
  * - Tags link to /tags/{tagname}
  * - Mentions (stored as @[userId]) link to /u/{username}
+ * - Post URLs are replaced with "<title> by @<username>" links
  *
  * @param description - The description text (with stored @[userId] format)
  * @param userMap - Map of userId -> username for resolving mentions
+ * @param postMap - Map of postId -> PostInfo for resolving post links
  */
 export function renderDescriptionWithTagsAndMentions(
   description: string,
   userMap: Map<string, string> = new Map(),
+  postMap: Map<string, PostInfo> = new Map(),
 ): JSX.Element[] {
   const nodes: JSX.Element[] = [];
 
@@ -55,6 +77,20 @@ export function renderDescriptionWithTagsAndMentions(
     });
   }
 
+  // Match post URLs only for the current app domain
+  const postUrlRegex = buildPostUrlRegex();
+  if (postUrlRegex) {
+    while ((match = postUrlRegex.exec(description)) !== null) {
+      matches.push({
+        type: 'postLink',
+        fullMatch: match[0],
+        value: match[1], // postId
+        start: match.index,
+        end: match.index + match[0].length,
+      });
+    }
+  }
+
   // Sort matches by start position
   matches.sort((a, b) => a.start - b.start);
 
@@ -81,7 +117,7 @@ export function renderDescriptionWithTagsAndMentions(
           #{m.value}
         </Link>,
       );
-    } else {
+    } else if (m.type === 'mention') {
       // mention - m.value is userId, look up username
       const username = userMap.get(m.value);
       if (username) {
@@ -96,6 +132,23 @@ export function renderDescriptionWithTagsAndMentions(
           <span key={`mention-${i}`} className="mention-link mention-deleted">
             @[deleted]
           </span>,
+        );
+      }
+    } else if (m.type === 'postLink') {
+      // post link - m.value is postId, look up post info
+      const postInfo = postMap.get(m.value);
+      if (postInfo) {
+        nodes.push(
+          <Link key={`post-${i}`} href={`/post/${m.value}`} className="post-link">
+            {postInfo.title} by @{postInfo.authorUsername}
+          </Link>,
+        );
+      } else {
+        // Post not found or deleted - show as regular link
+        nodes.push(
+          <Link key={`post-${i}`} href={`/post/${m.value}`} className="post-link">
+            {m.fullMatch}
+          </Link>,
         );
       }
     }
@@ -118,5 +171,17 @@ export function renderDescriptionWithTagsAndMentions(
 export function extractMentionUserIds(description: string): string[] {
   const mentionIdRegex = /@\[([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})]/gi;
   const matches = [...description.matchAll(mentionIdRegex)];
+  return [...new Set(matches.map((m) => m[1]))];
+}
+
+/**
+ * Extract post IDs from post URLs for pre-fetching.
+ * Only matches URLs from the current app domain.
+ */
+export function extractPostIds(description: string): string[] {
+  const postUrlRegex = buildPostUrlRegex();
+  if (!postUrlRegex) return [];
+
+  const matches = [...description.matchAll(postUrlRegex)];
   return [...new Set(matches.map((m) => m[1]))];
 }

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { supabase } from '../lib/supabaseClient';
+import { formatPostTitle, formatAuthorUsername } from '../utils/post-format';
 
 interface LineageNode {
   id: string;
@@ -58,8 +59,8 @@ function LineageItem({
   depth?: number;
   currentPostId: string;
 }) {
-  const title = node.title || '(untitled)';
-  const author = node.author_username || 'unknown';
+  const title = formatPostTitle(node.title);
+  const author = formatAuthorUsername(node.author_username);
   const isCurrent = node.id === currentPostId;
 
   return (

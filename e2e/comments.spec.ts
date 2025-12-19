@@ -629,7 +629,9 @@ test.describe('Comments - reporting', () => {
     await expect(page.getByText('Already reported comment')).toBeVisible({ timeout: 5000 });
 
     // Report button should show "Reported" and be disabled
-    const commentItem = page.locator('.comment-item').filter({ hasText: 'Already reported comment' });
+    const commentItem = page
+      .locator('.comment-item')
+      .filter({ hasText: 'Already reported comment' });
     await expect(commentItem.getByRole('button', { name: 'Reported' })).toBeVisible();
     await expect(commentItem.getByRole('button', { name: 'Reported' })).toBeDisabled();
   });

@@ -15,6 +15,7 @@ import {
 } from '../../utils/video-export';
 import { ModeOption } from '../../model/expression';
 import { useThemeId } from '../../theme/ThemeContext';
+import { formatPostTitle, formatAuthorUsername } from '../../utils/post-format';
 
 interface VideoTheme {
   accentColor: string;
@@ -98,8 +99,8 @@ export default function ExportVideoPage() {
     const themeColors = getThemeColors();
     const canvas = renderPreviewFrame({
       expression: post.expression,
-      title: post.title || '(untitled)',
-      authorUsername: post.author_username || 'unknown',
+      title: formatPostTitle(post.title),
+      authorUsername: formatAuthorUsername(post.author_username),
       orientation: settings.orientation,
       resolution: settings.resolution,
       accentColor: themeColors.accentColor,
@@ -202,8 +203,8 @@ export default function ExportVideoPage() {
         orientation: settings.orientation,
         resolution: settings.resolution,
         fadeOut: settings.fadeOut,
-        title: post.title || '(untitled)',
-        authorUsername: post.author_username || 'unknown',
+        title: formatPostTitle(post.title),
+        authorUsername: formatAuthorUsername(post.author_username),
         accentColor: themeColors.accentColor,
         bgColor: themeColors.bgColor,
         textColor: themeColors.textColor,
@@ -258,7 +259,7 @@ export default function ExportVideoPage() {
         {!loading && !error && post && webCodecsSupported && (
           <div className="export-video-form">
             <p className="export-video-post-title">
-              Exporting: <strong>{post.title || '(untitled)'}</strong>
+              Exporting: <strong>{formatPostTitle(post.title)}</strong>
               {post.author_username && <span> by @{post.author_username}</span>}
             </p>
 

@@ -11,6 +11,7 @@ import { formatSampleRate, ModeOption } from '../model/expression';
 import type { LicenseOption } from '../model/postEditor';
 import { formatRelativeTime } from '../utils/time';
 import { validateExpression } from '../utils/expression-validator';
+import { formatPostTitle, formatAuthorUsername, formatPostByAuthor } from '../utils/post-format';
 
 export interface PostRow {
   id: string;
@@ -228,16 +229,14 @@ export function PostList({ posts, currentUserId }: PostListProps) {
               </div>
               <h3>
                 <Link className="post-title" href={`/post/${post.id}`}>
-                  {post.title || '(untitled)'}
+                  {formatPostTitle(post.title)}
                 </Link>
               </h3>
               {(post.fork_of_post_id || post.is_fork) && (
                 <div className="forked-from">
                   {post.origin_title || post.origin_username ? (
                     <Link href={`/post/${post.fork_of_post_id}`} className="fork-link">
-                      {`Forked from ${post.origin_title || '(untitled)'} by @${
-                        post.origin_username || 'unknown'
-                      }`}
+                      {`Forked from ${formatPostByAuthor(post.origin_title, post.origin_username)}`}
                     </Link>
                   ) : post.is_fork ? (
                     <span>Forked from (deleted)</span>
