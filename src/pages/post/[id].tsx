@@ -568,7 +568,11 @@ export default function PostDetailPage({ postMeta, baseUrl }: PostDetailPageProp
               </div>
             )}
 
-            <PostList posts={posts} currentUserId={user ? (user as any).id : undefined} skipMinification={true} />
+            <PostList
+              posts={posts}
+              currentUserId={user ? (user as any).id : undefined}
+              skipMinification={true}
+            />
 
             {posts[0]?.description && (
               <p className="post-description-detail">

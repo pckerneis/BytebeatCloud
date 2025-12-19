@@ -40,7 +40,11 @@ export function PostExpressionPlayer({
           : {}
       }
     >
-      <ReadonlyExpression expression={expression} disableCopy={disableCopy} skipMinification={skipMinification} />
+      <ReadonlyExpression
+        expression={expression}
+        disableCopy={disableCopy}
+        skipMinification={skipMinification}
+      />
       {!isActive && (
         <div className="post-expression-overlay" aria-hidden="true">
           <button type="button" className="post-expression-play-button" onClick={handleButtonClick}>
