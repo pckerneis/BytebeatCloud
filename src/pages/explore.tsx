@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useRouter } from 'next/router';
 import { supabase } from '../lib/supabaseClient';
 import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
 import { PostList, type PostRow } from '../components/PostList';
@@ -9,6 +10,7 @@ import { enrichWithTags } from '../utils/tags';
 import Link from 'next/link';
 import { validateExpression } from '../utils/expression-validator';
 import { useTabState } from '../hooks/useTabState';
+import { PostDetailView } from '../components/PostDetailView';
 
 const tabs = ['feed', 'recent', 'weekly'] as const;
 type TabName = (typeof tabs)[number];
@@ -25,7 +27,8 @@ function shuffle<T>(arr: T[]): T[] {
 }
 
 export default function ExplorePage() {
-  const { user } = useSupabaseAuth();
+  const router = useRouter();
+  const { user, loading: authLoading } = useSupabaseAuth();
   const [posts, setPosts] = useState<PostRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -35,6 +38,10 @@ export default function ExplorePage() {
   const sentinelRef = useRef<HTMLDivElement | null>(null);
   const [hasActiveChallenge, setHasActiveChallenge] = useState<boolean | null>(null);
   const [weekTheme, setWeekTheme] = useState('');
+  const initialLoadDoneRef = useRef(false);
+  const currentFetchRef = useRef(0);
+  const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
+  const isDetailOpen = Boolean(selectedPostId);
 
   const resetPagination = useCallback(() => {
     setPosts([]);
@@ -42,9 +49,62 @@ export default function ExplorePage() {
     setHasMore(true);
     setError('');
     loadingMoreRef.current = false;
+    initialLoadDoneRef.current = false;
+    currentFetchRef.current += 1;
+    // Scroll to top when switching tabs
+    const mainEl = document.querySelector('main');
+    if (mainEl) {
+      mainEl.scrollTo(0, 0);
+    } else {
+      window.scrollTo(0, 0);
+    }
   }, []);
 
   const [activeTab, setActiveTab] = useTabState(tabs, 'feed', { onTabChange: resetPagination });
+  const postIdFromQuery = typeof router.query.post === 'string' ? router.query.post : null;
+
+  // Stable userId that doesn't change during auth loading
+  const userId = user ? (user as any).id : undefined;
+
+  // Save scroll position when opening detail, restore when closing
+  const savedScrollRef = useRef<number>(0);
+
+  // Sync selectedPostId with query param
+  useEffect(() => {
+    if (postIdFromQuery) {
+      if (postIdFromQuery !== selectedPostId) {
+        // Save scroll before opening detail
+        const mainEl = document.querySelector('main');
+        savedScrollRef.current = mainEl?.scrollTop ?? window.scrollY;
+        setSelectedPostId(postIdFromQuery);
+      }
+    } else if (selectedPostId) {
+      // Closing detail - will restore scroll in next effect
+      setSelectedPostId(null);
+    }
+  }, [postIdFromQuery, selectedPostId]);
+
+  // Restore scroll when detail closes
+  const prevDetailOpenRef = useRef(isDetailOpen);
+  useEffect(() => {
+    const wasOpen = prevDetailOpenRef.current;
+    prevDetailOpenRef.current = isDetailOpen;
+    
+    // Only restore when transitioning from open to closed
+    if (wasOpen && !isDetailOpen) {
+      // Use multiple animation frames to ensure DOM is fully updated
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          const mainEl = document.querySelector('main');
+          if (mainEl) {
+            mainEl.scrollTo(0, savedScrollRef.current);
+          } else {
+            window.scrollTo(0, savedScrollRef.current);
+          }
+        });
+      });
+    }
+  }, [isDetailOpen]);
 
   // Check if there's an active weekly challenge on mount
   useEffect(() => {
@@ -64,7 +124,19 @@ export default function ExplorePage() {
   }, []);
 
   useEffect(() => {
+    // Wait for auth to finish loading before fetching
+    if (authLoading) {
+      return;
+    }
+
+    // Skip if we've already loaded this initial page
+    if (page === 0 && initialLoadDoneRef.current && posts.length > 0) {
+      return;
+    }
+
     let cancelled = false;
+    currentFetchRef.current += 1;
+    const fetchId = currentFetchRef.current;
     const pageSize = 20;
     const from = page * pageSize;
     const to = from + pageSize - 1;
@@ -75,6 +147,12 @@ export default function ExplorePage() {
         setLoading(true);
       }
       setError('');
+
+      // Check if this fetch is still current
+      if (fetchId !== currentFetchRef.current) {
+        loadingMoreRef.current = false;
+        return;
+      }
 
       let data: PostRow[] | null = null;
       let error: any = null;
@@ -144,7 +222,7 @@ export default function ExplorePage() {
         error = result.error;
       }
 
-      if (cancelled) return;
+      if (cancelled || fetchId !== currentFetchRef.current) return;
 
       if (error) {
         setError(error.message ?? String(error));
@@ -159,17 +237,23 @@ export default function ExplorePage() {
           rows = (await enrichWithViewerFavorites((user as any).id as string, rows)) as PostRow[];
         }
 
+        if (cancelled || fetchId !== currentFetchRef.current) return;
+
         if (rows.length > 0) {
           rows = (await enrichWithTags(rows)) as PostRow[];
         }
 
+        if (cancelled || fetchId !== currentFetchRef.current) return;
+
         // Security: drop posts with invalid expressions
         rows = rows.filter((r) => validateExpression(r.expression).valid);
 
-        setPosts((prev) => (page === 0 ? rows : [...prev, ...rows]));
-        if (rows.length < pageSize) {
-          setHasMore(false);
-        }
+        const newPosts = page === 0 ? rows : [...posts, ...rows];
+        const newHasMore = rows.length >= pageSize;
+        
+        setPosts(newPosts);
+        setHasMore(newHasMore);
+        initialLoadDoneRef.current = true;
       }
 
       loadingMoreRef.current = false;
@@ -181,12 +265,38 @@ export default function ExplorePage() {
     return () => {
       cancelled = true;
     };
-  }, [page, user, activeTab]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, userId, activeTab, authLoading]);
 
   useInfiniteScroll({ hasMore, loadingMoreRef, sentinelRef, setPage });
 
   const handleTabClick = (tab: TabName) => {
     setActiveTab(tab);
+  };
+
+  const handlePostClick = (post: PostRow) => {
+    const nextQuery = { ...router.query, post: post.id };
+    void router.push(
+      {
+        pathname: router.pathname,
+        query: nextQuery,
+      },
+      undefined,
+      { shallow: true },
+    );
+  };
+
+  const handleCloseDetail = () => {
+    const nextQuery = { ...router.query };
+    delete nextQuery.post;
+    void router.push(
+      {
+        pathname: router.pathname,
+        query: nextQuery,
+      },
+      undefined,
+      { shallow: true },
+    );
   };
 
   return (
@@ -205,7 +315,7 @@ export default function ExplorePage() {
         <meta property="og:image:height" content="630" />
         <meta name="twitter:card" content="summary_large_image" />
       </Head>
-      <section>
+      <section style={{ display: isDetailOpen ? 'none' : undefined }}>
         <h2>Explore</h2>
         <div className="tab-header">
           <span
@@ -255,7 +365,11 @@ export default function ExplorePage() {
           </p>
         )}
         {!loading && !error && posts.length > 0 && (
-          <PostList posts={posts} currentUserId={user ? (user as any).id : undefined} />
+          <PostList
+            posts={posts}
+            currentUserId={user ? (user as any).id : undefined}
+            onPostClick={handlePostClick}
+          />
         )}
         <div ref={sentinelRef} style={{ height: 1 }} data-testid="scroll-sentinel" />
         {hasMore && !loading && posts.length > 0 && <p className="text-centered">Loading more…</p>}
@@ -264,6 +378,9 @@ export default function ExplorePage() {
           <p className="text-centered">You reached the end!</p>
         )}
       </section>
+      {isDetailOpen && (
+        <PostDetailView postId={selectedPostId!} onBack={handleCloseDetail} />
+      )}
     </>
   );
 }

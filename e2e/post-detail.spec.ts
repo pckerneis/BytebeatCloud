@@ -115,13 +115,13 @@ test.describe('Post detail page - viewing', () => {
 
     // Navigate to post detail
     await page.getByRole('link', { name: 'Test Post Title' }).click();
-    await page.waitForURL(/\/post\//);
+    await expect(page.getByRole('heading', { name: 'Post detail' })).toHaveCount(1);
 
     // Click back button
     await page.getByRole('button', { name: '← Back' }).click();
 
     // Should be back on explore
-    await expect(page).toHaveURL(/\/explore/);
+    await expect(page.getByRole('heading', { name: 'Post detail' })).toHaveCount(0);
   });
 
   test('shows lineage tab and content', async ({ page }) => {
