@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useRouter } from 'next/router';
 import { supabase } from '../lib/supabaseClient';
 import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
 import { PostList, type PostRow } from '../components/PostList';
@@ -9,6 +10,7 @@ import { enrichWithTags } from '../utils/tags';
 import Link from 'next/link';
 import { validateExpression } from '../utils/expression-validator';
 import { useTabState } from '../hooks/useTabState';
+import { useFeedCache } from '../hooks/useFeedCache';
 
 const tabs = ['feed', 'recent', 'weekly'] as const;
 type TabName = (typeof tabs)[number];
@@ -25,7 +27,8 @@ function shuffle<T>(arr: T[]): T[] {
 }
 
 export default function ExplorePage() {
-  const { user } = useSupabaseAuth();
+  const router = useRouter();
+  const { user, loading: authLoading } = useSupabaseAuth();
   const [posts, setPosts] = useState<PostRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -35,6 +38,8 @@ export default function ExplorePage() {
   const sentinelRef = useRef<HTMLDivElement | null>(null);
   const [hasActiveChallenge, setHasActiveChallenge] = useState<boolean | null>(null);
   const [weekTheme, setWeekTheme] = useState('');
+  const initialLoadDoneRef = useRef(false);
+  const currentFetchRef = useRef(0);
 
   const resetPagination = useCallback(() => {
     setPosts([]);
@@ -42,9 +47,69 @@ export default function ExplorePage() {
     setHasMore(true);
     setError('');
     loadingMoreRef.current = false;
+    initialLoadDoneRef.current = false;
+    currentFetchRef.current += 1;
   }, []);
 
   const [activeTab, setActiveTab] = useTabState(tabs, 'feed', { onTabChange: resetPagination });
+
+  // Stable userId that doesn't change during auth loading
+  const userId = user ? (user as any).id : undefined;
+
+  const feedCache = useFeedCache({
+    tab: activeTab,
+    userId,
+  });
+  
+  // Track the cached page we restored to, so we don't re-fetch those pages
+  const restoredFromCachePageRef = useRef<number | null>(null);
+
+  // Restore from cache on mount or tab change (wait for auth to be ready)
+  useEffect(() => {
+    // Wait for auth to finish loading before trying to restore cache
+    if (authLoading) {
+      console.log('[Explore] Waiting for auth to load');
+      return;
+    }
+    console.log('[Explore] Cache restore effect running', { activeTab, userId });
+    const cached = feedCache.getCachedState();
+    console.log('[Explore] Cached state:', { hasCached: !!cached, postsCount: cached?.posts?.length, cachedPage: cached?.page });
+    if (cached && cached.posts.length > 0) {
+      console.log('[Explore] Restoring from cache', { postsCount: cached.posts.length, page: cached.page });
+      setPosts(cached.posts);
+      setPage(cached.page);
+      setHasMore(cached.hasMore);
+      setLoading(false);
+      initialLoadDoneRef.current = true;
+      restoredFromCachePageRef.current = cached.page;
+      // Restore scroll position after posts are rendered
+      feedCache.restoreScrollPosition();
+    } else {
+      console.log('[Explore] No cache to restore');
+      restoredFromCachePageRef.current = null;
+    }
+    // Only run on mount and when activeTab/userId changes (not on feedCache changes)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, userId, authLoading]);
+
+  // Save scroll position before navigating away
+  // Use a ref to capture the current feedCache.saveScrollPosition so it uses the correct cache key
+  const saveScrollPositionRef = useRef(feedCache.saveScrollPosition);
+  useEffect(() => {
+    saveScrollPositionRef.current = feedCache.saveScrollPosition;
+  }, [feedCache.saveScrollPosition]);
+
+  useEffect(() => {
+    const handleRouteChange = () => {
+      console.log('[Explore] Route change - saving scroll position');
+      saveScrollPositionRef.current();
+    };
+
+    router.events.on('routeChangeStart', handleRouteChange);
+    return () => {
+      router.events.off('routeChangeStart', handleRouteChange);
+    };
+  }, [router.events]);
 
   // Check if there's an active weekly challenge on mount
   useEffect(() => {
@@ -64,7 +129,25 @@ export default function ExplorePage() {
   }, []);
 
   useEffect(() => {
+    // Wait for auth to finish loading before fetching
+    if (authLoading) {
+      console.log('[Explore] Fetch effect waiting for auth');
+      return;
+    }
+    console.log('[Explore] Fetch effect running', { page, activeTab, restoredFromCachePage: restoredFromCachePageRef.current });
+    // Skip fetch if we restored from cache and this page was already loaded
+    if (restoredFromCachePageRef.current !== null && page <= restoredFromCachePageRef.current) {
+      console.log('[Explore] Skipping fetch - restored from cache', { page, restoredFromCachePage: restoredFromCachePageRef.current });
+      // Clear the restored flag after we've skipped all cached pages
+      if (page === restoredFromCachePageRef.current) {
+        restoredFromCachePageRef.current = null;
+      }
+      return;
+    }
+    console.log('[Explore] Proceeding with fetch', { page });
+
     let cancelled = false;
+    const fetchId = ++currentFetchRef.current;
     const pageSize = 20;
     const from = page * pageSize;
     const to = from + pageSize - 1;
@@ -75,6 +158,9 @@ export default function ExplorePage() {
         setLoading(true);
       }
       setError('');
+
+      // Check if this fetch is still current
+      if (fetchId !== currentFetchRef.current) return;
 
       let data: PostRow[] | null = null;
       let error: any = null;
@@ -144,7 +230,7 @@ export default function ExplorePage() {
         error = result.error;
       }
 
-      if (cancelled) return;
+      if (cancelled || fetchId !== currentFetchRef.current) return;
 
       if (error) {
         setError(error.message ?? String(error));
@@ -159,17 +245,26 @@ export default function ExplorePage() {
           rows = (await enrichWithViewerFavorites((user as any).id as string, rows)) as PostRow[];
         }
 
+        if (cancelled || fetchId !== currentFetchRef.current) return;
+
         if (rows.length > 0) {
           rows = (await enrichWithTags(rows)) as PostRow[];
         }
 
+        if (cancelled || fetchId !== currentFetchRef.current) return;
+
         // Security: drop posts with invalid expressions
         rows = rows.filter((r) => validateExpression(r.expression).valid);
 
-        setPosts((prev) => (page === 0 ? rows : [...prev, ...rows]));
-        if (rows.length < pageSize) {
-          setHasMore(false);
-        }
+        const newPosts = page === 0 ? rows : [...posts, ...rows];
+        const newHasMore = rows.length >= pageSize;
+        
+        setPosts(newPosts);
+        setHasMore(newHasMore);
+        
+        // Update cache
+        feedCache.updateCache(newPosts, page, newHasMore);
+        initialLoadDoneRef.current = true;
       }
 
       loadingMoreRef.current = false;
@@ -181,7 +276,8 @@ export default function ExplorePage() {
     return () => {
       cancelled = true;
     };
-  }, [page, user, activeTab]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, userId, activeTab, authLoading]);
 
   useInfiniteScroll({ hasMore, loadingMoreRef, sentinelRef, setPage });
 
