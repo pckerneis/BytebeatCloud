@@ -40,6 +40,7 @@ interface PostListProps {
   posts: PostRow[];
   currentUserId?: string;
   skipMinification?: boolean;
+  onPostClick?: (post: PostRow) => void;
 }
 
 function getLengthCategoryChip(expression: string): string | null {
@@ -49,7 +50,7 @@ function getLengthCategoryChip(expression: string): string | null {
   return null;
 }
 
-export function PostList({ posts, currentUserId, skipMinification }: PostListProps) {
+export function PostList({ posts, currentUserId, skipMinification, onPostClick }: PostListProps) {
   const { toggle, stop, isPlaying } = useBytebeatPlayer();
   const [activePostId, setActivePostId] = useState<string | null>(null);
   const [favoriteState, setFavoriteState] = useState<
@@ -231,9 +232,22 @@ export function PostList({ posts, currentUserId, skipMinification }: PostListPro
                 )}
               </div>
               <h3>
-                <Link className="post-title" href={`/post/${post.id}`}>
-                  {formatPostTitle(post.title)}
-                </Link>
+                {onPostClick ? (
+                  <a
+                    className="post-title"
+                    href={`/post/${post.id}`}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      onPostClick(post);
+                    }}
+                  >
+                    {formatPostTitle(post.title)}
+                  </a>
+                ) : (
+                  <Link className="post-title" href={`/post/${post.id}`}>
+                    {formatPostTitle(post.title)}
+                  </Link>
+                )}
               </h3>
               {(post.fork_of_post_id || post.is_fork) && (
                 <div className="forked-from">

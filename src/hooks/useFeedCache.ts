@@ -74,6 +74,8 @@ export function useFeedCache({ tab, userId }: UseFeedCacheParams): UseFeedCacheR
       entry.scrollY = scrollY;
       entry.timestamp = Date.now();
     }
+    // Reset the flag so scroll can be restored again
+    hasRestoredScroll.current = false;
   }, [cacheKey]);
 
   const restoreScrollPosition = useCallback(() => {

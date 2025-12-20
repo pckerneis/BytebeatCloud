@@ -10,7 +10,7 @@ import { enrichWithTags } from '../utils/tags';
 import Link from 'next/link';
 import { validateExpression } from '../utils/expression-validator';
 import { useTabState } from '../hooks/useTabState';
-import { useFeedCache } from '../hooks/useFeedCache';
+import { PostDetailView } from '../components/PostDetailView';
 
 const tabs = ['feed', 'recent', 'weekly'] as const;
 type TabName = (typeof tabs)[number];
@@ -40,6 +40,8 @@ export default function ExplorePage() {
   const [weekTheme, setWeekTheme] = useState('');
   const initialLoadDoneRef = useRef(false);
   const currentFetchRef = useRef(0);
+  const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
+  const isDetailOpen = Boolean(selectedPostId);
 
   const resetPagination = useCallback(() => {
     setPosts([]);
@@ -49,67 +51,60 @@ export default function ExplorePage() {
     loadingMoreRef.current = false;
     initialLoadDoneRef.current = false;
     currentFetchRef.current += 1;
+    // Scroll to top when switching tabs
+    const mainEl = document.querySelector('main');
+    if (mainEl) {
+      mainEl.scrollTo(0, 0);
+    } else {
+      window.scrollTo(0, 0);
+    }
   }, []);
 
   const [activeTab, setActiveTab] = useTabState(tabs, 'feed', { onTabChange: resetPagination });
+  const postIdFromQuery = typeof router.query.post === 'string' ? router.query.post : null;
 
   // Stable userId that doesn't change during auth loading
   const userId = user ? (user as any).id : undefined;
 
-  const feedCache = useFeedCache({
-    tab: activeTab,
-    userId,
-  });
-  
-  // Track the cached page we restored to, so we don't re-fetch those pages
-  const restoredFromCachePageRef = useRef<number | null>(null);
+  // Save scroll position when opening detail, restore when closing
+  const savedScrollRef = useRef<number>(0);
 
-  // Restore from cache on mount or tab change (wait for auth to be ready)
+  // Sync selectedPostId with query param
   useEffect(() => {
-    // Wait for auth to finish loading before trying to restore cache
-    if (authLoading) {
-      console.log('[Explore] Waiting for auth to load');
-      return;
+    if (postIdFromQuery) {
+      if (postIdFromQuery !== selectedPostId) {
+        // Save scroll before opening detail
+        const mainEl = document.querySelector('main');
+        savedScrollRef.current = mainEl?.scrollTop ?? window.scrollY;
+        setSelectedPostId(postIdFromQuery);
+      }
+    } else if (selectedPostId) {
+      // Closing detail - will restore scroll in next effect
+      setSelectedPostId(null);
     }
-    console.log('[Explore] Cache restore effect running', { activeTab, userId });
-    const cached = feedCache.getCachedState();
-    console.log('[Explore] Cached state:', { hasCached: !!cached, postsCount: cached?.posts?.length, cachedPage: cached?.page });
-    if (cached && cached.posts.length > 0) {
-      console.log('[Explore] Restoring from cache', { postsCount: cached.posts.length, page: cached.page });
-      setPosts(cached.posts);
-      setPage(cached.page);
-      setHasMore(cached.hasMore);
-      setLoading(false);
-      initialLoadDoneRef.current = true;
-      restoredFromCachePageRef.current = cached.page;
-      // Restore scroll position after posts are rendered
-      feedCache.restoreScrollPosition();
-    } else {
-      console.log('[Explore] No cache to restore');
-      restoredFromCachePageRef.current = null;
+  }, [postIdFromQuery, selectedPostId]);
+
+  // Restore scroll when detail closes
+  const prevDetailOpenRef = useRef(isDetailOpen);
+  useEffect(() => {
+    const wasOpen = prevDetailOpenRef.current;
+    prevDetailOpenRef.current = isDetailOpen;
+    
+    // Only restore when transitioning from open to closed
+    if (wasOpen && !isDetailOpen) {
+      // Use multiple animation frames to ensure DOM is fully updated
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          const mainEl = document.querySelector('main');
+          if (mainEl) {
+            mainEl.scrollTo(0, savedScrollRef.current);
+          } else {
+            window.scrollTo(0, savedScrollRef.current);
+          }
+        });
+      });
     }
-    // Only run on mount and when activeTab/userId changes (not on feedCache changes)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab, userId, authLoading]);
-
-  // Save scroll position before navigating away
-  // Use a ref to capture the current feedCache.saveScrollPosition so it uses the correct cache key
-  const saveScrollPositionRef = useRef(feedCache.saveScrollPosition);
-  useEffect(() => {
-    saveScrollPositionRef.current = feedCache.saveScrollPosition;
-  }, [feedCache.saveScrollPosition]);
-
-  useEffect(() => {
-    const handleRouteChange = () => {
-      console.log('[Explore] Route change - saving scroll position');
-      saveScrollPositionRef.current();
-    };
-
-    router.events.on('routeChangeStart', handleRouteChange);
-    return () => {
-      router.events.off('routeChangeStart', handleRouteChange);
-    };
-  }, [router.events]);
+  }, [isDetailOpen]);
 
   // Check if there's an active weekly challenge on mount
   useEffect(() => {
@@ -131,20 +126,8 @@ export default function ExplorePage() {
   useEffect(() => {
     // Wait for auth to finish loading before fetching
     if (authLoading) {
-      console.log('[Explore] Fetch effect waiting for auth');
       return;
     }
-    console.log('[Explore] Fetch effect running', { page, activeTab, restoredFromCachePage: restoredFromCachePageRef.current });
-    // Skip fetch if we restored from cache and this page was already loaded
-    if (restoredFromCachePageRef.current !== null && page <= restoredFromCachePageRef.current) {
-      console.log('[Explore] Skipping fetch - restored from cache', { page, restoredFromCachePage: restoredFromCachePageRef.current });
-      // Clear the restored flag after we've skipped all cached pages
-      if (page === restoredFromCachePageRef.current) {
-        restoredFromCachePageRef.current = null;
-      }
-      return;
-    }
-    console.log('[Explore] Proceeding with fetch', { page });
 
     let cancelled = false;
     const fetchId = ++currentFetchRef.current;
@@ -261,9 +244,6 @@ export default function ExplorePage() {
         
         setPosts(newPosts);
         setHasMore(newHasMore);
-        
-        // Update cache
-        feedCache.updateCache(newPosts, page, newHasMore);
         initialLoadDoneRef.current = true;
       }
 
@@ -285,6 +265,31 @@ export default function ExplorePage() {
     setActiveTab(tab);
   };
 
+  const handlePostClick = (post: PostRow) => {
+    const nextQuery = { ...router.query, post: post.id };
+    void router.push(
+      {
+        pathname: router.pathname,
+        query: nextQuery,
+      },
+      undefined,
+      { shallow: true },
+    );
+  };
+
+  const handleCloseDetail = () => {
+    const nextQuery = { ...router.query };
+    delete nextQuery.post;
+    void router.push(
+      {
+        pathname: router.pathname,
+        query: nextQuery,
+      },
+      undefined,
+      { shallow: true },
+    );
+  };
+
   return (
     <>
       <Head>
@@ -301,7 +306,7 @@ export default function ExplorePage() {
         <meta property="og:image:height" content="630" />
         <meta name="twitter:card" content="summary_large_image" />
       </Head>
-      <section>
+      <section style={{ display: isDetailOpen ? 'none' : undefined }}>
         <h2>Explore</h2>
         <div className="tab-header">
           <span
@@ -351,7 +356,11 @@ export default function ExplorePage() {
           </p>
         )}
         {!loading && !error && posts.length > 0 && (
-          <PostList posts={posts} currentUserId={user ? (user as any).id : undefined} />
+          <PostList
+            posts={posts}
+            currentUserId={user ? (user as any).id : undefined}
+            onPostClick={handlePostClick}
+          />
         )}
         <div ref={sentinelRef} style={{ height: 1 }} data-testid="scroll-sentinel" />
         {hasMore && !loading && posts.length > 0 && <p className="text-centered">Loading more…</p>}
@@ -360,6 +369,9 @@ export default function ExplorePage() {
           <p className="text-centered">You reached the end!</p>
         )}
       </section>
+      {isDetailOpen && (
+        <PostDetailView postId={selectedPostId!} onBack={handleCloseDetail} />
+      )}
     </>
   );
 }
