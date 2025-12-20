@@ -129,8 +129,14 @@ export default function ExplorePage() {
       return;
     }
 
+    // Skip if we've already loaded this initial page
+    if (page === 0 && initialLoadDoneRef.current && posts.length > 0) {
+      return;
+    }
+
     let cancelled = false;
-    const fetchId = ++currentFetchRef.current;
+    currentFetchRef.current += 1;
+    const fetchId = currentFetchRef.current;
     const pageSize = 20;
     const from = page * pageSize;
     const to = from + pageSize - 1;
@@ -143,7 +149,10 @@ export default function ExplorePage() {
       setError('');
 
       // Check if this fetch is still current
-      if (fetchId !== currentFetchRef.current) return;
+      if (fetchId !== currentFetchRef.current) {
+        loadingMoreRef.current = false;
+        return;
+      }
 
       let data: PostRow[] | null = null;
       let error: any = null;
