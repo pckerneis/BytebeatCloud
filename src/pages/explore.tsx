@@ -316,7 +316,19 @@ export default function ExplorePage() {
         <meta name="twitter:card" content="summary_large_image" />
       </Head>
       <section style={{ display: isDetailOpen ? 'none' : undefined }}>
-        <h2>Explore</h2>
+        <h2>
+          Explore
+        </h2>
+
+        <p>
+          Explore{' '}
+          <select>
+            <option value='posts'>posts</option>
+            <option value='playlists'>playlists</option>
+          </select>
+        </p>
+
+
         <div className="tab-header">
           <span
             className={`tab-button ${activeTab === 'feed' ? 'active' : ''}`}
