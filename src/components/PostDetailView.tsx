@@ -32,13 +32,22 @@ interface Comment {
   author_username: string | null;
 }
 
+interface Playlist {
+  id: string;
+  name: string;
+  description: string;
+  created_at: string;
+  author_id: string;
+  author_username: string | null;
+}
+
 interface PostDetailViewProps {
   postId: string;
   baseUrl?: string;
   onBack?: () => void;
 }
 
-export function PostDetailView({ postId, baseUrl, onBack }: PostDetailViewProps) {
+export function PostDetailView({ postId, baseUrl, onBack }: Readonly<PostDetailViewProps>) {
   const router = useRouter();
 
   const [posts, setPosts] = useState<PostRow[]>([]);
@@ -54,7 +63,8 @@ export function PostDetailView({ postId, baseUrl, onBack }: PostDetailViewProps)
   const [hasReported, setHasReported] = useState(false);
   const [reportPending, setReportPending] = useState(false);
   const [reportError, setReportError] = useState('');
-  const [activeTab, setActiveTab] = useState<'comments' | 'lineage'>('comments');
+  const [activeTab, setActiveTab] = useState<'comments' | 'playlists' | 'lineage'>('comments');
+
   const [comments, setComments] = useState<Comment[]>([]);
   const [commentsLoading, setCommentsLoading] = useState(false);
   const [newComment, setNewComment] = useState('');
@@ -74,6 +84,10 @@ export function PostDetailView({ postId, baseUrl, onBack }: PostDetailViewProps)
   const [deleteAlsoReport, setDeleteAlsoReport] = useState(false);
   const [deleteReportCategory, setDeleteReportCategory] = useState('');
   const [deletePending, setDeletePending] = useState(false);
+
+  const [playlists, setPlaylists] = useState<Playlist[]>([]);
+  const [playlistsLoading, setPlaylistsLoading] = useState(false);
+
   const { weekNumber: currentWeekNumber, theme: currentWeekTheme } = useCurrentWeeklyChallenge();
 
   const { user } = useSupabaseAuth();
@@ -625,6 +639,12 @@ export function PostDetailView({ postId, baseUrl, onBack }: PostDetailViewProps)
                 Comments ({comments.length})
               </span>
               <span
+                className={`tab-button ${activeTab === 'playlists' ? 'active' : ''}`}
+                onClick={() => setActiveTab('playlists')}
+              >
+                Playlists ({playlists.length})
+              </span>
+              <span
                 className={`tab-button ${activeTab === 'lineage' ? 'active' : ''}`}
                 onClick={() => setActiveTab('lineage')}
               >
@@ -646,7 +666,7 @@ export function PostDetailView({ postId, baseUrl, onBack }: PostDetailViewProps)
                       <li key={c.id} className="comment-item">
                         <div className="comment-header">
                           <Link href={`/u/${c.author_username}`} className="comment-author">
-                            @{c.author_username || 'unknown'}
+                            @{formatAuthorUsername(c.author_username)}
                           </Link>
                           <span className="comment-date">{formatRelativeTime(c.created_at)}</span>
                           {user &&
@@ -716,6 +736,17 @@ export function PostDetailView({ postId, baseUrl, onBack }: PostDetailViewProps)
                 ) : (
                   <p className="secondary-text">
                     <Link href="/login">Log in</Link> to leave a comment.
+                  </p>
+                )}
+              </div>
+            )}
+
+            {activeTab === 'playlists' && (
+              <div id="playlists" className="playlists-section">
+                {playlistsLoading && <p className="text-centered">Loading playlists…</p>}
+                {!playlistsLoading && playlists.length === 0 && (
+                  <p className="secondary-text text-centered">
+                    No playlists yet. Add this track to a playlist.
                   </p>
                 )}
               </div>
