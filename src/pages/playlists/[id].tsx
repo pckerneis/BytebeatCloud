@@ -5,6 +5,7 @@ import { supabase } from '../../lib/supabaseClient';
 import { useSupabaseAuth } from '../../hooks/useSupabaseAuth';
 import { PostList, type PostRow } from '../../components/PostList';
 import { formatAuthorUsername } from '../../utils/post-format';
+import Link from 'next/link';
 
 interface PlaylistRow {
   id: string;
@@ -149,7 +150,7 @@ export default function PlaylistDetailPage() {
         {!loading && !error && playlist && (
           <>
             <div className="playlist-header">
-              <span>Created by @{formatAuthorUsername(playlist.owner_username)}</span>
+              <span className="secondary-text">A playlist by{' '}<Link href={`/u/${playlist.owner_username}`}>@{formatAuthorUsername(playlist.owner_username)}</Link></span>
               <div className="chips">
                 <span className="chip" style={{ fontSize: 12 }}>{playlist.visibility}</span>
               </div>
