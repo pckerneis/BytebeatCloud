@@ -4,10 +4,6 @@ import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 import { useSupabaseAuth } from '../../hooks/useSupabaseAuth';
 import { PostList, type PostRow } from '../../components/PostList';
-import { useBytebeatPlayer } from '../../hooks/useBytebeatPlayer';
-import { usePlayerStore } from '../../hooks/usePlayerStore';
-import { ModeOption } from '../../model/expression';
-import { validateExpression } from '../../utils/expression-validator';
 import { formatAuthorUsername } from '../../utils/post-format';
 
 interface PlaylistRow {
@@ -29,22 +25,10 @@ export default function PlaylistDetailPage() {
   const { user } = useSupabaseAuth();
   const currentUserId = useMemo(() => (user ? (user as any).id : null), [user]);
 
-  const [playlist, setPlaylistRow] = useState<PlaylistRow | null>(null);
+  const [playlist, setPlaylist] = useState<PlaylistRow | null>(null);
   const [posts, setPosts] = useState<PostRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-
-  const { toggle, stop, isPlaying } = useBytebeatPlayer();
-  const {
-    setPlaylist,
-    setCurrentPostById,
-    startPlayTracking,
-    stopPlayTracking,
-    loopEnabled,
-    shuffleEnabled,
-    setLoop,
-    setShuffle,
-  } = usePlayerStore();
 
   useEffect(() => {
     if (!playlistId) return;
@@ -54,7 +38,7 @@ export default function PlaylistDetailPage() {
     const load = async () => {
       setLoading(true);
       setError('');
-      setPlaylistRow(null);
+      setPlaylist(null);
       setPosts([]);
 
       // Load playlist metadata
@@ -87,7 +71,7 @@ export default function PlaylistDetailPage() {
         created_at: pl.created_at,
         updated_at: pl.updated_at,
       };
-      setPlaylistRow(playlistRow);
+      setPlaylist(playlistRow);
 
       // Load entry positions
       const { data: entries, error: entErr } = await supabase
@@ -150,24 +134,6 @@ export default function PlaylistDetailPage() {
 
   const pageTitle = playlist ? `${playlist.title} - Playlist - BytebeatCloud` : 'Playlist - BytebeatCloud';
 
-  const handlePlayPlaylist = async () => {
-    if (posts.length === 0) return;
-    const first = posts[0];
-    stopPlayTracking();
-    await stop();
-    if (!validateExpression(first.expression).valid) return;
-    const mode: ModeOption =
-      first.mode === 'float'
-        ? ModeOption.Float
-        : first.mode === 'uint8'
-          ? ModeOption.Uint8
-          : ModeOption.Int8;
-    await toggle(first.expression, mode, first.sample_rate || 8000);
-    setPlaylist(posts, first.id);
-    setCurrentPostById(first.id);
-    startPlayTracking(first.id);
-  };
-
   return (
     <>
       <Head>
@@ -186,25 +152,6 @@ export default function PlaylistDetailPage() {
               <span>Created by @{formatAuthorUsername(playlist.owner_username)}</span>
               <div className="chips">
                 <span className="chip" style={{ fontSize: 12 }}>{playlist.visibility}</span>
-              </div>
-              <div className="flex-row" style={{ gap: 8, marginTop: 8 }}>
-                <button type="button" className="button secondary small" onClick={() => void handlePlayPlaylist()} disabled={posts.length === 0}>
-                  {isPlaying ? 'Restart' : 'Play'}
-                </button>
-                <button
-                  type="button"
-                  className={`button small ${loopEnabled ? '' : 'secondary'}`}
-                  onClick={() => setLoop(!loopEnabled)}
-                >
-                  Loop {loopEnabled ? 'On' : 'Off'}
-                </button>
-                <button
-                  type="button"
-                  className={`button small ${shuffleEnabled ? '' : 'secondary'}`}
-                  onClick={() => setShuffle(!shuffleEnabled)}
-                >
-                  Shuffle {shuffleEnabled ? 'On' : 'Off'}
-                </button>
               </div>
               {playlist.description && (
                 <p className="secondary-text" style={{ marginTop: 8 }}>{playlist.description}</p>
