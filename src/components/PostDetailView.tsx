@@ -102,6 +102,7 @@ export function PostDetailView({ postId, baseUrl, onBack }: Readonly<PostDetailV
   const { username: currentUsername } = useCurrentUserProfile();
 
   const currentUserId = useMemo(() => (user ? (user as any).id : null), [user]);
+  const postPlaylistIdSet = useMemo(() => new Set(postPlaylists.map((p) => p.id)), [postPlaylists]);
 
   const handleReportPost = () => {
     if (!user) {
@@ -1054,26 +1055,31 @@ export function PostDetailView({ postId, baseUrl, onBack }: Readonly<PostDetailV
               <p className="text-centered">Loading…</p>
             ) : playlists.length > 0 ? (
               <ul style={{ listStyle: 'none', padding: 0, margin: 0, maxHeight: 240, overflowY: 'auto' }}>
-                {playlists.map((pl) => (
-                  <li key={pl.id} style={{ display: 'flex', alignItems: 'center', padding: '8px 0' }}>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontWeight: 600 }}>{pl.name}</div>
-                      {pl.description && (
-                        <div className="secondary-text" style={{ fontSize: 12, marginTop: 2 }}>
-                          {pl.description}
-                        </div>
-                      )}
-                    </div>
-                    <button
-                      type="button"
-                      className="button small"
-                      onClick={() => void handleAppendToPlaylist(pl.id)}
-                      disabled={addToPlaylistPending}
-                    >
-                      {addToPlaylistPending ? 'Adding…' : 'Add'}
-                    </button>
-                  </li>
-                ))}
+                {playlists.map((pl) => {
+                  const alreadyHas = postPlaylistIdSet.has(pl.id);
+                  return (
+                    <li key={pl.id} style={{ display: 'flex', alignItems: 'center', padding: '8px 0' }}>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontWeight: 600 }}>{pl.name}</div>
+                        {pl.description && (
+                          <div className="secondary-text" style={{ fontSize: 12, marginTop: 2 }}>
+                            {pl.description}
+                          </div>
+                        )}
+                      </div>
+                      <button
+                        type="button"
+                        className="button small"
+                        onClick={() => { if (!alreadyHas) void handleAppendToPlaylist(pl.id); }}
+                        disabled={addToPlaylistPending || alreadyHas}
+                        aria-disabled={addToPlaylistPending || alreadyHas}
+                        title={alreadyHas ? 'This post is already in this playlist' : undefined}
+                      >
+                        {alreadyHas ? 'Added' : addToPlaylistPending ? 'Adding…' : 'Add'}
+                      </button>
+                    </li>
+                  );
+                })}
               </ul>
             ) : (
               <p className="secondary-text">You have no playlists yet.</p>

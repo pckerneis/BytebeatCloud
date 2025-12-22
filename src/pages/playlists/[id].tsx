@@ -37,6 +37,75 @@ export default function PlaylistDetailPage() {
   const dragIndexRef = useRef<number | null>(null);
   const [dropIndex, setDropIndex] = useState<number | null>(null);
   const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
+  const [removePendingId, setRemovePendingId] = useState<string | null>(null);
+  const listRef = useRef<HTMLUListElement | null>(null);
+  const [dropY, setDropY] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!isReordering || draggingIndex === null) return;
+
+    const handleDragOver = (e: DragEvent) => {
+      e.preventDefault();
+      if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
+
+      const ul = listRef.current;
+      if (!ul) return;
+
+      const items = Array.from(ul.querySelectorAll('li[data-index]')) as HTMLLIElement[];
+      if (items.length === 0) {
+        setDropIndex(0);
+        setDropY(0);
+        return;
+      }
+
+      const ulRect = ul.getBoundingClientRect();
+      const y = e.clientY;
+      
+      for (let i = 0; i < items.length; i++) {
+        const rect = items[i].getBoundingClientRect();
+        const midY = rect.top + rect.height / 2;
+        if (y < midY) {
+          setDropIndex(i);
+          setDropY(rect.top - ulRect.top);
+          return;
+        }
+      }
+      
+      const lastRect = items[items.length - 1].getBoundingClientRect();
+      setDropIndex(items.length);
+      setDropY(lastRect.bottom - ulRect.top);
+    };
+
+    const handleDrop = (e: DragEvent) => {
+      e.preventDefault();
+      const from = dragIndexRef.current;
+      if (from === null) return;
+
+      const to = dropIndex ?? reorderItems.length;
+      if (from !== to && from + 1 !== to) {
+        setReorderItems((prev) => {
+          const next = [...prev];
+          const [moved] = next.splice(from, 1);
+          const insertAt = from < to ? to - 1 : to;
+          next.splice(insertAt, 0, moved);
+          return next;
+        });
+      }
+
+      dragIndexRef.current = null;
+      setDraggingIndex(null);
+      setDropIndex(null);
+      setDropY(null);
+    };
+
+    window.addEventListener('dragover', handleDragOver);
+    window.addEventListener('drop', handleDrop);
+
+    return () => {
+      window.removeEventListener('dragover', handleDragOver);
+      window.removeEventListener('drop', handleDrop);
+    };
+  }, [isReordering, draggingIndex, dropIndex, reorderItems.length]);
 
   useEffect(() => {
     if (!playlistId) return;
@@ -173,7 +242,7 @@ export default function PlaylistDetailPage() {
                     setReorderItems(posts);
                     setReorderError('');
                   }}>
-                    Reorder
+                    Edit items
                   </button>
                 ) : (
                   <>
@@ -243,106 +312,89 @@ export default function PlaylistDetailPage() {
                 <p className="secondary-text">No entries yet.</p>
               ) : isReordering ? (
                 <ul
-                  style={{ listStyle: 'none', padding: 0, margin: 0 }}
-                  onDragOver={(e) => {
-                    // When dragging over the list but not over a specific item,
-                    // default the drop index to the end of the list.
-                    e.preventDefault();
-                    // Only act when hovering the list container itself (not child items)
-                    if (e.target !== e.currentTarget) return;
-                    if (dropIndex !== reorderItems.length) setDropIndex(reorderItems.length);
-                  }}
+                  ref={listRef}
+                  style={{ listStyle: 'none', padding: 0, margin: 0, position: 'relative' }}
                 >
-                  {reorderItems.map((p, idx) => (
-                    <>
-                      <li
-                        key={p.id}
-                        draggable
-                        onDragStart={() => { dragIndexRef.current = idx; setDraggingIndex(idx); setDropIndex(idx + 1); }}
-                        onDragOver={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          const desired = idx + 1;
-                          if (dropIndex !== desired) setDropIndex(desired);
-                        }}
-                        onDragEnd={() => {
-                          // If the drag ended without a drop, move to the latest valid drop index
-                          // Default to end of list when no dropIndex is set
-                          if (dragIndexRef.current !== null) {
-                            const from = dragIndexRef.current;
-                            const toRaw = dropIndex ?? reorderItems.length;
-                            if (!(from === toRaw || from + 1 === toRaw)) {
-                              setReorderItems((prev) => {
-                                const next = [...prev];
-                                const [moved] = next.splice(from, 1);
-                                let insertAt = toRaw;
-                                if (from < toRaw) insertAt = toRaw - 1;
-                                next.splice(insertAt, 0, moved);
-                                return next;
-                              });
-                            }
-                          }
-                          dragIndexRef.current = null;
-                          setDraggingIndex(null);
-                          setDropIndex(null);
-                        }}
-                        onDrop={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          const from = dragIndexRef.current;
-                          if (from === null) return;
-                          const toRaw = dropIndex ?? (idx + 1);
-                          if (from === toRaw || from + 1 === toRaw) { setDropIndex(null); return; }
-                          setReorderItems((prev) => {
-                            const next = [...prev];
-                            const [moved] = next.splice(from, 1);
-                            let insertAt = toRaw;
-                            if (from < toRaw) insertAt = toRaw - 1; // account for removal shift
-                            next.splice(insertAt, 0, moved);
-                            return next;
-                          });
-                          dragIndexRef.current = null;
-                          setDraggingIndex(null);
-                          setDropIndex(null);
-                        }}
-                        className="playlist-reorder-row"
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 8,
-                          padding: '8px 0',
-                          borderBottom: '1px solid rgba(255,255,255,0.08)',
-                          opacity: draggingIndex === idx ? 0.5 : 1,
-                        }}
-                        aria-grabbed={draggingIndex === idx}
-                      >
-                        <span style={{ cursor: 'grab' }} aria-label="Drag handle">⋮⋮</span>
-                        <span className="secondary-text" style={{ width: 24, textAlign: 'right' }}>{idx + 1}.</span>
-                        <span style={{ fontWeight: 600 }}>{formatPostTitle(p.title)}</span>{' '}
-                        <span className="secondary-text">by @{formatAuthorUsername(p.author_username)}</span>
-                      </li>
-                      {dropIndex === idx + 1 && idx < reorderItems.length - 1 && (
-                        <li
-                          key={`placeholder-${idx + 1}`}
-                          style={{
-                            height: 0,
-                            borderTop: '2px solid var(--accent, #6cf)',
-                            margin: '2px 0',
-                          }}
-                        />
-                      )}
-                    </>
-                  ))}
-                  {dropIndex === reorderItems.length && (
-                    <li
-                      key={`placeholder-end`}
+                  {dropIndex !== null && dropY !== null && (
+                    <div
                       style={{
-                        height: 0,
-                        borderTop: '2px solid var(--accent, #6cf)',
-                        margin: '2px 0',
+                        position: 'absolute',
+                        left: 0,
+                        right: 0,
+                        height: 2,
+                        backgroundColor: 'var(--accent, #6cf)',
+                        top: dropY,
+                        pointerEvents: 'none',
+                        zIndex: 10,
                       }}
                     />
                   )}
+                  {reorderItems.map((p, idx) => (
+                    <li
+                      key={p.id}
+                      data-index={idx}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 8,
+                        padding: '8px 0',
+                        borderBottom: '1px solid rgba(255,255,255,0.08)',
+                        opacity: draggingIndex === idx ? 0.5 : 1,
+                      }}
+                    >
+                      <span
+                        draggable
+                        onDragStart={(e) => {
+                          e.dataTransfer.effectAllowed = 'move';
+                          e.dataTransfer.setData('text/plain', p.id);
+                          dragIndexRef.current = idx;
+                          setDraggingIndex(idx);
+                        }}
+                        onDragEnd={() => {
+                          dragIndexRef.current = null;
+                          setDraggingIndex(null);
+                          setDropIndex(null);
+                          setDropY(null);
+                        }}
+                        style={{ cursor: 'grab' }}
+                        aria-label="Drag handle"
+                      >
+                        ⋮⋮
+                      </span>
+                        <span className="secondary-text" style={{ width: 24, textAlign: 'right' }}>{idx + 1}.</span>
+                        <span style={{ fontWeight: 600 }}>{formatPostTitle(p.title)}</span>{' '}
+                        <span className="secondary-text">by @{formatAuthorUsername(p.author_username)}</span>
+                        <button
+                          type="button"
+                          className="button danger small ml-auto"
+                          disabled={removePendingId === p.id || reorderPending}
+                          onClick={async () => {
+                            if (!playlistId) return;
+                            setReorderError('');
+                            setRemovePendingId(p.id);
+                            try {
+                              const { error: delErr } = await supabase
+                                .from('playlist_entries')
+                                .delete()
+                                .eq('playlist_id', playlistId)
+                                .eq('post_id', p.id);
+                              if (delErr) throw delErr;
+                              setReorderItems((prev) => prev.filter((it) => it.id !== p.id));
+                              setPosts((prev) => prev.filter((it) => it.id !== p.id));
+                              // adjust dropIndex if it points beyond new length
+                              setDropIndex((d) => (d !== null && d > reorderItems.length - 1 ? reorderItems.length - 1 : d));
+                            } catch (e: any) {
+                              setReorderError(e?.message || 'Failed to remove item.');
+                            } finally {
+                              setRemovePendingId(null);
+                            }
+                          }}
+                          aria-label={`Remove ${formatPostTitle(p.title)} from playlist`}
+                        >
+                          Remove
+                        </button>
+                    </li>
+                  ))}
                 </ul>
               ) : (
                 <PostList posts={posts} currentUserId={currentUserId ?? undefined} />
