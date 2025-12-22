@@ -10,6 +10,7 @@ import { PostList } from './PostList';
 import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
 import { useTabState } from '../hooks/useTabState';
 import { ActivityHeatmap } from './ActivityHeatmap';
+import { PlaylistCard } from './PlaylistCard';
 
 // Shared constants
 const POST_SELECT_COLUMNS =
@@ -186,6 +187,88 @@ export function useUserPosts(profileId: string | null, currentUserId?: string) {
   }, [profileId, page, currentUserId]);
 
   return { posts, loading, error, hasMore, loadingMoreRef, setPage };
+}
+
+interface PlaylistRow {
+  id: string;
+  title: string;
+  description: string | null;
+  posts_count: number;
+}
+
+function useUserPlaylists(
+  profileId: string | null,
+  currentUserId: string | null,
+  enabled: boolean,
+  isOwnProfile: boolean,
+) {
+  const [playlists, setPlaylists] = useState<PlaylistRow[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [hasLoaded, setHasLoaded] = useState(false);
+
+  useEffect(() => {
+    setHasLoaded(false);
+    setPlaylists([]);
+  }, [profileId]);
+
+  useEffect(() => {
+    if (!profileId || !enabled || hasLoaded) return;
+
+    let cancelled = false;
+
+    const load = async () => {
+      setLoading(true);
+      setError('');
+
+      let query = supabase
+        .from('playlists')
+        .select('id, title, description, owner_id')
+        .eq('owner_id', profileId)
+        .order('updated_at', { ascending: false });
+
+      // If not the owner, only show public playlists
+      if (!isOwnProfile) {
+        query = query.eq('visibility', 'public');
+      }
+
+      const { data, error: fetchError } = await query;
+
+      if (cancelled) return;
+
+      if (fetchError) {
+        setError('Unable to load playlists.');
+        setPlaylists([]);
+      } else {
+        // Fetch post counts for each playlist
+        const playlistsWithCounts = await Promise.all(
+          (data ?? []).map(async (pl) => {
+            const { count } = await supabase
+              .from('playlist_entries')
+              .select('*', { count: 'exact', head: true })
+              .eq('playlist_id', pl.id);
+            return {
+              id: pl.id,
+              title: pl.title,
+              description: pl.description,
+              posts_count: count ?? 0,
+            };
+          }),
+        );
+        setPlaylists(playlistsWithCounts);
+        setHasLoaded(true);
+      }
+
+      setLoading(false);
+    };
+
+    void load();
+    return () => {
+      cancelled = true;
+    };
+  }, [profileId, enabled, hasLoaded, isOwnProfile]);
+
+  return { playlists, loading, error };
 }
 
 export function useUserFavorites(
@@ -368,7 +451,7 @@ interface UserProfileContentProps {
   hideFollowButton?: boolean;
 }
 
-const tabs = ['posts', 'drafts', 'favorites'] as const;
+const tabs = ['posts', 'drafts', 'favorites', 'playlists'] as const;
 type TabName = (typeof tabs)[number];
 
 export function UserProfileContent({
@@ -395,6 +478,13 @@ export function UserProfileContent({
     profileId,
     currentUserId,
     activeTab === 'drafts' && isOwnProfile,
+  );
+
+  const playlistsQuery = useUserPlaylists(
+    profileId,
+    currentUserId,
+    activeTab === 'playlists',
+    isOwnProfile,
   );
 
   // Profile details (bio, social links)
@@ -516,6 +606,12 @@ export function UserProfileContent({
         >
           Favorites
         </span>
+        <span
+          className={activeTab === 'playlists' ? 'tab-button active' : 'tab-button'}
+          onClick={() => handleTabClick('playlists')}
+        >
+          Playlists
+        </span>
       </div>
 
       {activeTab === 'posts' && (
@@ -558,6 +654,31 @@ export function UserProfileContent({
           currentUserId={currentUserId}
           loadingMessage="Loading drafts…"
         />
+      )}
+
+      {activeTab === 'playlists' && (
+        <>
+          {playlistsQuery.loading && <p className="text-centered">Loading playlists…</p>}
+          {playlistsQuery.error && <p className="error-message">{playlistsQuery.error}</p>}
+          {!playlistsQuery.loading && !playlistsQuery.error && playlistsQuery.playlists.length === 0 && (
+            <p className="text-centered">
+              {isOwnProfile ? 'You have no playlists yet.' : 'This user has no public playlists yet.'}
+            </p>
+          )}
+          {!playlistsQuery.loading && !playlistsQuery.error && playlistsQuery.playlists.length > 0 && (
+            <ul>
+              {playlistsQuery.playlists.map((pl) => (
+                <PlaylistCard
+                  key={pl.id}
+                  id={pl.id}
+                  name={pl.title}
+                  description={pl.description}
+                  postsCount={pl.posts_count}
+                />
+              ))}
+            </ul>
+          )}
+        </>
       )}
     </section>
   );

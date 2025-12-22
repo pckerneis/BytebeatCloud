@@ -23,6 +23,7 @@ import { COMMENT_MAX } from '../constants';
 import { AutocompleteTextarea } from './AutocompleteTextarea';
 import { convertMentionsToIds } from '../utils/mentions';
 import { formatRelativeTime } from '../utils/time';
+import { PlaylistCard } from './PlaylistCard';
 
 interface Comment {
   id: string;
@@ -931,29 +932,13 @@ export function PostDetailView({ postId, baseUrl, onBack }: Readonly<PostDetailV
                 {!postPlaylistsLoading && postPlaylists.length > 0 && (
                   <ul>
                     {postPlaylists.map((pl) => (
-                      <li key={pl.id} className="playlist-card">
-                        <div className="flex-row flex-end">
-                          <Link href={`/playlists/${pl.id}`} className="weight-600">
-                            {pl.name}
-                          </Link>
-                          <span className="secondary-text ml-auto smaller">
-                            {(pl.postsCount ?? 0)} {pl.postsCount === 1 ? 'post' : 'posts'}
-                          </span>
-                        </div>
-                        {pl.description && (
-                          <div className="secondary-text smaller">
-                            {pl.description}
-                          </div>
-                          )}
-                        <div className="flex-row">
-                          <Link href={`/playlists/${pl.id}`} className="button small secondary">
-                            View
-                          </Link>
-                          <Link href={`/playlists/${pl.id}`} className="button small secondary ml-10">
-                            Play
-                          </Link>
-                        </div>
-                      </li>
+                      <PlaylistCard
+                        key={pl.id}
+                        id={pl.id}
+                        name={pl.name}
+                        description={pl.description}
+                        postsCount={pl.postsCount}
+                      />
                     ))}
                   </ul>
                 )}

@@ -30,82 +30,7 @@ export default function PlaylistDetailPage() {
   const [posts, setPosts] = useState<PostRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [isReordering, setIsReordering] = useState(false);
-  const [reorderItems, setReorderItems] = useState<PostRow[]>([]);
-  const [reorderPending, setReorderPending] = useState(false);
-  const [reorderError, setReorderError] = useState('');
-  const dragIndexRef = useRef<number | null>(null);
-  const [dropIndex, setDropIndex] = useState<number | null>(null);
-  const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
-  const [removedPostIds, setRemovedPostIds] = useState<Set<string>>(new Set());
-  const listRef = useRef<HTMLUListElement | null>(null);
-  const [dropY, setDropY] = useState<number | null>(null);
 
-  useEffect(() => {
-    if (!isReordering || draggingIndex === null) return;
-
-    const handleDragOver = (e: DragEvent) => {
-      e.preventDefault();
-      if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
-
-      const ul = listRef.current;
-      if (!ul) return;
-
-      const items = Array.from(ul.querySelectorAll('li[data-index]')) as HTMLLIElement[];
-      if (items.length === 0) {
-        setDropIndex(0);
-        setDropY(0);
-        return;
-      }
-
-      const ulRect = ul.getBoundingClientRect();
-      const y = e.clientY;
-      
-      for (let i = 0; i < items.length; i++) {
-        const rect = items[i].getBoundingClientRect();
-        const midY = rect.top + rect.height / 2;
-        if (y < midY) {
-          setDropIndex(i);
-          setDropY(rect.top - ulRect.top);
-          return;
-        }
-      }
-      
-      const lastRect = items[items.length - 1].getBoundingClientRect();
-      setDropIndex(items.length);
-      setDropY(lastRect.bottom - ulRect.top);
-    };
-
-    const handleDrop = (e: DragEvent) => {
-      e.preventDefault();
-      const from = dragIndexRef.current;
-      if (from === null) return;
-
-      const to = dropIndex ?? reorderItems.length;
-      if (from !== to && from + 1 !== to) {
-        setReorderItems((prev) => {
-          const next = [...prev];
-          const [moved] = next.splice(from, 1);
-          const insertAt = from < to ? to - 1 : to;
-          next.splice(insertAt, 0, moved);
-          return next;
-        });
-      }
-
-      dragIndexRef.current = null;
-      setDraggingIndex(null);
-      setDropIndex(null);
-      setDropY(null);
-    };
-
-    window.addEventListener('dragover', handleDragOver);
-    window.addEventListener('drop', handleDrop);
-
-    return () => {
-      window.removeEventListener('dragover', handleDragOver);
-      window.removeEventListener('drop', handleDrop);
-    };
-  }, [isReordering, draggingIndex, dropIndex, reorderItems.length]);
 
   useEffect(() => {
     if (!playlistId) return;
@@ -220,7 +145,16 @@ export default function PlaylistDetailPage() {
         <button type="button" className="button ghost" onClick={() => router.back()}>
           ← Back
         </button>
-        <h2>{playlist?.title ?? 'Playlist' }</h2>
+        <div className="profile-title-row">
+          <h2>{playlist?.title ?? 'Playlist' }</h2>
+          {!loading && !error && playlist && currentUserId && playlist.owner_id === currentUserId && (
+            <div className="profile-title-actions">
+              <Link href={`/playlists/${playlistId}/edit`} className="button secondary">
+                Edit
+              </Link>
+            </div>
+          )}
+        </div>
         {loading && <p>Loading…</p>}
         {!loading && error && <p className="error-message">{error}</p>}
         {!loading && !error && playlist && (
@@ -234,167 +168,9 @@ export default function PlaylistDetailPage() {
                 <p className="secondary-text" style={{ marginTop: 8 }}>{playlist.description}</p>
               )}
             </div>
-            {currentUserId && playlist.owner_id === currentUserId && posts.length > 0 && (
-              <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
-                {!isReordering ? (
-                  <button type="button" className="button secondary" onClick={() => {
-                    setIsReordering(true);
-                    setReorderItems(posts);
-                    setRemovedPostIds(new Set());
-                    setReorderError('');
-                  }}>
-                    Edit items
-                  </button>
-                ) : (
-                  <>
-                    <button
-                      type="button"
-                      className="button"
-                      disabled={reorderPending}
-                      onClick={async () => {
-                        if (!playlistId) return;
-                        setReorderPending(true);
-                        setReorderError('');
-                        try {
-                          // First, delete removed items
-                          for (const postId of removedPostIds) {
-                            const { error: delErr } = await supabase
-                              .from('playlist_entries')
-                              .delete()
-                              .eq('playlist_id', playlistId)
-                              .eq('post_id', postId);
-                            if (delErr) throw delErr;
-                          }
-
-                          // Filter out removed items from reorderItems
-                          const finalItems = reorderItems.filter(p => !removedPostIds.has(p.id));
-
-                          // Phase 1: set temporary positions to avoid unique constraint violation
-                          for (let i = 0; i < finalItems.length; i++) {
-                            const post = finalItems[i];
-                            const tempPosition = -i - 1;
-                            const { error: tempErr } = await supabase
-                              .from('playlist_entries')
-                              .update({ position: tempPosition })
-                              .eq('playlist_id', playlistId)
-                              .eq('post_id', post.id);
-                            if (tempErr) throw tempErr;
-                          }
-
-                          // Phase 2: set final sequential positions (1-based) in the desired order
-                          for (let i = 0; i < finalItems.length; i++) {
-                            const post = finalItems[i];
-                            const finalPosition = i + 1;
-                            const { error: finalErr } = await supabase
-                              .from('playlist_entries')
-                              .update({ position: finalPosition })
-                              .eq('playlist_id', playlistId)
-                              .eq('post_id', post.id);
-                            if (finalErr) throw finalErr;
-                          }
-                          setPosts(finalItems);
-                          setIsReordering(false);
-                          setRemovedPostIds(new Set());
-                        } catch (e: any) {
-                          setReorderError(e?.message || 'Failed to save new order.');
-                        } finally {
-                          setReorderPending(false);
-                        }
-                      }}
-                    >
-                      {reorderPending ? 'Saving…' : 'Save changes'}
-                    </button>
-                    <button
-                      type="button"
-                      className="button secondary"
-                      disabled={reorderPending}
-                      onClick={() => {
-                        setIsReordering(false);
-                        setReorderItems(posts);
-                        setRemovedPostIds(new Set());
-                        setReorderError('');
-                      }}
-                    >
-                      Cancel
-                    </button>
-                  </>
-                )}
-              </div>
-            )}
-            {reorderError && (
-              <p className="error-message" style={{ marginTop: 8 }}>{reorderError}</p>
-            )}
             <div style={{ marginTop: 16 }}>
               {posts.length === 0 ? (
                 <p className="secondary-text">No entries yet.</p>
-              ) : isReordering ? (
-                <ul
-                  ref={listRef}
-                  style={{ listStyle: 'none', padding: 0, margin: 0, position: 'relative' }}
-                >
-                  {dropIndex !== null && dropY !== null && (
-                    <div
-                      style={{
-                        position: 'absolute',
-                        left: 0,
-                        right: 0,
-                        height: 2,
-                        backgroundColor: 'var(--accent, #6cf)',
-                        top: dropY,
-                        pointerEvents: 'none',
-                        zIndex: 10,
-                      }}
-                    />
-                  )}
-                  {reorderItems.filter(p => !removedPostIds.has(p.id)).map((p, idx) => (
-                    <li
-                      key={p.id}
-                      data-index={idx}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 8,
-                        padding: '8px 0',
-                        borderBottom: '1px solid rgba(255,255,255,0.08)',
-                        opacity: draggingIndex === idx ? 0.5 : 1,
-                      }}
-                    >
-                      <span
-                        draggable
-                        onDragStart={(e) => {
-                          e.dataTransfer.effectAllowed = 'move';
-                          e.dataTransfer.setData('text/plain', p.id);
-                          dragIndexRef.current = idx;
-                          setDraggingIndex(idx);
-                        }}
-                        onDragEnd={() => {
-                          dragIndexRef.current = null;
-                          setDraggingIndex(null);
-                          setDropIndex(null);
-                          setDropY(null);
-                        }}
-                        style={{ cursor: 'grab' }}
-                        aria-label="Drag handle"
-                      >
-                        ⋮⋮
-                      </span>
-                        <span className="secondary-text" style={{ width: 24, textAlign: 'right' }}>{idx + 1}.</span>
-                        <span style={{ fontWeight: 600 }}>{formatPostTitle(p.title)}</span>{' '}
-                        <span className="secondary-text">by @{formatAuthorUsername(p.author_username)}</span>
-                        <button
-                          type="button"
-                          className="button danger small ml-auto"
-                          disabled={reorderPending}
-                          onClick={() => {
-                            setRemovedPostIds(prev => new Set(prev).add(p.id));
-                          }}
-                          aria-label={`Remove ${formatPostTitle(p.title)} from playlist`}
-                        >
-                          Remove
-                        </button>
-                    </li>
-                  ))}
-                </ul>
               ) : (
                 <PostList posts={posts} currentUserId={currentUserId ?? undefined} />
               )}
