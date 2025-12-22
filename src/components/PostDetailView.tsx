@@ -39,6 +39,7 @@ interface Playlist {
   created_at: string;
   author_id: string;
   author_username: string | null;
+  postsCount?: number;
 }
 
 interface PostDetailViewProps {
@@ -181,7 +182,7 @@ export function PostDetailView({ postId, baseUrl, onBack }: Readonly<PostDetailV
         } else {
           const { data: pls } = await supabase
             .from('playlists')
-            .select('id, title, description, created_at, owner:profiles!playlists_owner_id_fkey(username)')
+            .select('id, title, description, created_at, owner:profiles!playlists_owner_id_fkey(username), entries:playlist_entries(count)')
             .in('id', ids)
             .order('updated_at', { ascending: false });
           const rows: Playlist[] = (pls ?? []).map((p: any) => ({
@@ -191,6 +192,7 @@ export function PostDetailView({ postId, baseUrl, onBack }: Readonly<PostDetailV
             created_at: p.created_at as string,
             author_id: '',
             author_username: (p.owner?.username as string) ?? null,
+            postsCount: (p.entries?.[0]?.count as number) ?? 0,
           }));
           setPostPlaylists(rows);
         }
@@ -514,7 +516,7 @@ export function PostDetailView({ postId, baseUrl, onBack }: Readonly<PostDetailV
 
       const { data: pls, error: plErr } = await supabase
         .from('playlists')
-        .select('id, title, description, created_at, owner:profiles!playlists_owner_id_fkey(username)')
+        .select('id, title, description, created_at, owner:profiles!playlists_owner_id_fkey(username), entries:playlist_entries(count)')
         .in('id', ids)
         .order('updated_at', { ascending: false });
 
@@ -531,6 +533,7 @@ export function PostDetailView({ postId, baseUrl, onBack }: Readonly<PostDetailV
           created_at: p.created_at as string,
           author_id: '',
           author_username: (p.owner?.username as string) ?? null,
+          postsCount: (p.entries?.[0]?.count as number) ?? 0,
         }));
         setPostPlaylists(rows);
       }
@@ -806,7 +809,7 @@ export function PostDetailView({ postId, baseUrl, onBack }: Readonly<PostDetailV
               />
             )}
 
-            <div className="tab-header mt-30">
+            <div className="tab-header mt-30 mb-30">
               <span
                 className={`tab-button ${activeTab === 'comments' ? 'active' : ''}`}
                 onClick={() => setActiveTab('comments')}
@@ -925,27 +928,30 @@ export function PostDetailView({ postId, baseUrl, onBack }: Readonly<PostDetailV
                   </p>
                 )}
                 {!postPlaylistsLoading && postPlaylists.length > 0 && (
-                  <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                  <ul>
                     {postPlaylists.map((pl) => (
-                      <li key={pl.id} style={{ display: 'flex', alignItems: 'center', padding: '8px 0' }}>
-                        <div style={{ flex: 1 }}>
-                          <Link href={`/playlists/${pl.id}`} style={{ fontWeight: 600 }}>
+                      <li key={pl.id} className="playlist-card">
+                        <div className="flex-row flex-end">
+                          <Link href={`/playlists/${pl.id}`} className="weight-600">
                             {pl.name}
                           </Link>
-                          {pl.description && (
-                            <div className="secondary-text" style={{ fontSize: 12, marginTop: 2 }}>
-                              {pl.description}
-                            </div>
-                          )}
-                          {pl.author_username && (
-                            <div className="secondary-text" style={{ fontSize: 12, marginTop: 2 }}>
-                              by @{pl.author_username}
-                            </div>
-                          )}
+                          <span className="secondary-text ml-auto smaller">
+                            {(pl.postsCount ?? 0)} {pl.postsCount === 1 ? 'post' : 'posts'}
+                          </span>
                         </div>
-                        <Link href={`/playlists/${pl.id}`} className="button small secondary">
-                          View
-                        </Link>
+                        {pl.description && (
+                          <div className="secondary-text smaller">
+                            {pl.description}
+                          </div>
+                          )}
+                        <div className="flex-row">
+                          <Link href={`/playlists/${pl.id}`} className="button small secondary">
+                            View
+                          </Link>
+                          <Link href={`/playlists/${pl.id}`} className="button small secondary ml-10">
+                            Play
+                          </Link>
+                        </div>
                       </li>
                     ))}
                   </ul>

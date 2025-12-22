@@ -9,7 +9,7 @@
 
 .notification-item {
   list-style: none;
-  border-left: 3px solid grey;
+  border-left: 3px solid var(--chip-border-color);
   margin: 0;
   padding: 5px 10px;
   display: flex;

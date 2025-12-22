@@ -16,7 +16,7 @@ interface PostDetailPageProps {
   baseUrl: string;
 }
 
-export default function PostDetailPage({ postMeta, baseUrl }: PostDetailPageProps) {
+export default function PostDetailPage({ postMeta, baseUrl }: Readonly<PostDetailPageProps>) {
   const router = useRouter();
   const { id } = router.query;
   const postId = typeof id === 'string' ? id : null;

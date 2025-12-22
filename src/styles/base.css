@@ -129,6 +129,18 @@ button {
   margin-bottom: auto;
 }
 
+.weight-600 {
+    font-weight: 600;
+}
+
+.align-items-flex-end {
+    align-items: flex-end;
+}
+
+.smaller {
+    font-size: smaller;
+}
+
 .text-centered {
   text-align: center;
 }

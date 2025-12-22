@@ -1,10 +1,14 @@
 import { useRouter } from 'next/router';
 import Head from 'next/head';
 import { useEffect, useMemo, useState } from 'react';
-import Link from 'next/link';
 import { supabase } from '../../lib/supabaseClient';
 import { useSupabaseAuth } from '../../hooks/useSupabaseAuth';
 import { PostList, type PostRow } from '../../components/PostList';
+import { useBytebeatPlayer } from '../../hooks/useBytebeatPlayer';
+import { usePlayerStore } from '../../hooks/usePlayerStore';
+import { ModeOption } from '../../model/expression';
+import { validateExpression } from '../../utils/expression-validator';
+import { formatAuthorUsername } from '../../utils/post-format';
 
 interface PlaylistRow {
   id: string;
@@ -12,6 +16,7 @@ interface PlaylistRow {
   description: string | null;
   visibility: 'public' | 'unlisted' | 'private';
   owner_id: string;
+  owner_username: string;
   created_at: string;
   updated_at: string;
 }
@@ -24,10 +29,22 @@ export default function PlaylistDetailPage() {
   const { user } = useSupabaseAuth();
   const currentUserId = useMemo(() => (user ? (user as any).id : null), [user]);
 
-  const [playlist, setPlaylist] = useState<PlaylistRow | null>(null);
+  const [playlist, setPlaylistRow] = useState<PlaylistRow | null>(null);
   const [posts, setPosts] = useState<PostRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+
+  const { toggle, stop, isPlaying } = useBytebeatPlayer();
+  const {
+    setPlaylist,
+    setCurrentPostById,
+    startPlayTracking,
+    stopPlayTracking,
+    loopEnabled,
+    shuffleEnabled,
+    setLoop,
+    setShuffle,
+  } = usePlayerStore();
 
   useEffect(() => {
     if (!playlistId) return;
@@ -37,13 +54,13 @@ export default function PlaylistDetailPage() {
     const load = async () => {
       setLoading(true);
       setError('');
-      setPlaylist(null);
+      setPlaylistRow(null);
       setPosts([]);
 
       // Load playlist metadata
       const { data: pl, error: plErr } = await supabase
         .from('playlists')
-        .select('id, title, description, visibility, owner_id, created_at, updated_at')
+        .select('id, title, description, visibility, owner_id, created_at, updated_at, owner:profiles!playlists_owner_id_fkey(username)')
         .eq('id', playlistId)
         .maybeSingle();
 
@@ -55,16 +72,22 @@ export default function PlaylistDetailPage() {
         return;
       }
 
+      const ownerField: any = (pl as any).owner;
+      const ownerUsername: string = Array.isArray(ownerField)
+        ? (ownerField[0]?.username as string) ?? ''
+        : ((ownerField?.username as string) ?? '');
+
       const playlistRow: PlaylistRow = {
         id: pl.id,
         title: pl.title,
         description: pl.description ?? null,
         visibility: pl.visibility,
         owner_id: pl.owner_id,
+        owner_username: ownerUsername,
         created_at: pl.created_at,
         updated_at: pl.updated_at,
       };
-      setPlaylist(playlistRow);
+      setPlaylistRow(playlistRow);
 
       // Load entry positions
       const { data: entries, error: entErr } = await supabase
@@ -127,6 +150,24 @@ export default function PlaylistDetailPage() {
 
   const pageTitle = playlist ? `${playlist.title} - Playlist - BytebeatCloud` : 'Playlist - BytebeatCloud';
 
+  const handlePlayPlaylist = async () => {
+    if (posts.length === 0) return;
+    const first = posts[0];
+    stopPlayTracking();
+    await stop();
+    if (!validateExpression(first.expression).valid) return;
+    const mode: ModeOption =
+      first.mode === 'float'
+        ? ModeOption.Float
+        : first.mode === 'uint8'
+          ? ModeOption.Uint8
+          : ModeOption.Int8;
+    await toggle(first.expression, mode, first.sample_rate || 8000);
+    setPlaylist(posts, first.id);
+    setCurrentPostById(first.id);
+    startPlayTracking(first.id);
+  };
+
   return (
     <>
       <Head>
@@ -136,18 +177,39 @@ export default function PlaylistDetailPage() {
         <button type="button" className="button ghost" onClick={() => router.back()}>
           ← Back
         </button>
-        <h2>Playlist</h2>
+        <h2>{playlist?.title ?? 'Playlist' }</h2>
         {loading && <p>Loading…</p>}
         {!loading && error && <p className="error-message">{error}</p>}
         {!loading && !error && playlist && (
           <>
-            <div className="info-panel" style={{ display: 'flex', gap: 12, alignItems: 'baseline' }}>
-              <h3 style={{ margin: 0 }}>{playlist.title}</h3>
-              <span className="secondary-text" style={{ fontSize: 12 }}>({playlist.visibility})</span>
+            <div className="playlist-header">
+              <span>Created by @{formatAuthorUsername(playlist.owner_username)}</span>
+              <div className="chips">
+                <span className="chip" style={{ fontSize: 12 }}>{playlist.visibility}</span>
+              </div>
+              <div className="flex-row" style={{ gap: 8, marginTop: 8 }}>
+                <button type="button" className="button secondary small" onClick={() => void handlePlayPlaylist()} disabled={posts.length === 0}>
+                  {isPlaying ? 'Restart' : 'Play'}
+                </button>
+                <button
+                  type="button"
+                  className={`button small ${loopEnabled ? '' : 'secondary'}`}
+                  onClick={() => setLoop(!loopEnabled)}
+                >
+                  Loop {loopEnabled ? 'On' : 'Off'}
+                </button>
+                <button
+                  type="button"
+                  className={`button small ${shuffleEnabled ? '' : 'secondary'}`}
+                  onClick={() => setShuffle(!shuffleEnabled)}
+                >
+                  Shuffle {shuffleEnabled ? 'On' : 'Off'}
+                </button>
+              </div>
+              {playlist.description && (
+                <p className="secondary-text" style={{ marginTop: 8 }}>{playlist.description}</p>
+              )}
             </div>
-            {playlist.description && (
-              <p className="secondary-text" style={{ marginTop: 8 }}>{playlist.description}</p>
-            )}
             <div style={{ marginTop: 16 }}>
               {posts.length === 0 ? (
                 <p className="secondary-text">No entries yet.</p>
