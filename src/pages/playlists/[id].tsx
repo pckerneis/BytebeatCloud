@@ -37,7 +37,7 @@ export default function PlaylistDetailPage() {
   const dragIndexRef = useRef<number | null>(null);
   const [dropIndex, setDropIndex] = useState<number | null>(null);
   const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
-  const [removePendingId, setRemovePendingId] = useState<string | null>(null);
+  const [removedPostIds, setRemovedPostIds] = useState<Set<string>>(new Set());
   const listRef = useRef<HTMLUListElement | null>(null);
   const [dropY, setDropY] = useState<number | null>(null);
 
@@ -240,6 +240,7 @@ export default function PlaylistDetailPage() {
                   <button type="button" className="button secondary" onClick={() => {
                     setIsReordering(true);
                     setReorderItems(posts);
+                    setRemovedPostIds(new Set());
                     setReorderError('');
                   }}>
                     Edit items
@@ -255,9 +256,23 @@ export default function PlaylistDetailPage() {
                         setReorderPending(true);
                         setReorderError('');
                         try {
-                          for (let i = 0; i < reorderItems.length; i++) {
-                            const post = reorderItems[i];
-                            const tempPosition = -i - 1; // unique temporary position
+                          // First, delete removed items
+                          for (const postId of removedPostIds) {
+                            const { error: delErr } = await supabase
+                              .from('playlist_entries')
+                              .delete()
+                              .eq('playlist_id', playlistId)
+                              .eq('post_id', postId);
+                            if (delErr) throw delErr;
+                          }
+
+                          // Filter out removed items from reorderItems
+                          const finalItems = reorderItems.filter(p => !removedPostIds.has(p.id));
+
+                          // Phase 1: set temporary positions to avoid unique constraint violation
+                          for (let i = 0; i < finalItems.length; i++) {
+                            const post = finalItems[i];
+                            const tempPosition = -i - 1;
                             const { error: tempErr } = await supabase
                               .from('playlist_entries')
                               .update({ position: tempPosition })
@@ -267,8 +282,8 @@ export default function PlaylistDetailPage() {
                           }
 
                           // Phase 2: set final sequential positions (1-based) in the desired order
-                          for (let i = 0; i < reorderItems.length; i++) {
-                            const post = reorderItems[i];
+                          for (let i = 0; i < finalItems.length; i++) {
+                            const post = finalItems[i];
                             const finalPosition = i + 1;
                             const { error: finalErr } = await supabase
                               .from('playlist_entries')
@@ -277,8 +292,9 @@ export default function PlaylistDetailPage() {
                               .eq('post_id', post.id);
                             if (finalErr) throw finalErr;
                           }
-                          setPosts(reorderItems);
+                          setPosts(finalItems);
                           setIsReordering(false);
+                          setRemovedPostIds(new Set());
                         } catch (e: any) {
                           setReorderError(e?.message || 'Failed to save new order.');
                         } finally {
@@ -286,7 +302,7 @@ export default function PlaylistDetailPage() {
                         }
                       }}
                     >
-                      {reorderPending ? 'Saving…' : 'Save order'}
+                      {reorderPending ? 'Saving…' : 'Save changes'}
                     </button>
                     <button
                       type="button"
@@ -295,6 +311,7 @@ export default function PlaylistDetailPage() {
                       onClick={() => {
                         setIsReordering(false);
                         setReorderItems(posts);
+                        setRemovedPostIds(new Set());
                         setReorderError('');
                       }}
                     >
@@ -329,7 +346,7 @@ export default function PlaylistDetailPage() {
                       }}
                     />
                   )}
-                  {reorderItems.map((p, idx) => (
+                  {reorderItems.filter(p => !removedPostIds.has(p.id)).map((p, idx) => (
                     <li
                       key={p.id}
                       data-index={idx}
@@ -367,27 +384,9 @@ export default function PlaylistDetailPage() {
                         <button
                           type="button"
                           className="button danger small ml-auto"
-                          disabled={removePendingId === p.id || reorderPending}
-                          onClick={async () => {
-                            if (!playlistId) return;
-                            setReorderError('');
-                            setRemovePendingId(p.id);
-                            try {
-                              const { error: delErr } = await supabase
-                                .from('playlist_entries')
-                                .delete()
-                                .eq('playlist_id', playlistId)
-                                .eq('post_id', p.id);
-                              if (delErr) throw delErr;
-                              setReorderItems((prev) => prev.filter((it) => it.id !== p.id));
-                              setPosts((prev) => prev.filter((it) => it.id !== p.id));
-                              // adjust dropIndex if it points beyond new length
-                              setDropIndex((d) => (d !== null && d > reorderItems.length - 1 ? reorderItems.length - 1 : d));
-                            } catch (e: any) {
-                              setReorderError(e?.message || 'Failed to remove item.');
-                            } finally {
-                              setRemovePendingId(null);
-                            }
+                          disabled={reorderPending}
+                          onClick={() => {
+                            setRemovedPostIds(prev => new Set(prev).add(p.id));
                           }}
                           aria-label={`Remove ${formatPostTitle(p.title)} from playlist`}
                         >
