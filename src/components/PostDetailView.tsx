@@ -125,7 +125,8 @@ export function PostDetailView({ postId, baseUrl, onBack }: PostDetailViewProps)
   };
 
   const handleShare = async () => {
-    const effectiveBaseUrl = baseUrl || (typeof window !== 'undefined' ? window.location.origin : '');
+    const effectiveBaseUrl =
+      baseUrl || (typeof window !== 'undefined' ? window.location.origin : '');
     const shareUrl = `${effectiveBaseUrl}/post/${postId}`;
     const shareTitle = posts[0]?.title || 'Check out this bytebeat';
 

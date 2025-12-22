@@ -147,6 +147,11 @@
   background: var(--post-expression-overlay-color);
 }
 
+.post-expression-overlay:hover .post-expression-play-button {
+  opacity: 1;
+  scale: 1.1;
+}
+
 .post-expression-play-button {
   border-radius: 999px;
   width: 35px;
@@ -162,6 +167,8 @@
   font-size: 16px;
   padding-left: 12px;
   padding-top: 2px;
+  cursor: pointer;
+  opacity: 0.8;
 }
 
 .post-description-detail {

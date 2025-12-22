@@ -21,7 +21,6 @@ export default function PostDetailPage({ postMeta, baseUrl }: PostDetailPageProp
   const { id } = router.query;
   const postId = typeof id === 'string' ? id : null;
 
-
   const pageTitle = postMeta?.title
     ? `${postMeta.title} by @${postMeta.author_username || 'unknown'} - BytebeatCloud`
     : 'BytebeatCloud - Post detail';

@@ -89,7 +89,7 @@ export default function ExplorePage() {
   useEffect(() => {
     const wasOpen = prevDetailOpenRef.current;
     prevDetailOpenRef.current = isDetailOpen;
-    
+
     // Only restore when transitioning from open to closed
     if (wasOpen && !isDetailOpen) {
       // Use multiple animation frames to ensure DOM is fully updated
@@ -250,7 +250,7 @@ export default function ExplorePage() {
 
         const newPosts = page === 0 ? rows : [...posts, ...rows];
         const newHasMore = rows.length >= pageSize;
-        
+
         setPosts(newPosts);
         setHasMore(newHasMore);
         initialLoadDoneRef.current = true;
@@ -378,9 +378,7 @@ export default function ExplorePage() {
           <p className="text-centered">You reached the end!</p>
         )}
       </section>
-      {isDetailOpen && (
-        <PostDetailView postId={selectedPostId!} onBack={handleCloseDetail} />
-      )}
+      {isDetailOpen && <PostDetailView postId={selectedPostId!} onBack={handleCloseDetail} />}
     </>
   );
 }

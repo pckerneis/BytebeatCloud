@@ -79,18 +79,24 @@ export function useFeedCache({ tab, userId }: UseFeedCacheParams): UseFeedCacheR
   }, [cacheKey]);
 
   const restoreScrollPosition = useCallback(() => {
-    console.log('[FeedCache] restoreScrollPosition called', { cacheKey, hasRestoredScroll: hasRestoredScroll.current });
+    console.log('[FeedCache] restoreScrollPosition called', {
+      cacheKey,
+      hasRestoredScroll: hasRestoredScroll.current,
+    });
     if (hasRestoredScroll.current) return;
     const entry = feedCache.get(cacheKey);
-    console.log('[FeedCache] restoreScrollPosition', { hasEntry: !!entry, scrollY: entry?.scrollY });
+    console.log('[FeedCache] restoreScrollPosition', {
+      hasEntry: !!entry,
+      scrollY: entry?.scrollY,
+    });
     if (entry && entry.scrollY > 0) {
       hasRestoredScroll.current = true;
       const targetY = entry.scrollY;
-      
+
       // Wait for DOM to render with multiple attempts
       let attempts = 0;
       const maxAttempts = 10;
-      
+
       const tryScroll = () => {
         attempts++;
         // Scroll is on the main element, not window
@@ -111,7 +117,7 @@ export function useFeedCache({ tab, userId }: UseFeedCacheParams): UseFeedCacheR
           requestAnimationFrame(tryScroll);
         }
       };
-      
+
       requestAnimationFrame(tryScroll);
     }
   }, [cacheKey]);
