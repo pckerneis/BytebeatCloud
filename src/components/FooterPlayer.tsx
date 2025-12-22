@@ -8,18 +8,26 @@ import { getPreviewSource, subscribePreviewSource } from '../hooks/previewSource
 import { PostRow } from './PostList';
 import { formatPostTitle } from '../utils/post-format';
 import { favoritePost, unfavoritePost } from '../services/favoritesClient';
+import { AUTOPLAY_DEFAULT_DURATION } from '../constants';
 
 export default function FooterPlayer() {
   const { user } = useSupabaseAuth();
   const router = useRouter();
-  const { isPlaying, toggle, stop, waveform, masterGain, setMasterGain } = useBytebeatPlayer();
+  const { isPlaying, toggle, stop, waveform, masterGain, setMasterGain, fadeGain, setFadeGain } =
+    useBytebeatPlayer();
   const {
     currentPost,
+    playlist,
     next,
     prev,
     updateFavoriteStateForPost,
     startPlayTracking,
     stopPlayTracking,
+    // Loop & shuffle controls
+    loopEnabled,
+    shuffleEnabled,
+    setLoop,
+    setShuffle,
   } = usePlayerStore();
   const theme = useContext(ThemeContext);
   const [footerFavoritePending, setFooterFavoritePending] = useState(false);
@@ -28,6 +36,10 @@ export default function FooterPlayer() {
   const visualizerAnimationRef = useRef<number | null>(null);
   const [isTitleOverflowing, setIsTitleOverflowing] = useState(false);
   const [preview, setPreview] = useState(getPreviewSource());
+  const autoTimerRef = useRef<number | null>(null);
+  const fadeTimerRef = useRef<number | null>(null);
+  const fadeStartGainRef = useRef<number>(1);
+  const switchTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
     const unsubscribe = subscribePreviewSource(setPreview);
@@ -93,12 +105,12 @@ export default function FooterPlayer() {
       if (typeof window !== 'undefined') {
         const style = window.getComputedStyle(canvas);
         const fromVar = style.getPropertyValue('--accent-color');
-        if (fromVar && fromVar.trim()) {
+        if (fromVar?.trim()) {
           accentColor = fromVar.trim();
         }
 
         const fromVar2 = style.getPropertyValue('--card-bg-color');
-        if (fromVar2 && fromVar2.trim()) {
+        if (fromVar2?.trim()) {
           backgroundColor = fromVar2.trim();
         }
       }
@@ -158,9 +170,31 @@ export default function FooterPlayer() {
     };
   }, [isPlaying, currentPost?.id, waveform, theme]);
 
+  // Cleanup helper
+  const clearTimers = () => {
+    if (autoTimerRef.current != null) {
+      window.clearTimeout(autoTimerRef.current);
+      autoTimerRef.current = null;
+    }
+    if (fadeTimerRef.current != null) {
+      window.clearInterval(fadeTimerRef.current);
+      fadeTimerRef.current = null;
+    }
+    if (switchTimerRef.current != null) {
+      window.clearTimeout(switchTimerRef.current);
+      switchTimerRef.current = null;
+    }
+  };
+
+  const cancelAutoTransition = () => {
+    clearTimers();
+    setFadeGain(1);
+  };
+
   const playPost = async (post: PostRow | null) => {
     if (!post) return;
 
+    cancelAutoTransition();
     stopPlayTracking();
     await stop();
 
@@ -169,14 +203,70 @@ export default function FooterPlayer() {
     startPlayTracking(post.id);
   };
 
+  // Auto-next timer with 3s fade-out before the switch
+  useEffect(() => {
+    // Only schedule when playing, auto enabled, have at least 2 tracks, and a current post
+    if (isPlaying && loopEnabled && currentPost && (playlist?.length ?? 0) >= 2) {
+      const FADE_BEFORE_MS = 3000;
+      const TOTAL_DELAY_MS = AUTOPLAY_DEFAULT_DURATION * 1000;
+      const fadeStartDelay = Math.max(0, TOTAL_DELAY_MS - FADE_BEFORE_MS);
+
+      // Schedule fade start
+      autoTimerRef.current = window.setTimeout(() => {
+        // Begin fade-out over 3 seconds
+        const durationMs = FADE_BEFORE_MS;
+        const stepMs = 100;
+        const steps = Math.ceil(durationMs / stepMs);
+        let i = 0;
+        fadeStartGainRef.current = fadeGain;
+
+        if (fadeTimerRef.current != null) {
+          window.clearInterval(fadeTimerRef.current);
+        }
+        fadeTimerRef.current = window.setInterval(() => {
+          i += 1;
+          const t = Math.min(1, i / steps);
+          const newGain = fadeStartGainRef.current * (1 - t);
+          setFadeGain(newGain);
+          if (t >= 1) {
+            if (fadeTimerRef.current != null) {
+              window.clearInterval(fadeTimerRef.current);
+              fadeTimerRef.current = null;
+            }
+          }
+        }, stepMs);
+
+        // Schedule actual next track at 3s after fade start
+        switchTimerRef.current = window.setTimeout(async () => {
+          // If still playing and auto still enabled, advance
+          if (isPlaying && loopEnabled) {
+            await playPost(next());
+            // Restore volume immediately after switching
+            setFadeGain(fadeStartGainRef.current);
+          } else {
+            // Restore volume if auto canceled
+            setFadeGain(fadeStartGainRef.current);
+          }
+        }, FADE_BEFORE_MS);
+      }, fadeStartDelay);
+    }
+
+    return () => {
+      clearTimers();
+    };
+    // Recreate timers when these change
+  }, [currentPost?.id, isPlaying, loopEnabled, playlist?.length]);
+
   const handleFooterPlayPause = async () => {
     if (isPlaying) {
+      cancelAutoTransition();
       stopPlayTracking();
       await stop();
       return;
     }
 
     if (currentPost) {
+      cancelAutoTransition();
       await playPost(currentPost);
       return;
     }
@@ -187,11 +277,25 @@ export default function FooterPlayer() {
   };
 
   const handleFooterPrev = async () => {
+    cancelAutoTransition();
     await playPost(prev());
   };
 
   const handleFooterNext = async () => {
+    cancelAutoTransition();
     await playPost(next());
+  };
+
+  const handleToggleAuto = () => {
+    // Auto maps to looping behavior for continuous play
+    cancelAutoTransition();
+    setLoop(!loopEnabled);
+  };
+
+  const handleToggleShuffle = () => {
+    // Enable/disable shuffle bag behavior in the store
+    cancelAutoTransition();
+    setShuffle(!shuffleEnabled);
   };
 
   const handleFooterFavoriteClick = async () => {
@@ -274,6 +378,26 @@ export default function FooterPlayer() {
           »
         </button>
       </div>
+
+      <div className="flex-column gap-2">
+        <button
+          type="button"
+          className={`player-toggle ${loopEnabled ? 'active' : ''}`}
+          onClick={handleToggleAuto}
+          disabled={(playlist?.length ?? 0) < 2}
+        >
+          auto
+        </button>
+        <button
+          type="button"
+          className={`player-toggle ${shuffleEnabled ? 'active' : ''}`}
+          onClick={handleToggleShuffle}
+          disabled={(playlist?.length ?? 0) < 2}
+        >
+          shuffle
+        </button>
+      </div>
+
       <div className="visualizer">
         <canvas ref={visualizerRef} width={150} height={26}></canvas>
       </div>

@@ -5,3 +5,4 @@ export const POST_DESCRIPTION_MAX = 256;
 export const COMMENT_MAX = 256;
 export const POST_TITLE_MAX = 64;
 export const PLAYLIST_TITLE_MAX = 64;
+export const AUTOPLAY_DEFAULT_DURATION = 60;
