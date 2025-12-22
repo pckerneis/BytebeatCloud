@@ -144,12 +144,13 @@
     cursor: pointer;
 }
 
-.player-toggle.active {
+.player-toggle.active:not([disabled]) {
     opacity: 1;
 }
 
-.player-toggle.disabled {
+.player-toggle[disabled] {
     opacity: 0.2;
+    cursor: default;
 }
 
 .player-toggle:before {
