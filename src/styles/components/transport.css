@@ -1,7 +1,6 @@
 /* Transport/player controls */
 
 .visualizer {
-  background: var(--card-bg-color);
   height: 100%;
   display: flex;
   align-items: center;
@@ -43,6 +42,7 @@
   width: 120px;
   cursor: pointer;
   user-select: none;
+  margin-left: 10px;
 }
 
 .played-post-author {
