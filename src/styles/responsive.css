@@ -131,6 +131,16 @@
     right: auto;
   }
 
+  .post-detail-actions {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .post-detail-actions .button {
+    margin: 0;
+    width: 100%;
+  }
+
   .post-list {
     gap: 18px;
     margin: 10px 0 0 0;
