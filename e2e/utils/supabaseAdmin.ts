@@ -128,6 +128,8 @@ export async function ensureTestUserProfile(email: string, username: string) {
   if (error) {
     throw new Error(`[e2e] Failed to create profile: ${error.message}`);
   }
+
+  return { userId: user.id, username };
 }
 
 /**

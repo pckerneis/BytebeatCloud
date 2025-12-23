@@ -11,6 +11,8 @@ interface BytebeatPlayer {
   updateExpression: (expression: string, mode: ModeOption, sampleRate: number) => Promise<void>;
   masterGain: number;
   setMasterGain: (value: number) => void;
+  fadeGain: number;
+  setFadeGain: (value: number) => void;
 }
 
 // Module-level singletons so the audio engine is shared across the whole app.
@@ -18,6 +20,7 @@ let audioContext: AudioContext | null = null;
 let workletNode: AudioWorkletNode | null = null;
 let workletConnected = false;
 let globalGainNode: GainNode | null = null;
+let fadeGainNode: GainNode | null = null;
 let analyserNode: AnalyserNode | null = null;
 let analyserData: Float32Array | null = null;
 let analyserTimerId: number | null = null;
@@ -66,6 +69,18 @@ function setGlobalMasterGain(value: number) {
   masterGainListeners.forEach((listener) => listener(clamped));
 }
 
+let globalFadeGain = 1;
+const fadeGainListeners = new Set<(value: number) => void>();
+
+function setGlobalFadeGain(value: number) {
+  const clamped = Number.isFinite(value) ? Math.max(0, Math.min(1, value)) : 1;
+  globalFadeGain = clamped;
+  if (fadeGainNode) {
+    fadeGainNode.gain.value = clamped;
+  }
+  fadeGainListeners.forEach((listener) => listener(clamped));
+}
+
 let globalWaveform: Float32Array | null = null;
 const waveformListeners = new Set<(value: Float32Array | null) => void>();
 
@@ -97,6 +112,12 @@ async function ensureContextAndNodeBase() {
     const gain = audioContext.createGain();
     gain.gain.value = globalMasterGain;
     globalGainNode = gain;
+  }
+
+  if (!fadeGainNode && audioContext) {
+    const fg = audioContext.createGain();
+    fg.gain.value = globalFadeGain;
+    fadeGainNode = fg;
   }
 
   if (!analyserNode && audioContext && workletNode) {
@@ -149,6 +170,7 @@ export function useBytebeatPlayer(options?: { enableVisualizer?: boolean }): Byt
   const [level, setLevel] = useState(globalLevel);
   const [waveform, setWaveform] = useState<Float32Array | null>(globalWaveform);
   const [masterGain, setMasterGainState] = useState(globalMasterGain);
+  const [fadeGain, setFadeGainState] = useState(globalFadeGain);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -196,6 +218,16 @@ export function useBytebeatPlayer(options?: { enableVisualizer?: boolean }): Byt
     masterGainListeners.add(listener);
     return () => {
       masterGainListeners.delete(listener);
+    };
+  }, []);
+
+  useEffect(() => {
+    const listener = (value: number) => {
+      setFadeGainState(value);
+    };
+    fadeGainListeners.add(listener);
+    return () => {
+      fadeGainListeners.delete(listener);
     };
   }, []);
 
@@ -252,7 +284,20 @@ export function useBytebeatPlayer(options?: { enableVisualizer?: boolean }): Byt
           if (!workletConnected) {
             if (globalGainNode) {
               node.connect(globalGainNode);
-              globalGainNode.connect(ctx.destination);
+              // Ensure fade node exists and wire: master -> fade -> destination
+              if (!fadeGainNode) {
+                const fg = ctx.createGain();
+                fg.gain.value = globalFadeGain;
+                fadeGainNode = fg;
+              }
+              try {
+                globalGainNode.disconnect();
+              } catch {}
+              try {
+                fadeGainNode!.disconnect();
+              } catch {}
+              globalGainNode.connect(fadeGainNode!);
+              fadeGainNode!.connect(ctx.destination);
             } else {
               node.connect(ctx.destination);
             }
@@ -375,6 +420,13 @@ export function useBytebeatPlayer(options?: { enableVisualizer?: boolean }): Byt
               // Ignore disconnect errors.
             }
           }
+          if (fadeGainNode) {
+            try {
+              fadeGainNode.disconnect();
+            } catch {
+              // Ignore disconnect errors.
+            }
+          }
         } catch {
           // Ignore disconnect errors.
         }
@@ -399,7 +451,11 @@ export function useBytebeatPlayer(options?: { enableVisualizer?: boolean }): Byt
       setMasterGain: (value: number) => {
         setGlobalMasterGain(value);
       },
+      fadeGain,
+      setFadeGain: (value: number) => {
+        setGlobalFadeGain(value);
+      },
     }),
-    [isPlaying, lastError, toggle, stop, level, waveform, updateExpression, masterGain],
+    [isPlaying, lastError, toggle, stop, level, waveform, updateExpression, masterGain, fadeGain],
   );
 }

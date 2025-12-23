@@ -43,20 +43,28 @@ export default function CreatePage() {
   const [saveError, setSaveError] = useState('');
   const [liveUpdateEnabled, setLiveUpdateEnabled] = useState(true);
   const { weekNumber: currentWeekNumber, theme: currentTheme } = useCurrentWeeklyChallenge();
+  const [hasWeeklySubmission, setHasWeeklySubmission] = useState(false);
 
-  const { validationIssue, handleExpressionChange, handlePlayClick, setValidationIssue } =
-    useExpressionPlayer({
-      expression,
-      setExpression,
-      mode,
-      sampleRateValue: sampleRate,
-      toggle,
-      setCurrentPostById,
-      loopPreview: true,
-      isPlaying,
-      liveUpdateEnabled,
-      updateExpression,
-    });
+  const {
+    validationIssue,
+    handleExpressionChange,
+    handlePlayClick: handlePlayClickBase,
+    setValidationIssue,
+  } = useExpressionPlayer({
+    expression,
+    setExpression,
+    mode,
+    sampleRateValue: sampleRate,
+    toggle,
+    setCurrentPostById,
+    loopPreview: true,
+    isPlaying,
+    liveUpdateEnabled,
+    updateExpression,
+    currentPost,
+  });
+
+  const handlePlayClick = () => handlePlayClickBase(currentPost);
 
   useEffect(() => {
     return () => {
@@ -69,8 +77,36 @@ export default function CreatePage() {
 
   useCtrlSpacePlayShortcut(handlePlayClick);
 
+  // Check if user already has a submission for current week
   useEffect(() => {
-    if (!liveUpdateEnabled || !isPlaying) return;
+    const checkWeeklySubmission = async () => {
+      if (!user || currentWeekNumber === null) {
+        setHasWeeklySubmission(false);
+        return;
+      }
+
+      const weekTag = `#week${currentWeekNumber}`;
+      const { data, error } = await supabase
+        .from('posts')
+        .select('id')
+        .eq('profile_id', (user as any).id)
+        .eq('is_draft', false)
+        .or(`title.ilike.%${weekTag}%,description.ilike.%${weekTag}%`)
+        .limit(1);
+
+      if (!error && data && data.length > 0) {
+        setHasWeeklySubmission(true);
+      } else {
+        setHasWeeklySubmission(false);
+      }
+    };
+
+    void checkWeeklySubmission();
+  }, [user, currentWeekNumber]);
+
+  useEffect(() => {
+    // Only apply live updates when no post is playing (editor's expression is playing)
+    if (!liveUpdateEnabled || !isPlaying || currentPost) return;
 
     const trimmed = expression.trim();
     if (!trimmed) return;
@@ -79,7 +115,7 @@ export default function CreatePage() {
     if (!result.valid) return;
 
     void updateExpression(trimmed, mode, sampleRate);
-  }, [mode, sampleRate, liveUpdateEnabled, isPlaying, expression, updateExpression]);
+  }, [mode, sampleRate, liveUpdateEnabled, isPlaying, expression, updateExpression, currentPost]);
 
   // On first load, prefill from URL (if present) or from localStorage draft.
   useEffect(() => {
@@ -339,7 +375,7 @@ export default function CreatePage() {
           </div>
         )}
 
-        {user && !isWeeklyParticipation && currentTheme && (
+        {user && !isWeeklyParticipation && currentTheme && !hasWeeklySubmission && (
           <div className="info-panel">
             <span>This week&#39;s theme is &#34;{currentTheme}&#34;.</span>
             <div>
@@ -348,7 +384,7 @@ export default function CreatePage() {
               </span>{' '}
               to the post description to participate the{' '}
               <Link href="/about-weekly" target="_blank">
-                challenge
+                weekly challenge
               </Link>
               .
             </div>

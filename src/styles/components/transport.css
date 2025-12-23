@@ -1,7 +1,6 @@
 /* Transport/player controls */
 
 .visualizer {
-  background: var(--card-bg-color);
   height: 100%;
   display: flex;
   align-items: center;
@@ -43,6 +42,7 @@
   width: 120px;
   cursor: pointer;
   user-select: none;
+  margin-left: 10px;
 }
 
 .played-post-author {
@@ -129,4 +129,42 @@
   100% {
     transform: translateX(var(--marquee-offset, 0px));
   }
+}
+
+.player-toggle {
+  width: 100%;
+  font-size: 8px;
+  text-transform: uppercase;
+  display: flex;
+  padding: 2px 6px 2px 14px;
+  border: 1px solid var(--chip-border-color);
+  background: var(--chip-background-color);
+  position: relative;
+  opacity: 0.5;
+  cursor: pointer;
+}
+
+.player-toggle.active:not([disabled]) {
+  opacity: 1;
+}
+
+.player-toggle[disabled] {
+  opacity: 0.2;
+  cursor: default;
+}
+
+.player-toggle:before {
+  content: '';
+  width: 5px;
+  height: 5px;
+  display: block;
+  position: absolute;
+  left: 4px;
+  top: 4px;
+  background: var(--secondary-text-color);
+}
+
+.player-toggle.active:before {
+  background: var(--accent-color);
+  opacity: 1;
 }

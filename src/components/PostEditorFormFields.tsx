@@ -12,7 +12,7 @@ import {
 import { ValidationIssue } from '../utils/expression-validator';
 import type { PostMetadataModel } from '../model/postEditor';
 import { LICENSE_OPTIONS } from '../model/postEditor';
-import { EXPRESSION_MAX, POST_DESCRIPTION_MAX } from '../constants';
+import { EXPRESSION_MAX, POST_DESCRIPTION_MAX, POST_TITLE_MAX } from '../constants';
 import Link from 'next/link';
 
 interface PostEditorFormFieldsProps {
@@ -59,7 +59,7 @@ function findNextPresetSampleRate(sampleRate: number): number {
   return MAX_SAMPLE_RATE;
 }
 
-export function PostEditorFormFields(props: PostEditorFormFieldsProps) {
+export function PostEditorFormFields(props: Readonly<PostEditorFormFieldsProps>) {
   const {
     meta,
     onMetaChange,
@@ -186,7 +186,7 @@ export function PostEditorFormFields(props: PostEditorFormFieldsProps) {
     <>
       <label className="field">
         <AutocompleteInput
-          maxLength={64}
+          maxLength={POST_TITLE_MAX}
           value={title}
           onChange={(val) => onMetaChange({ ...meta, title: val })}
           onKeyDown={(e) => {
@@ -241,7 +241,7 @@ export function PostEditorFormFields(props: PostEditorFormFieldsProps) {
             type="checkbox"
             checked={liveUpdateEnabled}
             onChange={(e) => onLiveUpdateChange(e.target.checked)}
-          />
+          />{' '}
           Live update
         </label>
         <span className={isExpressionTooLong ? 'counter error' : 'counter'}>

@@ -1,5 +1,5 @@
 import { useRouter } from 'next/router';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ExportWavModal } from './ExportWavModal';
 import { ModeOption } from '../model/expression';
 import { LICENSE_OPTIONS } from '../model/postEditor';
@@ -23,6 +23,7 @@ import { COMMENT_MAX } from '../constants';
 import { AutocompleteTextarea } from './AutocompleteTextarea';
 import { convertMentionsToIds } from '../utils/mentions';
 import { formatRelativeTime } from '../utils/time';
+import { PlaylistCard } from './PlaylistCard';
 
 interface Comment {
   id: string;
@@ -32,13 +33,23 @@ interface Comment {
   author_username: string | null;
 }
 
+interface Playlist {
+  id: string;
+  name: string;
+  description: string;
+  created_at: string;
+  author_id: string;
+  author_username: string | null;
+  postsCount?: number;
+}
+
 interface PostDetailViewProps {
   postId: string;
   baseUrl?: string;
   onBack?: () => void;
 }
 
-export function PostDetailView({ postId, baseUrl, onBack }: PostDetailViewProps) {
+export function PostDetailView({ postId, baseUrl, onBack }: Readonly<PostDetailViewProps>) {
   const router = useRouter();
 
   const [posts, setPosts] = useState<PostRow[]>([]);
@@ -54,7 +65,8 @@ export function PostDetailView({ postId, baseUrl, onBack }: PostDetailViewProps)
   const [hasReported, setHasReported] = useState(false);
   const [reportPending, setReportPending] = useState(false);
   const [reportError, setReportError] = useState('');
-  const [activeTab, setActiveTab] = useState<'comments' | 'lineage'>('comments');
+  const [activeTab, setActiveTab] = useState<'comments' | 'playlists' | 'lineage'>('comments');
+
   const [comments, setComments] = useState<Comment[]>([]);
   const [commentsLoading, setCommentsLoading] = useState(false);
   const [newComment, setNewComment] = useState('');
@@ -74,10 +86,24 @@ export function PostDetailView({ postId, baseUrl, onBack }: PostDetailViewProps)
   const [deleteAlsoReport, setDeleteAlsoReport] = useState(false);
   const [deleteReportCategory, setDeleteReportCategory] = useState('');
   const [deletePending, setDeletePending] = useState(false);
+
+  const [playlists, setPlaylists] = useState<Playlist[]>([]);
+  const [playlistsLoading, setPlaylistsLoading] = useState(false);
+  const [addToPlaylistOpen, setAddToPlaylistOpen] = useState(false);
+  const [addToPlaylistPending, setAddToPlaylistPending] = useState(false);
+  const [addToPlaylistError, setAddToPlaylistError] = useState<string>('');
+
+  // Playlists that include this post (for the tab display)
+  const [postPlaylists, setPostPlaylists] = useState<Playlist[]>([]);
+  const [postPlaylistsLoading, setPostPlaylistsLoading] = useState(false);
+
   const { weekNumber: currentWeekNumber, theme: currentWeekTheme } = useCurrentWeeklyChallenge();
 
   const { user } = useSupabaseAuth();
   const { username: currentUsername } = useCurrentUserProfile();
+
+  const currentUserId = useMemo(() => (user ? (user as any).id : null), [user]);
+  const postPlaylistIdSet = useMemo(() => new Set(postPlaylists.map((p) => p.id)), [postPlaylists]);
 
   const handleReportPost = () => {
     if (!user) {
@@ -89,6 +115,102 @@ export function PostDetailView({ postId, baseUrl, onBack }: PostDetailViewProps)
     setReportDetails('');
     setReportError('');
     setReportOpen(true);
+  };
+
+  const openAddToPlaylist = async () => {
+    if (!user) {
+      void router.push('/login');
+      return;
+    }
+    setAddToPlaylistError('');
+    setAddToPlaylistOpen(true);
+    setPlaylists([]);
+    setPlaylistsLoading(true);
+    const { data, error } = await supabase
+      .from('playlists')
+      .select('id, title, description, created_at, owner_id:owner_id')
+      .eq('owner_id', (user as any).id)
+      .order('updated_at', { ascending: false });
+    if (error) {
+      console.warn('Error loading playlists', error.message);
+      setPlaylists([]);
+    } else {
+      const rows = (data ?? []).map((p: any) => ({
+        id: p.id as string,
+        name: p.title as string,
+        description: (p.description as string) ?? '',
+        created_at: p.created_at as string,
+        author_id: p.owner_id as string,
+        author_username: currentUsername ?? null,
+      }));
+      setPlaylists(rows);
+    }
+    setPlaylistsLoading(false);
+  };
+
+  const handleAppendToPlaylist = async (playlistId: string) => {
+    if (!user || posts.length === 0) return;
+    setAddToPlaylistPending(true);
+    setAddToPlaylistError('');
+    try {
+      const { data: posRow, error: posErr } = await supabase
+        .from('playlist_entries')
+        .select('position')
+        .eq('playlist_id', playlistId)
+        .order('position', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (posErr) throw posErr;
+      const nextPos = (posRow?.position ?? 0) + 1;
+
+      const { error: insertErr } = await supabase.from('playlist_entries').insert({
+        playlist_id: playlistId,
+        post_id: posts[0].id,
+        position: nextPos,
+      });
+      if (insertErr) throw insertErr;
+      setAddToPlaylistOpen(false);
+      // Refresh playlists containing this post so the tab count updates
+      try {
+        setPostPlaylistsLoading(true);
+        const { data: entries, error: entErr } = await supabase
+          .from('playlist_entries')
+          .select('playlist_id')
+          .eq('post_id', posts[0].id);
+        if (entErr) throw entErr;
+        const ids = Array.from(new Set((entries ?? []).map((e: any) => e.playlist_id)));
+        if (ids.length === 0) {
+          setPostPlaylists([]);
+        } else {
+          const { data: pls } = await supabase
+            .from('playlists')
+            .select(
+              'id, title, description, created_at, owner:profiles!playlists_owner_id_fkey(username), entries:playlist_entries(count)',
+            )
+            .in('id', ids)
+            .order('updated_at', { ascending: false });
+          const rows: Playlist[] = (pls ?? []).map((p: any) => ({
+            id: p.id as string,
+            name: p.title as string,
+            description: (p.description as string) ?? '',
+            created_at: p.created_at as string,
+            author_id: '',
+            author_username: (p.owner?.username as string) ?? null,
+            postsCount: (p.entries?.[0]?.count as number) ?? 0,
+          }));
+          setPostPlaylists(rows);
+        }
+      } catch (_refreshErr) {
+        // Best-effort; ignore
+      } finally {
+        setPostPlaylistsLoading(false);
+      }
+    } catch (e: any) {
+      console.warn('Failed to append to playlist', e?.message || e);
+      setAddToPlaylistError('Failed to add to playlist. Please try again.');
+    } finally {
+      setAddToPlaylistPending(false);
+    }
   };
 
   const closeReport = () => setReportOpen(false);
@@ -125,7 +247,8 @@ export function PostDetailView({ postId, baseUrl, onBack }: PostDetailViewProps)
   };
 
   const handleShare = async () => {
-    const effectiveBaseUrl = baseUrl || (typeof window !== 'undefined' ? window.location.origin : '');
+    const effectiveBaseUrl =
+      baseUrl || (typeof window !== 'undefined' ? window.location.origin : '');
     const shareUrl = `${effectiveBaseUrl}/post/${postId}`;
     const shareTitle = posts[0]?.title || 'Check out this bytebeat';
 
@@ -364,6 +487,73 @@ export function PostDetailView({ postId, baseUrl, onBack }: PostDetailViewProps)
     };
   }, [postId, posts.length, activeTab, user]);
 
+  // Load playlists containing this post (used for Playlists tab and tab count)
+  useEffect(() => {
+    if (!postId || posts.length === 0) return;
+
+    let cancelled = false;
+
+    const loadPlaylistsForPost = async () => {
+      setPostPlaylistsLoading(true);
+      setPostPlaylists([]);
+
+      const { data: entries, error: entErr } = await supabase
+        .from('playlist_entries')
+        .select('playlist_id')
+        .eq('post_id', postId);
+
+      if (cancelled) return;
+
+      if (entErr) {
+        console.warn('Error loading playlist entries', entErr.message);
+        setPostPlaylists([]);
+        setPostPlaylistsLoading(false);
+        return;
+      }
+
+      const ids = Array.from(new Set((entries ?? []).map((e: any) => e.playlist_id)));
+      if (ids.length === 0) {
+        setPostPlaylists([]);
+        setPostPlaylistsLoading(false);
+        return;
+      }
+
+      const { data: pls, error: plErr } = await supabase
+        .from('playlists')
+        .select(
+          'id, title, description, created_at, owner:profiles!playlists_owner_id_fkey(username), entries:playlist_entries(count)',
+        )
+        .in('id', ids)
+        .order('updated_at', { ascending: false });
+
+      if (cancelled) return;
+
+      if (plErr) {
+        console.warn('Error loading playlists for post', plErr.message);
+        setPostPlaylists([]);
+      } else {
+        const rows: Playlist[] = (pls ?? []).map((p: any) => ({
+          id: p.id as string,
+          name: p.title as string,
+          description: (p.description as string) ?? '',
+          created_at: p.created_at as string,
+          author_id: '',
+          author_username: (p.owner?.username as string) ?? null,
+          postsCount: (p.entries?.[0]?.count as number) ?? 0,
+        }));
+        setPostPlaylists(rows);
+      }
+
+      setPostPlaylistsLoading(false);
+    };
+
+    void loadPlaylistsForPost();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [postId, posts.length]);
+
   const handleSubmitComment = async () => {
     if (!user || !newComment.trim() || posts.length === 0) return;
     setCommentPending(true);
@@ -534,7 +724,7 @@ export function PostDetailView({ postId, baseUrl, onBack }: PostDetailViewProps)
             />
 
             {posts[0]?.description && (
-              <p className="post-description-detail">
+              <p className="post-description-detail white-space-pre-wrap">
                 {renderDescriptionWithTagsAndMentions(
                   posts[0].description,
                   mentionUserMap,
@@ -594,6 +784,15 @@ export function PostDetailView({ postId, baseUrl, onBack }: PostDetailViewProps)
               <button type="button" className="button secondary small ml-10" onClick={handleShare}>
                 {shareButtonText}
               </button>
+              {user && (
+                <button
+                  type="button"
+                  className="button secondary small ml-10"
+                  onClick={() => void openAddToPlaylist()}
+                >
+                  Add to playlist
+                </button>
+              )}
               {user && posts[0]?.profile_id !== (user as any).id && (
                 <button
                   type="button"
@@ -616,12 +815,18 @@ export function PostDetailView({ postId, baseUrl, onBack }: PostDetailViewProps)
               />
             )}
 
-            <div className="tab-header mt-30">
+            <div className="tab-header mt-30 mb-30">
               <span
                 className={`tab-button ${activeTab === 'comments' ? 'active' : ''}`}
                 onClick={() => setActiveTab('comments')}
               >
                 Comments ({comments.length})
+              </span>
+              <span
+                className={`tab-button ${activeTab === 'playlists' ? 'active' : ''}`}
+                onClick={() => setActiveTab('playlists')}
+              >
+                Playlists ({postPlaylists.length})
               </span>
               <span
                 className={`tab-button ${activeTab === 'lineage' ? 'active' : ''}`}
@@ -645,7 +850,7 @@ export function PostDetailView({ postId, baseUrl, onBack }: PostDetailViewProps)
                       <li key={c.id} className="comment-item">
                         <div className="comment-header">
                           <Link href={`/u/${c.author_username}`} className="comment-author">
-                            @{c.author_username || 'unknown'}
+                            @{formatAuthorUsername(c.author_username)}
                           </Link>
                           <span className="comment-date">{formatRelativeTime(c.created_at)}</span>
                           {user &&
@@ -672,7 +877,7 @@ export function PostDetailView({ postId, baseUrl, onBack }: PostDetailViewProps)
                               </button>
                             )}
                         </div>
-                        <p className="comment-content">
+                        <p className="comment-content white-space-pre-wrap">
                           {renderDescriptionWithTagsAndMentions(
                             c.content,
                             commentMentionUserMap,
@@ -716,6 +921,30 @@ export function PostDetailView({ postId, baseUrl, onBack }: PostDetailViewProps)
                   <p className="secondary-text">
                     <Link href="/login">Log in</Link> to leave a comment.
                   </p>
+                )}
+              </div>
+            )}
+
+            {activeTab === 'playlists' && (
+              <div id="playlists" className="playlists-section">
+                {postPlaylistsLoading && <p className="text-centered">Loading playlists…</p>}
+                {!postPlaylistsLoading && postPlaylists.length === 0 && (
+                  <p className="secondary-text text-centered">
+                    No playlists yet. Add this track to a playlist.
+                  </p>
+                )}
+                {!postPlaylistsLoading && postPlaylists.length > 0 && (
+                  <ul>
+                    {postPlaylists.map((pl) => (
+                      <PlaylistCard
+                        key={pl.id}
+                        id={pl.id}
+                        name={pl.name}
+                        description={pl.description}
+                        postsCount={pl.postsCount}
+                      />
+                    ))}
+                  </ul>
                 )}
               </div>
             )}
@@ -788,6 +1017,98 @@ export function PostDetailView({ postId, baseUrl, onBack }: PostDetailViewProps)
                 disabled={deletePending || (deleteAlsoReport && !deleteReportCategory)}
               >
                 {deletePending ? 'Deleting…' : 'Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {addToPlaylistOpen && (
+        <div
+          className="modal-backdrop"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.4)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+          }}
+        >
+          <div className="modal" style={{ maxWidth: 520 }}>
+            <h2 style={{ marginTop: 0, marginBottom: '8px', fontSize: '16px' }}>Add to playlist</h2>
+            <p className="secondary-text" style={{ marginTop: 0, marginBottom: '12px' }}>
+              Choose one of your playlists or create a new one.
+            </p>
+            {playlistsLoading ? (
+              <p className="text-centered">Loading…</p>
+            ) : playlists.length > 0 ? (
+              <ul
+                style={{
+                  listStyle: 'none',
+                  padding: 0,
+                  margin: 0,
+                  maxHeight: 240,
+                  overflowY: 'auto',
+                }}
+              >
+                {playlists.map((pl) => {
+                  const alreadyHas = postPlaylistIdSet.has(pl.id);
+                  return (
+                    <li
+                      key={pl.id}
+                      style={{ display: 'flex', alignItems: 'center', padding: '8px 0' }}
+                    >
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontWeight: 600 }}>{pl.name}</div>
+                        {pl.description && (
+                          <div className="secondary-text" style={{ fontSize: 12, marginTop: 2 }}>
+                            {pl.description}
+                          </div>
+                        )}
+                      </div>
+                      <button
+                        type="button"
+                        className="button small"
+                        onClick={() => {
+                          if (!alreadyHas) void handleAppendToPlaylist(pl.id);
+                        }}
+                        disabled={addToPlaylistPending || alreadyHas}
+                        aria-disabled={addToPlaylistPending || alreadyHas}
+                        title={alreadyHas ? 'This post is already in this playlist' : undefined}
+                      >
+                        {alreadyHas ? 'Added' : addToPlaylistPending ? 'Adding…' : 'Add'}
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            ) : (
+              <p className="secondary-text">You have no playlists yet.</p>
+            )}
+            {addToPlaylistError && (
+              <p className="error-message" style={{ marginTop: '8px' }}>
+                {addToPlaylistError}
+              </p>
+            )}
+            <div
+              style={{ display: 'flex', justifyContent: 'space-between', gap: 8, marginTop: 12 }}
+            >
+              <button
+                type="button"
+                className="button secondary"
+                onClick={() => setAddToPlaylistOpen(false)}
+                disabled={addToPlaylistPending}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="button"
+                onClick={() => router.push(`/playlists/new?sourcePostId=${posts[0]?.id}`)}
+                disabled={addToPlaylistPending}
+              >
+                Create new playlist
               </button>
             </div>
           </div>

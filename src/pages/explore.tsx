@@ -11,9 +11,12 @@ import Link from 'next/link';
 import { validateExpression } from '../utils/expression-validator';
 import { useTabState } from '../hooks/useTabState';
 import { PostDetailView } from '../components/PostDetailView';
+import { PlaylistCard } from '../components/PlaylistCard';
 
 const tabs = ['feed', 'recent', 'weekly'] as const;
 type TabName = (typeof tabs)[number];
+const contentTypes = ['posts', 'playlists'] as const;
+type ContentType = (typeof contentTypes)[number];
 
 function shuffle<T>(arr: T[]): T[] {
   const newArr = [...arr];
@@ -43,6 +46,23 @@ export default function ExplorePage() {
   const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
   const isDetailOpen = Boolean(selectedPostId);
 
+  interface PlaylistRow {
+    id: string;
+    title: string;
+    description: string | null;
+    owner_username: string | null;
+    updated_at: string;
+    postsCount?: number;
+  }
+  const [playlists, setPlaylists] = useState<PlaylistRow[]>([]);
+  const [playlistsLoading, setPlaylistsLoading] = useState(true);
+  const [playlistsError, setPlaylistsError] = useState('');
+  const [pagePlaylists, setPagePlaylists] = useState(0);
+  const [hasMorePlaylists, setHasMorePlaylists] = useState(true);
+  const loadingMorePlaylistsRef = useRef(false);
+  const playlistsInitialLoadDoneRef = useRef(false);
+  const playlistsCurrentFetchRef = useRef(0);
+
   const resetPagination = useCallback(() => {
     setPosts([]);
     setPage(0);
@@ -61,6 +81,28 @@ export default function ExplorePage() {
   }, []);
 
   const [activeTab, setActiveTab] = useTabState(tabs, 'feed', { onTabChange: resetPagination });
+  const [contentType, setContentType] = useTabState<ContentType>(contentTypes, 'posts', {
+    queryParam: 'type',
+    onTabChange: (t) => {
+      if (t === 'posts') {
+        resetPagination();
+      } else {
+        setPlaylists([]);
+        setPagePlaylists(0);
+        setHasMorePlaylists(true);
+        setPlaylistsError('');
+        loadingMorePlaylistsRef.current = false;
+        playlistsInitialLoadDoneRef.current = false;
+        playlistsCurrentFetchRef.current += 1;
+        const mainEl = document.querySelector('main');
+        if (mainEl) {
+          mainEl.scrollTo(0, 0);
+        } else {
+          window.scrollTo(0, 0);
+        }
+      }
+    },
+  });
   const postIdFromQuery = typeof router.query.post === 'string' ? router.query.post : null;
 
   // Stable userId that doesn't change during auth loading
@@ -89,7 +131,7 @@ export default function ExplorePage() {
   useEffect(() => {
     const wasOpen = prevDetailOpenRef.current;
     prevDetailOpenRef.current = isDetailOpen;
-    
+
     // Only restore when transitioning from open to closed
     if (wasOpen && !isDetailOpen) {
       // Use multiple animation frames to ensure DOM is fully updated
@@ -151,6 +193,12 @@ export default function ExplorePage() {
       // Check if this fetch is still current
       if (fetchId !== currentFetchRef.current) {
         loadingMoreRef.current = false;
+        return;
+      }
+
+      if (contentType !== 'posts') {
+        loadingMoreRef.current = false;
+        setLoading(false);
         return;
       }
 
@@ -250,7 +298,7 @@ export default function ExplorePage() {
 
         const newPosts = page === 0 ? rows : [...posts, ...rows];
         const newHasMore = rows.length >= pageSize;
-        
+
         setPosts(newPosts);
         setHasMore(newHasMore);
         initialLoadDoneRef.current = true;
@@ -266,9 +314,76 @@ export default function ExplorePage() {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, userId, activeTab, authLoading]);
+  }, [page, userId, activeTab, authLoading, contentType]);
 
-  useInfiniteScroll({ hasMore, loadingMoreRef, sentinelRef, setPage });
+  useInfiniteScroll({
+    hasMore: contentType === 'playlists' ? hasMorePlaylists : hasMore,
+    loadingMoreRef: contentType === 'playlists' ? loadingMorePlaylistsRef : loadingMoreRef,
+    sentinelRef,
+    setPage: contentType === 'playlists' ? setPagePlaylists : setPage,
+  });
+
+  useEffect(() => {
+    if (contentType !== 'playlists') return;
+
+    if (pagePlaylists === 0 && playlistsInitialLoadDoneRef.current && playlists.length > 0) {
+      return;
+    }
+
+    let cancelled = false;
+    playlistsCurrentFetchRef.current += 1;
+    const fetchId = playlistsCurrentFetchRef.current;
+    const pageSize = 20;
+    const from = pagePlaylists * pageSize;
+    const to = from + pageSize - 1;
+
+    const loadPlaylists = async () => {
+      loadingMorePlaylistsRef.current = true;
+      if (pagePlaylists === 0) setPlaylistsLoading(true);
+      setPlaylistsError('');
+
+      const { data, error } = await supabase
+        .from('playlists')
+        .select(
+          'id, title, description, updated_at, owner:profiles!playlists_owner_id_fkey(username), entries:playlist_entries(count)',
+        )
+        .eq('visibility', 'public')
+        .order('updated_at', { ascending: false })
+        .range(from, to);
+
+      if (cancelled || fetchId !== playlistsCurrentFetchRef.current) return;
+
+      if (error) {
+        setPlaylistsError(error.message ?? String(error));
+        if (pagePlaylists === 0) setPlaylists([]);
+        setHasMorePlaylists(false);
+      } else {
+        const rows: PlaylistRow[] = (data ?? []).map((p: any) => ({
+          id: p.id as string,
+          title: p.title as string,
+          description: (p.description as string) ?? null,
+          updated_at: p.updated_at as string,
+          owner_username: (p.owner?.username as string) ?? null,
+          postsCount: (p.entries?.[0]?.count as number) ?? 0,
+        }));
+
+        const newRows = pagePlaylists === 0 ? rows : [...playlists, ...rows];
+        const newHasMore = rows.length >= pageSize;
+        setPlaylists(newRows);
+        setHasMorePlaylists(newHasMore);
+        playlistsInitialLoadDoneRef.current = true;
+      }
+
+      loadingMorePlaylistsRef.current = false;
+      setPlaylistsLoading(false);
+    };
+
+    void loadPlaylists();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [contentType, pagePlaylists, playlists, playlists.length]);
 
   const handleTabClick = (tab: TabName) => {
     setActiveTab(tab);
@@ -317,70 +432,119 @@ export default function ExplorePage() {
       </Head>
       <section style={{ display: isDetailOpen ? 'none' : undefined }}>
         <h2>Explore</h2>
-        <div className="tab-header">
-          <span
-            className={`tab-button ${activeTab === 'feed' ? 'active' : ''}`}
-            onClick={() => handleTabClick('feed')}
-          >
-            Feed
-          </span>
-          <span
-            className={`tab-button ${activeTab === 'recent' ? 'active' : ''}`}
-            onClick={() => handleTabClick('recent')}
-          >
-            Recent
-          </span>
-          {hasActiveChallenge && (
-            <span
-              className={`tab-button ${activeTab === 'weekly' ? 'active' : ''}`}
-              onClick={() => handleTabClick('weekly')}
-            >
-              Weekly Challenge
-            </span>
-          )}
-        </div>
-        {activeTab === 'weekly' && (
-          <div className="info-panel">
-            <div>
-              This tab shows the participants for the{' '}
-              <Link href={'/about-weekly'}>Bytebeat of the Week challenge</Link>.
-            </div>
-            {weekTheme && <div>This week&apos;s theme is &quot;{weekTheme}&quot;</div>}
-          </div>
-        )}
-        {loading && <p className="text-centered">Loading posts…</p>}
-        {error && !loading && <p className="error-message">{error}</p>}
-        {!loading && !error && posts.length === 0 && (
-          <p className="text-centered">
-            {activeTab === 'weekly' ? (
-              <span>
-                No submission yet.{' '}
-                <Link href={'/create?weekly'}>Participate this week&#39;s challenge!</Link>
-              </span>
-            ) : (
-              <span>
-                No posts yet. Create something on the <Link href={'/create'}>Create</Link> page!
-              </span>
-            )}
-          </p>
-        )}
-        {!loading && !error && posts.length > 0 && (
-          <PostList
-            posts={posts}
-            currentUserId={user ? (user as any).id : undefined}
-            onPostClick={handlePostClick}
-          />
-        )}
-        <div ref={sentinelRef} style={{ height: 1 }} data-testid="scroll-sentinel" />
-        {hasMore && !loading && posts.length > 0 && <p className="text-centered">Loading more…</p>}
 
-        {!hasMore && !loading && posts.length > 0 && (
-          <p className="text-centered">You reached the end!</p>
+        <p>
+          Explore{' '}
+          <select
+            value={contentType}
+            onChange={(e) => setContentType(e.target.value as ContentType)}
+          >
+            <option value="posts">posts</option>
+            <option value="playlists">playlists</option>
+          </select>
+        </p>
+        {contentType === 'posts' ? (
+          <>
+            <div className="tab-header">
+              <span
+                className={`tab-button ${activeTab === 'feed' ? 'active' : ''}`}
+                onClick={() => handleTabClick('feed')}
+              >
+                Feed
+              </span>
+              <span
+                className={`tab-button ${activeTab === 'recent' ? 'active' : ''}`}
+                onClick={() => handleTabClick('recent')}
+              >
+                Recent
+              </span>
+              {hasActiveChallenge && (
+                <span
+                  className={`tab-button ${activeTab === 'weekly' ? 'active' : ''}`}
+                  onClick={() => handleTabClick('weekly')}
+                >
+                  Weekly Challenge
+                </span>
+              )}
+            </div>
+            {activeTab === 'weekly' && (
+              <div className="info-panel">
+                <div>
+                  This tab shows the participants for the{' '}
+                  <Link href={'/about-weekly'}>Bytebeat of the Week challenge</Link>.
+                </div>
+                {weekTheme && <div>This week&apos;s theme is &quot;{weekTheme}&quot;</div>}
+              </div>
+            )}
+            {loading && <p className="text-centered">Loading posts…</p>}
+            {error && !loading && <p className="error-message">{error}</p>}
+            {!loading && !error && posts.length === 0 && (
+              <p className="text-centered">
+                {activeTab === 'weekly' ? (
+                  <span>
+                    No submission yet.{' '}
+                    <Link href={'/create?weekly'}>Participate this week&#39;s challenge!</Link>
+                  </span>
+                ) : (
+                  <span>
+                    No posts yet. Create something on the <Link href={'/create'}>Create</Link> page!
+                  </span>
+                )}
+              </p>
+            )}
+            {!loading && !error && posts.length > 0 && (
+              <PostList
+                posts={posts}
+                currentUserId={user ? (user as any).id : undefined}
+                onPostClick={handlePostClick}
+              />
+            )}
+            <div ref={sentinelRef} style={{ height: 1 }} data-testid="scroll-sentinel" />
+            {hasMore && !loading && posts.length > 0 && (
+              <p className="text-centered">Loading more…</p>
+            )}
+            {!hasMore && !loading && posts.length > 0 && (
+              <p className="text-centered">You reached the end!</p>
+            )}
+          </>
+        ) : (
+          <>
+            <div className="tab-header">
+              <span className="tab-button active">Recently Updated</span>
+            </div>
+            {playlistsLoading && <p className="text-centered">Loading playlists…</p>}
+            {playlistsError && !playlistsLoading && (
+              <p className="error-message">{playlistsError}</p>
+            )}
+            {!playlistsLoading && !playlistsError && playlists.length === 0 && (
+              <p className="text-centered">No playlists yet.</p>
+            )}
+            {!playlistsLoading && !playlistsError && playlists.length > 0 && (
+              <div className="playlists-section mt-30">
+                <ul>
+                  {playlists.map((pl) => (
+                    <PlaylistCard
+                      key={pl.id}
+                      id={pl.id}
+                      name={pl.title}
+                      description={pl.description}
+                      postsCount={pl.postsCount}
+                    />
+                  ))}
+                </ul>
+              </div>
+            )}
+            <div ref={sentinelRef} style={{ height: 1 }} data-testid="scroll-sentinel" />
+            {hasMorePlaylists && !playlistsLoading && playlists.length > 0 && (
+              <p className="text-centered">Loading more…</p>
+            )}
+            {!hasMorePlaylists && !playlistsLoading && playlists.length > 0 && (
+              <p className="text-centered">You reached the end!</p>
+            )}
+          </>
         )}
       </section>
-      {isDetailOpen && (
-        <PostDetailView postId={selectedPostId!} onBack={handleCloseDetail} />
-      )}
+      {isDetailOpen && <PostDetailView postId={selectedPostId!} onBack={handleCloseDetail} />}
     </>
   );
 }

@@ -57,12 +57,25 @@ button {
   display: flex;
 }
 
+.flex-column {
+  display: flex;
+  flex-direction: column;
+}
+
+.gap-2 {
+  gap: 2px;
+}
+
 .space-between {
   justify-content: space-between;
 }
 
 .space-around {
   justify-content: space-around;
+}
+
+.white-space-pre-wrap {
+  white-space: pre-wrap;
 }
 
 .ml-5 {
@@ -127,6 +140,18 @@ button {
 
 .mb-auto {
   margin-bottom: auto;
+}
+
+.weight-600 {
+  font-weight: 600;
+}
+
+.align-items-flex-end {
+  align-items: flex-end;
+}
+
+.smaller {
+  font-size: smaller;
 }
 
 .text-centered {

@@ -168,13 +168,18 @@ This command will start the Supabase local instance, the front end dev server an
 - [x] Signed int mode
 - [x] Video export
 - [x] Bytebeat of the Week
+- [x] Report posts or users
+- [x] Block/unblock users
+- [x] Comments
+
+**Working on**
+
+- [ ] Playlists
 
 **Coming later**
 
 - [ ] Change history
 - [ ] Offline mode
-- [ ] Report posts or users
-- [ ] Block/unblock users
 - [ ] Reject silent/too loud posts
 - [ ] Moderator tools
 - [ ] Pin posts on profile
