@@ -1,6 +1,6 @@
 import { useRouter } from 'next/router';
 import Head from 'next/head';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { supabase } from '../../../lib/supabaseClient';
 import { useSupabaseAuth } from '../../../hooks/useSupabaseAuth';
 import type { PostRow } from '../../../components/PostList';
@@ -71,7 +71,7 @@ export default function PlaylistEditPage() {
     setDropY(lastRect.bottom - ulRect.top);
   };
 
-  const performDrop = () => {
+  const performDrop = useCallback(() => {
     const from = dragIndexRef.current;
     if (from === null) return;
 
@@ -90,7 +90,7 @@ export default function PlaylistEditPage() {
     setDraggingIndex(null);
     setDropIndex(null);
     setDropY(null);
-  };
+  }, [dropIndex, reorderItems.length]);
 
   useEffect(() => {
     if (draggingIndex === null) return;
@@ -129,7 +129,7 @@ export default function PlaylistEditPage() {
       window.removeEventListener('touchmove', handleTouchMove);
       window.removeEventListener('touchend', handleTouchEnd);
     };
-  }, [draggingIndex, dropIndex, reorderItems.length]);
+  }, [draggingIndex, dropIndex, performDrop, reorderItems.length]);
 
   useEffect(() => {
     if (!playlistId) return;
@@ -308,7 +308,7 @@ export default function PlaylistEditPage() {
         {loading && <p>Loading…</p>}
         {!loading && error && <p className="error-message">{error}</p>}
         {unauthorized && (
-          <p className="error-message">You don't have permission to edit this playlist.</p>
+          <p className="error-message">You don&apos;t have permission to edit this playlist.</p>
         )}
         {!loading && !error && isOwner && playlist && (
           <>

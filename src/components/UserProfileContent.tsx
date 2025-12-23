@@ -208,6 +208,7 @@ function useUserPlaylists(
   const [hasLoaded, setHasLoaded] = useState(false);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setHasLoaded(false);
     setPlaylists([]);
   }, [profileId]);

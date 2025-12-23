@@ -2,7 +2,7 @@ import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
 import { useRouter } from 'next/router';
 import { useBytebeatPlayer } from '../hooks/useBytebeatPlayer';
 import { usePlayerStore } from '../hooks/usePlayerStore';
-import { useContext, useEffect, useRef, useState } from 'react';
+import { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { ThemeContext } from '../theme/ThemeContext';
 import { getPreviewSource, subscribePreviewSource } from '../hooks/previewSource';
 import { PostRow } from './PostList';
@@ -186,12 +186,12 @@ export default function FooterPlayer() {
     }
   };
 
-  const cancelAutoTransition = () => {
+  const cancelAutoTransition = useCallback(() => {
     clearTimers();
     setFadeGain(1);
-  };
+  }, [setFadeGain]);
 
-  const playPost = async (post: PostRow | null) => {
+  const playPost = useCallback(async (post: PostRow | null) => {
     if (!post) return;
 
     cancelAutoTransition();
@@ -201,7 +201,7 @@ export default function FooterPlayer() {
     const sr = post.sample_rate;
     await toggle(post.expression, post.mode, sr);
     startPlayTracking(post.id);
-  };
+  }, [cancelAutoTransition, stopPlayTracking, stop, toggle, startPlayTracking]);
 
   // Auto-next timer with 3s fade-out before the switch
   useEffect(() => {
@@ -255,7 +255,7 @@ export default function FooterPlayer() {
       clearTimers();
     };
     // Recreate timers when these change
-  }, [currentPost?.id, isPlaying, loopEnabled, playlist?.length]);
+  }, [currentPost?.id, isPlaying, loopEnabled, playlist?.length, fadeGain, setFadeGain, next, playPost, currentPost]);
 
   const handleFooterPlayPause = async () => {
     if (isPlaying) {

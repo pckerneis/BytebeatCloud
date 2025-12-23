@@ -382,7 +382,7 @@ export default function ExplorePage() {
     return () => {
       cancelled = true;
     };
-  }, [contentType, pagePlaylists, playlists.length]);
+  }, [contentType, pagePlaylists, playlists, playlists.length]);
 
   const handleTabClick = (tab: TabName) => {
     setActiveTab(tab);
