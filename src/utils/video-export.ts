@@ -99,6 +99,51 @@ function resampleStereo(
   };
 }
 
+// Draw text with word wrapping
+function drawWrappedText(
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  x: number,
+  y: number,
+  maxWidth: number,
+  fontSize: number,
+  lineHeight: number,
+  maxLines?: number,
+): number {
+  const words = text.split(' ');
+  let currentLine = '';
+  let currentY = y;
+  let lineCount = 0;
+
+  for (let i = 0; i < words.length; i++) {
+    const testLine = currentLine + (currentLine ? ' ' : '') + words[i];
+    const metrics = ctx.measureText(testLine);
+
+    if (metrics.width > maxWidth && currentLine.length > 0) {
+      ctx.fillText(currentLine, x, currentY);
+      currentLine = words[i];
+      currentY += lineHeight;
+      lineCount++;
+
+      if (maxLines && lineCount >= maxLines) {
+        // Add ellipsis if we've reached max lines
+        ctx.fillText('...', x, currentY);
+        return currentY;
+      }
+    } else {
+      currentLine = testLine;
+    }
+  }
+
+  // Draw remaining text
+  if (currentLine) {
+    ctx.fillText(currentLine, x, currentY);
+    currentY += lineHeight;
+  }
+
+  return currentY;
+}
+
 // Draw code with word wrapping (no syntax highlighting)
 function drawCode(
   ctx: CanvasRenderingContext2D,
@@ -217,18 +262,24 @@ function renderStaticFrame(
     contentY + usernameFontSize,
   );
 
-  // Title
+  // Title (with wrapping)
   const titleFontSize = Math.max(16, Math.floor(height * 0.045));
+  const titleLineHeight = titleFontSize * 1.3;
   ctx.fillStyle = textColor;
   ctx.font = `bold ${titleFontSize}px "Inconsolata", monospace`;
-  ctx.fillText(
+  const titleEndY = drawWrappedText(
+    ctx,
     formatPostTitle(options.title),
     padding,
     contentY + usernameFontSize + titleFontSize + 8,
+    width - padding * 2,
+    titleFontSize,
+    titleLineHeight,
+    3, // Max 3 lines for title
   );
 
   // === CHIPS (tags) ===
-  let chipsEndY = contentY + usernameFontSize + titleFontSize + 16;
+  let chipsEndY = titleEndY + 8;
 
   // === CODE DISPLAY ===
   const waveformHeight = Math.floor(height * 0.18);
