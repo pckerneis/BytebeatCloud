@@ -41,70 +41,93 @@ export default function PlaylistEditPage() {
   const [dropY, setDropY] = useState<number | null>(null);
   const [editTitle, setEditTitle] = useState('');
   const [editDescription, setEditDescription] = useState('');
+  const [touchStartY, setTouchStartY] = useState<number | null>(null);
+
+  const updateDropPosition = (y: number) => {
+    const ul = listRef.current;
+    if (!ul) return;
+
+    const items = Array.from(ul.querySelectorAll('li[data-index]')) as HTMLLIElement[];
+    if (items.length === 0) {
+      setDropIndex(0);
+      setDropY(0);
+      return;
+    }
+
+    const ulRect = ul.getBoundingClientRect();
+    
+    for (let i = 0; i < items.length; i++) {
+      const rect = items[i].getBoundingClientRect();
+      const midY = rect.top + rect.height / 2;
+      if (y < midY) {
+        setDropIndex(i);
+        setDropY(rect.top - ulRect.top);
+        return;
+      }
+    }
+    
+    const lastRect = items[items.length - 1].getBoundingClientRect();
+    setDropIndex(items.length);
+    setDropY(lastRect.bottom - ulRect.top);
+  };
+
+  const performDrop = () => {
+    const from = dragIndexRef.current;
+    if (from === null) return;
+
+    const to = dropIndex ?? reorderItems.length;
+    if (from !== to && from + 1 !== to) {
+      setReorderItems((prev) => {
+        const next = [...prev];
+        const [moved] = next.splice(from, 1);
+        const insertAt = from < to ? to - 1 : to;
+        next.splice(insertAt, 0, moved);
+        return next;
+      });
+    }
+
+    dragIndexRef.current = null;
+    setDraggingIndex(null);
+    setDropIndex(null);
+    setDropY(null);
+  };
 
   useEffect(() => {
-    if (!draggingIndex) return;
+    if (draggingIndex === null) return;
 
     const handleDragOver = (e: DragEvent) => {
       e.preventDefault();
       if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
-
-      const ul = listRef.current;
-      if (!ul) return;
-
-      const items = Array.from(ul.querySelectorAll('li[data-index]')) as HTMLLIElement[];
-      if (items.length === 0) {
-        setDropIndex(0);
-        setDropY(0);
-        return;
-      }
-
-      const ulRect = ul.getBoundingClientRect();
-      const y = e.clientY;
-      
-      for (let i = 0; i < items.length; i++) {
-        const rect = items[i].getBoundingClientRect();
-        const midY = rect.top + rect.height / 2;
-        if (y < midY) {
-          setDropIndex(i);
-          setDropY(rect.top - ulRect.top);
-          return;
-        }
-      }
-      
-      const lastRect = items[items.length - 1].getBoundingClientRect();
-      setDropIndex(items.length);
-      setDropY(lastRect.bottom - ulRect.top);
+      updateDropPosition(e.clientY);
     };
 
     const handleDrop = (e: DragEvent) => {
       e.preventDefault();
-      const from = dragIndexRef.current;
-      if (from === null) return;
+      performDrop();
+    };
 
-      const to = dropIndex ?? reorderItems.length;
-      if (from !== to && from + 1 !== to) {
-        setReorderItems((prev) => {
-          const next = [...prev];
-          const [moved] = next.splice(from, 1);
-          const insertAt = from < to ? to - 1 : to;
-          next.splice(insertAt, 0, moved);
-          return next;
-        });
+    const handleTouchMove = (e: TouchEvent) => {
+      if (e.touches.length > 0) {
+        const touch = e.touches[0];
+        updateDropPosition(touch.clientY);
       }
+    };
 
-      dragIndexRef.current = null;
-      setDraggingIndex(null);
-      setDropIndex(null);
-      setDropY(null);
+    const handleTouchEnd = () => {
+      performDrop();
+      setTouchStartY(null);
     };
 
     window.addEventListener('dragover', handleDragOver);
     window.addEventListener('drop', handleDrop);
+    window.addEventListener('touchmove', handleTouchMove);
+    window.addEventListener('touchend', handleTouchEnd);
 
     return () => {
       window.removeEventListener('dragover', handleDragOver);
       window.removeEventListener('drop', handleDrop);
+      window.removeEventListener('touchmove', handleTouchMove);
+      window.removeEventListener('touchend', handleTouchEnd);
     };
   }, [draggingIndex, dropIndex, reorderItems.length]);
 
@@ -368,7 +391,13 @@ export default function PlaylistEditPage() {
                           setDropIndex(null);
                           setDropY(null);
                         }}
-                        style={{ cursor: 'grab' }}
+                        onTouchStart={(e) => {
+                          const touch = e.touches[0];
+                          setTouchStartY(touch.clientY);
+                          dragIndexRef.current = idx;
+                          setDraggingIndex(idx);
+                        }}
+                        style={{ cursor: 'grab', touchAction: 'none' }}
                         aria-label="Drag handle"
                       >
                         ⋮⋮
