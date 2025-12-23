@@ -31,7 +31,6 @@ export default function PlaylistDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-
   useEffect(() => {
     if (!playlistId) return;
 
@@ -46,7 +45,9 @@ export default function PlaylistDetailPage() {
       // Load playlist metadata
       const { data: pl, error: plErr } = await supabase
         .from('playlists')
-        .select('id, title, description, visibility, owner_id, created_at, updated_at, owner:profiles!playlists_owner_id_fkey(username)')
+        .select(
+          'id, title, description, visibility, owner_id, created_at, updated_at, owner:profiles!playlists_owner_id_fkey(username)',
+        )
         .eq('id', playlistId)
         .maybeSingle();
 
@@ -61,7 +62,7 @@ export default function PlaylistDetailPage() {
       const ownerField: any = (pl as any).owner;
       const ownerUsername: string = Array.isArray(ownerField)
         ? (ownerField[0]?.username as string) ?? ''
-        : ((ownerField?.username as string) ?? '');
+        : (ownerField?.username as string) ?? '';
 
       const playlistRow: PlaylistRow = {
         id: pl.id,
@@ -101,7 +102,7 @@ export default function PlaylistDetailPage() {
       const { data: postRows, error: postErr } = await supabase
         .from('posts_with_meta')
         .select(
-          'id,title,description,expression,is_draft,sample_rate,mode,created_at,profile_id,fork_of_post_id,is_fork,author_username,origin_title,origin_username,favorites_count,is_weekly_winner,license,comments_count'
+          'id,title,description,expression,is_draft,sample_rate,mode,created_at,profile_id,fork_of_post_id,is_fork,author_username,origin_title,origin_username,favorites_count,is_weekly_winner,license,comments_count',
         )
         .in('id', postIds);
 
@@ -134,7 +135,9 @@ export default function PlaylistDetailPage() {
     };
   }, [playlistId]);
 
-  const pageTitle = playlist ? `${playlist.title} - Playlist - BytebeatCloud` : 'Playlist - BytebeatCloud';
+  const pageTitle = playlist
+    ? `${playlist.title} - Playlist - BytebeatCloud`
+    : 'Playlist - BytebeatCloud';
 
   return (
     <>
@@ -146,26 +149,39 @@ export default function PlaylistDetailPage() {
           ← Back
         </button>
         <div className="profile-title-row">
-          <h2>{playlist?.title ?? 'Playlist' }</h2>
-          {!loading && !error && playlist && currentUserId && playlist.owner_id === currentUserId && (
-            <div className="profile-title-actions">
-              <Link href={`/playlists/${playlistId}/edit`} className="button secondary">
-                Edit
-              </Link>
-            </div>
-          )}
+          <h2>{playlist?.title ?? 'Playlist'}</h2>
+          {!loading &&
+            !error &&
+            playlist &&
+            currentUserId &&
+            playlist.owner_id === currentUserId && (
+              <div className="profile-title-actions">
+                <Link href={`/playlists/${playlistId}/edit`} className="button secondary">
+                  Edit
+                </Link>
+              </div>
+            )}
         </div>
         {loading && <p>Loading…</p>}
         {!loading && error && <p className="error-message">{error}</p>}
         {!loading && !error && playlist && (
           <>
             <div className="playlist-header">
-              <span className="secondary-text">A playlist by{' '}<Link href={`/u/${playlist.owner_username}`}>@{formatAuthorUsername(playlist.owner_username)}</Link></span>
+              <span className="secondary-text">
+                A playlist by{' '}
+                <Link href={`/u/${playlist.owner_username}`}>
+                  @{formatAuthorUsername(playlist.owner_username)}
+                </Link>
+              </span>
               <div className="chips">
-                <span className="chip" style={{ fontSize: 12 }}>{playlist.visibility}</span>
+                <span className="chip" style={{ fontSize: 12 }}>
+                  {playlist.visibility}
+                </span>
               </div>
               {playlist.description && (
-                <p className="secondary-text white-space-pre-wrap" style={{ marginTop: 8 }}>{playlist.description}</p>
+                <p className="secondary-text white-space-pre-wrap" style={{ marginTop: 8 }}>
+                  {playlist.description}
+                </p>
               )}
             </div>
             <div style={{ marginTop: 16 }}>

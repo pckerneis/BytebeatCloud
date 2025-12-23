@@ -661,24 +661,30 @@ export function UserProfileContent({
         <>
           {playlistsQuery.loading && <p className="text-centered">Loading playlists…</p>}
           {playlistsQuery.error && <p className="error-message">{playlistsQuery.error}</p>}
-          {!playlistsQuery.loading && !playlistsQuery.error && playlistsQuery.playlists.length === 0 && (
-            <p className="text-centered">
-              {isOwnProfile ? 'You have no playlists yet.' : 'This user has no public playlists yet.'}
-            </p>
-          )}
-          {!playlistsQuery.loading && !playlistsQuery.error && playlistsQuery.playlists.length > 0 && (
-            <ul>
-              {playlistsQuery.playlists.map((pl) => (
-                <PlaylistCard
-                  key={pl.id}
-                  id={pl.id}
-                  name={pl.title}
-                  description={pl.description}
-                  postsCount={pl.posts_count}
-                />
-              ))}
-            </ul>
-          )}
+          {!playlistsQuery.loading &&
+            !playlistsQuery.error &&
+            playlistsQuery.playlists.length === 0 && (
+              <p className="text-centered">
+                {isOwnProfile
+                  ? 'You have no playlists yet.'
+                  : 'This user has no public playlists yet.'}
+              </p>
+            )}
+          {!playlistsQuery.loading &&
+            !playlistsQuery.error &&
+            playlistsQuery.playlists.length > 0 && (
+              <ul>
+                {playlistsQuery.playlists.map((pl) => (
+                  <PlaylistCard
+                    key={pl.id}
+                    id={pl.id}
+                    name={pl.title}
+                    description={pl.description}
+                    postsCount={pl.posts_count}
+                  />
+                ))}
+              </ul>
+            )}
         </>
       )}
     </section>

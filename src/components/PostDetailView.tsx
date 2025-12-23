@@ -184,7 +184,9 @@ export function PostDetailView({ postId, baseUrl, onBack }: Readonly<PostDetailV
         } else {
           const { data: pls } = await supabase
             .from('playlists')
-            .select('id, title, description, created_at, owner:profiles!playlists_owner_id_fkey(username), entries:playlist_entries(count)')
+            .select(
+              'id, title, description, created_at, owner:profiles!playlists_owner_id_fkey(username), entries:playlist_entries(count)',
+            )
             .in('id', ids)
             .order('updated_at', { ascending: false });
           const rows: Playlist[] = (pls ?? []).map((p: any) => ({
@@ -518,7 +520,9 @@ export function PostDetailView({ postId, baseUrl, onBack }: Readonly<PostDetailV
 
       const { data: pls, error: plErr } = await supabase
         .from('playlists')
-        .select('id, title, description, created_at, owner:profiles!playlists_owner_id_fkey(username), entries:playlist_entries(count)')
+        .select(
+          'id, title, description, created_at, owner:profiles!playlists_owner_id_fkey(username), entries:playlist_entries(count)',
+        )
         .in('id', ids)
         .order('updated_at', { ascending: false });
 
@@ -1039,11 +1043,22 @@ export function PostDetailView({ postId, baseUrl, onBack }: Readonly<PostDetailV
             {playlistsLoading ? (
               <p className="text-centered">Loading…</p>
             ) : playlists.length > 0 ? (
-              <ul style={{ listStyle: 'none', padding: 0, margin: 0, maxHeight: 240, overflowY: 'auto' }}>
+              <ul
+                style={{
+                  listStyle: 'none',
+                  padding: 0,
+                  margin: 0,
+                  maxHeight: 240,
+                  overflowY: 'auto',
+                }}
+              >
                 {playlists.map((pl) => {
                   const alreadyHas = postPlaylistIdSet.has(pl.id);
                   return (
-                    <li key={pl.id} style={{ display: 'flex', alignItems: 'center', padding: '8px 0' }}>
+                    <li
+                      key={pl.id}
+                      style={{ display: 'flex', alignItems: 'center', padding: '8px 0' }}
+                    >
                       <div style={{ flex: 1 }}>
                         <div style={{ fontWeight: 600 }}>{pl.name}</div>
                         {pl.description && (
@@ -1055,7 +1070,9 @@ export function PostDetailView({ postId, baseUrl, onBack }: Readonly<PostDetailV
                       <button
                         type="button"
                         className="button small"
-                        onClick={() => { if (!alreadyHas) void handleAppendToPlaylist(pl.id); }}
+                        onClick={() => {
+                          if (!alreadyHas) void handleAppendToPlaylist(pl.id);
+                        }}
                         disabled={addToPlaylistPending || alreadyHas}
                         aria-disabled={addToPlaylistPending || alreadyHas}
                         title={alreadyHas ? 'This post is already in this playlist' : undefined}
@@ -1070,9 +1087,13 @@ export function PostDetailView({ postId, baseUrl, onBack }: Readonly<PostDetailV
               <p className="secondary-text">You have no playlists yet.</p>
             )}
             {addToPlaylistError && (
-              <p className="error-message" style={{ marginTop: '8px' }}>{addToPlaylistError}</p>
+              <p className="error-message" style={{ marginTop: '8px' }}>
+                {addToPlaylistError}
+              </p>
             )}
-            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, marginTop: 12 }}>
+            <div
+              style={{ display: 'flex', justifyContent: 'space-between', gap: 8, marginTop: 12 }}
+            >
               <button
                 type="button"
                 className="button secondary"

@@ -15,14 +15,10 @@ export function PlaylistCard({ id, name, description, postsCount }: PlaylistCard
           {name}
         </Link>
         <span className="secondary-text ml-auto smaller">
-          {(postsCount ?? 0)} {postsCount === 1 ? 'post' : 'posts'}
+          {postsCount ?? 0} {postsCount === 1 ? 'post' : 'posts'}
         </span>
       </div>
-      {description && (
-        <div className="secondary-text smaller">
-          {description}
-        </div>
-      )}
+      {description && <div className="secondary-text smaller">{description}</div>}
       <div className="flex-row">
         <Link href={`/playlists/${id}`} className="button small secondary">
           View

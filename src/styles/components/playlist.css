@@ -1,22 +1,22 @@
 .playlist-header {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .playlists-section ul {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    list-style: none;
-    padding: 0;
-    margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
 }
 
 .playlist-card {
-    display: flex;
-    flex-direction: column;
-    padding: 5px 10px;
-    border-left: 3px solid var(--chip-border-color);
-    gap: 5px;
+  display: flex;
+  flex-direction: column;
+  padding: 5px 10px;
+  border-left: 3px solid var(--chip-border-color);
+  gap: 5px;
 }

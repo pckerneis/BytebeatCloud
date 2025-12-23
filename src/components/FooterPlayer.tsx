@@ -191,17 +191,20 @@ export default function FooterPlayer() {
     setFadeGain(1);
   }, [setFadeGain]);
 
-  const playPost = useCallback(async (post: PostRow | null) => {
-    if (!post) return;
+  const playPost = useCallback(
+    async (post: PostRow | null) => {
+      if (!post) return;
 
-    cancelAutoTransition();
-    stopPlayTracking();
-    await stop();
+      cancelAutoTransition();
+      stopPlayTracking();
+      await stop();
 
-    const sr = post.sample_rate;
-    await toggle(post.expression, post.mode, sr);
-    startPlayTracking(post.id);
-  }, [cancelAutoTransition, stopPlayTracking, stop, toggle, startPlayTracking]);
+      const sr = post.sample_rate;
+      await toggle(post.expression, post.mode, sr);
+      startPlayTracking(post.id);
+    },
+    [cancelAutoTransition, stopPlayTracking, stop, toggle, startPlayTracking],
+  );
 
   // Auto-next timer with 3s fade-out before the switch
   useEffect(() => {
@@ -255,7 +258,17 @@ export default function FooterPlayer() {
       clearTimers();
     };
     // Recreate timers when these change
-  }, [currentPost?.id, isPlaying, loopEnabled, playlist?.length, fadeGain, setFadeGain, next, playPost, currentPost]);
+  }, [
+    currentPost?.id,
+    isPlaying,
+    loopEnabled,
+    playlist?.length,
+    fadeGain,
+    setFadeGain,
+    next,
+    playPost,
+    currentPost,
+  ]);
 
   const handleFooterPlayPause = async () => {
     if (isPlaying) {

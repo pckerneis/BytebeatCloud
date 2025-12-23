@@ -105,7 +105,7 @@
   }
 
   .visualizer canvas {
-      opacity: 0.35;
+    opacity: 0.35;
   }
 
   .played-post-info {

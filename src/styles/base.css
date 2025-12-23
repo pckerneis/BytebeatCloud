@@ -58,12 +58,12 @@ button {
 }
 
 .flex-column {
-    display: flex;
-    flex-direction: column;
+  display: flex;
+  flex-direction: column;
 }
 
 .gap-2 {
-    gap: 2px;
+  gap: 2px;
 }
 
 .space-between {
@@ -75,7 +75,7 @@ button {
 }
 
 .white-space-pre-wrap {
-    white-space: pre-wrap;
+  white-space: pre-wrap;
 }
 
 .ml-5 {
@@ -143,15 +143,15 @@ button {
 }
 
 .weight-600 {
-    font-weight: 600;
+  font-weight: 600;
 }
 
 .align-items-flex-end {
-    align-items: flex-end;
+  align-items: flex-end;
 }
 
 .smaller {
-    font-size: smaller;
+  font-size: smaller;
 }
 
 .text-centered {

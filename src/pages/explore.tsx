@@ -344,7 +344,7 @@ export default function ExplorePage() {
       const { data, error } = await supabase
         .from('playlists')
         .select(
-          'id, title, description, updated_at, owner:profiles!playlists_owner_id_fkey(username), entries:playlist_entries(count)'
+          'id, title, description, updated_at, owner:profiles!playlists_owner_id_fkey(username), entries:playlist_entries(count)',
         )
         .eq('visibility', 'public')
         .order('updated_at', { ascending: false })
@@ -430,15 +430,16 @@ export default function ExplorePage() {
         <meta name="twitter:card" content="summary_large_image" />
       </Head>
       <section style={{ display: isDetailOpen ? 'none' : undefined }}>
-        <h2>
-          Explore
-        </h2>
+        <h2>Explore</h2>
 
         <p>
           Explore{' '}
-          <select value={contentType} onChange={(e) => setContentType(e.target.value as ContentType)}>
-            <option value='posts'>posts</option>
-            <option value='playlists'>playlists</option>
+          <select
+            value={contentType}
+            onChange={(e) => setContentType(e.target.value as ContentType)}
+          >
+            <option value="posts">posts</option>
+            <option value="playlists">playlists</option>
           </select>
         </p>
         {contentType === 'posts' ? (
@@ -526,7 +527,7 @@ export default function ExplorePage() {
                         {pl.title}
                       </Link>
                       <span className="secondary-text ml-auto smaller">
-                        {(pl.postsCount ?? 0)} {pl.postsCount === 1 ? 'post' : 'posts'}
+                        {pl.postsCount ?? 0} {pl.postsCount === 1 ? 'post' : 'posts'}
                       </span>
                     </div>
                     {pl.description && (

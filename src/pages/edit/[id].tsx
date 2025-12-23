@@ -44,20 +44,24 @@ export default function EditPostPage() {
   const isDirtyRef = useRef(false);
   const isApplyingServerStateRef = useRef(false);
 
-  const { validationIssue, handleExpressionChange, handlePlayClick: handlePlayClickBase, setValidationIssue } =
-    useExpressionPlayer({
-      expression,
-      setExpression,
-      mode,
-      sampleRateValue: sampleRate,
-      toggle,
-      setCurrentPostById,
-      loopPreview: false,
-      isPlaying,
-      liveUpdateEnabled,
-      updateExpression,
-      currentPost,
-    });
+  const {
+    validationIssue,
+    handleExpressionChange,
+    handlePlayClick: handlePlayClickBase,
+    setValidationIssue,
+  } = useExpressionPlayer({
+    expression,
+    setExpression,
+    mode,
+    sampleRateValue: sampleRate,
+    toggle,
+    setCurrentPostById,
+    loopPreview: false,
+    isPlaying,
+    liveUpdateEnabled,
+    updateExpression,
+    currentPost,
+  });
 
   const handlePlayClick = () => handlePlayClickBase(currentPost);
 

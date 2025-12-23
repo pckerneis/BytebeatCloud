@@ -45,20 +45,24 @@ export default function CreatePage() {
   const { weekNumber: currentWeekNumber, theme: currentTheme } = useCurrentWeeklyChallenge();
   const [hasWeeklySubmission, setHasWeeklySubmission] = useState(false);
 
-  const { validationIssue, handleExpressionChange, handlePlayClick: handlePlayClickBase, setValidationIssue } =
-    useExpressionPlayer({
-      expression,
-      setExpression,
-      mode,
-      sampleRateValue: sampleRate,
-      toggle,
-      setCurrentPostById,
-      loopPreview: true,
-      isPlaying,
-      liveUpdateEnabled,
-      updateExpression,
-      currentPost,
-    });
+  const {
+    validationIssue,
+    handleExpressionChange,
+    handlePlayClick: handlePlayClickBase,
+    setValidationIssue,
+  } = useExpressionPlayer({
+    expression,
+    setExpression,
+    mode,
+    sampleRateValue: sampleRate,
+    toggle,
+    setCurrentPostById,
+    loopPreview: true,
+    isPlaying,
+    liveUpdateEnabled,
+    updateExpression,
+    currentPost,
+  });
 
   const handlePlayClick = () => handlePlayClickBase(currentPost);
 

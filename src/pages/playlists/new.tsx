@@ -54,9 +54,8 @@ export default function NewPlaylistPage() {
       setCreatedId(newId);
 
       // If a sourcePostId is provided, append it to the new playlist then redirect
-      const sourcePostId = typeof router.query.sourcePostId === 'string'
-        ? router.query.sourcePostId
-        : undefined;
+      const sourcePostId =
+        typeof router.query.sourcePostId === 'string' ? router.query.sourcePostId : undefined;
       if (sourcePostId) {
         // compute next position
         const { data: posRow, error: posErr } = await supabase
@@ -158,7 +157,12 @@ export default function NewPlaylistPage() {
               <button type="submit" className="button" disabled={pending || !user}>
                 {pending ? 'Creating…' : 'Create playlist'}
               </button>
-              <button type="button" className="button secondary" onClick={() => router.back()} disabled={pending}>
+              <button
+                type="button"
+                className="button secondary"
+                onClick={() => router.back()}
+                disabled={pending}
+              >
                 Cancel
               </button>
             </div>

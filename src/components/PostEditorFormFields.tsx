@@ -241,7 +241,8 @@ export function PostEditorFormFields(props: Readonly<PostEditorFormFieldsProps>)
             type="checkbox"
             checked={liveUpdateEnabled}
             onChange={(e) => onLiveUpdateChange(e.target.checked)}
-          />{' '}Live update
+          />{' '}
+          Live update
         </label>
         <span className={isExpressionTooLong ? 'counter error' : 'counter'}>
           {expressionLength} / {EXPRESSION_MAX}

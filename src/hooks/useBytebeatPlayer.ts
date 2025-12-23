@@ -290,8 +290,12 @@ export function useBytebeatPlayer(options?: { enableVisualizer?: boolean }): Byt
                 fg.gain.value = globalFadeGain;
                 fadeGainNode = fg;
               }
-              try { globalGainNode.disconnect(); } catch {}
-              try { fadeGainNode!.disconnect(); } catch {}
+              try {
+                globalGainNode.disconnect();
+              } catch {}
+              try {
+                fadeGainNode!.disconnect();
+              } catch {}
               globalGainNode.connect(fadeGainNode!);
               fadeGainNode!.connect(ctx.destination);
             } else {

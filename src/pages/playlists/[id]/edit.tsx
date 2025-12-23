@@ -55,7 +55,7 @@ export default function PlaylistEditPage() {
     }
 
     const ulRect = ul.getBoundingClientRect();
-    
+
     for (let i = 0; i < items.length; i++) {
       const rect = items[i].getBoundingClientRect();
       const midY = rect.top + rect.height / 2;
@@ -65,7 +65,7 @@ export default function PlaylistEditPage() {
         return;
       }
     }
-    
+
     const lastRect = items[items.length - 1].getBoundingClientRect();
     setDropIndex(items.length);
     setDropY(lastRect.bottom - ulRect.top);
@@ -144,7 +144,9 @@ export default function PlaylistEditPage() {
 
       const { data: pl, error: plError } = await supabase
         .from('playlists')
-        .select('id, title, description, visibility, owner_id, created_at, updated_at, owner:profiles!playlists_owner_id_fkey(username)')
+        .select(
+          'id, title, description, visibility, owner_id, created_at, updated_at, owner:profiles!playlists_owner_id_fkey(username)',
+        )
         .eq('id', playlistId)
         .maybeSingle();
 
@@ -159,7 +161,7 @@ export default function PlaylistEditPage() {
       const ownerField: any = (pl as any).owner;
       const ownerUsername: string = Array.isArray(ownerField)
         ? (ownerField[0]?.username as string) ?? ''
-        : ((ownerField?.username as string) ?? '');
+        : (ownerField?.username as string) ?? '';
 
       const playlistRow: PlaylistRow = {
         id: pl.id,
@@ -251,7 +253,7 @@ export default function PlaylistEditPage() {
       }
 
       // Filter out removed items from reorderItems
-      const finalItems = reorderItems.filter(p => !removedPostIds.has(p.id));
+      const finalItems = reorderItems.filter((p) => !removedPostIds.has(p.id));
 
       // Phase 1: set temporary positions to avoid unique constraint violation
       for (let i = 0; i < finalItems.length; i++) {
@@ -294,7 +296,9 @@ export default function PlaylistEditPage() {
   const isOwner = currentUserId && playlist && playlist.owner_id === currentUserId;
   const unauthorized = !loading && playlist && !isOwner;
 
-  const pageTitle = playlist ? `Edit ${playlist.title} - BytebeatCloud` : 'Edit Playlist - BytebeatCloud';
+  const pageTitle = playlist
+    ? `Edit ${playlist.title} - BytebeatCloud`
+    : 'Edit Playlist - BytebeatCloud';
 
   return (
     <>
@@ -339,7 +343,9 @@ export default function PlaylistEditPage() {
             </div>
 
             {saveError && (
-              <p className="error-message" style={{ marginTop: 8 }}>{saveError}</p>
+              <p className="error-message" style={{ marginTop: 8 }}>
+                {saveError}
+              </p>
             )}
 
             <div style={{ marginTop: 16 }}>
@@ -364,63 +370,69 @@ export default function PlaylistEditPage() {
                       }}
                     />
                   )}
-                  {reorderItems.filter(p => !removedPostIds.has(p.id)).map((p, idx) => (
-                    <li
-                      key={p.id}
-                      data-index={idx}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 8,
-                        padding: '8px 0',
-                        borderBottom: '1px solid rgba(255,255,255,0.08)',
-                        opacity: draggingIndex === idx ? 0.5 : 1,
-                      }}
-                    >
-                      <span
-                        draggable
-                        onDragStart={(e) => {
-                          e.dataTransfer.effectAllowed = 'move';
-                          e.dataTransfer.setData('text/plain', p.id);
-                          dragIndexRef.current = idx;
-                          setDraggingIndex(idx);
+                  {reorderItems
+                    .filter((p) => !removedPostIds.has(p.id))
+                    .map((p, idx) => (
+                      <li
+                        key={p.id}
+                        data-index={idx}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 8,
+                          padding: '8px 0',
+                          borderBottom: '1px solid rgba(255,255,255,0.08)',
+                          opacity: draggingIndex === idx ? 0.5 : 1,
                         }}
-                        onDragEnd={() => {
-                          dragIndexRef.current = null;
-                          setDraggingIndex(null);
-                          setDropIndex(null);
-                          setDropY(null);
-                        }}
-                        onTouchStart={(e) => {
-                          const touch = e.touches[0];
-                          setTouchStartY(touch.clientY);
-                          dragIndexRef.current = idx;
-                          setDraggingIndex(idx);
-                        }}
-                        style={{ cursor: 'grab', touchAction: 'none' }}
-                        aria-label="Drag handle"
                       >
-                        ⋮⋮
-                      </span>
-                      <span className="secondary-text" style={{ width: 24, textAlign: 'right' }}>{idx + 1}.</span>
+                        <span
+                          draggable
+                          onDragStart={(e) => {
+                            e.dataTransfer.effectAllowed = 'move';
+                            e.dataTransfer.setData('text/plain', p.id);
+                            dragIndexRef.current = idx;
+                            setDraggingIndex(idx);
+                          }}
+                          onDragEnd={() => {
+                            dragIndexRef.current = null;
+                            setDraggingIndex(null);
+                            setDropIndex(null);
+                            setDropY(null);
+                          }}
+                          onTouchStart={(e) => {
+                            const touch = e.touches[0];
+                            setTouchStartY(touch.clientY);
+                            dragIndexRef.current = idx;
+                            setDraggingIndex(idx);
+                          }}
+                          style={{ cursor: 'grab', touchAction: 'none' }}
+                          aria-label="Drag handle"
+                        >
+                          ⋮⋮
+                        </span>
+                        <span className="secondary-text" style={{ width: 24, textAlign: 'right' }}>
+                          {idx + 1}.
+                        </span>
 
-                      <div>
-                        <span style={{ fontWeight: 600 }}>{formatPostTitle(p.title)}</span>{' '}
-                        <span className="secondary-text">by @{formatAuthorUsername(p.author_username)}</span>
-                      </div>
-                      <button
-                        type="button"
-                        className="button danger small ml-auto"
-                        disabled={savePending}
-                        onClick={() => {
-                          setRemovedPostIds(prev => new Set(prev).add(p.id));
-                        }}
-                        aria-label={`Remove ${formatPostTitle(p.title)} from playlist`}
-                      >
-                        Remove
-                      </button>
-                    </li>
-                  ))}
+                        <div>
+                          <span style={{ fontWeight: 600 }}>{formatPostTitle(p.title)}</span>{' '}
+                          <span className="secondary-text">
+                            by @{formatAuthorUsername(p.author_username)}
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          className="button danger small ml-auto"
+                          disabled={savePending}
+                          onClick={() => {
+                            setRemovedPostIds((prev) => new Set(prev).add(p.id));
+                          }}
+                          aria-label={`Remove ${formatPostTitle(p.title)} from playlist`}
+                        >
+                          Remove
+                        </button>
+                      </li>
+                    ))}
                 </ul>
               )}
             </div>
