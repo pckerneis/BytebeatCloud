@@ -105,46 +105,62 @@ export default function NewPlaylistPage() {
           </p>
         )}
 
-        {!createdId ? (
-          <form onSubmit={handleSubmit} style={{ maxWidth: 560 }}>
-            <div className="form-field">
-              <label htmlFor="title">Name</label>
-              <input
-                id="title"
-                type="text"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                maxLength={64}
-                placeholder="My playlist"
-                required
-              />
-              <div className="secondary-text" style={{ fontSize: 12 }}>
-                {title.length}/64
+        {!createdId && user && (
+          <form onSubmit={handleSubmit}>
+            <div className="create-form">
+              <div className="field">
+                <label htmlFor="title" style={{ fontWeight: 600 }}>
+                  Name
+                </label>
+                <input
+                  id="title"
+                  type="text"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  maxLength={64}
+                  placeholder="My playlist"
+                  className="border-bottom-accent-focus"
+                  disabled={pending}
+                  required
+                />
+                <div className="secondary-text" style={{ fontSize: 12, marginTop: 4 }}>
+                  {title.length}/64
+                </div>
               </div>
-            </div>
 
-            <div className="form-field">
-              <label htmlFor="description">Description</label>
-              <textarea
-                id="description"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                rows={3}
-                placeholder="Optional description"
-              />
-            </div>
+              <div className="field">
+                <label htmlFor="description" style={{ fontWeight: 600 }}>
+                  Description
+                </label>
+                <textarea
+                  id="description"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  rows={3}
+                  placeholder="Optional description"
+                  className="border-bottom-accent-focus"
+                  disabled={pending}
+                />
+              </div>
 
-            <div className="form-field">
-              <label htmlFor="visibility">Visibility</label>
-              <select
-                id="visibility"
-                value={visibility}
-                onChange={(e) => setVisibility(e.target.value as 'public' | 'unlisted' | 'private')}
-              >
-                <option value="public">Public</option>
-                <option value="unlisted">Unlisted</option>
-                <option value="private">Private</option>
-              </select>
+              <div className="field">
+                <label htmlFor="visibility" style={{ fontWeight: 600 }}>
+                  Visibility
+                </label>
+                <select
+                  id="visibility"
+                  value={visibility}
+                  onChange={(e) =>
+                    setVisibility(e.target.value as 'public' | 'unlisted' | 'private')
+                  }
+                  className="border-bottom-accent-focus"
+                  disabled={pending}
+                >
+                  <option value="public">Public</option>
+                  <option value="unlisted">Unlisted</option>
+                  <option value="private">Private</option>
+                </select>
+              </div>
             </div>
 
             {error && (
@@ -153,8 +169,8 @@ export default function NewPlaylistPage() {
               </p>
             )}
 
-            <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
-              <button type="submit" className="button" disabled={pending || !user}>
+            <div className="mt-30" style={{ display: 'flex', gap: 8 }}>
+              <button type="submit" className="button primary" disabled={pending || !user}>
                 {pending ? 'Creating…' : 'Create playlist'}
               </button>
               <button
@@ -167,7 +183,7 @@ export default function NewPlaylistPage() {
               </button>
             </div>
           </form>
-        ) : null}
+        )}
       </section>
     </>
   );
