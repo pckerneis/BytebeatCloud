@@ -26,11 +26,9 @@ export default function ProfilePage() {
             username={username}
             hideFollowButton
             extraHeader={
-              <>
-                <button type="button" className="button secondary" onClick={handleEditProfile}>
-                  Edit
-                </button>
-              </>
+              <button type="button" className="button secondary" onClick={handleEditProfile}>
+                Edit
+              </button>
             }
           />
         )}

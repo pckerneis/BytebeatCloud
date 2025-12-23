@@ -658,7 +658,7 @@ export function UserProfileContent({
       )}
 
       {activeTab === 'playlists' && (
-        <>
+        <div className="playlists-section">
           {playlistsQuery.loading && <p className="text-centered">Loading playlists…</p>}
           {playlistsQuery.error && <p className="error-message">{playlistsQuery.error}</p>}
           {!playlistsQuery.loading &&
@@ -685,7 +685,7 @@ export function UserProfileContent({
                 ))}
               </ul>
             )}
-        </>
+        </div>
       )}
     </section>
   );

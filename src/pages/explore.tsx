@@ -11,6 +11,7 @@ import Link from 'next/link';
 import { validateExpression } from '../utils/expression-validator';
 import { useTabState } from '../hooks/useTabState';
 import { PostDetailView } from '../components/PostDetailView';
+import { PlaylistCard } from '../components/PlaylistCard';
 
 const tabs = ['feed', 'recent', 'weekly'] as const;
 type TabName = (typeof tabs)[number];
@@ -519,28 +520,19 @@ export default function ExplorePage() {
               <p className="text-centered">No playlists yet.</p>
             )}
             {!playlistsLoading && !playlistsError && playlists.length > 0 && (
-              <ul style={{ listStyle: 'none', padding: 0 }}>
-                {playlists.map((pl) => (
-                  <li key={pl.id} className="playlist-card">
-                    <div className="flex-row flex-end">
-                      <Link href={`/playlists/${pl.id}`} className="weight-600">
-                        {pl.title}
-                      </Link>
-                      <span className="secondary-text ml-auto smaller">
-                        {pl.postsCount ?? 0} {pl.postsCount === 1 ? 'post' : 'posts'}
-                      </span>
-                    </div>
-                    {pl.description && (
-                      <div className="secondary-text smaller">{pl.description}</div>
-                    )}
-                    <div className="flex-row">
-                      <Link href={`/playlists/${pl.id}`} className="button small secondary">
-                        View
-                      </Link>
-                    </div>
-                  </li>
-                ))}
-              </ul>
+              <div className="playlists-section mt-30">
+                <ul>
+                  {playlists.map((pl) => (
+                    <PlaylistCard
+                      key={pl.id}
+                      id={pl.id}
+                      name={pl.title}
+                      description={pl.description}
+                      postsCount={pl.postsCount}
+                    />
+                  ))}
+                </ul>
+              </div>
             )}
             <div ref={sentinelRef} style={{ height: 1 }} data-testid="scroll-sentinel" />
             {hasMorePlaylists && !playlistsLoading && playlists.length > 0 && (
