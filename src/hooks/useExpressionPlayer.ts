@@ -24,6 +24,7 @@ interface UseExpressionPlayerOptions {
     mode: ModeOption,
     sampleRate: number,
   ) => void | Promise<void>;
+  currentPost?: { id: string } | null;
 }
 
 export function useExpressionPlayer({
@@ -37,6 +38,7 @@ export function useExpressionPlayer({
   isPlaying,
   liveUpdateEnabled,
   updateExpression,
+  currentPost,
 }: UseExpressionPlayerOptions) {
   const [validationIssue, setValidationIssue] = useState<ValidationIssue | null>(null);
   const validationTimeoutRef = useRef<number | null>(null);
@@ -58,7 +60,8 @@ export function useExpressionPlayer({
       const result = validateExpression(value);
       setValidationIssue(result.valid ? null : result.issues[0] ?? null);
 
-      if (result.valid && liveUpdateEnabled && isPlaying) {
+      // Only apply live updates if no post is currently playing (i.e., editor's expression is playing)
+      if (result.valid && liveUpdateEnabled && isPlaying && !currentPost) {
         void updateExpression(value, mode, sampleRateValue);
       }
 
@@ -70,8 +73,15 @@ export function useExpressionPlayer({
     }, DEBOUNCE_CODE_MS);
   };
 
-  const handlePlayClick = () => {
-    if (isPlaying) {
+  const handlePlayClick = (currentPost?: { id: string } | null) => {
+    // If currently playing the editor's expression, pause it
+    if (isPlaying && !currentPost) {
+      void toggle(expression, mode, sampleRateValue, loopPreview);
+      return;
+    }
+
+    // If currently playing a post, pause it first (don't start editor)
+    if (isPlaying && currentPost) {
       void toggle(expression, mode, sampleRateValue, loopPreview);
       return;
     }

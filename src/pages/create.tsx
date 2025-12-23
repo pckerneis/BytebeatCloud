@@ -45,7 +45,7 @@ export default function CreatePage() {
   const { weekNumber: currentWeekNumber, theme: currentTheme } = useCurrentWeeklyChallenge();
   const [hasWeeklySubmission, setHasWeeklySubmission] = useState(false);
 
-  const { validationIssue, handleExpressionChange, handlePlayClick, setValidationIssue } =
+  const { validationIssue, handleExpressionChange, handlePlayClick: handlePlayClickBase, setValidationIssue } =
     useExpressionPlayer({
       expression,
       setExpression,
@@ -57,7 +57,10 @@ export default function CreatePage() {
       isPlaying,
       liveUpdateEnabled,
       updateExpression,
+      currentPost,
     });
+
+  const handlePlayClick = () => handlePlayClickBase(currentPost);
 
   useEffect(() => {
     return () => {
@@ -98,7 +101,8 @@ export default function CreatePage() {
   }, [user, currentWeekNumber]);
 
   useEffect(() => {
-    if (!liveUpdateEnabled || !isPlaying) return;
+    // Only apply live updates when no post is playing (editor's expression is playing)
+    if (!liveUpdateEnabled || !isPlaying || currentPost) return;
 
     const trimmed = expression.trim();
     if (!trimmed) return;
@@ -107,7 +111,7 @@ export default function CreatePage() {
     if (!result.valid) return;
 
     void updateExpression(trimmed, mode, sampleRate);
-  }, [mode, sampleRate, liveUpdateEnabled, isPlaying, expression, updateExpression]);
+  }, [mode, sampleRate, liveUpdateEnabled, isPlaying, expression, updateExpression, currentPost]);
 
   // On first load, prefill from URL (if present) or from localStorage draft.
   useEffect(() => {

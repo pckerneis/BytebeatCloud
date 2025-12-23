@@ -44,7 +44,7 @@ export default function EditPostPage() {
   const isDirtyRef = useRef(false);
   const isApplyingServerStateRef = useRef(false);
 
-  const { validationIssue, handleExpressionChange, handlePlayClick, setValidationIssue } =
+  const { validationIssue, handleExpressionChange, handlePlayClick: handlePlayClickBase, setValidationIssue } =
     useExpressionPlayer({
       expression,
       setExpression,
@@ -56,7 +56,10 @@ export default function EditPostPage() {
       isPlaying,
       liveUpdateEnabled,
       updateExpression,
+      currentPost,
     });
+
+  const handlePlayClick = () => handlePlayClickBase(currentPost);
 
   const handleExpressionChangeWithDirty = (value: string) => {
     if (!isApplyingServerStateRef.current) {
@@ -88,7 +91,8 @@ export default function EditPostPage() {
   useCtrlSpacePlayShortcut(handlePlayClick);
 
   useEffect(() => {
-    if (!liveUpdateEnabled || !isPlaying) return;
+    // Only apply live updates when no post is playing (editor's expression is playing)
+    if (!liveUpdateEnabled || !isPlaying || currentPost) return;
 
     const trimmed = expression.trim();
     if (!trimmed) return;
@@ -97,7 +101,7 @@ export default function EditPostPage() {
     if (!result.valid) return;
 
     void updateExpression(trimmed, mode, sampleRate);
-  }, [mode, sampleRate, liveUpdateEnabled, isPlaying, expression, updateExpression]);
+  }, [mode, sampleRate, liveUpdateEnabled, isPlaying, expression, updateExpression, currentPost]);
 
   useEffect(() => {
     if (!id || typeof id !== 'string') return;
