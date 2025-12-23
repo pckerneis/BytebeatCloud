@@ -43,6 +43,7 @@ export default function CreatePage() {
   const [saveError, setSaveError] = useState('');
   const [liveUpdateEnabled, setLiveUpdateEnabled] = useState(true);
   const { weekNumber: currentWeekNumber, theme: currentTheme } = useCurrentWeeklyChallenge();
+  const [hasWeeklySubmission, setHasWeeklySubmission] = useState(false);
 
   const { validationIssue, handleExpressionChange, handlePlayClick, setValidationIssue } =
     useExpressionPlayer({
@@ -68,6 +69,33 @@ export default function CreatePage() {
   }, [stop, currentPost]);
 
   useCtrlSpacePlayShortcut(handlePlayClick);
+
+  // Check if user already has a submission for current week
+  useEffect(() => {
+    const checkWeeklySubmission = async () => {
+      if (!user || currentWeekNumber === null) {
+        setHasWeeklySubmission(false);
+        return;
+      }
+
+      const weekTag = `#week${currentWeekNumber}`;
+      const { data, error } = await supabase
+        .from('posts')
+        .select('id')
+        .eq('profile_id', (user as any).id)
+        .eq('is_draft', false)
+        .or(`title.ilike.%${weekTag}%,description.ilike.%${weekTag}%`)
+        .limit(1);
+
+      if (!error && data && data.length > 0) {
+        setHasWeeklySubmission(true);
+      } else {
+        setHasWeeklySubmission(false);
+      }
+    };
+
+    void checkWeeklySubmission();
+  }, [user, currentWeekNumber]);
 
   useEffect(() => {
     if (!liveUpdateEnabled || !isPlaying) return;
@@ -339,7 +367,7 @@ export default function CreatePage() {
           </div>
         )}
 
-        {user && !isWeeklyParticipation && currentTheme && (
+        {user && !isWeeklyParticipation && currentTheme && !hasWeeklySubmission && (
           <div className="info-panel">
             <span>This week&#39;s theme is &#34;{currentTheme}&#34;.</span>
             <div>
@@ -348,7 +376,7 @@ export default function CreatePage() {
               </span>{' '}
               to the post description to participate the{' '}
               <Link href="/about-weekly" target="_blank">
-                challenge
+                weekly challenge
               </Link>
               .
             </div>
