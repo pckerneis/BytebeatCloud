@@ -373,20 +373,23 @@ export default function PlaylistEditPage() {
                       >
                         ⋮⋮
                       </span>
-                        <span className="secondary-text" style={{ width: 24, textAlign: 'right' }}>{idx + 1}.</span>
+                      <span className="secondary-text" style={{ width: 24, textAlign: 'right' }}>{idx + 1}.</span>
+
+                      <div>
                         <span style={{ fontWeight: 600 }}>{formatPostTitle(p.title)}</span>{' '}
                         <span className="secondary-text">by @{formatAuthorUsername(p.author_username)}</span>
-                        <button
-                          type="button"
-                          className="button danger small ml-auto"
-                          disabled={savePending}
-                          onClick={() => {
-                            setRemovedPostIds(prev => new Set(prev).add(p.id));
-                          }}
-                          aria-label={`Remove ${formatPostTitle(p.title)} from playlist`}
-                        >
-                          Remove
-                        </button>
+                      </div>
+                      <button
+                        type="button"
+                        className="button danger small ml-auto"
+                        disabled={savePending}
+                        onClick={() => {
+                          setRemovedPostIds(prev => new Set(prev).add(p.id));
+                        }}
+                        aria-label={`Remove ${formatPostTitle(p.title)} from playlist`}
+                      >
+                        Remove
+                      </button>
                     </li>
                   ))}
                 </ul>
