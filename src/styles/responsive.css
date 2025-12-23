@@ -1,6 +1,13 @@
 /* Mobile layout */
 
 @media (max-width: 640px) {
+  html,
+  body {
+    overflow: hidden;
+    width: 100%;
+    height: 100%;
+  }
+
   .top-content {
     flex-direction: column;
   }
@@ -92,13 +99,36 @@
     height: 32px;
   }
 
+  .visualizer {
+    position: relative;
+  }
+
   .played-post-info {
-    width: 40%;
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 100%;
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 0 4px;
+    pointer-events: none;
+    background: linear-gradient(to right, #ffffffa0 0%, #ffffffdd 50%, #ffffffa0 100%);
+  }
+
+  .played-post-info * {
+    pointer-events: auto;
   }
 
   .visualizer canvas {
     width: 100px;
+  }
+
+  .volume-slider-backdrop {
+    left: auto;
+    right: auto;
   }
 
   .post-list {

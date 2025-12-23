@@ -400,6 +400,20 @@ export default function FooterPlayer() {
 
       <div className="visualizer">
         <canvas ref={visualizerRef} width={150} height={26}></canvas>
+        <div className="played-post-info" onClick={handlePlayedPostInfoClick}>
+          <div className="played-post-author">
+            {currentPost
+              ? currentPost.author_username
+                ? `@${currentPost.author_username}`
+                : '@unknown'
+              : '-'}
+          </div>
+          <div className="played-post-name" ref={titleRef}>
+            <span className={`played-post-name-text${isTitleOverflowing ? ' is-overflowing' : ''}`}>
+              {currentPost ? formatPostTitle(currentPost.title) : '-'}
+            </span>
+          </div>
+        </div>
       </div>
 
       <div className="footer-volume">
@@ -473,20 +487,6 @@ export default function FooterPlayer() {
               className="volume-slider"
             />
           </div>
-        </div>
-      </div>
-      <div className="played-post-info" onClick={handlePlayedPostInfoClick}>
-        <div className="played-post-author">
-          {currentPost
-            ? currentPost.author_username
-              ? `@${currentPost.author_username}`
-              : '@unknown'
-            : '-'}
-        </div>
-        <div className="played-post-name" ref={titleRef}>
-          <span className={`played-post-name-text${isTitleOverflowing ? ' is-overflowing' : ''}`}>
-            {currentPost ? formatPostTitle(currentPost.title) : '-'}
-          </span>
         </div>
       </div>
       <button
