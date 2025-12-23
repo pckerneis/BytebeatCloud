@@ -165,7 +165,7 @@ export default function PlaylistDetailPage() {
                 <span className="chip" style={{ fontSize: 12 }}>{playlist.visibility}</span>
               </div>
               {playlist.description && (
-                <p className="secondary-text" style={{ marginTop: 8 }}>{playlist.description}</p>
+                <p className="secondary-text white-space-pre-wrap" style={{ marginTop: 8 }}>{playlist.description}</p>
               )}
             </div>
             <div style={{ marginTop: 16 }}>

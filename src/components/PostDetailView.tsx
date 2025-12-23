@@ -720,7 +720,7 @@ export function PostDetailView({ postId, baseUrl, onBack }: Readonly<PostDetailV
             />
 
             {posts[0]?.description && (
-              <p className="post-description-detail">
+              <p className="post-description-detail white-space-pre-wrap">
                 {renderDescriptionWithTagsAndMentions(
                   posts[0].description,
                   mentionUserMap,
@@ -873,7 +873,7 @@ export function PostDetailView({ postId, baseUrl, onBack }: Readonly<PostDetailV
                               </button>
                             )}
                         </div>
-                        <p className="comment-content">
+                        <p className="comment-content white-space-pre-wrap">
                           {renderDescriptionWithTagsAndMentions(
                             c.content,
                             commentMentionUserMap,

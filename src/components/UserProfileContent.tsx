@@ -559,7 +559,7 @@ export function UserProfileContent({
         </div>
       </div>
 
-      {bio && <p className="profile-bio">{bio}</p>}
+      {bio && <p className="profile-bio white-space-pre-wrap">{bio}</p>}
 
       {socialLinks.length > 0 && (
         <div className="profile-social-links">

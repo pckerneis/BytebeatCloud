@@ -74,6 +74,10 @@ button {
   justify-content: space-around;
 }
 
+.white-space-pre-wrap {
+    white-space: pre-wrap;
+}
+
 .ml-5 {
   margin-left: 5px;
 }
