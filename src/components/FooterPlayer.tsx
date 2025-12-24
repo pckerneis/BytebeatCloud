@@ -258,15 +258,13 @@ export default function FooterPlayer() {
       clearTimers();
     };
     // Recreate timers when these change
+    // Note: fadeGain is intentionally excluded to prevent timer reset during fade animation
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     currentPost?.id,
     isPlaying,
     loopEnabled,
     playlist?.length,
-    fadeGain,
-    setFadeGain,
-    next,
-    playPost,
     currentPost,
   ]);
 
