@@ -89,6 +89,7 @@ export function PostDetailView({ postId, baseUrl, onBack }: Readonly<PostDetailV
   const [deletePending, setDeletePending] = useState(false);
   const [replyToCommentId, setReplyToCommentId] = useState<string | null>(null);
   const [replyToUsername, setReplyToUsername] = useState<string | null>(null);
+  const [highlightedCommentId, setHighlightedCommentId] = useState<string | null>(null);
 
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
   const [playlistsLoading, setPlaylistsLoading] = useState(false);
@@ -639,6 +640,17 @@ export function PostDetailView({ postId, baseUrl, onBack }: Readonly<PostDetailV
     }
   };
 
+  const handleScrollToComment = (commentId: string) => {
+    const commentElement = document.querySelector(`[data-comment-id="${commentId}"]`);
+    if (commentElement) {
+      commentElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      setHighlightedCommentId(commentId);
+      setTimeout(() => {
+        setHighlightedCommentId(null);
+      }, 2000);
+    }
+  };
+
   const handleOpenDeleteConfirm = (commentId: string, authorId: string) => {
     setDeleteConfirmOpen(commentId);
     setDeleteConfirmAuthorId(authorId);
@@ -877,9 +889,17 @@ export function PostDetailView({ postId, baseUrl, onBack }: Readonly<PostDetailV
                         ? comments.find((comment) => comment.id === c.reply_to_comment_id)
                         : null;
                       return (
-                        <li key={c.id} className="comment-item">
+                        <li
+                          key={c.id}
+                          className={`comment-item${highlightedCommentId === c.id ? ' highlighted' : ''}`}
+                          data-comment-id={c.id}
+                        >
                           {replyToComment && (
-                            <div className="comment-reply-indicator">
+                            <div
+                              className="comment-reply-indicator"
+                              onClick={() => handleScrollToComment(c.reply_to_comment_id!)}
+                              style={{ cursor: 'pointer' }}
+                            >
                               Replying to @{formatAuthorUsername(replyToComment.author_username)}
                             </div>
                           )}
