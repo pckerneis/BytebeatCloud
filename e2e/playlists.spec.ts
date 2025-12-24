@@ -125,9 +125,7 @@ test.describe('Playlists - unauthenticated', () => {
     await expect(page.getByText('Test Post')).toBeVisible();
   });
 
-  test('should not show Edit button for public playlist when unauthenticated', async ({
-    page,
-  }) => {
+  test('should not show Edit button for public playlist when unauthenticated', async ({ page }) => {
     const { userId } = await ensureTestUserProfile(TEST_USER_EMAIL, TEST_USERNAME);
 
     const playlistId = await createTestPlaylist({
@@ -175,7 +173,7 @@ test.describe('Playlists - create', () => {
     await page.click('button[type="submit"]');
 
     await page.waitForURL(/\/playlists\/[a-f0-9-]+$/);
-    await expect(page.getByText('private', {exact: true})).toBeVisible();
+    await expect(page.getByText('private', { exact: true })).toBeVisible();
   });
 
   test('should show character count for title', async ({ page }) => {
@@ -222,7 +220,7 @@ test.describe('Playlists - create', () => {
     await page.click('button[type="submit"]');
 
     await page.waitForURL(/\/playlists\/[a-f0-9-]+$/);
-    await expect(page.getByText('Source Post', {exact: true})).toBeVisible();
+    await expect(page.getByText('Source Post', { exact: true })).toBeVisible();
   });
 });
 
@@ -275,7 +273,9 @@ test.describe('Playlists - view and play', () => {
   test('should show Edit button for own playlist', async ({ page }) => {
     await page.goto(`/playlists/${playlistId}`);
 
-    await expect(page.locator('.profile-title-row').getByRole('link', { name: 'Edit' })).toBeVisible();
+    await expect(
+      page.locator('.profile-title-row').getByRole('link', { name: 'Edit' }),
+    ).toBeVisible();
   });
 
   test('should not show Edit button for other users playlist', async ({ page }) => {
@@ -301,9 +301,7 @@ test.describe('Playlists - view and play', () => {
   test('should show playlist owner username', async ({ page }) => {
     await page.goto(`/playlists/${playlistId}`);
 
-    await expect(page
-      .locator('.playlist-header')
-      .getByText(`@${TEST_USERNAME}`)).toBeVisible();
+    await expect(page.locator('.playlist-header').getByText(`@${TEST_USERNAME}`)).toBeVisible();
   });
 });
 
@@ -428,9 +426,7 @@ test.describe('Playlists - edit', () => {
 
     await page.goto(`/playlists/${playlistId}/edit`);
 
-    await expect(
-      page.getByText(/you don't have permission to edit this playlist/i),
-    ).toBeVisible();
+    await expect(page.getByText(/you don't have permission to edit this playlist/i)).toBeVisible();
   });
 
   test('should disable save button when title is empty', async ({ page }) => {
@@ -480,10 +476,10 @@ test.describe('Playlists - add to playlist from post detail', () => {
     await expect(page.getByText('Target Playlist')).toBeVisible();
 
     // Click Add button for the playlist
-    await page.getByRole('button', {name: 'Add', exact: true}).click();
+    await page.getByRole('button', { name: 'Add', exact: true }).click();
 
     // Wait for success
-    await expect(page.getByText("Playlists (1)")).toBeVisible();
+    await expect(page.getByText('Playlists (1)')).toBeVisible();
 
     // Navigate to playlist and verify post is there
     await page.goto(`/playlists/${playlistId}`);

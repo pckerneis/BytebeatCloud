@@ -300,10 +300,7 @@ export default function PlaylistEditPage() {
     setDeletePending(true);
     setDeleteError('');
     try {
-      const { error: deleteErr } = await supabase
-        .from('playlists')
-        .delete()
-        .eq('id', playlistId);
+      const { error: deleteErr } = await supabase.from('playlists').delete().eq('id', playlistId);
       if (deleteErr) throw deleteErr;
 
       void router.push('/explore?type=playlists');
@@ -478,7 +475,10 @@ export default function PlaylistEditPage() {
               </button>
             </div>
 
-            <div className="mt-30" style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: 24 }}>
+            <div
+              className="mt-30"
+              style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: 24 }}
+            >
               <h3 style={{ marginBottom: 8 }}>Danger Zone</h3>
               <p className="secondary-text" style={{ marginBottom: 16 }}>
                 Deleting this playlist is permanent and cannot be undone.
@@ -513,7 +513,9 @@ export default function PlaylistEditPage() {
                     Are you sure you want to delete <strong>{playlist.title}</strong>? This action
                     cannot be undone.
                   </p>
-                  <div style={{ display: 'flex', gap: 8, marginTop: 24, justifyContent: 'flex-end' }}>
+                  <div
+                    style={{ display: 'flex', gap: 8, marginTop: 24, justifyContent: 'flex-end' }}
+                  >
                     <button
                       type="button"
                       className="button secondary"
