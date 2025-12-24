@@ -285,7 +285,7 @@ export function PostDetailView({ postId, baseUrl, onBack }: Readonly<PostDetailV
       const { data, error } = await supabase
         .from('posts_with_meta')
         .select(
-          'id,title,description,expression,is_draft,sample_rate,mode,created_at,profile_id,fork_of_post_id,is_fork,author_username,origin_title,origin_username,favorites_count,is_weekly_winner,license,comments_count',
+          'id,title,description,expression,is_draft,sample_rate,mode,created_at,profile_id,fork_of_post_id,is_fork,author_username,origin_title,origin_username,favorites_count,is_weekly_winner,license,comments_count,favorited_by_current_user',
         )
         .eq('id', postId)
         .maybeSingle();
@@ -306,21 +306,6 @@ export function PostDetailView({ postId, baseUrl, onBack }: Readonly<PostDetailV
       }
 
       let rowWithCount = data as PostRow;
-
-      if (user) {
-        const { data: favs, error: favError } = await supabase
-          .from('favorites')
-          .select('post_id')
-          .eq('profile_id', (user as any).id)
-          .eq('post_id', rowWithCount.id);
-
-        if (!favError && favs && favs.length > 0) {
-          rowWithCount = {
-            ...rowWithCount,
-            favorited_by_current_user: true,
-          };
-        }
-      }
 
       if (!validateExpression(rowWithCount.expression).valid) {
         setError('This post contains an invalid expression.');

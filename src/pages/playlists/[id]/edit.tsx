@@ -42,6 +42,9 @@ export default function PlaylistEditPage() {
   const [editTitle, setEditTitle] = useState('');
   const [editDescription, setEditDescription] = useState('');
   const [touchStartY, setTouchStartY] = useState<number | null>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deletePending, setDeletePending] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
 
   const updateDropPosition = (y: number) => {
     const ul = listRef.current;
@@ -292,6 +295,22 @@ export default function PlaylistEditPage() {
     void router.push(`/playlists/${playlistId}`);
   };
 
+  const handleDelete = async () => {
+    if (!playlistId) return;
+    setDeletePending(true);
+    setDeleteError('');
+    try {
+      const { error: deleteErr } = await supabase.from('playlists').delete().eq('id', playlistId);
+      if (deleteErr) throw deleteErr;
+
+      void router.push('/explore?type=playlists');
+    } catch (e: any) {
+      setDeleteError(e?.message || 'Failed to delete playlist.');
+    } finally {
+      setDeletePending(false);
+    }
+  };
+
   // Check authorization
   const isOwner = currentUserId && playlist && playlist.owner_id === currentUserId;
   const unauthorized = !loading && playlist && !isOwner;
@@ -455,6 +474,68 @@ export default function PlaylistEditPage() {
                 Cancel
               </button>
             </div>
+
+            <div
+              className="mt-30"
+              style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: 24 }}
+            >
+              <h3 style={{ marginBottom: 8 }}>Danger Zone</h3>
+              <p className="secondary-text" style={{ marginBottom: 16 }}>
+                Deleting this playlist is permanent and cannot be undone.
+              </p>
+              <button
+                type="button"
+                className="button danger"
+                disabled={savePending || deletePending}
+                onClick={() => setShowDeleteModal(true)}
+              >
+                Delete Playlist
+              </button>
+              {deleteError && (
+                <p className="error-message" style={{ marginTop: 8 }}>
+                  {deleteError}
+                </p>
+              )}
+            </div>
+
+            {showDeleteModal && (
+              <div
+                className="modal-backdrop"
+                onClick={() => !deletePending && setShowDeleteModal(false)}
+              >
+                <div
+                  className="modal"
+                  onClick={(e) => e.stopPropagation()}
+                  style={{ maxWidth: 500 }}
+                >
+                  <h3>Delete Playlist</h3>
+                  <p style={{ marginTop: 16 }}>
+                    Are you sure you want to delete <strong>{playlist.title}</strong>? This action
+                    cannot be undone.
+                  </p>
+                  <div
+                    style={{ display: 'flex', gap: 8, marginTop: 24, justifyContent: 'flex-end' }}
+                  >
+                    <button
+                      type="button"
+                      className="button secondary"
+                      disabled={deletePending}
+                      onClick={() => setShowDeleteModal(false)}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      className="button danger"
+                      disabled={deletePending}
+                      onClick={handleDelete}
+                    >
+                      {deletePending ? 'Deleting…' : 'Delete Playlist'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </>
         )}
       </section>

@@ -5,7 +5,6 @@ import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
 import { PostList, type PostRow } from '../components/PostList';
 import Head from 'next/head';
 import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
-import { enrichWithViewerFavorites } from '../utils/favorites';
 import { enrichWithTags } from '../utils/tags';
 import Link from 'next/link';
 import { validateExpression } from '../utils/expression-validator';
@@ -223,7 +222,7 @@ export default function ExplorePage() {
             const result = await supabase
               .from('posts_with_meta')
               .select(
-                'id,title,expression,sample_rate,mode,created_at,profile_id,is_draft,fork_of_post_id,is_fork,author_username,origin_title,origin_username,favorites_count,is_weekly_winner,license,comments_count',
+                'id,title,expression,sample_rate,mode,created_at,profile_id,is_draft,fork_of_post_id,is_fork,author_username,origin_title,origin_username,favorites_count,favorited_by_current_user,is_weekly_winner,license,comments_count',
               )
               .in('id', ids);
 
@@ -260,7 +259,7 @@ export default function ExplorePage() {
         const result = await supabase
           .from('posts_with_meta')
           .select(
-            'id,title,expression,sample_rate,mode,created_at,profile_id,is_draft,fork_of_post_id,is_fork,author_username,origin_title,origin_username,favorites_count,is_weekly_winner,license,comments_count',
+            'id,title,expression,sample_rate,mode,created_at,profile_id,is_draft,fork_of_post_id,is_fork,author_username,origin_title,origin_username,favorites_count,favorited_by_current_user,is_weekly_winner,license,comments_count',
           )
           .eq('is_draft', false)
           .order('created_at', { ascending: false })
@@ -280,10 +279,6 @@ export default function ExplorePage() {
         setHasMore(false);
       } else {
         let rows = (data ?? []) as PostRow[];
-
-        if (user && rows.length > 0) {
-          rows = (await enrichWithViewerFavorites((user as any).id as string, rows)) as PostRow[];
-        }
 
         if (cancelled || fetchId !== currentFetchRef.current) return;
 
@@ -383,7 +378,8 @@ export default function ExplorePage() {
     return () => {
       cancelled = true;
     };
-  }, [contentType, pagePlaylists, playlists, playlists.length]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [contentType, pagePlaylists]);
 
   const handleTabClick = (tab: TabName) => {
     setActiveTab(tab);

@@ -106,9 +106,7 @@ export function PlaylistCard({ id, name, description, postsCount }: Readonly<Pla
   };
 
   return (
-    <li
-      className={`playlist-card${isPlayingThisPlaylist ? ' playing' : ''}`}
-    >
+    <li className={`playlist-card${isPlayingThisPlaylist ? ' playing' : ''}`}>
       <div className="flex-row flex-end">
         <Link href={`/playlists/${id}`} className="weight-600">
           {name}
