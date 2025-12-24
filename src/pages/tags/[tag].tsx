@@ -5,7 +5,6 @@ import { supabase } from '../../lib/supabaseClient';
 import { PostList, type PostRow } from '../../components/PostList';
 import { useSupabaseAuth } from '../../hooks/useSupabaseAuth';
 import { useInfiniteScroll } from '../../hooks/useInfiniteScroll';
-import { enrichWithViewerFavorites } from '../../utils/favorites';
 import { enrichWithTags } from '../../utils/tags';
 import { validateExpression } from '../../utils/expression-validator';
 import { useTabState } from '../../hooks/useTabState';
@@ -140,10 +139,6 @@ export default function TagPage() {
         setHasMore(false);
       } else {
         let rows = (result.data ?? []) as PostRow[];
-
-        if (user && rows.length > 0) {
-          rows = (await enrichWithViewerFavorites((user as any).id as string, rows)) as PostRow[];
-        }
 
         if (rows.length > 0) {
           rows = (await enrichWithTags(rows)) as PostRow[];

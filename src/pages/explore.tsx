@@ -5,7 +5,6 @@ import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
 import { PostList, type PostRow } from '../components/PostList';
 import Head from 'next/head';
 import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
-import { enrichWithViewerFavorites } from '../utils/favorites';
 import { enrichWithTags } from '../utils/tags';
 import Link from 'next/link';
 import { validateExpression } from '../utils/expression-validator';
@@ -280,10 +279,6 @@ export default function ExplorePage() {
         setHasMore(false);
       } else {
         let rows = (data ?? []) as PostRow[];
-
-        if (user && rows.length > 0) {
-          rows = (await enrichWithViewerFavorites((user as any).id as string, rows)) as PostRow[];
-        }
 
         if (cancelled || fetchId !== currentFetchRef.current) return;
 

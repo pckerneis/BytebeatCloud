@@ -1,6 +1,5 @@
 import { ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
-import { enrichWithViewerFavorites } from '../utils/favorites';
 import { enrichWithTags } from '../utils/tags';
 import { validateExpression } from '../utils/expression-validator';
 import type { PostRow } from './PostList';
@@ -18,9 +17,6 @@ const POST_SELECT_COLUMNS =
 
 // Shared enrichment pipeline
 async function enrichPosts(rows: PostRow[], currentUserId?: string | null): Promise<PostRow[]> {
-  if (currentUserId && rows.length > 0) {
-    rows = (await enrichWithViewerFavorites(currentUserId, rows)) as PostRow[];
-  }
   if (rows.length > 0) {
     rows = (await enrichWithTags(rows)) as PostRow[];
   }
