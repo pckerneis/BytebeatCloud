@@ -105,9 +105,6 @@
 .post-header h3 {
   margin: 0;
   padding: 0;
-  overflow: hidden;
-  text-wrap: nowrap;
-  text-overflow: ellipsis;
 }
 
 .post-item .post-meta {
