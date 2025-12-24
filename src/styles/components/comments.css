@@ -73,3 +73,10 @@
   align-items: center;
   margin-top: 8px;
 }
+
+.comment-reply-indicator {
+  font-size: 12px;
+  color: var(--secondary-text-color);
+  margin-bottom: 4px;
+  font-style: italic;
+}

@@ -142,6 +142,10 @@ button {
   margin-bottom: auto;
 }
 
+.pl-0 {
+  padding-left: 0 !important;
+}
+
 .weight-600 {
   font-weight: 600;
 }

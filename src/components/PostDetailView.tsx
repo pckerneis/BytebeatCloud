@@ -31,6 +31,7 @@ interface Comment {
   created_at: string;
   author_id: string;
   author_username: string | null;
+  reply_to_comment_id: string | null;
 }
 
 interface Playlist {
@@ -86,6 +87,8 @@ export function PostDetailView({ postId, baseUrl, onBack }: Readonly<PostDetailV
   const [deleteAlsoReport, setDeleteAlsoReport] = useState(false);
   const [deleteReportCategory, setDeleteReportCategory] = useState('');
   const [deletePending, setDeletePending] = useState(false);
+  const [replyToCommentId, setReplyToCommentId] = useState<string | null>(null);
+  const [replyToUsername, setReplyToUsername] = useState<string | null>(null);
 
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
   const [playlistsLoading, setPlaylistsLoading] = useState(false);
@@ -382,7 +385,7 @@ export function PostDetailView({ postId, baseUrl, onBack }: Readonly<PostDetailV
       const { data, error } = await supabase
         .from('comments')
         .select(
-          'id, content, created_at, author_id, author:profiles!comments_author_id_fkey(username)',
+          'id, content, created_at, author_id, reply_to_comment_id, author:profiles!comments_author_id_fkey(username)',
         )
         .eq('post_id', postId)
         .is('deleted_at', null)
@@ -400,6 +403,7 @@ export function PostDetailView({ postId, baseUrl, onBack }: Readonly<PostDetailV
           created_at: c.created_at as string,
           author_id: c.author_id as string,
           author_username: (c.author?.username as string) ?? null,
+          reply_to_comment_id: (c.reply_to_comment_id as string) ?? null,
         }));
         setComments(rows);
 
@@ -549,6 +553,7 @@ export function PostDetailView({ postId, baseUrl, onBack }: Readonly<PostDetailV
     const { data, error } = await supabase.rpc('create_comment', {
       p_post_id: posts[0].id,
       p_content: contentWithIds,
+      p_reply_to_comment_id: replyToCommentId,
     });
 
     if (error) {
@@ -592,10 +597,28 @@ export function PostDetailView({ postId, baseUrl, onBack }: Readonly<PostDetailV
         created_at: data.created_at,
         author_id: data.author_id,
         author_username: currentUsername ?? null,
+        reply_to_comment_id: data.reply_to_comment_id ?? null,
       },
     ]);
     setNewComment('');
+    setReplyToCommentId(null);
+    setReplyToUsername(null);
     setCommentPending(false);
+  };
+
+  const handleReply = (commentId: string, username: string | null) => {
+    if (!username) return;
+    setReplyToCommentId(commentId);
+    setReplyToUsername(username);
+    setNewComment(`@${username} ${newComment}`);
+  };
+
+  const handleCancelReply = () => {
+    setReplyToCommentId(null);
+    setReplyToUsername(null);
+    if (newComment.startsWith(`@${replyToUsername} `)) {
+      setNewComment('');
+    }
   };
 
   const handleOpenDeleteConfirm = (commentId: string, authorId: string) => {
@@ -831,50 +854,88 @@ export function PostDetailView({ postId, baseUrl, onBack }: Readonly<PostDetailV
                 )}
                 {!commentsLoading && comments.length > 0 && (
                   <ul className="comments-list">
-                    {comments.map((c) => (
-                      <li key={c.id} className="comment-item">
-                        <div className="comment-header">
-                          <Link href={`/u/${c.author_username}`} className="comment-author">
-                            @{formatAuthorUsername(c.author_username)}
-                          </Link>
-                          <span className="comment-date">{formatRelativeTime(c.created_at)}</span>
-                          {user &&
-                            ((user as any).id === c.author_id ||
-                              posts[0]?.profile_id === (user as any).id) && (
-                              <button
-                                type="button"
-                                className="button ghost small ml-auto"
-                                onClick={() => handleOpenDeleteConfirm(c.id, c.author_id)}
-                              >
-                                Delete
-                              </button>
-                            )}
-                          {user &&
-                            (user as any).id !== c.author_id &&
-                            posts[0]?.profile_id !== (user as any).id && (
-                              <button
-                                type="button"
-                                className="button ghost small ml-auto"
-                                onClick={() => handleOpenCommentReport(c.id)}
-                                disabled={reportedCommentIds.has(c.id)}
-                              >
-                                {reportedCommentIds.has(c.id) ? 'Reported' : 'Report'}
-                              </button>
-                            )}
-                        </div>
-                        <p className="comment-content white-space-pre-wrap">
-                          {renderDescriptionWithTagsAndMentions(
-                            c.content,
-                            commentMentionUserMap,
-                            commentPostMap,
+                    {comments.map((c) => {
+                      const replyToComment = c.reply_to_comment_id
+                        ? comments.find((comment) => comment.id === c.reply_to_comment_id)
+                        : null;
+                      return (
+                        <li key={c.id} className="comment-item">
+                          {replyToComment && (
+                            <div className="comment-reply-indicator">
+                              Replying to @{formatAuthorUsername(replyToComment.author_username)}
+                            </div>
                           )}
-                        </p>
-                      </li>
-                    ))}
+                          <div className="comment-header">
+                            <Link href={`/u/${c.author_username}`} className="comment-author">
+                              @{formatAuthorUsername(c.author_username)}
+                            </Link>
+                            <span className="comment-date">{formatRelativeTime(c.created_at)}</span>
+                          </div>
+                          <p className="comment-content white-space-pre-wrap">
+                            {renderDescriptionWithTagsAndMentions(
+                              c.content,
+                              commentMentionUserMap,
+                              commentPostMap,
+                            )}
+                          </p>
+                          {user && (
+                            <div className="comment-actions">
+                              <button
+                                type="button"
+                                className="button ghost small pl-0"
+                                onClick={() => handleReply(c.id, c.author_username)}
+                              >
+                                Reply
+                              </button>
+                              {((user as any).id === c.author_id ||
+                                posts[0]?.profile_id === (user as any).id) && (
+                                <button
+                                  type="button"
+                                  className="button ghost small"
+                                  onClick={() => handleOpenDeleteConfirm(c.id, c.author_id)}
+                                >
+                                  Delete
+                                </button>
+                              )}
+                              {(user as any).id !== c.author_id &&
+                                posts[0]?.profile_id !== (user as any).id && (
+                                  <button
+                                    type="button"
+                                    className="button ghost small"
+                                    onClick={() => handleOpenCommentReport(c.id)}
+                                    disabled={reportedCommentIds.has(c.id)}
+                                  >
+                                    {reportedCommentIds.has(c.id) ? 'Reported' : 'Report'}
+                                  </button>
+                                )}
+                            </div>
+                          )}
+                        </li>
+                      );
+                    })}
                   </ul>
                 )}
                 {user ? (
                   <div className="comment-form">
+                    {replyToUsername && (
+                      <div
+                        style={{
+                          marginBottom: '8px',
+                          fontSize: '14px',
+                          color: 'var(--secondary-text-color)',
+                        }}
+                      >
+                        Replying to @{replyToUsername}{' '}
+                        <button
+                          type="button"
+                          className="button ghost small"
+                          onClick={handleCancelReply}
+                          style={{ padding: '0 4px' }}
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    )}
                     <AutocompleteTextarea
                       value={newComment}
                       onChange={setNewComment}

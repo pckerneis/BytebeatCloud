@@ -106,6 +106,7 @@
 
   .visualizer canvas {
     opacity: 0.35;
+    width: 100px;
   }
 
   .played-post-info {
@@ -126,10 +127,6 @@
 
   .played-post-info * {
     pointer-events: auto;
-  }
-
-  .visualizer canvas {
-    width: 100px;
   }
 
   .volume-slider-backdrop {
@@ -160,6 +157,10 @@
   .chips .chip {
     font-size: 9px;
     padding-inline: 6px;
+  }
+
+  .comment-content {
+    font-size: small;
   }
 
   /* Mobile theme toggle: compact round swatch */
