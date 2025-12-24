@@ -378,7 +378,8 @@ export default function ExplorePage() {
     return () => {
       cancelled = true;
     };
-  }, [contentType, pagePlaylists, playlists, playlists.length]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [contentType, pagePlaylists]);
 
   const handleTabClick = (tab: TabName) => {
     setActiveTab(tab);
