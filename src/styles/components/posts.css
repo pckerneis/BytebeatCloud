@@ -233,3 +233,9 @@
   margin: 16px 0;
   display: flex;
 }
+
+.comment-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}

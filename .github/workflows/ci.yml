@@ -60,8 +60,8 @@ jobs:
             spec: e2e/auth-nav.spec.ts
           - group: create_edit
             spec: e2e/create.spec.ts e2e/edit.spec.ts e2e/fork.spec.ts
-          - group: notifications
-            spec: e2e/notifications.spec.ts e2e/notification-triggers.spec.ts e2e/mentions.spec.ts e2e/comments.spec.ts e2e/comment-rate-limiting.spec.ts
+          - group: notifications and comments
+            spec: e2e/notifications.spec.ts e2e/notification-triggers.spec.ts e2e/mentions.spec.ts e2e/comments.spec.ts e2e/comment-rate-limiting.spec.ts e2e/comment-replies.spec.ts
           - group: weekly
             spec: e2e/weekly-challenges.spec.ts e2e/weekly-hall-of-fame.spec.ts e2e/home-weekly.spec.ts
           - group: playlists
