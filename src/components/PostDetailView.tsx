@@ -610,7 +610,25 @@ export function PostDetailView({ postId, baseUrl, onBack }: Readonly<PostDetailV
     if (!username) return;
     setReplyToCommentId(commentId);
     setReplyToUsername(username);
-    setNewComment(`@${username} ${newComment}`);
+
+    if (!newComment.startsWith(`@${username}`)) {
+      setNewComment(`@${username} ${newComment}`);
+    }
+
+    // Scroll to comment form
+    setTimeout(() => {
+      const commentForm = document.querySelector('.comment-form');
+      if (commentForm) {
+        commentForm.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        // Focus the textarea
+        const textarea = commentForm.querySelector('textarea');
+        if (textarea) {
+          textarea.focus();
+          // Move cursor to end
+          textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+        }
+      }
+    }, 100);
   };
 
   const handleCancelReply = () => {

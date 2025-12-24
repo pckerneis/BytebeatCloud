@@ -2,8 +2,9 @@
 
 BEGIN;
 
--- Drop the old function
+-- Drop the old function (try both signatures to be safe)
 DROP FUNCTION IF EXISTS public.create_comment(uuid, text);
+DROP FUNCTION IF EXISTS public.create_comment(uuid, text, uuid);
 
 -- Recreate with reply_to_comment_id parameter
 CREATE OR REPLACE FUNCTION public.create_comment(
