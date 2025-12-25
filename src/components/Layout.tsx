@@ -60,9 +60,15 @@ export function Layout({ children }: PropsWithChildren) {
   };
 
   const loadCount = async () => {
+    if (!userId) {
+      setNotificationsCount(null);
+      return;
+    }
+
     const { count, error } = await supabase
       .from('notifications')
       .select('id', { count: 'exact', head: true })
+      .eq('user_id', userId)
       .eq('read', false);
 
     if (error) {
@@ -72,28 +78,49 @@ export function Layout({ children }: PropsWithChildren) {
     }
   };
 
-  const handleRefresh = () => {
-    void loadCount();
-  };
-
-  if (typeof window !== 'undefined') {
-    window.addEventListener('notifications:refresh', handleRefresh);
-  }
-
-  void loadCount();
-
+  // Load initial count and subscribe to real-time updates
   useEffect(() => {
-    const interval = setInterval(() => {
+    if (!userId) {
+      setNotificationsCount(null);
+      return;
+    }
+
+    // Load initial count
+    void loadCount();
+
+    // Subscribe to real-time notifications
+    const channel = supabase
+      .channel(`notifications:${userId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'notifications',
+          filter: `user_id=eq.${userId}`,
+        },
+        () => {
+          void loadCount();
+        },
+      )
+      .subscribe();
+
+    // Listen for manual refresh events (e.g., when marking as read)
+    const handleRefresh = () => {
       void loadCount();
-    }, 30000);
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('notifications:refresh', handleRefresh);
+    }
 
     return () => {
+      void supabase.removeChannel(channel);
       if (typeof window !== 'undefined') {
-        window.clearInterval(interval);
         window.removeEventListener('notifications:refresh', handleRefresh);
       }
     };
-  });
+  }, [userId]);
 
   const handleCycleTheme = () => {
     if (!theme) {
