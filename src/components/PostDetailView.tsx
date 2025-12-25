@@ -1,5 +1,5 @@
 import { useRouter } from 'next/router';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ExportWavModal } from './ExportWavModal';
 import { ModeOption } from '../model/expression';
 import { LICENSE_OPTIONS } from '../model/postEditor';
@@ -48,9 +48,10 @@ interface PostDetailViewProps {
   postId: string;
   baseUrl?: string;
   onBack?: () => void;
+  scrollToComments?: boolean;
 }
 
-export function PostDetailView({ postId, baseUrl, onBack }: Readonly<PostDetailViewProps>) {
+export function PostDetailView({ postId, baseUrl, onBack, scrollToComments }: Readonly<PostDetailViewProps>) {
   const router = useRouter();
 
   const [posts, setPosts] = useState<PostRow[]>([]);
@@ -90,6 +91,7 @@ export function PostDetailView({ postId, baseUrl, onBack }: Readonly<PostDetailV
   const [replyToCommentId, setReplyToCommentId] = useState<string | null>(null);
   const [replyToUsername, setReplyToUsername] = useState<string | null>(null);
   const [highlightedCommentId, setHighlightedCommentId] = useState<string | null>(null);
+  const commentsTabRef = useRef<HTMLDivElement | null>(null);
 
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
   const [playlistsLoading, setPlaylistsLoading] = useState(false);
@@ -476,6 +478,23 @@ export function PostDetailView({ postId, baseUrl, onBack }: Readonly<PostDetailV
       cancelled = true;
     };
   }, [postId, posts.length, activeTab, user]);
+
+  // Auto-scroll to comments section when scrollToComments is true
+  useEffect(() => {
+    if (scrollToComments && !commentsLoading && posts.length > 0) {
+      // Switch to comments tab first
+      if (activeTab !== 'comments') {
+        setActiveTab('comments');
+      }
+      // Scroll to comments section after a short delay to ensure DOM is ready
+      setTimeout(() => {
+        const commentsSection = document.getElementById('comments');
+        if (commentsSection) {
+          commentsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 100);
+    }
+  }, [scrollToComments, commentsLoading, posts.length, activeTab]);
 
   // Load playlists containing this post (used for Playlists tab and tab count)
   useEffect(() => {

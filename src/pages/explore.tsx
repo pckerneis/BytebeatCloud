@@ -43,6 +43,7 @@ export default function ExplorePage() {
   const initialLoadDoneRef = useRef(false);
   const currentFetchRef = useRef(0);
   const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
+  const [scrollToComments, setScrollToComments] = useState(false);
   const isDetailOpen = Boolean(selectedPostId);
 
   interface PlaylistRow {
@@ -386,6 +387,20 @@ export default function ExplorePage() {
   };
 
   const handlePostClick = (post: PostRow) => {
+    setScrollToComments(false);
+    const nextQuery = { ...router.query, post: post.id };
+    void router.push(
+      {
+        pathname: router.pathname,
+        query: nextQuery,
+      },
+      undefined,
+      { shallow: true },
+    );
+  };
+
+  const handleCommentClick = (post: PostRow) => {
+    setScrollToComments(true);
     const nextQuery = { ...router.query, post: post.id };
     void router.push(
       {
@@ -493,6 +508,7 @@ export default function ExplorePage() {
                 posts={posts}
                 currentUserId={user ? (user as any).id : undefined}
                 onPostClick={handlePostClick}
+                onCommentClick={handleCommentClick}
               />
             )}
             <div ref={sentinelRef} style={{ height: 1 }} data-testid="scroll-sentinel" />
@@ -540,7 +556,13 @@ export default function ExplorePage() {
           </>
         )}
       </section>
-      {isDetailOpen && <PostDetailView postId={selectedPostId!} onBack={handleCloseDetail} />}
+      {isDetailOpen && (
+        <PostDetailView
+          postId={selectedPostId!}
+          onBack={handleCloseDetail}
+          scrollToComments={scrollToComments}
+        />
+      )}
     </>
   );
 }

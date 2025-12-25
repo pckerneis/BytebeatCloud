@@ -41,6 +41,7 @@ interface PostListProps {
   currentUserId?: string;
   skipMinification?: boolean;
   onPostClick?: (post: PostRow) => void;
+  onCommentClick?: (post: PostRow) => void;
 }
 
 function getLengthCategoryChip(expression: string): string | null {
@@ -50,7 +51,13 @@ function getLengthCategoryChip(expression: string): string | null {
   return null;
 }
 
-export function PostList({ posts, currentUserId, skipMinification, onPostClick }: PostListProps) {
+export function PostList({
+  posts,
+  currentUserId,
+  skipMinification,
+  onPostClick,
+  onCommentClick,
+}: Readonly<PostListProps>) {
   const { toggle, stop, isPlaying } = useBytebeatPlayer();
   const [activePostId, setActivePostId] = useState<string | null>(null);
   const [favoriteState, setFavoriteState] = useState<
@@ -319,27 +326,55 @@ export function PostList({ posts, currentUserId, skipMinification, onPostClick }
                 </svg>
                 <span className="favorite-count">{favoriteCount}</span>
               </button>
-              <Link
-                href={`/post/${post.id}#comments`}
-                className="comments-button"
-                aria-label="Comments"
-              >
-                <svg
-                  className="comment-icon"
-                  width="64"
-                  height="64"
-                  viewBox="0 0 64 64"
-                  fill="currentColor"
-                  xmlns="http://www.w3.org/2000/svg"
+              {onCommentClick ? (
+                <a
+                  href={`/post/${post.id}#comments`}
+                  className="comments-button"
+                  aria-label="Comments"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    onCommentClick(post);
+                  }}
                 >
-                  <path
-                    fillRule="evenodd"
-                    clipRule="evenodd"
-                    d="M53 10C57.9706 10 62 14.0294 62 19V39.8232C61.9999 44.7937 57.9773 48.8232 53.0068 48.8232C43.7145 48.8232 30.2547 48.8232 28 48.8232C24.5 48.8232 9.00001 61.764 12 56.9111C15 52.0583 13.5 48.8232 11 48.8232C6.02952 48.8232 2.00013 44.7937 2 39.8232V19C2 14.0294 6.02944 10 11 10H53ZM17 25C14.2386 25 12 27.2386 12 30C12 32.7614 14.2386 35 17 35C19.7614 35 22 32.7614 22 30C22 27.2386 19.7614 25 17 25ZM32 25C29.2386 25 27 27.2386 27 30C27 32.7614 29.2386 35 32 35C34.7614 35 37 32.7614 37 30C37 27.2386 34.7614 25 32 25ZM47 25C44.2386 25 42 27.2386 42 30C42 32.7614 44.2386 35 47 35C49.7614 35 52 32.7614 52 30C52 27.2386 49.7614 25 47 25Z"
-                  />
-                </svg>
-                <span className="comments-count">{commentsCount}</span>
-              </Link>
+                  <svg
+                    className="comment-icon"
+                    width="64"
+                    height="64"
+                    viewBox="0 0 64 64"
+                    fill="currentColor"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      clipRule="evenodd"
+                      d="M53 10C57.9706 10 62 14.0294 62 19V39.8232C61.9999 44.7937 57.9773 48.8232 53.0068 48.8232C43.7145 48.8232 30.2547 48.8232 28 48.8232C24.5 48.8232 9.00001 61.764 12 56.9111C15 52.0583 13.5 48.8232 11 48.8232C6.02952 48.8232 2.00013 44.7937 2 39.8232V19C2 14.0294 6.02944 10 11 10H53ZM17 25C14.2386 25 12 27.2386 12 30C12 32.7614 14.2386 35 17 35C19.7614 35 22 32.7614 22 30C22 27.2386 19.7614 25 17 25ZM32 25C29.2386 25 27 27.2386 27 30C27 32.7614 29.2386 35 32 35C34.7614 35 37 32.7614 37 30C37 27.2386 34.7614 25 32 25ZM47 25C44.2386 25 42 27.2386 42 30C42 32.7614 44.2386 35 47 35C49.7614 35 52 32.7614 52 30C52 27.2386 49.7614 25 47 25Z"
+                    />
+                  </svg>
+                  <span className="comments-count">{commentsCount}</span>
+                </a>
+              ) : (
+                <Link
+                  href={`/post/${post.id}#comments`}
+                  className="comments-button"
+                  aria-label="Comments"
+                >
+                  <svg
+                    className="comment-icon"
+                    width="64"
+                    height="64"
+                    viewBox="0 0 64 64"
+                    fill="currentColor"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      clipRule="evenodd"
+                      d="M53 10C57.9706 10 62 14.0294 62 19V39.8232C61.9999 44.7937 57.9773 48.8232 53.0068 48.8232C43.7145 48.8232 30.2547 48.8232 28 48.8232C24.5 48.8232 9.00001 61.764 12 56.9111C15 52.0583 13.5 48.8232 11 48.8232C6.02952 48.8232 2.00013 44.7937 2 39.8232V19C2 14.0294 6.02944 10 11 10H53ZM17 25C14.2386 25 12 27.2386 12 30C12 32.7614 14.2386 35 17 35C19.7614 35 22 32.7614 22 30C22 27.2386 19.7614 25 17 25ZM32 25C29.2386 25 27 27.2386 27 30C27 32.7614 29.2386 35 32 35C34.7614 35 37 32.7614 37 30C37 27.2386 34.7614 25 32 25ZM47 25C44.2386 25 42 27.2386 42 30C42 32.7614 44.2386 35 47 35C49.7614 35 52 32.7614 52 30C52 27.2386 49.7614 25 47 25Z"
+                    />
+                  </svg>
+                  <span className="comments-count">{commentsCount}</span>
+                </Link>
+              )}
               {canEdit ? (
                 <Link href={`/edit/${post.id}`} className="edit-link">
                   Edit
