@@ -5,12 +5,14 @@ import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
 import { PostList, type PostRow } from '../components/PostList';
 import Head from 'next/head';
 import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
+import { usePullToRefresh } from '../hooks/usePullToRefresh';
 import { enrichWithTags } from '../utils/tags';
 import Link from 'next/link';
 import { validateExpression } from '../utils/expression-validator';
 import { useTabState } from '../hooks/useTabState';
 import { PostDetailView } from '../components/PostDetailView';
 import { PlaylistCard } from '../components/PlaylistCard';
+import { PullToRefreshIndicator } from '../components/PullToRefreshIndicator';
 
 const tabs = ['feed', 'recent', 'weekly'] as const;
 type TabName = (typeof tabs)[number];
@@ -64,6 +66,7 @@ export default function ExplorePage() {
   const playlistsCurrentFetchRef = useRef(0);
 
   const resetPagination = useCallback(() => {
+    setLoading(true);
     setPosts([]);
     setPage(0);
     setHasMore(true);
@@ -78,6 +81,17 @@ export default function ExplorePage() {
     } else {
       window.scrollTo(0, 0);
     }
+  }, []);
+
+  const resetPlaylistsPagination = useCallback(() => {
+    setPlaylistsLoading(true);
+    setPlaylists([]);
+    setPagePlaylists(0);
+    setHasMorePlaylists(true);
+    setPlaylistsError('');
+    loadingMorePlaylistsRef.current = false;
+    playlistsInitialLoadDoneRef.current = false;
+    playlistsCurrentFetchRef.current += 1;
   }, []);
 
   const [activeTab, setActiveTab] = useTabState(tabs, 'feed', { onTabChange: resetPagination });
@@ -102,6 +116,20 @@ export default function ExplorePage() {
         }
       }
     },
+  });
+
+  const handleRefresh = useCallback(() => {
+    if (contentType === 'posts') {
+      resetPagination();
+    } else {
+      resetPlaylistsPagination();
+    }
+  }, [contentType, resetPagination, resetPlaylistsPagination]);
+
+  const pullToRefreshState = usePullToRefresh({
+    onRefresh: handleRefresh,
+    enabled: !isDetailOpen && !loading && (contentType === 'posts' ? !loadingMoreRef.current : !loadingMorePlaylistsRef.current),
+    threshold: 80,
   });
   const postIdFromQuery = typeof router.query.post === 'string' ? router.query.post : null;
 
@@ -180,12 +208,15 @@ export default function ExplorePage() {
     currentFetchRef.current += 1;
     const fetchId = currentFetchRef.current;
     const pageSize = 20;
-    const from = page * pageSize;
+    
+    // Force page 0 if this is a fresh load (after reset)
+    const actualPage = !initialLoadDoneRef.current ? 0 : page;
+    const from = actualPage * pageSize;
     const to = from + pageSize - 1;
 
     const loadPage = async () => {
       loadingMoreRef.current = true;
-      if (page === 0) {
+      if (actualPage === 0) {
         setLoading(true);
       }
       setError('');
@@ -245,13 +276,13 @@ export default function ExplorePage() {
         if (user) {
           const rpcResult = await supabase.rpc('get_personalized_feed', {
             viewer_id: (user as any).id,
-            page,
+            page: actualPage,
           });
           data = (rpcResult.data ?? []) as PostRow[];
           error = rpcResult.error;
         } else {
           const rpcResult = await supabase.rpc('get_global_feed', {
-            page,
+            page: actualPage,
           });
           data = (rpcResult.data ?? []) as PostRow[];
           error = rpcResult.error;
@@ -274,7 +305,7 @@ export default function ExplorePage() {
 
       if (error) {
         setError(error.message ?? String(error));
-        if (page === 0) {
+        if (actualPage === 0) {
           setPosts([]);
         }
         setHasMore(false);
@@ -292,7 +323,7 @@ export default function ExplorePage() {
         // Security: drop posts with invalid expressions
         rows = rows.filter((r) => validateExpression(r.expression).valid);
 
-        const newPosts = page === 0 ? rows : [...posts, ...rows];
+        const newPosts = actualPage === 0 ? rows : [...posts, ...rows];
         const newHasMore = rows.length >= pageSize;
 
         setPosts(newPosts);
@@ -441,6 +472,7 @@ export default function ExplorePage() {
         <meta property="og:image:height" content="630" />
         <meta name="twitter:card" content="summary_large_image" />
       </Head>
+      <PullToRefreshIndicator pullState={pullToRefreshState} threshold={80} />
       <section style={{ display: isDetailOpen ? 'none' : undefined }}>
         <h2>Explore</h2>
 
