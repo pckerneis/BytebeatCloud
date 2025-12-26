@@ -1172,7 +1172,7 @@ export function PostDetailView({ postId, baseUrl, onBack, scrollToComments }: Re
                       </div>
                       <button
                         type="button"
-                        className="button small"
+                        className="button small primary"
                         onClick={() => {
                           if (!alreadyHas) void handleAppendToPlaylist(pl.id);
                         }}
@@ -1207,7 +1207,7 @@ export function PostDetailView({ postId, baseUrl, onBack, scrollToComments }: Re
               </button>
               <button
                 type="button"
-                className="button"
+                className="button primary"
                 onClick={() => router.push(`/playlists/new?sourcePostId=${posts[0]?.id}`)}
                 disabled={addToPlaylistPending}
               >
