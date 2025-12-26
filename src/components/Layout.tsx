@@ -22,7 +22,7 @@ function NavLink({ href, children }: PropsWithChildren<{ href: string }>) {
   );
 }
 
-export function Layout({ children }: PropsWithChildren) {
+export function Layout({ children }: Readonly<PropsWithChildren>) {
   const { user } = useSupabaseAuth();
   const router = useRouter();
   const [theme, setTheme] = useState<ThemeId>(DEFAULT_THEME_ID);
@@ -59,31 +59,32 @@ export function Layout({ children }: PropsWithChildren) {
     await router.push('/');
   };
 
-  const loadCount = async () => {
-    if (!userId) {
-      setNotificationsCount(null);
-      return;
-    }
-
-    const { count, error } = await supabase
-      .from('notifications')
-      .select('id', { count: 'exact', head: true })
-      .eq('user_id', userId)
-      .eq('read', false);
-
-    if (error) {
-      setNotificationsCount(null);
-    } else {
-      setNotificationsCount(typeof count === 'number' ? count : null);
-    }
-  };
-
   // Load initial count and subscribe to real-time updates
   useEffect(() => {
     if (!userId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setNotificationsCount(null);
       return;
     }
+
+    const loadCount = async () => {
+      if (!userId) {
+        setNotificationsCount(null);
+        return;
+      }
+
+      const { count, error } = await supabase
+        .from('notifications')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', userId)
+        .eq('read', false);
+
+      if (error) {
+        setNotificationsCount(null);
+      } else {
+        setNotificationsCount(typeof count === 'number' ? count : null);
+      }
+    };
 
     // Load initial count
     void loadCount();
