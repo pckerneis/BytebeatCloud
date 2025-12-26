@@ -11,7 +11,7 @@ import { formatSampleRate, ModeOption } from '../model/expression';
 import type { LicenseOption } from '../model/postEditor';
 import { formatRelativeTime } from '../utils/time';
 import { validateExpression } from '../utils/expression-validator';
-import { formatPostTitle, formatAuthorUsername, formatPostByAuthor } from '../utils/post-format';
+import { formatPostTitle, formatPostByAuthor } from '../utils/post-format';
 
 export interface PostRow {
   id: string;
@@ -41,6 +41,7 @@ interface PostListProps {
   currentUserId?: string;
   skipMinification?: boolean;
   onPostClick?: (post: PostRow) => void;
+  onCommentClick?: (post: PostRow) => void;
 }
 
 function getLengthCategoryChip(expression: string): string | null {
@@ -50,7 +51,13 @@ function getLengthCategoryChip(expression: string): string | null {
   return null;
 }
 
-export function PostList({ posts, currentUserId, skipMinification, onPostClick }: PostListProps) {
+export function PostList({
+  posts,
+  currentUserId,
+  skipMinification,
+  onPostClick,
+  onCommentClick,
+}: Readonly<PostListProps>) {
   const { toggle, stop, isPlaying } = useBytebeatPlayer();
   const [activePostId, setActivePostId] = useState<string | null>(null);
   const [favoriteState, setFavoriteState] = useState<
@@ -69,6 +76,7 @@ export function PostList({ posts, currentUserId, skipMinification, onPostClick }
     stopPlayTracking,
   } = usePlayerStore();
   const [favoritePending, setFavoritePending] = useState<Record<string, boolean>>({});
+  const [toTopVisible, setToTopVisible] = useState(false);
 
   useEffect(() => {
     if (currentPost && posts.some((p) => p.id === currentPost.id)) {
@@ -200,163 +208,223 @@ export function PostList({ posts, currentUserId, skipMinification, onPostClick }
     }
   };
 
-  return (
-    <ul className="post-list">
-      {posts.map((post) => {
-        const username = post.author_username ?? null;
-        const created = formatRelativeTime(post.created_at);
-        const createdTitle = new Date(post.created_at).toLocaleString();
-        const isActive = isPlaying && activePostId === post.id;
-        const canEdit = Boolean(
-          currentUserId && post.profile_id && post.profile_id === currentUserId,
-        );
-        const favorite = favoriteState[post.id];
-        const favoriteCount = favorite ? favorite.count : post.favorites_count ?? 0;
-        const isFavorited =
-          favorite?.favorited !== undefined ? favorite.favorited : !!post.favorited_by_current_user;
-        const isFavoritePending = favoritePending[post.id];
-        const commentsCount = post.comments_count ?? 0;
-        const lengthCategory = getLengthCategoryChip(post.expression);
-        const sortedTags = post.tags?.sort((a, b) => a.localeCompare(b));
+  useEffect(() => {
+    const onScroll = () => {
+      const postListEl = document.querySelector('.post-list');
+      setToTopVisible(postListEl ? postListEl?.getBoundingClientRect().y < -1000 : false);
+    };
 
-        return (
-          <li key={post.id} className={`post-item ${isActive ? 'playing' : ''}`}>
-            <div className="post-header">
-              <div className="post-meta">
-                {username ? (
-                  <Link href={`/u/${username}`} className="username">
-                    @{username}
-                  </Link>
-                ) : (
-                  <span className="username">@unknown</span>
-                )}
-              </div>
-              <h3>
-                {onPostClick ? (
-                  <a
-                    className="post-title"
-                    href={`/post/${post.id}`}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      onPostClick(post);
-                    }}
-                  >
-                    {formatPostTitle(post.title)}
-                  </a>
-                ) : (
-                  <Link className="post-title" href={`/post/${post.id}`}>
-                    {formatPostTitle(post.title)}
-                  </Link>
-                )}
-              </h3>
-              {(post.fork_of_post_id || post.is_fork) && (
-                <div className="forked-from">
-                  {post.origin_title || post.origin_username ? (
-                    <Link href={`/post/${post.fork_of_post_id}`} className="fork-link">
-                      {`Forked from ${formatPostByAuthor(post.origin_title, post.origin_username)}`}
+    const main = document.querySelector('main');
+    main?.addEventListener('scroll', onScroll);
+
+    return () => main?.removeEventListener('scroll', onScroll);
+  }, [toTopVisible]);
+
+  const handleToTopClick = () => {
+    const main = document.querySelector('main');
+
+    if (main) {
+      main.scrollTo({
+        top: 0,
+      });
+    }
+  };
+
+  return (
+    <>
+      <ul className="post-list">
+        {posts.map((post) => {
+          const username = post.author_username ?? null;
+          const created = formatRelativeTime(post.created_at);
+          const createdTitle = new Date(post.created_at).toLocaleString();
+          const isActive = isPlaying && activePostId === post.id;
+          const canEdit = Boolean(
+            currentUserId && post.profile_id && post.profile_id === currentUserId,
+          );
+          const favorite = favoriteState[post.id];
+          const favoriteCount = favorite ? favorite.count : post.favorites_count ?? 0;
+          const isFavorited =
+            favorite?.favorited !== undefined
+              ? favorite.favorited
+              : !!post.favorited_by_current_user;
+          const isFavoritePending = favoritePending[post.id];
+          const commentsCount = post.comments_count ?? 0;
+          const lengthCategory = getLengthCategoryChip(post.expression);
+          const sortedTags = post.tags?.sort((a, b) => a.localeCompare(b));
+
+          return (
+            <li key={post.id} className={`post-item ${isActive ? 'playing' : ''}`}>
+              <div className="post-header">
+                <div className="post-meta">
+                  {username ? (
+                    <Link href={`/u/${username}`} className="username">
+                      @{username}
                     </Link>
-                  ) : post.is_fork ? (
-                    <span>Forked from (deleted)</span>
-                  ) : null}
+                  ) : (
+                    <span className="username">@unknown</span>
+                  )}
                 </div>
-              )}
-              <div className="flex-row">
-                <div className="chips">
-                  {post.is_weekly_winner && (
-                    <Link href="/weekly-hall-of-fame" className="chip top-pick-badge">
-                      Top Pick
+                <h3>
+                  {onPostClick ? (
+                    <a
+                      className="post-title"
+                      href={`/post/${post.id}`}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        onPostClick(post);
+                      }}
+                    >
+                      {formatPostTitle(post.title)}
+                    </a>
+                  ) : (
+                    <Link className="post-title" href={`/post/${post.id}`}>
+                      {formatPostTitle(post.title)}
                     </Link>
                   )}
-                  {post.is_draft && <span className="chip draft-badge">Draft</span>}
-                  <span className="chip mode">{post.mode}</span>
-                  <span className="chip sample-rate">{formatSampleRate(post.sample_rate)}</span>
-                  {lengthCategory && <span className="chip length-chip">{lengthCategory}</span>}
-                  {sortedTags &&
-                    sortedTags.length > 0 &&
-                    sortedTags.map((tag) => {
-                      const isCurrentWeekTag = Boolean(currentWeekTag && tag === currentWeekTag);
-                      const href = isCurrentWeekTag ? '/explore?tab=weekly' : `/tags/${tag}`;
-                      const className = `chip tag-chip${isCurrentWeekTag ? ' weekly-tag-chip' : ''}`;
+                </h3>
+                {(post.fork_of_post_id || post.is_fork) && (
+                  <div className="forked-from">
+                    {post.origin_title || post.origin_username ? (
+                      <Link href={`/post/${post.fork_of_post_id}`} className="fork-link">
+                        {`Forked from ${formatPostByAuthor(post.origin_title, post.origin_username)}`}
+                      </Link>
+                    ) : post.is_fork ? (
+                      <span>Forked from (deleted)</span>
+                    ) : null}
+                  </div>
+                )}
+                <div className="flex-row">
+                  <div className="chips">
+                    {post.is_weekly_winner && (
+                      <Link href="/weekly-hall-of-fame" className="chip top-pick-badge">
+                        Top Pick
+                      </Link>
+                    )}
+                    {post.is_draft && <span className="chip draft-badge">Draft</span>}
+                    <span className="chip mode">{post.mode}</span>
+                    <span className="chip sample-rate">{formatSampleRate(post.sample_rate)}</span>
+                    {lengthCategory && <span className="chip length-chip">{lengthCategory}</span>}
+                    {sortedTags &&
+                      sortedTags.length > 0 &&
+                      sortedTags.map((tag) => {
+                        const isCurrentWeekTag = Boolean(currentWeekTag && tag === currentWeekTag);
+                        const href = isCurrentWeekTag ? '/explore?tab=weekly' : `/tags/${tag}`;
+                        const className = `chip tag-chip${isCurrentWeekTag ? ' weekly-tag-chip' : ''}`;
 
-                      return (
-                        <Link key={tag} href={href} className={className}>
-                          #{tag}
-                        </Link>
-                      );
-                    })}
+                        return (
+                          <Link key={tag} href={href} className={className}>
+                            #{tag}
+                          </Link>
+                        );
+                      })}
+                  </div>
+                  <span className="created" title={createdTitle}>
+                    {created}
+                  </span>
                 </div>
-                <span className="created" title={createdTitle}>
-                  {created}
-                </span>
               </div>
-            </div>
-            <PostExpressionPlayer
-              expression={post.expression}
-              isActive={isActive}
-              onTogglePlay={() => handleExpressionClick(post)}
-              disableCopy={post.license === 'all-rights-reserved'}
-              skipMinification={skipMinification}
-            />
-            <div className="post-actions">
-              <button
-                type="button"
-                className={`favorite-button${isFavorited ? ' favorited' : ''}${
-                  isFavoritePending ? ' pending' : ''
-                }`}
-                onClick={() => void handleFavoriteClick(post)}
-                disabled={isFavoritePending}
-                aria-label="Favorite"
-              >
-                <svg
-                  className="heart-icon"
-                  width="64"
-                  height="64"
-                  viewBox="0 0 64 64"
-                  fill="currentColor"
-                  xmlns="http://www.w3.org/2000/svg"
+              <PostExpressionPlayer
+                expression={post.expression}
+                isActive={isActive}
+                onTogglePlay={() => handleExpressionClick(post)}
+                disableCopy={post.license === 'all-rights-reserved'}
+                skipMinification={skipMinification}
+              />
+              <div className="post-actions">
+                <button
+                  type="button"
+                  className={`favorite-button${isFavorited ? ' favorited' : ''}${
+                    isFavoritePending ? ' pending' : ''
+                  }`}
+                  onClick={() => void handleFavoriteClick(post)}
+                  disabled={isFavoritePending}
+                  aria-label="Favorite"
                 >
-                  <path d="M31.9823 58.7827L5.69823 32.4986C3.60164 30.402 2.20391 27.9645 1.50505 25.1861C0.823232 22.4077 0.831755 19.6463 1.53062 16.902C2.22948 14.1406 3.61869 11.7372 5.69823 9.69176C7.82891 7.59517 10.2579 6.20596 12.9852 5.52415C15.7295 4.82528 18.4653 4.82528 21.1926 5.52415C23.9369 6.22301 26.3744 7.61222 28.5051 9.69176L31.9823 13.0668L35.4596 9.69176C37.6073 7.61222 40.0448 6.22301 42.7721 5.52415C45.4994 4.82528 48.2266 4.82528 50.9539 5.52415C53.6982 6.20596 56.1357 7.59517 58.2664 9.69176C60.346 11.7372 61.7352 14.1406 62.434 16.902C63.1329 19.6463 63.1329 22.4077 62.434 25.1861C61.7522 27.9645 60.363 30.402 58.2664 32.4986L31.9823 58.7827Z" />
-                </svg>
-                <span className="favorite-count">{favoriteCount}</span>
-              </button>
-              <Link
-                href={`/post/${post.id}#comments`}
-                className="comments-button"
-                aria-label="Comments"
-              >
-                <svg
-                  className="comment-icon"
-                  width="64"
-                  height="64"
-                  viewBox="0 0 64 64"
-                  fill="currentColor"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    fillRule="evenodd"
-                    clipRule="evenodd"
-                    d="M53 10C57.9706 10 62 14.0294 62 19V39.8232C61.9999 44.7937 57.9773 48.8232 53.0068 48.8232C43.7145 48.8232 30.2547 48.8232 28 48.8232C24.5 48.8232 9.00001 61.764 12 56.9111C15 52.0583 13.5 48.8232 11 48.8232C6.02952 48.8232 2.00013 44.7937 2 39.8232V19C2 14.0294 6.02944 10 11 10H53ZM17 25C14.2386 25 12 27.2386 12 30C12 32.7614 14.2386 35 17 35C19.7614 35 22 32.7614 22 30C22 27.2386 19.7614 25 17 25ZM32 25C29.2386 25 27 27.2386 27 30C27 32.7614 29.2386 35 32 35C34.7614 35 37 32.7614 37 30C37 27.2386 34.7614 25 32 25ZM47 25C44.2386 25 42 27.2386 42 30C42 32.7614 44.2386 35 47 35C49.7614 35 52 32.7614 52 30C52 27.2386 49.7614 25 47 25Z"
-                  />
-                </svg>
-                <span className="comments-count">{commentsCount}</span>
-              </Link>
-              {canEdit ? (
-                <Link href={`/edit/${post.id}`} className="edit-link">
-                  Edit
-                </Link>
-              ) : post.license === 'all-rights-reserved' ? (
-                <span className="edit-link disabled" title="This post is all rights reserved">
-                  Fork
-                </span>
-              ) : (
-                <Link href={`/fork/${post.id}`} className="edit-link">
-                  Fork
-                </Link>
-              )}
-            </div>
-          </li>
-        );
-      })}
-    </ul>
+                  <svg
+                    className="heart-icon"
+                    width="64"
+                    height="64"
+                    viewBox="0 0 64 64"
+                    fill="currentColor"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path d="M31.9823 58.7827L5.69823 32.4986C3.60164 30.402 2.20391 27.9645 1.50505 25.1861C0.823232 22.4077 0.831755 19.6463 1.53062 16.902C2.22948 14.1406 3.61869 11.7372 5.69823 9.69176C7.82891 7.59517 10.2579 6.20596 12.9852 5.52415C15.7295 4.82528 18.4653 4.82528 21.1926 5.52415C23.9369 6.22301 26.3744 7.61222 28.5051 9.69176L31.9823 13.0668L35.4596 9.69176C37.6073 7.61222 40.0448 6.22301 42.7721 5.52415C45.4994 4.82528 48.2266 4.82528 50.9539 5.52415C53.6982 6.20596 56.1357 7.59517 58.2664 9.69176C60.346 11.7372 61.7352 14.1406 62.434 16.902C63.1329 19.6463 63.1329 22.4077 62.434 25.1861C61.7522 27.9645 60.363 30.402 58.2664 32.4986L31.9823 58.7827Z" />
+                  </svg>
+                  <span className="favorite-count">{favoriteCount}</span>
+                </button>
+                {onCommentClick ? (
+                  <a
+                    href={`/post/${post.id}#comments`}
+                    className="comments-button"
+                    aria-label="Comments"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      onCommentClick(post);
+                    }}
+                  >
+                    <svg
+                      className="comment-icon"
+                      width="64"
+                      height="64"
+                      viewBox="0 0 64 64"
+                      fill="currentColor"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        clipRule="evenodd"
+                        d="M53 10C57.9706 10 62 14.0294 62 19V39.8232C61.9999 44.7937 57.9773 48.8232 53.0068 48.8232C43.7145 48.8232 30.2547 48.8232 28 48.8232C24.5 48.8232 9.00001 61.764 12 56.9111C15 52.0583 13.5 48.8232 11 48.8232C6.02952 48.8232 2.00013 44.7937 2 39.8232V19C2 14.0294 6.02944 10 11 10H53ZM17 25C14.2386 25 12 27.2386 12 30C12 32.7614 14.2386 35 17 35C19.7614 35 22 32.7614 22 30C22 27.2386 19.7614 25 17 25ZM32 25C29.2386 25 27 27.2386 27 30C27 32.7614 29.2386 35 32 35C34.7614 35 37 32.7614 37 30C37 27.2386 34.7614 25 32 25ZM47 25C44.2386 25 42 27.2386 42 30C42 32.7614 44.2386 35 47 35C49.7614 35 52 32.7614 52 30C52 27.2386 49.7614 25 47 25Z"
+                      />
+                    </svg>
+                    <span className="comments-count">{commentsCount}</span>
+                  </a>
+                ) : (
+                  <Link
+                    href={`/post/${post.id}#comments`}
+                    className="comments-button"
+                    aria-label="Comments"
+                  >
+                    <svg
+                      className="comment-icon"
+                      width="64"
+                      height="64"
+                      viewBox="0 0 64 64"
+                      fill="currentColor"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        clipRule="evenodd"
+                        d="M53 10C57.9706 10 62 14.0294 62 19V39.8232C61.9999 44.7937 57.9773 48.8232 53.0068 48.8232C43.7145 48.8232 30.2547 48.8232 28 48.8232C24.5 48.8232 9.00001 61.764 12 56.9111C15 52.0583 13.5 48.8232 11 48.8232C6.02952 48.8232 2.00013 44.7937 2 39.8232V19C2 14.0294 6.02944 10 11 10H53ZM17 25C14.2386 25 12 27.2386 12 30C12 32.7614 14.2386 35 17 35C19.7614 35 22 32.7614 22 30C22 27.2386 19.7614 25 17 25ZM32 25C29.2386 25 27 27.2386 27 30C27 32.7614 29.2386 35 32 35C34.7614 35 37 32.7614 37 30C37 27.2386 34.7614 25 32 25ZM47 25C44.2386 25 42 27.2386 42 30C42 32.7614 44.2386 35 47 35C49.7614 35 52 32.7614 52 30C52 27.2386 49.7614 25 47 25Z"
+                      />
+                    </svg>
+                    <span className="comments-count">{commentsCount}</span>
+                  </Link>
+                )}
+                {canEdit ? (
+                  <Link href={`/edit/${post.id}`} className="edit-link">
+                    Edit
+                  </Link>
+                ) : post.license === 'all-rights-reserved' ? (
+                  <span className="edit-link disabled" title="This post is all rights reserved">
+                    Fork
+                  </span>
+                ) : (
+                  <Link href={`/fork/${post.id}`} className="edit-link">
+                    Fork
+                  </Link>
+                )}
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+      <button
+        className={`back-to-top-button button primary${toTopVisible ? ' visible' : ''}`}
+        onClick={handleToTopClick}
+      >
+        ↑ Back to top
+      </button>
+    </>
   );
 }
