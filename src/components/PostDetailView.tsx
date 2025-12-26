@@ -51,7 +51,12 @@ interface PostDetailViewProps {
   scrollToComments?: boolean;
 }
 
-export function PostDetailView({ postId, baseUrl, onBack, scrollToComments }: Readonly<PostDetailViewProps>) {
+export function PostDetailView({
+  postId,
+  baseUrl,
+  onBack,
+  scrollToComments,
+}: Readonly<PostDetailViewProps>) {
   const router = useRouter();
 
   const [posts, setPosts] = useState<PostRow[]>([]);

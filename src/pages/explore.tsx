@@ -128,7 +128,10 @@ export default function ExplorePage() {
 
   const pullToRefreshState = usePullToRefresh({
     onRefresh: handleRefresh,
-    enabled: !isDetailOpen && !loading && (contentType === 'posts' ? !loadingMoreRef.current : !loadingMorePlaylistsRef.current),
+    enabled:
+      !isDetailOpen &&
+      !loading &&
+      (contentType === 'posts' ? !loadingMoreRef.current : !loadingMorePlaylistsRef.current),
     threshold: 80,
   });
   const postIdFromQuery = typeof router.query.post === 'string' ? router.query.post : null;
@@ -208,7 +211,7 @@ export default function ExplorePage() {
     currentFetchRef.current += 1;
     const fetchId = currentFetchRef.current;
     const pageSize = 20;
-    
+
     // Force page 0 if this is a fresh load (after reset)
     const actualPage = !initialLoadDoneRef.current ? 0 : page;
     const from = actualPage * pageSize;

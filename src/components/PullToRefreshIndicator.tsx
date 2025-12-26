@@ -68,9 +68,7 @@ export function PullToRefreshIndicator({
             strokeLinecap="round"
             strokeLinejoin="round"
             style={{
-              color: canRelease
-                ? 'var(--accent-color)'
-                : 'var(--secondary-text-color)',
+              color: canRelease ? 'var(--accent-color)' : 'var(--secondary-text-color)',
               animation: isRefreshing ? 'ptr-spin 1s linear infinite' : 'none',
             }}
           >

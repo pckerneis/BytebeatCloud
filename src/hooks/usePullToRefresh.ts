@@ -29,11 +29,11 @@ export function usePullToRefresh({
 
   const handleRefresh = useCallback(() => {
     if (isRefreshingRef.current || !enabled) return;
-    
+
     isRefreshingRef.current = true;
-    setPullState(prev => ({ ...prev, isRefreshing: true, isPulling: false }));
+    setPullState((prev) => ({ ...prev, isRefreshing: true, isPulling: false }));
     onRefresh();
-    
+
     setTimeout(() => {
       isRefreshingRef.current = false;
       setPullState({ isPulling: false, pullDistance: 0, isRefreshing: false, canRelease: false });
@@ -48,11 +48,11 @@ export function usePullToRefresh({
 
     const handleTouchStart = (e: TouchEvent) => {
       const currentScroll = mainEl ? mainEl.scrollTop : window.scrollY;
-      
+
       if (currentScroll === 0 && !isRefreshingRef.current) {
         touchStartY = e.touches[0].clientY;
         isDraggingRef.current = true;
-        setPullState(prev => ({ ...prev, isPulling: true, pullDistance: 0 }));
+        setPullState((prev) => ({ ...prev, isPulling: true, pullDistance: 0 }));
       }
     };
 
@@ -91,14 +91,19 @@ export function usePullToRefresh({
 
     const handleTouchEnd = () => {
       if (!isDraggingRef.current) return;
-      
+
       isDraggingRef.current = false;
-      
-      setPullState(prev => {
+
+      setPullState((prev) => {
         if (prev.canRelease) {
           handleRefresh();
         }
-        return { isPulling: false, pullDistance: 0, isRefreshing: prev.canRelease, canRelease: false };
+        return {
+          isPulling: false,
+          pullDistance: 0,
+          isRefreshing: prev.canRelease,
+          canRelease: false,
+        };
       });
     };
 
