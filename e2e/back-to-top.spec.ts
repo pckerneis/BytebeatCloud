@@ -63,7 +63,7 @@ test.describe('Back to top button', () => {
     await expect(page.locator('.post-item')).toHaveCount(20, { timeout: 10000 });
 
     const backToTopButton = page.locator('.back-to-top-button');
-    
+
     // Initially hidden
     await expect(backToTopButton).not.toHaveClass(/visible/);
 

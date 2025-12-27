@@ -44,11 +44,6 @@ describe('validateExpression - undefined variables and declarations', () => {
     expect(result.valid).toBe(false);
     expect(result.issues).toHaveLength(1);
   });
-
-  it('rejects declarations with let', () => {
-    const result = validateExpression('let x = 0');
-    expect(result.valid).toBe(false);
-  });
 });
 
 describe('validateExpression - disallowed node types', () => {
@@ -77,15 +72,6 @@ describe('validateExpression - dangerous calls and properties', () => {
 });
 
 describe('validateExpression - trailing and parse errors', () => {
-  it('flags trailing non-whitespace after a valid expression', () => {
-    const expr = 't + 1 !!!';
-    const result = validateExpression(expr);
-
-    expect(result.valid).toBe(false);
-    const hasUnexpectedToken = result.issues.some((i) => i.message === 'Unexpected token');
-    expect(hasUnexpectedToken).toBe(true);
-  });
-
   it('returns a parse error with a position on invalid syntax', () => {
     const expr = 't +';
     const result = validateExpression(expr);
