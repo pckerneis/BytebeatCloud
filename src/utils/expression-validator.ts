@@ -1,59 +1,5 @@
 import * as acorn from 'acorn';
 
-const allowedGlobals = new Set([
-  'Array',
-  'E',
-  'String',
-  'LN10',
-  'LN2',
-  'LOG2E',
-  'Math',
-  'PI',
-  'SQRT1_2',
-  'SQRT2',
-  'SR',
-  'TAU',
-  'abs',
-  'acos',
-  'acosh',
-  'asin',
-  'asinh',
-  'atan',
-  'atanh',
-  'cbrt',
-  'ceil',
-  'charCodeAt',
-  'clz32',
-  'cos',
-  'cosh',
-  'exp',
-  'expm1',
-  'floor',
-  'fround',
-  'hypot',
-  'imul',
-  'log',
-  'log10',
-  'log1p',
-  'log2',
-  'max',
-  'min',
-  'parseInt',
-  'pow',
-  'random',
-  'round',
-  'sign',
-  'sin',
-  'sinh',
-  'sqrt',
-  't',
-  'tan',
-  'tanh',
-  'trunc',
-]);
-
-const disallowedNodes = new Set<string>(['SwitchStatement', 'IfStatement']);
-
 type AcornNode = acorn.Node & {
   [key: string]: unknown;
 };
@@ -62,8 +8,6 @@ interface ValidationContext {
   errors: string[];
   warnings: string[];
   issues: ValidationIssue[];
-  declaredVars: Set<string>;
-  scope: Array<Set<string>>;
 }
 
 export interface ValidationIssue {
@@ -90,31 +34,12 @@ class BytebeatValidator {
       const errors: string[] = [];
       const warnings: string[] = [];
       const issues: ValidationIssue[] = [];
-      const declaredVars = new Set<string>();
 
       this.walkNode(ast as unknown as AcornNode, {
         errors,
         warnings,
         issues,
-        declaredVars,
-        scope: [new Set(allowedGlobals)],
       });
-
-      // If there is trailing non-whitespace after the parsed expression,
-      // treat it as a syntax error at the first unexpected token.
-      const end = (ast as any).end ?? expr.length;
-      const rest = expr.slice(end);
-      const nonWsIndex = rest.search(/\S/);
-      if (nonWsIndex !== -1) {
-        const pos = end + nonWsIndex;
-        const message = 'Unexpected token';
-        errors.push(`Parse error: ${message}`);
-        issues.push({
-          message,
-          start: pos,
-          end: pos + 1,
-        });
-      }
 
       return {
         valid: errors.length === 0,
@@ -151,66 +76,6 @@ class BytebeatValidator {
 
   walkNode(node: AcornNode, context: ValidationContext): void {
     if (!node || typeof node !== 'object') return;
-
-    // Check for disallowed node types
-    if (disallowedNodes.has(node.type)) {
-      const message = `${node.type} is not allowed in bytebeat expressions`;
-      context.errors.push(message);
-      context.issues.push({
-        message,
-        start: (node as any).start ?? 0,
-        end: (node as any).end ?? (node as any).start ?? 0,
-      });
-    }
-
-    // Treat assignment to an identifier as an implicit declaration in this scope
-    if (node.type === 'AssignmentExpression') {
-      const left = (node as any).left;
-      if (left?.type === 'Identifier') {
-        const name = left.name as string;
-        const currentScope = context.scope[context.scope.length - 1];
-        currentScope.add(name);
-        context.declaredVars.add(name);
-      }
-    }
-
-    // Track variable declarations
-    if (node.type === 'VariableDeclaration') {
-      for (const decl of (node as any).declarations ?? []) {
-        if (decl.id?.type === 'Identifier') {
-          context.scope[context.scope.length - 1].add(decl.id.name);
-          context.declaredVars.add(decl.id.name);
-        }
-      }
-    }
-
-    // Track function parameters
-    if (
-      node.type === 'FunctionDeclaration' ||
-      node.type === 'FunctionExpression' ||
-      node.type === 'ArrowFunctionExpression'
-    ) {
-      const currentScope = context.scope[context.scope.length - 1];
-      const newScope = new Set<string>(currentScope);
-
-      for (const param of (node as any).params ?? []) {
-        if (param.type === 'Identifier') {
-          newScope.add(param.name);
-        } else if (param.type === 'AssignmentPattern' && param.left?.type === 'Identifier') {
-          newScope.add(param.left.name);
-        }
-      }
-
-      context.scope.push(newScope);
-
-      // Walk function body
-      if ((node as any).body) {
-        this.walkNode((node as any).body, context);
-      }
-
-      context.scope.pop();
-      return; // Don't walk children again
-    }
 
     // Check for dangerous patterns
     if (node.type === 'CallExpression') {
@@ -257,12 +122,6 @@ class BytebeatValidator {
         this.walkNode(child as AcornNode, context);
       }
     }
-  }
-
-  isInDeclarationPosition(_node: AcornNode): boolean {
-    // This is a simplified check - in a real implementation,
-    // you'd track parent relationships more carefully
-    return false;
   }
 }
 

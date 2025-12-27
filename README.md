@@ -21,10 +21,7 @@ This makes it closer to a creative platform than a standalone tool.
 
 The audio engine and expression interpreter uses Javascript. this makes this app closer to web based implementations than the original C-based ones.
 
-There are a few differences with other web implementations:
-
-- Length is limited to 4096 characters.
-- Only a subset of JS is allowed. You cannot use `if`, `var`, `let`, `const`... ternary operations and implicit declarations with assignment are fine though.
+While most bytebeat composer apps allow arbitrary lengths, BytebeatCloud encourages tiny programs by limiting the expression size to 4096 characters.
 
 ## Features
 
@@ -43,6 +40,7 @@ There are a few differences with other web implementations:
 - **Share links**: generate shareable URLs for any expression
 - **WAV export**: export your bytebeat as a WAV file
 - **Video export**: export your bytebeat as a video with waveform visualization
+- **Playlists**: create and share playlists
 
 ### Discovery
 
@@ -71,6 +69,7 @@ There are a few differences with other web implementations:
 - **Responsive design**: works on desktop and mobile
 - **Progressive Web App**: install on your device
 - **Live waveform visualizer**: see your audio in real-time
+- **Auto and shuffle play modes**: autoplay next track in a list, pick next track at random
 
 ## Run locally
 
@@ -171,15 +170,13 @@ This command will start the Supabase local instance, the front end dev server an
 - [x] Report posts or users
 - [x] Block/unblock users
 - [x] Comments
-
-**Working on**
-
-- [ ] Playlists
+- [x] Playlists
 
 **Coming later**
 
 - [ ] Change history
 - [ ] Offline mode
+- [ ] Offline pre-rendering
 - [ ] Reject silent/too loud posts
 - [ ] Moderator tools
 - [ ] Pin posts on profile
