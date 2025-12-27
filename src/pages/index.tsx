@@ -208,16 +208,16 @@ export default function Home() {
   return (
     <>
       <Head>
-        <title>BytebeatCloud - Create and share bytebeat music</title>
+        <title>Bytebeat Composer & Community Platform | BytebeatCloud</title>
         <meta
           name="description"
-          content="A platform to explore and share tiny musical expressions"
+          content="Create bytebeat music online. Share, discover, and participate weekly challenges. The only social bytebeat platform with community features."
         />
         <meta property="og:type" content="website" />
         <meta property="og:title" content="BytebeatCloud" />
         <meta
           property="og:description"
-          content="A platform to explore and share tiny musical expressions"
+          content="Create bytebeat music online. Share, discover, and participate weekly challenges. The only social bytebeat platform with community features."
         />
         <meta
           property="og:image"

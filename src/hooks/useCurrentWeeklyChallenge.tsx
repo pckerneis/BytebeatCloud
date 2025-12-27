@@ -25,6 +25,7 @@ export function WeeklyChallengeProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let cancelled = false;
+    let refreshTimer: NodeJS.Timeout | null = null;
 
     const loadCurrentWeek = async () => {
       setIsLoading(true);
@@ -40,7 +41,38 @@ export function WeeklyChallengeProvider({ children }: { children: ReactNode }) {
           setWeekNumber(week);
           setTheme(nextTheme);
           const endsAtStr = (row as any)?.ends_at as string | null | undefined;
-          setEndsAt(endsAtStr ? new Date(endsAtStr) : null);
+          const endsAtDate = endsAtStr ? new Date(endsAtStr) : null;
+          setEndsAt(endsAtDate);
+
+          // Schedule a refresh for next Saturday at 20:10 UTC
+          // Weekly challenges start at 20:00 UTC, we refresh at 20:10 to ensure DB is updated
+          const now = new Date();
+          const nextSaturday = new Date(now);
+
+          // Find next Saturday
+          const daysUntilSaturday = (6 - now.getUTCDay() + 7) % 7;
+          if (daysUntilSaturday === 0) {
+            // Today is Saturday - check if we're past 20:10 UTC
+            const todayAt2010 = new Date(now);
+            todayAt2010.setUTCHours(20, 10, 0, 0);
+            if (now >= todayAt2010) {
+              // Already past 20:10, schedule for next Saturday
+              nextSaturday.setUTCDate(now.getUTCDate() + 7);
+            }
+          } else {
+            nextSaturday.setUTCDate(now.getUTCDate() + daysUntilSaturday);
+          }
+
+          nextSaturday.setUTCHours(20, 10, 0, 0);
+          const timeUntilRefresh = nextSaturday.getTime() - now.getTime();
+
+          if (timeUntilRefresh > 0) {
+            refreshTimer = setTimeout(() => {
+              if (!cancelled) {
+                void loadCurrentWeek();
+              }
+            }, timeUntilRefresh);
+          }
         } else {
           setWeekNumber(null);
           setTheme('');
@@ -57,8 +89,22 @@ export function WeeklyChallengeProvider({ children }: { children: ReactNode }) {
 
     void loadCurrentWeek();
 
+    // Also refresh every hour to catch any stale data
+    const hourlyRefresh = setInterval(
+      () => {
+        if (!cancelled) {
+          void loadCurrentWeek();
+        }
+      },
+      60 * 60 * 1000,
+    ); // 1 hour
+
     return () => {
       cancelled = true;
+      if (refreshTimer) {
+        clearTimeout(refreshTimer);
+      }
+      clearInterval(hourlyRefresh);
     };
   }, []);
 
