@@ -48,7 +48,7 @@ export function WeeklyChallengeProvider({ children }: { children: ReactNode }) {
           // Weekly challenges start at 20:00 UTC, we refresh at 20:10 to ensure DB is updated
           const now = new Date();
           const nextSaturday = new Date(now);
-          
+
           // Find next Saturday
           const daysUntilSaturday = (6 - now.getUTCDay() + 7) % 7;
           if (daysUntilSaturday === 0) {
@@ -62,10 +62,10 @@ export function WeeklyChallengeProvider({ children }: { children: ReactNode }) {
           } else {
             nextSaturday.setUTCDate(now.getUTCDate() + daysUntilSaturday);
           }
-          
+
           nextSaturday.setUTCHours(20, 10, 0, 0);
           const timeUntilRefresh = nextSaturday.getTime() - now.getTime();
-          
+
           if (timeUntilRefresh > 0) {
             refreshTimer = setTimeout(() => {
               if (!cancelled) {
@@ -90,11 +90,14 @@ export function WeeklyChallengeProvider({ children }: { children: ReactNode }) {
     void loadCurrentWeek();
 
     // Also refresh every hour to catch any stale data
-    const hourlyRefresh = setInterval(() => {
-      if (!cancelled) {
-        void loadCurrentWeek();
-      }
-    }, 60 * 60 * 1000); // 1 hour
+    const hourlyRefresh = setInterval(
+      () => {
+        if (!cancelled) {
+          void loadCurrentWeek();
+        }
+      },
+      60 * 60 * 1000,
+    ); // 1 hour
 
     return () => {
       cancelled = true;
