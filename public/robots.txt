@@ -1,0 +1,27 @@
+# robots.txt for BytebeatCloud
+# https://www.robotstxt.org/
+
+# Allow all crawlers to access all content
+User-agent: *
+Allow: /
+
+# Sitemap location (update this URL to your production domain)
+Sitemap: https://bytebeat.cloud/sitemap.xml
+
+# Crawl-delay for polite crawling (optional)
+# Crawl-delay: 1
+
+# Disallow crawling of API endpoints to save resources
+User-agent: *
+Disallow: /api/
+
+# Disallow crawling of authentication pages
+Disallow: /auth/
+
+# Allow crawling of public pages
+Allow: /explore
+Allow: /tags/
+Allow: /profile/
+Allow: /post/
+Allow: /weekly-challenges
+Allow: /hall-of-fame
