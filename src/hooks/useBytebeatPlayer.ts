@@ -5,7 +5,7 @@ import { loadPrerenderedAudio } from '../utils/prerender-loader';
 interface BytebeatPlayer {
   isPlaying: boolean;
   lastError: string | null;
-  toggle: (expression: string, mode: ModeOption, sampleRate: number, prerenderedUrl?: string) => Promise<void>;
+  toggle: (expression: string, mode: ModeOption, sampleRate: number, prerenderedUrl?: string, updatedAt?: string) => Promise<void>;
   stop: () => Promise<void>;
   level: number;
   waveform: Float32Array | null;
@@ -271,7 +271,7 @@ export function useBytebeatPlayer(options?: { enableVisualizer?: boolean }): Byt
   }, []);
 
   const toggle = useCallback(
-    async (expression: string, mode: ModeOption, sampleRate: number, prerenderedUrl?: string) => {
+    async (expression: string, mode: ModeOption, sampleRate: number, prerenderedUrl?: string, updatedAt?: string) => {
       if (toggleInProgress) {
         return;
       }
@@ -294,7 +294,7 @@ export function useBytebeatPlayer(options?: { enableVisualizer?: boolean }): Byt
           // If pre-rendered URL is provided, try to use it
           if (prerenderedUrl) {
             try {
-              const prerendered = await loadPrerenderedAudio(prerenderedUrl, ctx);
+              const prerendered = await loadPrerenderedAudio(prerenderedUrl, ctx, updatedAt);
               
               // Stop any existing pre-rendered source
               if (prerenderedSource) {
