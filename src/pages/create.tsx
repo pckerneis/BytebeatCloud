@@ -57,7 +57,6 @@ export default function CreatePage() {
     sampleRateValue: sampleRate,
     toggle,
     setCurrentPostById,
-    loopPreview: true,
     isPlaying,
     liveUpdateEnabled,
     updateExpression,

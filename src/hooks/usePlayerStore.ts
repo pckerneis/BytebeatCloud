@@ -5,7 +5,7 @@ import { recordPlayEvent } from '../services/playEventsClient';
 interface PlayerStoreState {
   playlist: PostRow[];
   currentIndex: number;
-  loopEnabled?: boolean;
+  autoEnabled?: boolean;
   shuffleEnabled?: boolean;
 }
 
@@ -16,7 +16,7 @@ interface PlayerStoreSnapshot extends PlayerStoreState {
 // Simple module-level store shared across the app.
 let playlist: PostRow[] = [];
 let currentIndex = -1;
-let loopEnabled = false;
+let autoEnabled = false;
 let shuffleEnabled = false;
 
 // Play tracking state
@@ -92,7 +92,7 @@ function stepInternal(direction: 1 | -1): PlayerStoreSnapshot {
   } else {
     const nextIndex = currentIndex + direction;
     if (nextIndex < 0 || nextIndex >= playlist.length) {
-      if (loopEnabled) {
+      if (autoEnabled) {
         currentIndex = nextIndex < 0 ? playlist.length - 1 : 0;
       } else {
         // Clamp at ends; stay on current index.
@@ -164,15 +164,15 @@ export function usePlayerStore() {
   useEffect(() => {
     if (typeof window === 'undefined') return;
     try {
-      const loopStr = window.localStorage.getItem('player-loop-enabled');
+      const autoStr = window.localStorage.getItem('player-auto-enabled');
       const shuffleStr = window.localStorage.getItem('player-shuffle-enabled');
 
       let changed = false;
 
-      if (loopStr != null) {
-        const v = loopStr === 'true';
-        if (loopEnabled !== v) {
-          loopEnabled = v;
+      if (autoStr != null) {
+        const v = autoStr === 'true';
+        if (autoEnabled !== v) {
+          autoEnabled = v;
           changed = true;
         }
       }
@@ -218,14 +218,14 @@ export function usePlayerStore() {
     setCurrentUserId: (userId: string | null) => setCurrentUserIdInternal(userId),
     startPlayTracking: (postId: string) => startPlayTrackingInternal(postId),
     stopPlayTracking: () => stopPlayTrackingInternal(),
-    // Loop & shuffle controls
-    loopEnabled: loopEnabled,
+    // Auto & shuffle controls
+    autoEnabled: autoEnabled,
     shuffleEnabled: shuffleEnabled,
-    setLoop: (enabled: boolean) => {
-      loopEnabled = enabled;
+    setAuto: (enabled: boolean) => {
+      autoEnabled = enabled;
       try {
         if (typeof window !== 'undefined') {
-          window.localStorage.setItem('player-loop-enabled', String(enabled));
+          window.localStorage.setItem('player-auto-enabled', String(enabled));
         }
       } catch {}
       emit();
@@ -252,8 +252,3 @@ export function usePlayerStore() {
     },
   };
 }
-
-// Initialize persisted flags on first hook mount
-// This effect must be outside the returned object but inside the module scope of the hook function.
-// It runs when usePlayerStore is called and the component mounts.
-export function __initPlayerStorePersistence() {}

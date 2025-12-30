@@ -56,7 +56,6 @@ export default function EditPostPage() {
     sampleRateValue: sampleRate,
     toggle,
     setCurrentPostById,
-    loopPreview: false,
     isPlaying,
     liveUpdateEnabled,
     updateExpression,

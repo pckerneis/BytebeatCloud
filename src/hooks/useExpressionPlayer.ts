@@ -17,7 +17,6 @@ interface UseExpressionPlayerOptions {
     updatedAt?: string,
   ) => void | Promise<void>;
   setCurrentPostById: (id: string | null) => void;
-  loopPreview?: boolean;
   isPlaying: boolean;
   liveUpdateEnabled: boolean;
   updateExpression: (
@@ -35,7 +34,6 @@ export function useExpressionPlayer({
   sampleRateValue,
   toggle,
   setCurrentPostById,
-  loopPreview,
   isPlaying,
   liveUpdateEnabled,
   updateExpression,

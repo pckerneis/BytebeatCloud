@@ -23,10 +23,9 @@ export default function FooterPlayer() {
     updateFavoriteStateForPost,
     startPlayTracking,
     stopPlayTracking,
-    // Loop & shuffle controls
-    loopEnabled,
+    autoEnabled,
     shuffleEnabled,
-    setLoop,
+    setAuto,
     setShuffle,
   } = usePlayerStore();
   const theme = useContext(ThemeContext);
@@ -200,17 +199,18 @@ export default function FooterPlayer() {
       await stop();
 
       const sr = post.sample_rate;
-      const prerenderedUrl = post.pre_rendered && post.sample_url ? post.sample_url : undefined;
+      // Only use prerendered audio when auto mode is enabled
+      const prerenderedUrl = autoEnabled && post.pre_rendered && post.sample_url ? post.sample_url : undefined;
       await toggle(post.expression, post.mode, sr, prerenderedUrl, post.updated_at);
       startPlayTracking(post.id);
     },
-    [cancelAutoTransition, stopPlayTracking, stop, toggle, startPlayTracking],
+    [cancelAutoTransition, stopPlayTracking, stop, toggle, startPlayTracking, autoEnabled],
   );
 
   // Auto-next timer with 3s fade-out before the switch
   useEffect(() => {
     // Only schedule when playing, auto enabled, have at least 2 tracks, and a current post
-    if (isPlaying && loopEnabled && currentPost && (playlist?.length ?? 0) >= 2) {
+    if (isPlaying && autoEnabled && currentPost && (playlist?.length ?? 0) >= 2) {
       const FADE_BEFORE_MS = 3000;
       const TOTAL_DELAY_MS = AUTOPLAY_DEFAULT_DURATION * 1000;
       const fadeStartDelay = Math.max(0, TOTAL_DELAY_MS - FADE_BEFORE_MS);
@@ -243,7 +243,7 @@ export default function FooterPlayer() {
         // Schedule actual next track at 3s after fade start
         switchTimerRef.current = window.setTimeout(async () => {
           // If still playing and auto still enabled, advance
-          if (isPlaying && loopEnabled) {
+          if (isPlaying && autoEnabled) {
             await playPost(next());
             // Restore volume immediately after switching
             setFadeGain(fadeStartGainRef.current);
@@ -261,7 +261,7 @@ export default function FooterPlayer() {
     // Recreate timers when these change
     // Note: fadeGain is intentionally excluded to prevent timer reset during fade animation
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPost?.id, isPlaying, loopEnabled, playlist?.length, currentPost]);
+  }, [currentPost?.id, isPlaying, autoEnabled, playlist?.length, currentPost]);
 
   const handleFooterPlayPause = async () => {
     if (isPlaying) {
@@ -295,7 +295,7 @@ export default function FooterPlayer() {
   const handleToggleAuto = () => {
     // Auto maps to looping behavior for continuous play
     cancelAutoTransition();
-    setLoop(!loopEnabled);
+    setAuto(!autoEnabled);
   };
 
   const handleToggleShuffle = () => {
@@ -388,7 +388,7 @@ export default function FooterPlayer() {
       <div className="flex-column gap-2">
         <button
           type="button"
-          className={`player-toggle ${loopEnabled ? 'active' : ''}`}
+          className={`player-toggle ${autoEnabled ? 'active' : ''}`}
           onClick={handleToggleAuto}
           disabled={(playlist?.length ?? 0) < 2}
         >

@@ -312,7 +312,6 @@ export function useBytebeatPlayer(options?: { enableVisualizer?: boolean }): Byt
               // Create and configure source
               const source = ctx.createBufferSource();
               source.buffer = prerendered.audioBuffer;
-              source.loop = true;
               
               // Connect through gain nodes
               if (!globalGainNode) {
