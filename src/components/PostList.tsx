@@ -34,6 +34,8 @@ export interface PostRow {
   tags?: string[];
   is_weekly_winner?: boolean;
   license?: LicenseOption;
+  pre_rendered?: boolean;
+  sample_url?: string;
 }
 
 interface PostListProps {
@@ -140,7 +142,8 @@ export function PostList({
           ? ModeOption.Uint8
           : ModeOption.Int8;
 
-    await toggle(post.expression, mode, sr);
+    const prerenderedUrl = post.pre_rendered && post.sample_url ? post.sample_url : undefined;
+    await toggle(post.expression, mode, sr, prerenderedUrl);
     setActivePostId(post.id);
     setPlaylist(posts, post.id);
     setCurrentPostById(post.id);

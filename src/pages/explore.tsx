@@ -257,7 +257,7 @@ export default function ExplorePage() {
             const result = await supabase
               .from('posts_with_meta')
               .select(
-                'id,title,expression,sample_rate,mode,created_at,profile_id,is_draft,fork_of_post_id,is_fork,author_username,origin_title,origin_username,favorites_count,favorited_by_current_user,is_weekly_winner,license,comments_count',
+                'id,title,expression,sample_rate,mode,created_at,profile_id,is_draft,fork_of_post_id,is_fork,author_username,origin_title,origin_username,favorites_count,favorited_by_current_user,is_weekly_winner,license,comments_count,pre_rendered,sample_url',
               )
               .in('id', ids);
 
@@ -294,7 +294,7 @@ export default function ExplorePage() {
         const result = await supabase
           .from('posts_with_meta')
           .select(
-            'id,title,expression,sample_rate,mode,created_at,profile_id,is_draft,fork_of_post_id,is_fork,author_username,origin_title,origin_username,favorites_count,favorited_by_current_user,is_weekly_winner,license,comments_count',
+            'id,title,expression,sample_rate,mode,created_at,profile_id,is_draft,fork_of_post_id,is_fork,author_username,origin_title,origin_username,favorites_count,favorited_by_current_user,is_weekly_winner,license,comments_count,pre_rendered,sample_url',
           )
           .eq('is_draft', false)
           .order('created_at', { ascending: false })

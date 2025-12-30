@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ModeOption } from '../model/expression';
+import { loadPrerenderedAudio } from '../utils/prerender-loader';
 
 interface BytebeatPlayer {
   isPlaying: boolean;
   lastError: string | null;
-  toggle: (expression: string, mode: ModeOption, sampleRate: number) => Promise<void>;
+  toggle: (expression: string, mode: ModeOption, sampleRate: number, prerenderedUrl?: string) => Promise<void>;
   stop: () => Promise<void>;
   level: number;
   waveform: Float32Array | null;
@@ -25,6 +26,12 @@ let analyserNode: AnalyserNode | null = null;
 let analyserData: Float32Array | null = null;
 let analyserTimerId: number | null = null;
 let analyserTapGain: GainNode | null = null;
+
+// Pre-rendered audio playback
+let prerenderedSource: AudioBufferSourceNode | null = null;
+let prerenderedStartTime: number = 0;
+let prerenderedLeftChannel: Float32Array | null = null;
+let prerenderedRightChannel: Float32Array | null = null;
 
 const ANALYSER_INTERVAL = 80;
 
@@ -264,7 +271,7 @@ export function useBytebeatPlayer(options?: { enableVisualizer?: boolean }): Byt
   }, []);
 
   const toggle = useCallback(
-    async (expression: string, mode: ModeOption, sampleRate: number) => {
+    async (expression: string, mode: ModeOption, sampleRate: number, prerenderedUrl?: string) => {
       if (toggleInProgress) {
         return;
       }
@@ -272,7 +279,10 @@ export function useBytebeatPlayer(options?: { enableVisualizer?: boolean }): Byt
       toggleInProgress = true;
 
       const res = await ensureContextAndNode();
-      if (!res) return;
+      if (!res) {
+        toggleInProgress = false;
+        return;
+      }
 
       try {
         const { node } = res;
@@ -281,6 +291,131 @@ export function useBytebeatPlayer(options?: { enableVisualizer?: boolean }): Byt
         const shouldStart = !globalIsPlaying;
 
         if (shouldStart) {
+          // If pre-rendered URL is provided, try to use it
+          if (prerenderedUrl) {
+            try {
+              const prerendered = await loadPrerenderedAudio(prerenderedUrl, ctx);
+              
+              // Stop any existing pre-rendered source
+              if (prerenderedSource) {
+                try {
+                  prerenderedSource.stop();
+                  prerenderedSource.disconnect();
+                } catch {}
+                prerenderedSource = null;
+              }
+
+              // Store channels for waveform visualization
+              prerenderedLeftChannel = prerendered.leftChannel;
+              prerenderedRightChannel = prerendered.rightChannel;
+
+              // Create and configure source
+              const source = ctx.createBufferSource();
+              source.buffer = prerendered.audioBuffer;
+              source.loop = true;
+              
+              // Connect through gain nodes
+              if (!globalGainNode) {
+                const gain = ctx.createGain();
+                gain.gain.value = globalMasterGain;
+                globalGainNode = gain;
+              }
+              if (!fadeGainNode) {
+                const fg = ctx.createGain();
+                fg.gain.value = globalFadeGain;
+                fadeGainNode = fg;
+              }
+
+              try {
+                globalGainNode.disconnect();
+              } catch {}
+              try {
+                fadeGainNode.disconnect();
+              } catch {}
+
+              source.connect(globalGainNode);
+              globalGainNode.connect(fadeGainNode);
+              fadeGainNode.connect(ctx.destination);
+
+              // Start playback
+              prerenderedStartTime = ctx.currentTime;
+              source.start(0);
+              prerenderedSource = source;
+
+              if (ctx.state === 'suspended') {
+                await ctx.resume();
+              }
+
+              setLastError(null);
+              setGlobalIsPlaying(true);
+              
+              // Start waveform updates for pre-rendered audio
+              // Clear any existing timer first
+              if (analyserTimerId != null) {
+                window.clearTimeout(analyserTimerId);
+                analyserTimerId = null;
+              }
+              
+              const updatePrerenderedWaveform = () => {
+                if (!globalIsPlaying || !prerenderedLeftChannel) {
+                  setGlobalWaveform(null);
+                  return;
+                }
+                // Calculate current playback position
+                const elapsed = (ctx.currentTime - prerenderedStartTime) % (prerenderedLeftChannel.length / sampleRate);
+                const sampleOffset = Math.floor(elapsed * sampleRate);
+                const windowSize = 1024;
+                
+                // Extract waveform window
+                const waveformData = new Float32Array(windowSize);
+                for (let i = 0; i < windowSize; i++) {
+                  const idx = (sampleOffset + i) % prerenderedLeftChannel.length;
+                  waveformData[i] = prerenderedLeftChannel[idx];
+                }
+                setGlobalWaveform(waveformData);
+                analyserTimerId = window.setTimeout(updatePrerenderedWaveform, ANALYSER_INTERVAL);
+              };
+              analyserTimerId = window.setTimeout(updatePrerenderedWaveform, ANALYSER_INTERVAL);
+
+              return;
+            } catch (error) {
+              console.warn('Failed to load pre-rendered audio, falling back to real-time:', error);
+              // Fall through to real-time rendering
+            }
+          }
+
+          // Stop any existing pre-rendered source before starting real-time rendering
+          if (prerenderedSource) {
+            try {
+              prerenderedSource.stop();
+              prerenderedSource.disconnect();
+            } catch {}
+            prerenderedSource = null;
+            prerenderedLeftChannel = null;
+            prerenderedRightChannel = null;
+          }
+
+          // Clear waveform timer from pre-rendered playback and restart for real-time
+          if (analyserTimerId != null) {
+            window.clearTimeout(analyserTimerId);
+            analyserTimerId = null;
+          }
+
+          // Restart analyser timer for real-time rendering
+          if (analyserNode && analyserData) {
+            const updateWaveform = () => {
+              if (!analyserNode || !analyserData || !globalIsPlaying) {
+                setGlobalWaveform(null);
+              } else {
+                analyserNode.getFloatTimeDomainData(analyserData as any);
+                setGlobalWaveform(new Float32Array(analyserData));
+              }
+              analyserTimerId = window.setTimeout(updateWaveform, ANALYSER_INTERVAL);
+            };
+            analyserTimerId = window.setTimeout(updateWaveform, ANALYSER_INTERVAL);
+          }
+
+          // Real-time rendering path
           if (!workletConnected) {
             if (globalGainNode) {
               node.connect(globalGainNode);
@@ -346,6 +481,23 @@ export function useBytebeatPlayer(options?: { enableVisualizer?: boolean }): Byt
           }
           setGlobalIsPlaying(true);
         } else {
+          // Stop playback
+          if (prerenderedSource) {
+            try {
+              prerenderedSource.stop();
+              prerenderedSource.disconnect();
+            } catch {}
+            prerenderedSource = null;
+            prerenderedLeftChannel = null;
+            prerenderedRightChannel = null;
+          }
+
+          // Clear waveform timer
+          if (analyserTimerId != null) {
+            window.clearTimeout(analyserTimerId);
+            analyserTimerId = null;
+          }
+
           if (ctx.state === 'running') {
             await ctx.suspend();
           }

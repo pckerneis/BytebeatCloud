@@ -296,7 +296,7 @@ export function PostDetailView({
       const { data, error } = await supabase
         .from('posts_with_meta')
         .select(
-          'id,title,description,expression,is_draft,sample_rate,mode,created_at,profile_id,fork_of_post_id,is_fork,author_username,origin_title,origin_username,favorites_count,is_weekly_winner,license,comments_count,favorited_by_current_user',
+          'id,title,description,expression,is_draft,sample_rate,mode,created_at,profile_id,fork_of_post_id,is_fork,author_username,origin_title,origin_username,favorites_count,is_weekly_winner,license,comments_count,favorited_by_current_user,pre_rendered,sample_url',
         )
         .eq('id', postId)
         .maybeSingle();

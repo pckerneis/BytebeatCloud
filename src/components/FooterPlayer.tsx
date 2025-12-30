@@ -200,7 +200,8 @@ export default function FooterPlayer() {
       await stop();
 
       const sr = post.sample_rate;
-      await toggle(post.expression, post.mode, sr);
+      const prerenderedUrl = post.pre_rendered && post.sample_url ? post.sample_url : undefined;
+      await toggle(post.expression, post.mode, sr, prerenderedUrl);
       startPlayTracking(post.id);
     },
     [cancelAutoTransition, stopPlayTracking, stop, toggle, startPlayTracking],

@@ -102,7 +102,7 @@ export default function PlaylistDetailPage() {
       const { data: postRows, error: postErr } = await supabase
         .from('posts_with_meta')
         .select(
-          'id,title,description,expression,is_draft,sample_rate,mode,created_at,profile_id,fork_of_post_id,is_fork,author_username,origin_title,origin_username,favorites_count,favorited_by_current_user,is_weekly_winner,license,comments_count',
+          'id,title,description,expression,is_draft,sample_rate,mode,created_at,profile_id,fork_of_post_id,is_fork,author_username,origin_title,origin_username,favorites_count,favorited_by_current_user,is_weekly_winner,license,comments_count,pre_rendered,sample_url',
         )
         .in('id', postIds);
 
