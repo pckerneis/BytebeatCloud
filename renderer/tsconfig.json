@@ -13,9 +13,9 @@
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
-    "baseUrl": "..",
+    "baseUrl": ".",
     "paths": {
-      "@shared/*": ["src/*"]
+      "@shared/*": ["../src/*"]
     }
   },
   "include": ["src/**/*", "../src/model/expression.ts", "../src/utils/audio-render.ts"],

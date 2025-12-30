@@ -1,5 +1,5 @@
 import { ModeOption } from '@shared/model/expression';
-import { renderExpressionToSamples, StereoSamples } from '@shared/utils/audio-render';
+import { renderExpressionToSamples } from '@shared/utils/audio-render';
 
 interface ExportOptions {
   expression: string;
