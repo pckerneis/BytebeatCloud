@@ -75,6 +75,7 @@ The worker expects the following columns in the `posts` table:
 - `sample_url` (text, nullable) - stores the URL of the rendered audio sample
 - `prerender_duration` (integer, nullable) - duration used for rendering (in seconds)
 - `prerender_signature` (text, nullable) - SHA-256 signature of render configuration
+- `last_rendered_at` (timestamptz, nullable) - timestamp of when the post was last rendered
 
 A migration file is provided at `../supabase/migrations/054_renderer_columns.sql`
 

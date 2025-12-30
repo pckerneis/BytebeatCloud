@@ -21,21 +21,44 @@ export async function getPostsNeedingRender(
   client: SupabaseClient,
   limit: number = 10,
 ): Promise<Post[]> {
-  // Fetch all non-draft posts that either:
-  // 1. Have never been rendered (pre_rendered is null or false)
-  // 2. Have been rendered (we'll check signature in the renderer logic)
-  const { data, error } = await client
+  // Fetch non-draft posts that have never been rendered
+  const { data: unrenderedData, error: unrenderedError } = await client
     .from('posts')
     .select('*')
     .eq('is_draft', false)
+    .or('pre_rendered.is.null,pre_rendered.eq.false')
     .order('created_at', { ascending: true })
-    .limit(limit * 2); // Fetch more since we'll filter by signature
+    .limit(limit);
 
-  if (error) {
-    throw new Error(`Failed to fetch posts: ${error.message}`);
+  if (unrenderedError) {
+    throw new Error(`Failed to fetch unrendered posts: ${unrenderedError.message}`);
   }
 
-  return data || [];
+  // Fetch posts that were updated after their last render
+  // This catches posts where expression/settings changed
+  // Note: Supabase doesn't support column-to-column comparison, so we fetch all rendered posts
+  // and filter in application code
+  const { data: renderedData, error: renderedError } = await client
+    .from('posts')
+    .select('*')
+    .eq('is_draft', false)
+    .eq('pre_rendered', true)
+    .not('last_rendered_at', 'is', null)
+    .order('updated_at', { ascending: false })
+    .limit(limit * 3); // Fetch more since we'll filter in code
+
+  if (renderedError) {
+    throw new Error(`Failed to fetch rendered posts: ${renderedError.message}`);
+  }
+
+  // Filter posts where updated_at > last_rendered_at
+  const staleData = (renderedData || []).filter(post => {
+    if (!post.last_rendered_at) return false;
+    return new Date(post.updated_at) > new Date(post.last_rendered_at);
+  }).slice(0, limit);
+
+  // Combine both sets, prioritizing unrendered posts
+  return [...(unrenderedData || []), ...staleData];
 }
 
 export async function markPostAsRendered(
@@ -52,6 +75,7 @@ export async function markPostAsRendered(
       sample_url: sampleUrl,
       prerender_signature: signature,
       prerender_duration: duration,
+      last_rendered_at: new Date().toISOString(),
     })
     .eq('id', postId);
 

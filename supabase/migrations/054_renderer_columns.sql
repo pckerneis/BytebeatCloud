@@ -3,9 +3,13 @@ ALTER TABLE posts ADD COLUMN IF NOT EXISTS pre_rendered BOOLEAN DEFAULT FALSE;
 ALTER TABLE posts ADD COLUMN IF NOT EXISTS sample_url TEXT;
 ALTER TABLE posts ADD COLUMN IF NOT EXISTS prerender_duration INTEGER;
 ALTER TABLE posts ADD COLUMN IF NOT EXISTS prerender_signature TEXT;
+ALTER TABLE posts ADD COLUMN IF NOT EXISTS last_rendered_at TIMESTAMPTZ;
 
 -- Create index for faster queries on posts needing rendering
 CREATE INDEX IF NOT EXISTS idx_posts_pre_rendered ON posts(pre_rendered) WHERE is_draft = false;
+
+-- Create index for finding posts that need re-rendering (updated after last render)
+CREATE INDEX IF NOT EXISTS idx_posts_needs_rerender ON posts(updated_at, last_rendered_at) WHERE is_draft = false AND pre_rendered = true;
 
 -- Create storage bucket for audio samples
 INSERT INTO storage.buckets (id, name, public)

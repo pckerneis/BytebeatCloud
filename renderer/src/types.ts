@@ -12,4 +12,5 @@ export interface Post {
   sample_url?: string;
   prerender_duration?: number;
   prerender_signature?: string;
+  last_rendered_at?: string;
 }
