@@ -36,6 +36,7 @@ export interface PostRow {
   license?: LicenseOption;
   pre_rendered?: boolean;
   sample_url?: string;
+  updated_at?: string;
 }
 
 interface PostListProps {
@@ -143,7 +144,7 @@ export function PostList({
           : ModeOption.Int8;
 
     const prerenderedUrl = post.pre_rendered && post.sample_url ? post.sample_url : undefined;
-    await toggle(post.expression, mode, sr, prerenderedUrl);
+    await toggle(post.expression, mode, sr, prerenderedUrl, post.updated_at);
     setActivePostId(post.id);
     setPlaylist(posts, post.id);
     setCurrentPostById(post.id);

@@ -11,10 +11,6 @@ import { useTabState } from '../hooks/useTabState';
 import { ActivityHeatmap } from './ActivityHeatmap';
 import { PlaylistCard } from './PlaylistCard';
 
-// Shared constants
-const POST_SELECT_COLUMNS =
-  'id,title,expression,is_draft,sample_rate,mode,created_at,profile_id,fork_of_post_id,is_fork,author_username,origin_title,origin_username,favorites_count,favorited_by_current_user,is_weekly_winner,license,comments_count,pre_rendered,sample_url';
-
 // Shared enrichment pipeline
 async function enrichPosts(rows: PostRow[], currentUserId?: string | null): Promise<PostRow[]> {
   if (rows.length > 0) {
@@ -149,7 +145,7 @@ export function useUserPosts(profileId: string | null, currentUserId?: string) {
 
       const { data, error: fetchError } = await supabase
         .from('posts_with_meta')
-        .select(POST_SELECT_COLUMNS)
+        .select()
         .eq('profile_id', profileId)
         .eq('is_draft', false)
         .order('created_at', { ascending: false })
@@ -286,7 +282,7 @@ export function useUserFavorites(
 
     return supabase
       .from('posts_with_meta')
-      .select(POST_SELECT_COLUMNS)
+      .select()
       .in('id', postIds)
       .eq('is_draft', false)
       .order('created_at', { ascending: false });
@@ -304,7 +300,7 @@ export function useUserDrafts(
     async (pid: string) =>
       supabase
         .from('posts_with_meta')
-        .select(POST_SELECT_COLUMNS)
+        .select()
         .eq('profile_id', pid)
         .eq('is_draft', true)
         .order('created_at', { ascending: false }),

@@ -110,9 +110,7 @@ export default function TagPage() {
       if (activeTab === 'recent') {
         result = await supabase
           .from('posts_with_meta')
-          .select(
-            'id,title,description,expression,is_draft,sample_rate,mode,created_at,profile_id,fork_of_post_id,is_fork,author_username,origin_title,origin_username,favorites_count,favorited_by_current_user,is_weekly_winner,license,comments_count,pre_rendered,sample_url',
-          )
+          .select()
           .in('id', postIds)
           .eq('is_draft', false)
           .order('created_at', { ascending: false })
@@ -121,9 +119,7 @@ export default function TagPage() {
         // trending within this tag
         result = await supabase
           .from('posts_with_meta')
-          .select(
-            'id,title,description,expression,is_draft,sample_rate,mode,created_at,profile_id,fork_of_post_id,is_fork,author_username,origin_title,origin_username,favorites_count,favorited_by_current_user,is_weekly_winner,license,comments_count,pre_rendered,sample_url',
-          )
+          .select()
           .in('id', postIds)
           .eq('is_draft', false)
           .order('favorites_count', { ascending: false })

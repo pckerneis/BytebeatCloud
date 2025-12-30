@@ -65,7 +65,7 @@ export default async function handler(req: NextRequest) {
 
   const { data: post, error } = await supabase
     .from('posts_with_meta')
-    .select('id, title, expression, author_username, mode')
+    .select()
     .eq('id', id)
     .maybeSingle();
 
