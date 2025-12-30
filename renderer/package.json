@@ -1,0 +1,26 @@
+{
+  "name": "bytebeat-renderer-worker",
+  "version": "1.0.0",
+  "description": "Worker app for pre-rendering bytebeat audio samples",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/renderer/src/index.js",
+    "dev": "ts-node -r tsconfig-paths/register src/index.ts",
+    "lint": "eslint src --ext .ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "2.48.0",
+    "dotenv": "^16.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "20.11.30",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "eslint": "^8.0.0",
+    "ts-node": "^10.9.1",
+    "tsconfig-paths": "^4.2.0",
+    "typescript": "5.4.5"
+  }
+}
