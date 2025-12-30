@@ -13,7 +13,8 @@ interface UseExpressionPlayerOptions {
     expression: string,
     mode: ModeOption,
     sampleRate: number,
-    loop?: boolean,
+    prerenderedUrl?: string,
+    updatedAt?: string,
   ) => void | Promise<void>;
   setCurrentPostById: (id: string | null) => void;
   loopPreview?: boolean;
@@ -76,13 +77,13 @@ export function useExpressionPlayer({
   const handlePlayClick = (currentPost?: { id: string } | null) => {
     // If currently playing the editor's expression, pause it
     if (isPlaying && !currentPost) {
-      void toggle(expression, mode, sampleRateValue, loopPreview);
+      void toggle(expression, mode, sampleRateValue);
       return;
     }
 
     // If currently playing a post, pause it first (don't start editor)
     if (isPlaying && currentPost) {
-      void toggle(expression, mode, sampleRateValue, loopPreview);
+      void toggle(expression, mode, sampleRateValue);
       return;
     }
 
@@ -101,7 +102,7 @@ export function useExpressionPlayer({
 
     setValidationIssue(null);
     setCurrentPostById(null);
-    void toggle(expression, mode, sampleRateValue, loopPreview);
+    void toggle(expression, mode, sampleRateValue);
   };
 
   return {
