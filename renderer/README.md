@@ -9,6 +9,7 @@ This worker's job is to look for public posts that need to be pre-rendered, pre-
 - Uploads rendered samples to Supabase Storage
 - Updates posts with the sample URL and marks them as pre-rendered
 - Configurable batch size, render duration, and polling interval
+- Smart re-rendering using SHA-256 signature-based invalidation
 
 ## Architecture
 
@@ -17,6 +18,17 @@ The renderer worker shares audio rendering code with the main application to avo
 - Audio rendering logic: `../src/utils/audio-render.ts`
 - Expression types: `../src/model/expression.ts`
 - WAV export wrapper: `./src/wav-export.ts` (renderer-specific, uses shared rendering)
+
+### Smart Re-rendering
+
+The worker uses SHA-256 signatures to detect when posts need re-rendering. A signature is calculated from:
+
+- `expression` - the bytebeat code
+- `mode` - audio mode (uint8, int8, float)
+- `sample_rate` - sample rate in Hz
+- `prerender_duration` - render duration in seconds
+
+When any of these properties change, the signature changes and the post is automatically re-rendered on the next worker cycle.
 
 ## Setup
 
@@ -50,21 +62,19 @@ The worker expects the following columns in the `posts` table:
 
 - `pre_rendered` (boolean, nullable) - marks if a post has been pre-rendered
 - `sample_url` (text, nullable) - stores the URL of the rendered audio sample
+- `prerender_duration` (integer, nullable) - duration used for rendering (in seconds)
+- `prerender_signature` (text, nullable) - SHA-256 signature of render configuration
 
-Add these columns with a migration if they don't exist:
-
-```sql
-ALTER TABLE posts ADD COLUMN IF NOT EXISTS pre_rendered BOOLEAN DEFAULT FALSE;
-ALTER TABLE posts ADD COLUMN IF NOT EXISTS sample_url TEXT;
-```
+A migration file is provided at `../supabase/migrations/054_renderer_columns.sql`
 
 ### 4. Storage Bucket
 
-Create a storage bucket named `audio-samples` in Supabase:
+The `audio-samples` storage bucket is automatically created by the migration file. No manual setup required!
 
-1. Go to Storage in Supabase Dashboard
-2. Create a new bucket named `audio-samples`
-3. Set it to **public** (or configure appropriate policies)
+The migration sets up:
+- Public bucket for audio samples
+- Public read access for all users
+- Service role write/update/delete permissions
 
 ## Usage
 
@@ -91,20 +101,24 @@ Environment variables:
 - `SUPABASE_SERVICE_KEY` - Supabase service role key (required for admin operations)
 - `POLL_INTERVAL_MS` - Time between polling cycles (default: 60000ms / 1 minute)
 - `BATCH_SIZE` - Number of posts to process per cycle (default: 5)
-- `RENDER_DURATION` - Duration of rendered audio in seconds (default: 30)
+- `RENDER_DURATION` - Duration of rendered audio in seconds (default: 120)
 - `FADE_IN_SECONDS` - Fade-in duration (default: 0.1)
 - `FADE_OUT_SECONDS` - Fade-out duration (default: 0.5)
 
 ## How It Works
 
 1. Worker polls the database every `POLL_INTERVAL_MS` milliseconds
-2. Fetches up to `BATCH_SIZE` posts where `pre_rendered` is `false` or `null`
-3. For each post:
+2. Fetches non-draft posts from the database
+3. Filters posts that need rendering by checking:
+   - Posts that have never been rendered (`pre_rendered` is `false` or `null`)
+   - Posts where the render signature has changed (expression, mode, sample_rate, or prerender_duration modified)
+4. For each post needing render (up to `BATCH_SIZE`):
+   - Calculates the current render signature
    - Renders the bytebeat expression to a WAV file
    - Uploads the WAV to Supabase Storage (`audio-samples` bucket)
-   - Updates the post with `pre_rendered = true` and `sample_url`
-4. Logs progress and errors
-5. Waits for the next polling cycle
+   - Updates the post with `pre_rendered = true`, `sample_url`, `prerender_signature`, and `prerender_duration`
+5. Logs progress and errors
+6. Waits for the next polling cycle
 
 ## Deployment
 

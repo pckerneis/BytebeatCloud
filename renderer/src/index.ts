@@ -8,6 +8,7 @@ import {
 import { renderToWav } from './wav-export';
 import { ModeOption } from '@shared/model/expression';
 import { Post } from './types';
+import { needsRerender, getRenderConfigFromPost, generateRenderSignature } from './signature';
 
 dotenv.config();
 
@@ -59,9 +60,13 @@ async function processPost(post: Post): Promise<void> {
   const supabase = createSupabaseClient();
 
   try {
+    const duration = post.prerender_duration ?? RENDER_DURATION;
+    const renderConfig = getRenderConfigFromPost(post, RENDER_DURATION);
+    const signature = generateRenderSignature(renderConfig);
+    
     const wavBuffer = await renderPost(post);
     const publicUrl = await uploadAudioSample(supabase, post.id, wavBuffer);
-    await markPostAsRendered(supabase, post.id, publicUrl);
+    await markPostAsRendered(supabase, post.id, publicUrl, signature, duration);
     console.log(`✓ Post ${post.id} processed successfully. URL: ${publicUrl}`);
   } catch (error) {
     console.error(`✗ Failed to process post ${post.id}:`, error);
@@ -73,24 +78,29 @@ async function processBatch(): Promise<void> {
   const supabase = createSupabaseClient();
 
   try {
-    const posts = await getPostsNeedingRender(supabase, BATCH_SIZE);
+    const allPosts = await getPostsNeedingRender(supabase, BATCH_SIZE);
 
-    if (posts.length === 0) {
+    // Filter posts that actually need rendering based on signature
+    const postsToRender = allPosts.filter(post => needsRerender(post, RENDER_DURATION)).slice(0, BATCH_SIZE);
+
+    if (postsToRender.length === 0) {
       console.log('No posts need rendering at this time.');
       return;
     }
 
-    console.log(`Found ${posts.length} post(s) to render`);
+    console.log(`Found ${postsToRender.length} post(s) needing render (checked ${allPosts.length} total)`);
 
-    for (const post of posts) {
+    for (const post of postsToRender) {
       try {
+        const reason = !post.pre_rendered ? 'never rendered' : 'signature changed';
+        console.log(`Processing post ${post.id} (${reason})`);
         await processPost(post);
       } catch (error) {
         console.error(`Skipping post ${post.id} due to error`);
       }
     }
 
-    console.log(`Batch complete. Processed ${posts.length} post(s).`);
+    console.log(`Batch complete. Processed ${postsToRender.length} post(s).`);
   } catch (error) {
     console.error('Error during batch processing:', error);
   }

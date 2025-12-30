@@ -21,13 +21,15 @@ export async function getPostsNeedingRender(
   client: SupabaseClient,
   limit: number = 10,
 ): Promise<Post[]> {
+  // Fetch all non-draft posts that either:
+  // 1. Have never been rendered (pre_rendered is null or false)
+  // 2. Have been rendered (we'll check signature in the renderer logic)
   const { data, error } = await client
     .from('posts')
     .select('*')
     .eq('is_draft', false)
-    .or('pre_rendered.is.null,pre_rendered.eq.false')
     .order('created_at', { ascending: true })
-    .limit(limit);
+    .limit(limit * 2); // Fetch more since we'll filter by signature
 
   if (error) {
     throw new Error(`Failed to fetch posts: ${error.message}`);
@@ -40,12 +42,16 @@ export async function markPostAsRendered(
   client: SupabaseClient,
   postId: string,
   sampleUrl: string,
+  signature: string,
+  duration: number,
 ): Promise<void> {
   const { error } = await client
     .from('posts')
     .update({
       pre_rendered: true,
       sample_url: sampleUrl,
+      prerender_signature: signature,
+      prerender_duration: duration,
     })
     .eq('id', postId);
 
