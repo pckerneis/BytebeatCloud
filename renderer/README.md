@@ -84,6 +84,7 @@ A migration file is provided at `../supabase/migrations/054_renderer_columns.sql
 The `audio-samples` storage bucket is automatically created by the migration file. No manual setup required!
 
 The migration sets up:
+
 - Public bucket for audio samples
 - Public read access for all users
 - Service role write/update/delete permissions
@@ -166,3 +167,4 @@ docker run -d \
   -e SUPABASE_URL=your_url \
   -e SUPABASE_SERVICE_KEY=your_key \
   bytebeat-renderer
+```

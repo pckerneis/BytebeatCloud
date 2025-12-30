@@ -200,7 +200,8 @@ export default function FooterPlayer() {
 
       const sr = post.sample_rate;
       // Only use prerendered audio when auto mode is enabled
-      const prerenderedUrl = autoEnabled && post.pre_rendered && post.sample_url ? post.sample_url : undefined;
+      const prerenderedUrl =
+        autoEnabled && post.pre_rendered && post.sample_url ? post.sample_url : undefined;
       await toggle(post.expression, post.mode, sr, prerenderedUrl, post.updated_at);
       startPlayTracking(post.id);
     },

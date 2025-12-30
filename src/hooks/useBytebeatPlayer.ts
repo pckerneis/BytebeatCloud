@@ -5,7 +5,13 @@ import { loadPrerenderedAudio } from '../utils/prerender-loader';
 interface BytebeatPlayer {
   isPlaying: boolean;
   lastError: string | null;
-  toggle: (expression: string, mode: ModeOption, sampleRate: number, prerenderedUrl?: string, updatedAt?: string) => Promise<void>;
+  toggle: (
+    expression: string,
+    mode: ModeOption,
+    sampleRate: number,
+    prerenderedUrl?: string,
+    updatedAt?: string,
+  ) => Promise<void>;
   stop: () => Promise<void>;
   level: number;
   waveform: Float32Array | null;
@@ -271,7 +277,13 @@ export function useBytebeatPlayer(options?: { enableVisualizer?: boolean }): Byt
   }, []);
 
   const toggle = useCallback(
-    async (expression: string, mode: ModeOption, sampleRate: number, prerenderedUrl?: string, updatedAt?: string) => {
+    async (
+      expression: string,
+      mode: ModeOption,
+      sampleRate: number,
+      prerenderedUrl?: string,
+      updatedAt?: string,
+    ) => {
       if (toggleInProgress) {
         return;
       }
@@ -295,7 +307,7 @@ export function useBytebeatPlayer(options?: { enableVisualizer?: boolean }): Byt
           if (prerenderedUrl) {
             try {
               const prerendered = await loadPrerenderedAudio(prerenderedUrl, ctx, updatedAt);
-              
+
               // Stop any existing pre-rendered source
               if (prerenderedSource) {
                 try {
@@ -312,7 +324,7 @@ export function useBytebeatPlayer(options?: { enableVisualizer?: boolean }): Byt
               // Create and configure source
               const source = ctx.createBufferSource();
               source.buffer = prerendered.audioBuffer;
-              
+
               // Connect through gain nodes
               if (!globalGainNode) {
                 const gain = ctx.createGain();
@@ -347,24 +359,26 @@ export function useBytebeatPlayer(options?: { enableVisualizer?: boolean }): Byt
 
               setLastError(null);
               setGlobalIsPlaying(true);
-              
+
               // Start waveform updates for pre-rendered audio
               // Clear any existing timer first
               if (analyserTimerId != null) {
                 window.clearTimeout(analyserTimerId);
                 analyserTimerId = null;
               }
-              
+
               const updatePrerenderedWaveform = () => {
                 if (!globalIsPlaying || !prerenderedLeftChannel) {
                   setGlobalWaveform(null);
                   return;
                 }
                 // Calculate current playback position
-                const elapsed = (ctx.currentTime - prerenderedStartTime) % (prerenderedLeftChannel.length / sampleRate);
+                const elapsed =
+                  (ctx.currentTime - prerenderedStartTime) %
+                  (prerenderedLeftChannel.length / sampleRate);
                 const sampleOffset = Math.floor(elapsed * sampleRate);
                 const windowSize = 1024;
-                
+
                 // Extract waveform window
                 const waveformData = new Float32Array(windowSize);
                 for (let i = 0; i < windowSize; i++) {

@@ -13,7 +13,7 @@ export function withTimeout<T>(
   return Promise.race([
     promise,
     new Promise<T>((_, reject) =>
-      setTimeout(() => reject(new TimeoutError(errorMessage)), timeoutMs)
+      setTimeout(() => reject(new TimeoutError(errorMessage)), timeoutMs),
     ),
   ]);
 }

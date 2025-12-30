@@ -42,14 +42,15 @@ async function renderPost(post: Post): Promise<Buffer> {
 
   try {
     const wavBuffer = await runWithTimeout(
-      () => renderToWav({
-        expression: post.expression,
-        mode,
-        sampleRate,
-        duration: post.prerender_duration ?? RENDER_DURATION,
-        fadeIn: FADE_IN_SECONDS,
-        fadeOut: FADE_OUT_SECONDS,
-      }),
+      () =>
+        renderToWav({
+          expression: post.expression,
+          mode,
+          sampleRate,
+          duration: post.prerender_duration ?? RENDER_DURATION,
+          fadeIn: FADE_IN_SECONDS,
+          fadeOut: FADE_OUT_SECONDS,
+        }),
       RENDER_TIMEOUT_MS,
       `Rendering timed out after ${RENDER_TIMEOUT_MS}ms (possible infinite loop)`,
     );
@@ -73,7 +74,7 @@ async function processPost(post: Post): Promise<void> {
     const duration = post.prerender_duration ?? RENDER_DURATION;
     const renderConfig = getRenderConfigFromPost(post, RENDER_DURATION);
     const signature = generateRenderSignature(renderConfig);
-    
+
     const wavBuffer = await renderPost(post);
     const publicUrl = await uploadAudioSample(supabase, post.id, wavBuffer);
     await markPostAsRendered(supabase, post.id, publicUrl, signature, duration);
@@ -91,14 +92,18 @@ async function processBatch(): Promise<void> {
     const allPosts = await getPostsNeedingRender(supabase, BATCH_SIZE);
 
     // Filter posts that actually need rendering based on signature
-    const postsToRender = allPosts.filter(post => needsRerender(post, RENDER_DURATION)).slice(0, BATCH_SIZE);
+    const postsToRender = allPosts
+      .filter((post) => needsRerender(post, RENDER_DURATION))
+      .slice(0, BATCH_SIZE);
 
     if (postsToRender.length === 0) {
       console.log('No posts need rendering at this time.');
       return;
     }
 
-    console.log(`Found ${postsToRender.length} post(s) needing render (checked ${allPosts.length} total)`);
+    console.log(
+      `Found ${postsToRender.length} post(s) needing render (checked ${allPosts.length} total)`,
+    );
 
     for (const post of postsToRender) {
       try {

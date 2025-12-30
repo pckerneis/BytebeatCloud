@@ -37,9 +37,8 @@ export async function loadPrerenderedAudio(
   const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
 
   const leftChannel = audioBuffer.getChannelData(0);
-  const rightChannel = audioBuffer.numberOfChannels > 1 
-    ? audioBuffer.getChannelData(1) 
-    : leftChannel;
+  const rightChannel =
+    audioBuffer.numberOfChannels > 1 ? audioBuffer.getChannelData(1) : leftChannel;
 
   const audio: PrerenderedAudio = {
     audioBuffer,

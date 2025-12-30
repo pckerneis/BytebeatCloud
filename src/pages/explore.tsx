@@ -254,10 +254,7 @@ export default function ExplorePage() {
             .filter((id: string | null): id is string => !!id);
 
           if (ids.length > 0) {
-            const result = await supabase
-              .from('posts_with_meta')
-              .select()
-              .in('id', ids);
+            const result = await supabase.from('posts_with_meta').select().in('id', ids);
 
             data = shuffle(result.data ?? []) as PostRow[];
             if (result.error) {

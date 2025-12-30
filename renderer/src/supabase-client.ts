@@ -6,7 +6,9 @@ export function createSupabaseClient(): SupabaseClient {
   const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY;
 
   if (!supabaseUrl || !supabaseServiceKey) {
-    throw new Error('Missing required environment variables: SUPABASE_URL and SUPABASE_SERVICE_KEY');
+    throw new Error(
+      'Missing required environment variables: SUPABASE_URL and SUPABASE_SERVICE_KEY',
+    );
   }
 
   return createClient(supabaseUrl, supabaseServiceKey, {
@@ -52,10 +54,12 @@ export async function getPostsNeedingRender(
   }
 
   // Filter posts where updated_at > last_rendered_at
-  const staleData = (renderedData || []).filter(post => {
-    if (!post.last_rendered_at) return false;
-    return new Date(post.updated_at) > new Date(post.last_rendered_at);
-  }).slice(0, limit);
+  const staleData = (renderedData || [])
+    .filter((post) => {
+      if (!post.last_rendered_at) return false;
+      return new Date(post.updated_at) > new Date(post.last_rendered_at);
+    })
+    .slice(0, limit);
 
   // Combine both sets, prioritizing unrendered posts
   return [...(unrenderedData || []), ...staleData];

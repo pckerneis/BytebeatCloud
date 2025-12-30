@@ -15,7 +15,7 @@ export function generateRenderSignature(config: RenderConfig): string {
     sampleRate: config.sampleRate,
     prerenderDuration: config.prerenderDuration,
   });
-  
+
   return createHash('sha256').update(data).digest('hex');
 }
 
