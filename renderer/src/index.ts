@@ -9,6 +9,7 @@ import { renderToWav } from './wav-export';
 import { ModeOption } from '@shared/model/expression';
 import { Post } from './types';
 import { needsRerender, getRenderConfigFromPost, generateRenderSignature } from './signature';
+import { runWithTimeout, TimeoutError } from './timeout';
 
 dotenv.config();
 
@@ -17,6 +18,7 @@ const BATCH_SIZE = parseInt(process.env.BATCH_SIZE || '5', 10);
 const RENDER_DURATION = parseInt(process.env.RENDER_DURATION || '120', 10);
 const FADE_IN_SECONDS = parseFloat(process.env.FADE_IN_SECONDS || '0.1');
 const FADE_OUT_SECONDS = parseFloat(process.env.FADE_OUT_SECONDS || '0.5');
+const RENDER_TIMEOUT_MS = parseInt(process.env.RENDER_TIMEOUT_MS || '120000', 10);
 
 function mapModeToEnum(mode: string): ModeOption {
   switch (mode.toLowerCase()) {
@@ -39,19 +41,27 @@ async function renderPost(post: Post): Promise<Buffer> {
   const sampleRate = post.sample_rate || 8000;
 
   try {
-    const wavBuffer = renderToWav({
-      expression: post.expression,
-      mode,
-      sampleRate,
-      duration: post.prerender_duration ?? RENDER_DURATION,
-      fadeIn: FADE_IN_SECONDS,
-      fadeOut: FADE_OUT_SECONDS,
-    });
+    const wavBuffer = await runWithTimeout(
+      () => renderToWav({
+        expression: post.expression,
+        mode,
+        sampleRate,
+        duration: post.prerender_duration ?? RENDER_DURATION,
+        fadeIn: FADE_IN_SECONDS,
+        fadeOut: FADE_OUT_SECONDS,
+      }),
+      RENDER_TIMEOUT_MS,
+      `Rendering timed out after ${RENDER_TIMEOUT_MS}ms (possible infinite loop)`,
+    );
 
     console.log(`Successfully rendered post ${post.id} (${wavBuffer.length} bytes)`);
     return wavBuffer;
   } catch (error) {
-    console.error(`Failed to render post ${post.id}:`, error);
+    if (error instanceof TimeoutError) {
+      console.error(`⏱ Post ${post.id} timed out - likely infinite loop in expression`);
+    } else {
+      console.error(`Failed to render post ${post.id}:`, error);
+    }
     throw error;
   }
 }
@@ -111,6 +121,7 @@ async function main(): Promise<void> {
   console.log(`Poll interval: ${POLL_INTERVAL_MS}ms`);
   console.log(`Batch size: ${BATCH_SIZE}`);
   console.log(`Render duration: ${RENDER_DURATION}s`);
+  console.log(`Render timeout: ${RENDER_TIMEOUT_MS}ms`);
   console.log(`Fade in: ${FADE_IN_SECONDS}s, Fade out: ${FADE_OUT_SECONDS}s`);
   console.log('================================\n');
 

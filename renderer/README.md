@@ -30,6 +30,17 @@ The worker uses SHA-256 signatures to detect when posts need re-rendering. A sig
 
 When any of these properties change, the signature changes and the post is automatically re-rendered on the next worker cycle.
 
+### Timeout Protection
+
+The worker includes timeout protection to prevent infinite loops in expressions from hanging the worker:
+
+- Each render operation has a configurable timeout (default: 120 seconds)
+- If an expression takes longer than the timeout, it's terminated with a `TimeoutError`
+- The worker logs timeout errors and continues processing other posts
+- Posts that timeout are skipped and will be retried on the next cycle
+
+This ensures one problematic expression cannot block the entire rendering queue.
+
 ## Setup
 
 ### 1. Install Dependencies
@@ -99,10 +110,11 @@ Environment variables:
 
 - `SUPABASE_URL` - Supabase project URL
 - `SUPABASE_SERVICE_KEY` - Supabase service role key (required for admin operations)
-- `POLL_INTERVAL_MS` - Time between polling cycles (default: 60000ms / 1 minute)
-- `BATCH_SIZE` - Number of posts to process per cycle (default: 5)
+- `POLL_INTERVAL_MS` - Time between polling cycles (default: 30000ms / 30 seconds)
+- `BATCH_SIZE` - Number of posts to process per cycle (default: 10)
 - `RENDER_DURATION` - Duration of rendered audio in seconds (default: 120)
-- `FADE_IN_SECONDS` - Fade-in duration (default: 0.1)
+- `RENDER_TIMEOUT_MS` - Maximum time allowed for rendering before timeout (default: 12000ms / 120 seconds)
+- `FADE_IN_SECONDS` - Fade-in duration (default: 0.0)
 - `FADE_OUT_SECONDS` - Fade-out duration (default: 0.5)
 
 ## How It Works
