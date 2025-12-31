@@ -22,6 +22,11 @@ export function formatAuthorUsername(username: string | null | undefined): strin
   return username || UNKNOWN_AUTHOR;
 }
 
+export function formatAuthorDashTitle(username: string | null | undefined,
+                                      title: string | null | undefined): string {
+  return `${formatAuthorUsername(username)}-${formatAuthorUsername(title)}`;
+}
+
 /**
  * Format a post display string as "<title> by @<username>"
  */
