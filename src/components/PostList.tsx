@@ -211,7 +211,7 @@ export function PostList({
   useEffect(() => {
     const onScroll = () => {
       const postListEl = document.querySelector('.post-list');
-      setToTopVisible(postListEl ? postListEl?.getBoundingClientRect().y < -1000 : false);
+      setToTopVisible(posts.length > 1 && (postListEl ? postListEl?.getBoundingClientRect().y < -1000 : false));
     };
 
     const main = document.querySelector('main');
