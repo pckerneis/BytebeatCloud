@@ -695,7 +695,6 @@ export default function FooterPlayer() {
               type="button"
               className={`play-queue-button toggle ${autoSkipEnabled ? 'active' : ''}`}
               onClick={handleToggleAuto}
-              disabled={(playlist?.length ?? 0) < 2}
             >
               auto-skip
             </button>
@@ -703,7 +702,6 @@ export default function FooterPlayer() {
               type="button"
               className="play-queue-button"
               onClick={handleShuffle}
-              disabled={(playlist?.length ?? 0) < 2}
             >
               shuffle
             </button>

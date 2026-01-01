@@ -91,9 +91,9 @@
 }
 
 .volume-slider-backdrop {
-  height: 96px;
+  height: 60px;
   position: absolute;
-  bottom: 0;
+  bottom: 15px;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
@@ -154,14 +154,9 @@
   padding: 4px 6px 4px 18px;
 }
 
-.play-queue-button.active:not([disabled]),
-.play-queue-button:hover:not([disabled]) {
+.play-queue-button.active,
+.play-queue-button:hover {
   opacity: 0.9;
-}
-
-.play-queue-button[disabled] {
-  opacity: 0.2;
-  cursor: default;
 }
 
 .play-queue-button.toggle:before {
