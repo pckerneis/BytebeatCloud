@@ -91,9 +91,9 @@
 }
 
 .volume-slider-backdrop {
-  height: 96px;
+  height: 60px;
   position: absolute;
-  bottom: 0;
+  bottom: 15px;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
