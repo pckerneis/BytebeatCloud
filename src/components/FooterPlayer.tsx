@@ -44,11 +44,12 @@ export default function FooterPlayer() {
   const fadeStartGainRef = useRef<number>(1);
   const switchTimerRef = useRef<number | null>(null);
   const playStartTimeRef = useRef<number | null>(null);
+  const progressBarRef = useRef<HTMLDivElement | null>(null);
+  const progressAnimationRef = useRef<number | null>(null);
   const [isQueueOpen, setIsQueueOpen] = useState(false);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [dropIndicatorIndex, setDropIndicatorIndex] = useState<number | null>(null);
   const [queueFavoritePending, setQueueFavoritePending] = useState<Record<string, boolean>>({});
-  const [autoProgress, setAutoProgress] = useState(0);
 
   useEffect(() => {
     const unsubscribe = subscribePreviewSource(setPreview);
@@ -237,13 +238,22 @@ export default function FooterPlayer() {
       const actualTotalMs = elapsedMs + actualRemainingMs;
       const progressStartTime = Date.now();
 
-      // Update progress bar continuously
-      const progressInterval = window.setInterval(() => {
+      // Update progress bar continuously using requestAnimationFrame
+      const updateProgress = () => {
         const progressElapsed = Date.now() - progressStartTime;
         const totalElapsed = elapsedMs + progressElapsed;
         const progress = Math.min(100, (totalElapsed / actualTotalMs) * 100);
-        setAutoProgress(progress);
-      }, 50);
+        
+        if (progressBarRef.current) {
+          progressBarRef.current.style.width = `${progress}%`;
+        }
+        
+        if (progress < 100) {
+          progressAnimationRef.current = requestAnimationFrame(updateProgress);
+        }
+      };
+      
+      progressAnimationRef.current = requestAnimationFrame(updateProgress);
 
       // Schedule fade start
       autoTimerRef.current = window.setTimeout(() => {
@@ -286,11 +296,20 @@ export default function FooterPlayer() {
 
       return () => {
         clearTimers();
-        window.clearInterval(progressInterval);
+        if (progressAnimationRef.current !== null) {
+          cancelAnimationFrame(progressAnimationRef.current);
+          progressAnimationRef.current = null;
+        }
       };
     } else {
       // Reset progress when auto mode is not active
-      setAutoProgress(0);
+      if (progressBarRef.current) {
+        progressBarRef.current.style.width = '0%';
+      }
+      if (progressAnimationRef.current !== null) {
+        cancelAnimationFrame(progressAnimationRef.current);
+        progressAnimationRef.current = null;
+      }
     }
     // Recreate timers when these change
     // Note: fadeGain is intentionally excluded to prevent timer reset during fade animation
@@ -493,8 +512,8 @@ export default function FooterPlayer() {
       {autoSkipEnabled && isPlaying && currentPost && (
         <div className="footer-progress">
           <div 
-            className="footer-progress-bar" 
-            style={{ width: `${autoProgress}%` }}
+            ref={progressBarRef}
+            className="footer-progress-bar"
           />
         </div>
       )}
