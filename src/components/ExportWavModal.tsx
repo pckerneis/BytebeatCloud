@@ -7,8 +7,8 @@ interface ExportWavModalProps {
   expression: string;
   mode: ModeOption;
   sampleRate: number;
-  username: string;
-  title: string;
+  username?: string | null;
+  title?: string | null;
   onClose: () => void;
 }
 
