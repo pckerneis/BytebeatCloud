@@ -29,9 +29,8 @@ export default function FooterPlayer() {
     stopPlayTracking,
     // Loop & shuffle controls
     loopEnabled,
-    shuffleEnabled,
     setLoop,
-    setShuffle,
+    shufflePlaylist,
   } = usePlayerStore();
   const theme = useContext(ThemeContext);
   const [footerFavoritePending, setFooterFavoritePending] = useState(false);
@@ -306,10 +305,8 @@ export default function FooterPlayer() {
     setLoop(!loopEnabled);
   };
 
-  const handleToggleShuffle = () => {
-    // Enable/disable shuffle bag behavior in the store
-    cancelAutoTransition();
-    setShuffle(!shuffleEnabled);
+  const handleShuffle = () => {
+    shufflePlaylist();
   };
 
   const handleFooterFavoriteClick = async () => {
@@ -493,25 +490,6 @@ export default function FooterPlayer() {
         </button>
       </div>
 
-      <div className="flex-column gap-2">
-        <button
-          type="button"
-          className={`player-toggle ${loopEnabled ? 'active' : ''}`}
-          onClick={handleToggleAuto}
-          disabled={(playlist?.length ?? 0) < 2}
-        >
-          auto
-        </button>
-        <button
-          type="button"
-          className={`player-toggle ${shuffleEnabled ? 'active' : ''}`}
-          onClick={handleToggleShuffle}
-          disabled={(playlist?.length ?? 0) < 2}
-        >
-          shuffle
-        </button>
-      </div>
-
       <div className="visualizer">
         <canvas ref={visualizerRef} width={150} height={26}></canvas>
         <div className="played-post-info" onClick={handlePlayedPostInfoClick}>
@@ -647,6 +625,24 @@ export default function FooterPlayer() {
           aria-label="Close queue"
         >
           ×
+        </button>
+      </div>
+      <div className="play-queue-controls">
+        <button
+          type="button"
+          className={`play-queue-button toggle ${loopEnabled ? 'active' : ''}`}
+          onClick={handleToggleAuto}
+          disabled={(playlist?.length ?? 0) < 2}
+        >
+          auto
+        </button>
+        <button
+          type="button"
+          className="play-queue-button"
+          onClick={handleShuffle}
+          disabled={(playlist?.length ?? 0) < 2}
+        >
+          shuffle
         </button>
       </div>
       <div className="play-queue-list">

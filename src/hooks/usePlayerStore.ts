@@ -6,7 +6,6 @@ interface PlayerStoreState {
   playlist: PostRow[];
   currentIndex: number;
   loopEnabled?: boolean;
-  shuffleEnabled?: boolean;
 }
 
 interface PlayerStoreSnapshot extends PlayerStoreState {
@@ -17,7 +16,6 @@ interface PlayerStoreSnapshot extends PlayerStoreState {
 let playlist: PostRow[] = [];
 let currentIndex = -1;
 let loopEnabled = false;
-let shuffleEnabled = false;
 
 // Play tracking state
 let currentPlayStartTime: number | null = null;
@@ -50,18 +48,7 @@ function shuffleArray<T>(arr: T[]): T[] {
 }
 
 function setPlaylistInternal(newPlaylist: PostRow[], startPostId: string | null) {
-  if (shuffleEnabled && newPlaylist.length > 1) {
-    // Preserve the starting post at the front if specified
-    if (startPostId) {
-      const start = newPlaylist.find((p) => p.id === startPostId) ?? newPlaylist[0];
-      const rest = newPlaylist.filter((p) => p.id !== start.id);
-      playlist = [start, ...shuffleArray(rest)];
-    } else {
-      playlist = shuffleArray(newPlaylist);
-    }
-  } else {
-    playlist = newPlaylist;
-  }
+  playlist = newPlaylist;
   if (!startPostId) {
     currentIndex = newPlaylist.length > 0 ? 0 : -1;
   } else {
@@ -211,41 +198,13 @@ export function usePlayerStore() {
     if (typeof window === 'undefined') return;
     try {
       const loopStr = window.localStorage.getItem('player-loop-enabled');
-      const shuffleStr = window.localStorage.getItem('player-shuffle-enabled');
-
-      let changed = false;
 
       if (loopStr != null) {
         const v = loopStr === 'true';
         if (loopEnabled !== v) {
           loopEnabled = v;
-          changed = true;
+          emit();
         }
-      }
-
-      if (shuffleStr != null) {
-        const v = shuffleStr === 'true';
-        if (shuffleEnabled !== v) {
-          shuffleEnabled = v;
-          // Re-apply shuffle to current playlist, keeping current first when possible
-          if (playlist.length > 0) {
-            const current = getSnapshot().currentPost;
-            const newOrder = v
-              ? current
-                ? [current, ...shuffleArray(playlist.filter((p) => p.id !== current.id))]
-                : shuffleArray(playlist)
-              : playlist.slice();
-            playlist = newOrder;
-            if (current) {
-              currentIndex = newOrder.findIndex((p) => p.id === current.id);
-            }
-          }
-          changed = true;
-        }
-      }
-
-      if (changed) {
-        emit();
       }
     } catch {}
   }, []);
@@ -268,7 +227,6 @@ export function usePlayerStore() {
     stopPlayTracking: () => stopPlayTrackingInternal(),
     // Loop & shuffle controls
     loopEnabled: loopEnabled,
-    shuffleEnabled: shuffleEnabled,
     setLoop: (enabled: boolean) => {
       loopEnabled = enabled;
       try {
@@ -278,25 +236,19 @@ export function usePlayerStore() {
       } catch {}
       emit();
     },
-    setShuffle: (enabled: boolean) => {
-      shuffleEnabled = enabled;
-      // Re-apply shuffle to current playlist order, keeping current post in place as first
-      if (playlist.length > 0) {
+    shufflePlaylist: () => {
+      if (playlist.length > 1) {
         const current = state.currentPost;
-        const newOrder = enabled
-          ? current
-            ? [current, ...shuffleArray(playlist.filter((p) => p.id !== current.id))]
-            : shuffleArray(playlist)
-          : playlist.slice();
-        playlist = newOrder;
-        currentIndex = current ? newOrder.findIndex((p) => p.id === current.id) : currentIndex;
-      }
-      try {
-        if (typeof window !== 'undefined') {
-          window.localStorage.setItem('player-shuffle-enabled', String(enabled));
+        // Keep current post at the front, shuffle the rest
+        if (current) {
+          const rest = playlist.filter((p) => p.id !== current.id);
+          playlist = [current, ...shuffleArray(rest)];
+          currentIndex = 0;
+        } else {
+          playlist = shuffleArray(playlist);
         }
-      } catch {}
-      emit();
+        emit();
+      }
     },
   };
 }
