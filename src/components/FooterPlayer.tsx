@@ -356,6 +356,7 @@ export default function FooterPlayer() {
   };
 
   return (
+    <>
     <div className="footer">
       <div className="transport-buttons">
         <button
@@ -421,98 +422,110 @@ export default function FooterPlayer() {
         </div>
       </div>
 
-      <div className="footer-volume">
-        <button type="button" className="volume-button" aria-label="Master volume">
-          {masterGain > 0 ? (
-            <svg width="64" height="64" viewBox="0 0 64 64" fill="none" style={{ height: '100%' }}>
-              <rect x="1" y="18" width="22" height="29" rx="2" fill="currentColor" />
-              <path
-                d="M14 23.9613C14 23.3537 14.2762 22.7791 14.7506 22.3995L35.7506 5.59951C37.0601 4.55189 39 5.48424 39 7.16125V57.8387C39 59.5158 37.0601 60.4481 35.7506 59.4005L14.7506 42.6005C14.2762 42.2209 14 41.6463 14 41.0387V23.9613Z"
-                fill="currentColor"
-              />
-              <line
-                x1="48"
-                y1="20"
-                x2="48"
-                y2="44"
-                stroke="currentColor"
-                strokeWidth="6"
-                strokeLinecap="round"
-              />
-              {masterGain > 0.7 && (
+      <div className="player-buttons-group">
+        <div className="footer-volume">
+          <button type="button" className="volume-button" aria-label="Master volume">
+            {masterGain > 0 ? (
+              <svg width="64" height="64" viewBox="0 0 64 64" fill="none" style={{ height: '100%' }}>
+                <rect x="1" y="18" width="22" height="29" rx="2" fill="currentColor" />
+                <path
+                  d="M14 23.9613C14 23.3537 14.2762 22.7791 14.7506 22.3995L35.7506 5.59951C37.0601 4.55189 39 5.48424 39 7.16125V57.8387C39 59.5158 37.0601 60.4481 35.7506 59.4005L14.7506 42.6005C14.2762 42.2209 14 41.6463 14 41.0387V23.9613Z"
+                  fill="currentColor"
+                />
                 <line
-                  x1="59"
-                  y1="11"
-                  x2="59"
-                  y2="53"
+                  x1="48"
+                  y1="20"
+                  x2="48"
+                  y2="44"
                   stroke="currentColor"
                   strokeWidth="6"
                   strokeLinecap="round"
                 />
-              )}
-            </svg>
-          ) : (
-            <svg width="64" height="64" viewBox="0 0 64 64" fill="none" style={{ height: '100%' }}>
-              <rect x="1" y="18" width="22" height="29" rx="2" fill="currentColor" />
-              <path
-                d="M14 23.9613C14 23.3537 14.2762 22.7791 14.7506 22.3995L35.7506 5.59951C37.0601 4.55189 39 5.48424 39 7.16125V57.8387C39 59.5158 37.0601 60.4481 35.7506 59.4005L14.7506 42.6005C14.2762 42.2209 14 41.6463 14 41.0387V23.9613Z"
-                fill="currentColor"
+                {masterGain > 0.7 && (
+                  <line
+                    x1="59"
+                    y1="11"
+                    x2="59"
+                    y2="53"
+                    stroke="currentColor"
+                    strokeWidth="6"
+                    strokeLinecap="round"
+                  />
+                )}
+              </svg>
+            ) : (
+              <svg width="64" height="64" viewBox="0 0 64 64" fill="none" style={{ height: '100%' }}>
+                <rect x="1" y="18" width="22" height="29" rx="2" fill="currentColor" />
+                <path
+                  d="M14 23.9613C14 23.3537 14.2762 22.7791 14.7506 22.3995L35.7506 5.59951C37.0601 4.55189 39 5.48424 39 7.16125V57.8387C39 59.5158 37.0601 60.4481 35.7506 59.4005L14.7506 42.6005C14.2762 42.2209 14 41.6463 14 41.0387V23.9613Z"
+                  fill="currentColor"
+                />
+                <line
+                  x1="60"
+                  y1="26.2426"
+                  x2="46.2426"
+                  y2="40"
+                  stroke="currentColor"
+                  strokeWidth="6"
+                  strokeLinecap="round"
+                />
+                <line
+                  x1="3"
+                  y1="-3"
+                  x2="22.4558"
+                  y2="-3"
+                  transform="matrix(-0.707107 -0.707107 -0.707107 0.707107 60 44)"
+                  stroke="currentColor"
+                  strokeWidth="6"
+                  strokeLinecap="round"
+                />
+              </svg>
+            )}
+          </button>
+          <div className="volume-slider-backdrop">
+            <div className="volume-slider-container">
+              <input
+                type="range"
+                min={0}
+                max={1}
+                step={0.01}
+                value={masterGain}
+                onChange={(e) => setMasterGain(Number(e.target.value))}
+                className="volume-slider"
               />
-              <line
-                x1="60"
-                y1="26.2426"
-                x2="46.2426"
-                y2="40"
-                stroke="currentColor"
-                strokeWidth="6"
-                strokeLinecap="round"
-              />
-              <line
-                x1="3"
-                y1="-3"
-                x2="22.4558"
-                y2="-3"
-                transform="matrix(-0.707107 -0.707107 -0.707107 0.707107 60 44)"
-                stroke="currentColor"
-                strokeWidth="6"
-                strokeLinecap="round"
-              />
-            </svg>
-          )}
-        </button>
-        <div className="volume-slider-backdrop">
-          <div className="volume-slider-container">
-            <input
-              type="range"
-              min={0}
-              max={1}
-              step={0.01}
-              value={masterGain}
-              onChange={(e) => setMasterGain(Number(e.target.value))}
-              className="volume-slider"
-            />
+            </div>
           </div>
         </div>
-      </div>
-      <button
-        type="button"
-        className={`favorite-button${isFooterFavorited ? ' favorited' : ''}${
-          footerFavoritePending ? ' pending' : ''
-        }`}
-        onClick={handleFooterFavoriteClick}
-        disabled={!currentPost || footerFavoritePending}
-      >
-        <svg
-          className="heart-icon"
-          width="64"
-          height="64"
-          viewBox="0 0 64 64"
-          fill="currentColor"
-          xmlns="http://www.w3.org/2000/svg"
+        <button type="button" className="volume-button">
+          ▤
+        </button>
+        <button
+          type="button"
+          className={`favorite-button${isFooterFavorited ? ' favorited' : ''}${
+            footerFavoritePending ? ' pending' : ''
+          }`}
+          onClick={handleFooterFavoriteClick}
+          disabled={!currentPost || footerFavoritePending}
         >
-          <path d="M31.9823 58.7827L5.69823 32.4986C3.60164 30.402 2.20391 27.9645 1.50505 25.1861C0.823232 22.4077 0.831755 19.6463 1.53062 16.902C2.22948 14.1406 3.61869 11.7372 5.69823 9.69176C7.82891 7.59517 10.2579 6.20596 12.9852 5.52415C15.7295 4.82528 18.4653 4.82528 21.1926 5.52415C23.9369 6.22301 26.3744 7.61222 28.5051 9.69176L31.9823 13.0668L35.4596 9.69176C37.6073 7.61222 40.0448 6.22301 42.7721 5.52415C45.4994 4.82528 48.2266 4.82528 50.9539 5.52415C53.6982 6.20596 56.1357 7.59517 58.2664 9.69176C60.346 11.7372 61.7352 14.1406 62.434 16.902C63.1329 19.6463 63.1329 22.4077 62.434 25.1861C61.7522 27.9645 60.363 30.402 58.2664 32.4986L31.9823 58.7827Z" />
-        </svg>
-      </button>
+          <svg
+            className="heart-icon"
+            width="64"
+            height="64"
+            viewBox="0 0 64 64"
+            fill="currentColor"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path d="M31.9823 58.7827L5.69823 32.4986C3.60164 30.402 2.20391 27.9645 1.50505 25.1861C0.823232 22.4077 0.831755 19.6463 1.53062 16.902C2.22948 14.1406 3.61869 11.7372 5.69823 9.69176C7.82891 7.59517 10.2579 6.20596 12.9852 5.52415C15.7295 4.82528 18.4653 4.82528 21.1926 5.52415C23.9369 6.22301 26.3744 7.61222 28.5051 9.69176L31.9823 13.0668L35.4596 9.69176C37.6073 7.61222 40.0448 6.22301 42.7721 5.52415C45.4994 4.82528 48.2266 4.82528 50.9539 5.52415C53.6982 6.20596 56.1357 7.59517 58.2664 9.69176C60.346 11.7372 61.7352 14.1406 62.434 16.902C63.1329 19.6463 63.1329 22.4077 62.434 25.1861C61.7522 27.9645 60.363 30.402 58.2664 32.4986L31.9823 58.7827Z" />
+          </svg>
+        </button>
+      </div>
+
     </div>
+
+
+  <div className="play-queue-container">
+    Hello
+  </div>
+    </>
   );
 }

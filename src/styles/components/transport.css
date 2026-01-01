@@ -72,6 +72,11 @@
   align-items: center;
 }
 
+.player-buttons-group {
+  display: flex;
+  gap: 4px;
+}
+
 .volume-button {
   border-radius: 50%;
   border: 1px solid var(--chip-border-color);
@@ -167,4 +172,16 @@
 .player-toggle.active:before {
   background: var(--accent-color);
   opacity: 1;
+}
+
+.play-queue-container {
+  position: absolute;
+  width: 220px;
+  height: 220px;
+  background: var(--bg-color);
+  border: 1px solid var(--chip-border-color);
+  bottom: 50px;
+  right: 30px;
+  box-shadow: 0 0 50px 0 #00000020;
+  padding: 6px;
 }
