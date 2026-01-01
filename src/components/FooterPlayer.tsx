@@ -47,6 +47,7 @@ export default function FooterPlayer() {
   const [isQueueOpen, setIsQueueOpen] = useState(false);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [dropIndicatorIndex, setDropIndicatorIndex] = useState<number | null>(null);
+  const [queueFavoritePending, setQueueFavoritePending] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     const unsubscribe = subscribePreviewSource(setPreview);
@@ -378,6 +379,50 @@ export default function FooterPlayer() {
     removeFromPlaylist(postId);
   };
 
+  const handleQueueItemFavoriteClick = async (post: PostRow, e: React.MouseEvent) => {
+    e.stopPropagation();
+
+    if (!user) {
+      await router.push('/login');
+      return;
+    }
+
+    if (queueFavoritePending[post.id]) {
+      return;
+    }
+
+    const userId = (user as any).id as string;
+    const baseCount = post.favorites_count ?? 0;
+    const isFavorited = !!post.favorited_by_current_user;
+
+    setQueueFavoritePending((prev) => ({ ...prev, [post.id]: true }));
+
+    try {
+      if (!isFavorited) {
+        const { error } = await favoritePost(userId, post.id);
+
+        if (error) {
+          console.warn('Error favoriting post', error.message);
+          return;
+        }
+
+        updateFavoriteStateForPost(post.id, true, baseCount + 1);
+        return;
+      }
+
+      const { error: deleteError } = await unfavoritePost(userId, post.id);
+
+      if (deleteError) {
+        console.warn('Error removing favorite', deleteError.message);
+        return;
+      }
+
+      updateFavoriteStateForPost(post.id, false, Math.max(0, baseCount - 1));
+    } finally {
+      setQueueFavoritePending((prev) => ({ ...prev, [post.id]: false }));
+    }
+  };
+
   const handleDragStart = (index: number) => {
     setDraggedIndex(index);
   };
@@ -638,6 +683,27 @@ export default function FooterPlayer() {
                         {post.author_username ? `@${post.author_username}` : '@unknown'}
                       </div>
                     </div>
+                    <button
+                      type="button"
+                      className={`play-queue-item-favorite${post.favorited_by_current_user ? ' favorited' : ''}${
+                        queueFavoritePending[post.id] ? ' pending' : ''
+                      }`}
+                      onClick={(e) => handleQueueItemFavoriteClick(post, e)}
+                      disabled={queueFavoritePending[post.id]}
+                      aria-label="Favorite"
+                      title={post.favorited_by_current_user ? 'Remove from favorites' : 'Add to favorites'}
+                    >
+                      <svg
+                        className="heart-icon"
+                        width="64"
+                        height="64"
+                        viewBox="0 0 64 64"
+                        fill="currentColor"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path d="M31.9823 58.7827L5.69823 32.4986C3.60164 30.402 2.20391 27.9645 1.50505 25.1861C0.823232 22.4077 0.831755 19.6463 1.53062 16.902C2.22948 14.1406 3.61869 11.7372 5.69823 9.69176C7.82891 7.59517 10.2579 6.20596 12.9852 5.52415C15.7295 4.82528 18.4653 4.82528 21.1926 5.52415C23.9369 6.22301 26.3744 7.61222 28.5051 9.69176L31.9823 13.0668L35.4596 9.69176C37.6073 7.61222 40.0448 6.22301 42.7721 5.52415C45.4994 4.82528 48.2266 4.82528 50.9539 5.52415C53.6982 6.20596 56.1357 7.59517 58.2664 9.69176C60.346 11.7372 61.7352 14.1406 62.434 16.902C63.1329 19.6463 63.1329 22.4077 62.434 25.1861C61.7522 27.9645 60.363 30.402 58.2664 32.4986L31.9823 58.7827Z" />
+                      </svg>
+                    </button>
                     <button
                       type="button"
                       className="play-queue-item-remove"
