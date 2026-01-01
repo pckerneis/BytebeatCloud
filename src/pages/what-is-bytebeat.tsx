@@ -83,12 +83,12 @@ export default function WhatIsBytebeat() {
           </Link>{' '}
           and{' '}
           <Link
-            href="http://greggman.com/downloads/examples/html5bytebeat/html5bytebeat.html"
+            href="https://greggman.com/downloads/examples/html5bytebeat/html5bytebeat.html"
             target="_blank"
           >
             Greggman’s bytebeat engine
           </Link>
-          are classic tools that introduced many people to the concept.
+          {' '}are classic tools that introduced many people to the concept.
         </p>
 
         <p>
