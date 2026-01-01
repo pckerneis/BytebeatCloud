@@ -300,6 +300,10 @@ export default function Home() {
           </p>
 
           <p>
+            <Link href="/what-is-bytebeat">Learn more about bytebeat</Link>
+          </p>
+
+          <p>
             <Link href="/explore">Browse existing bytebeats</Link> or{' '}
             <Link href="/create">create your own</Link>.
           </p>
