@@ -1,12 +1,14 @@
 import { useState } from 'react';
 import { ModeOption } from '../model/expression';
 import { renderToWav, downloadWav } from '../utils/wav-export';
+import { formatAuthorDashTitle } from '../utils/post-format';
 
 interface ExportWavModalProps {
   expression: string;
   mode: ModeOption;
   sampleRate: number;
-  title: string;
+  username?: string | null;
+  title?: string | null;
   onClose: () => void;
 }
 
@@ -14,6 +16,7 @@ export function ExportWavModal({
   expression,
   mode,
   sampleRate,
+  username,
   title,
   onClose,
 }: ExportWavModalProps) {
@@ -40,7 +43,10 @@ export function ExportWavModal({
         fadeOut,
       });
 
-      const filename = `${title || 'bytebeat'}.wav`.replace(/[^a-zA-Z0-9._-]/g, '_');
+      const filename = `${formatAuthorDashTitle(username, title)}.wav`.replace(
+        /[^a-zA-Z0-9._-]/g,
+        '_',
+      );
       downloadWav(buffer, filename);
       onClose();
     } catch (e) {

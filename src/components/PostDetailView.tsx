@@ -872,7 +872,8 @@ export function PostDetailView({
                 expression={posts[0].expression}
                 mode={(posts[0].mode as ModeOption) || ModeOption.Uint8}
                 sampleRate={posts[0].sample_rate || 8000}
-                title={posts[0].title || 'bytebeat'}
+                username={posts[0].author_username}
+                title={posts[0].title}
                 onClose={() => setShowExportModal(false)}
               />
             )}
