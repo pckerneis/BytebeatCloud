@@ -120,6 +120,52 @@ function updateFavoriteStateInternal(postId: string, favorited: boolean, count: 
   emit();
 }
 
+function removeFromPlaylistInternal(postId: string) {
+  const removedIndex = playlist.findIndex((p) => p.id === postId);
+  if (removedIndex === -1) return;
+
+  playlist = playlist.filter((p) => p.id !== postId);
+
+  // Adjust currentIndex if needed
+  if (currentIndex === removedIndex) {
+    // If we're removing the current post, move to the next one (or previous if at end)
+    if (playlist.length === 0) {
+      currentIndex = -1;
+    } else if (currentIndex >= playlist.length) {
+      currentIndex = playlist.length - 1;
+    }
+    // else keep currentIndex the same (it now points to what was the next item)
+  } else if (currentIndex > removedIndex) {
+    // If we removed something before the current index, shift down
+    currentIndex--;
+  }
+
+  emit();
+}
+
+function reorderPlaylistInternal(fromIndex: number, toIndex: number) {
+  if (fromIndex === toIndex || fromIndex < 0 || toIndex < 0 || 
+      fromIndex >= playlist.length || toIndex >= playlist.length) {
+    return;
+  }
+
+  const newPlaylist = [...playlist];
+  const [movedItem] = newPlaylist.splice(fromIndex, 1);
+  newPlaylist.splice(toIndex, 0, movedItem);
+  playlist = newPlaylist;
+
+  // Update currentIndex to track the current post
+  if (currentIndex === fromIndex) {
+    currentIndex = toIndex;
+  } else if (fromIndex < currentIndex && toIndex >= currentIndex) {
+    currentIndex--;
+  } else if (fromIndex > currentIndex && toIndex <= currentIndex) {
+    currentIndex++;
+  }
+
+  emit();
+}
+
 function setCurrentUserIdInternal(userId: string | null) {
   currentUserId = userId;
 }
@@ -215,6 +261,8 @@ export function usePlayerStore() {
     prev: () => stepInternal(-1).currentPost,
     updateFavoriteStateForPost: (postId: string, favorited: boolean, count: number) =>
       updateFavoriteStateInternal(postId, favorited, count),
+    removeFromPlaylist: (postId: string) => removeFromPlaylistInternal(postId),
+    reorderPlaylist: (fromIndex: number, toIndex: number) => reorderPlaylistInternal(fromIndex, toIndex),
     setCurrentUserId: (userId: string | null) => setCurrentUserIdInternal(userId),
     startPlayTracking: (postId: string) => startPlayTrackingInternal(postId),
     stopPlayTracking: () => stopPlayTrackingInternal(),

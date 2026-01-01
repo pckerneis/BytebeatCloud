@@ -176,12 +176,168 @@
 
 .play-queue-container {
   position: absolute;
-  width: 220px;
-  height: 220px;
-  background: var(--bg-color);
-  border: 1px solid var(--chip-border-color);
+  width: 320px;
+  max-height: 400px;
+  background: var(--card-bg-color);
+  border: 1px solid var(--panel-border-color);
   bottom: 50px;
-  right: 30px;
-  box-shadow: 0 0 50px 0 #00000020;
-  padding: 6px;
+  right: 20px;
+  box-shadow: 0 6px 24px var(--shadow-soft-color);
+  display: flex;
+  flex-direction: column;
+  z-index: 100;
+}
+
+.play-queue-header {
+  border-bottom: 1px solid var(--panel-border-color);
+  background: var(--bg-color);
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 8px;
+  display: flex;
+}
+
+.play-queue-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-color);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.play-queue-close {
+  background: none;
+  border: none;
+  color: var(--secondary-text-color);
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: background-color 120ms ease;
+}
+
+.play-queue-close:hover {
+  background-color: var(--chip-background-color);
+  color: var(--text-color);
+}
+
+.play-queue-list {
+  overflow-y: auto;
+  max-height: 340px;
+  padding: 4px;
+}
+
+.play-queue-empty {
+  padding: 40px 20px;
+  text-align: center;
+  color: var(--secondary-text-color);
+  font-size: 12px;
+}
+
+.play-queue-item {
+  cursor: pointer;
+  -webkit-user-select: none;
+  user-select: none;
+  border-left: 4px solid transparent;
+  align-items: center;
+  gap: 8px;
+  margin: 2px 0;
+  padding: 2px;
+  transition: background-color .12s;
+  display: flex;
+}
+
+.play-queue-item:hover {
+  background-color: var(--chip-background-color);
+}
+
+.play-queue-item.current {
+  background-color: var(--chip-background-color);
+  border-color: var(--accent-color);
+}
+
+.play-queue-item.dragging {
+  opacity: 0.5;
+}
+
+.play-queue-drop-indicator {
+  height: 2px;
+  background: var(--accent-color);
+  margin: 2px 8px;
+  border-radius: 1px;
+  box-shadow: 0 0 4px var(--accent-color);
+}
+
+.play-queue-item-drag-handle {
+  color: var(--secondary-text-color);
+  font-size: 12px;
+  cursor: grab;
+  padding: 0 4px;
+  line-height: 1;
+}
+
+.play-queue-item-drag-handle:active {
+  cursor: grabbing;
+}
+
+.play-queue-item-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.play-queue-item-title {
+  font-size: 11px;
+  color: var(--text-color);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 500;
+}
+
+.play-queue-item-author {
+  font-size: 9px;
+  color: var(--secondary-text-color);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.play-queue-item-remove {
+  background: none;
+  border: none;
+  color: var(--secondary-text-color);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 120ms ease;
+  opacity: 0;
+}
+
+.play-queue-item:hover .play-queue-item-remove {
+  opacity: 1;
+}
+
+.play-queue-item-remove:hover {
+  color: var(--text-color);
+}
+
+.volume-button.active {
+  background-color: var(--chip-background-color);
+  border-color: var(--accent-color);
 }

@@ -45,6 +45,7 @@ main > section {
     var(--sidebar-bg-gradient-color) 91%
   );
   position: relative;
+  z-index: 1000;
 }
 
 .home-section {

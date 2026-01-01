@@ -18,9 +18,13 @@ export default function FooterPlayer() {
   const {
     currentPost,
     playlist,
+    currentIndex,
     next,
     prev,
     updateFavoriteStateForPost,
+    removeFromPlaylist,
+    reorderPlaylist,
+    setCurrentPostById,
     startPlayTracking,
     stopPlayTracking,
     // Loop & shuffle controls
@@ -40,6 +44,9 @@ export default function FooterPlayer() {
   const fadeTimerRef = useRef<number | null>(null);
   const fadeStartGainRef = useRef<number>(1);
   const switchTimerRef = useRef<number | null>(null);
+  const [isQueueOpen, setIsQueueOpen] = useState(false);
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  const [dropIndicatorIndex, setDropIndicatorIndex] = useState<number | null>(null);
 
   useEffect(() => {
     const unsubscribe = subscribePreviewSource(setPreview);
@@ -201,9 +208,10 @@ export default function FooterPlayer() {
 
       const sr = post.sample_rate;
       await toggle(post.expression, post.mode, sr);
+      setCurrentPostById(post.id);
       startPlayTracking(post.id);
     },
-    [cancelAutoTransition, stopPlayTracking, stop, toggle, startPlayTracking],
+    [cancelAutoTransition, stopPlayTracking, stop, toggle, setCurrentPostById, startPlayTracking],
   );
 
   // Auto-next timer with 3s fade-out before the switch
@@ -355,6 +363,61 @@ export default function FooterPlayer() {
     void router.push(`/post/${currentPost.id}`);
   };
 
+  const handleToggleQueue = () => {
+    setIsQueueOpen(!isQueueOpen);
+  };
+
+  const handleQueueItemClick = async (post: PostRow) => {
+    if (post.id === currentPost?.id) return;
+    cancelAutoTransition();
+    await playPost(post);
+  };
+
+  const handleRemoveFromQueue = (postId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    removeFromPlaylist(postId);
+  };
+
+  const handleDragStart = (index: number) => {
+    setDraggedIndex(index);
+  };
+
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    if (draggedIndex === null || draggedIndex === index) {
+      setDropIndicatorIndex(null);
+      return;
+    }
+
+    // Determine if we should show indicator before or after this item
+    // If dragging down (draggedIndex < index), show after
+    // If dragging up (draggedIndex > index), show before
+    const targetIndex = draggedIndex < index ? index + 1 : index;
+    setDropIndicatorIndex(targetIndex);
+  };
+
+  const handleDragLeave = () => {
+    // Don't clear immediately as it causes flicker between items
+  };
+
+  const handleDrop = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    if (draggedIndex !== null && draggedIndex !== index) {
+      // Calculate the actual target index based on drag direction
+      const targetIndex = draggedIndex < index ? index : index;
+      if (draggedIndex !== targetIndex) {
+        reorderPlaylist(draggedIndex, targetIndex);
+      }
+    }
+    setDraggedIndex(null);
+    setDropIndicatorIndex(null);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedIndex(null);
+    setDropIndicatorIndex(null);
+  };
+
   return (
     <>
     <div className="footer">
@@ -496,7 +559,12 @@ export default function FooterPlayer() {
             </div>
           </div>
         </div>
-        <button type="button" className="volume-button">
+        <button 
+          type="button" 
+          className={`volume-button${isQueueOpen ? ' active' : ''}`}
+          onClick={handleToggleQueue}
+          title="Play queue"
+        >
           ▤
         </button>
         <button
@@ -523,9 +591,74 @@ export default function FooterPlayer() {
     </div>
 
 
-  <div className="play-queue-container">
-    Hello
-  </div>
+  {isQueueOpen && (
+    <div className="play-queue-container">
+      <div className="play-queue-header">
+        <span className="play-queue-title">Play Queue ({playlist.length})</span>
+        <button 
+          type="button" 
+          className="play-queue-close"
+          onClick={handleToggleQueue}
+          aria-label="Close queue"
+        >
+          ×
+        </button>
+      </div>
+      <div className="play-queue-list">
+        {playlist.length === 0 ? (
+          <div className="play-queue-empty">No tracks in queue</div>
+        ) : (
+          <>
+            {playlist.map((post, index) => {
+              const isCurrent = index === currentIndex;
+              const isDragging = draggedIndex === index;
+              const showDropIndicatorBefore = dropIndicatorIndex === index;
+              
+              return (
+                <div key={post.id}>
+                  {showDropIndicatorBefore && (
+                    <div className="play-queue-drop-indicator" />
+                  )}
+                  <div
+                    className={`play-queue-item${isCurrent ? ' current' : ''}${isDragging ? ' dragging' : ''}`}
+                    draggable
+                    onDragStart={() => handleDragStart(index)}
+                    onDragOver={(e) => handleDragOver(e, index)}
+                    onDragLeave={handleDragLeave}
+                    onDrop={(e) => handleDrop(e, index)}
+                    onDragEnd={handleDragEnd}
+                    onClick={() => handleQueueItemClick(post)}
+                  >
+                    <div className="play-queue-item-drag-handle">⋮⋮</div>
+                    <div className="play-queue-item-info">
+                      <div className="play-queue-item-title">
+                        {formatPostTitle(post.title)}
+                      </div>
+                      <div className="play-queue-item-author">
+                        {post.author_username ? `@${post.author_username}` : '@unknown'}
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      className="play-queue-item-remove"
+                      onClick={(e) => handleRemoveFromQueue(post.id, e)}
+                      aria-label="Remove from queue"
+                      title="Remove from queue"
+                    >
+                      ×
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+            {dropIndicatorIndex === playlist.length && (
+              <div className="play-queue-drop-indicator" />
+            )}
+          </>
+        )}
+      </div>
+    </div>
+  )}
     </>
   );
 }
