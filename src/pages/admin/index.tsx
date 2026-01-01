@@ -211,7 +211,7 @@ function MetricCard({ label, value }: { label: string; value: number }) {
       <div className="metric-label">{label}</div>
       <style jsx>{`
         .metric-card {
-          background: var(--chip-background-color,#1a1a1a);
+          background: var(--chip-background-color, #1a1a1a);
           border: 1px solid var(--border-color, #333);
           border-radius: 4px;
           padding: 0.75rem;
@@ -287,7 +287,7 @@ function TrendChart({ data, label }: { data: DailyData[]; label: string }) {
           background: var(--accent-color, #4a9eff);
           border-radius: 2px 2px 0 0;
           min-height: 2px;
-            opacity: 0.8;
+          opacity: 0.8;
         }
         .bar-wrapper:hover .bar {
           opacity: 1;

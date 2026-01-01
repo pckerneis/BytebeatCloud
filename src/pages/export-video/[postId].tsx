@@ -15,7 +15,11 @@ import {
 } from '../../utils/video-export';
 import { ModeOption } from '../../model/expression';
 import { useThemeId } from '../../theme/ThemeContext';
-import { formatPostTitle, formatAuthorUsername, formatAuthorDashTitle } from '../../utils/post-format';
+import {
+  formatPostTitle,
+  formatAuthorUsername,
+  formatAuthorDashTitle,
+} from '../../utils/post-format';
 
 interface VideoTheme {
   accentColor: string;
@@ -214,7 +218,9 @@ export default function ExportVideoPage() {
         },
       });
 
-      const safeTitle = formatAuthorDashTitle(post.author_username, post.title).replace(/[^a-z0-9-]/gi, '_').substring(0, 50);
+      const safeTitle = formatAuthorDashTitle(post.author_username, post.title)
+        .replace(/[^a-z0-9-]/gi, '_')
+        .substring(0, 50);
       const extension = hasWebCodecs() ? 'mp4' : 'webm';
       const filename = `${safeTitle}_${settings.resolution}_${settings.orientation}.${extension}`;
 

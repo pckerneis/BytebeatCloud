@@ -43,7 +43,10 @@ export function ExportWavModal({
         fadeOut,
       });
 
-      const filename = `${formatAuthorDashTitle(username, title)}.wav`.replace(/[^a-zA-Z0-9._-]/g, '_');
+      const filename = `${formatAuthorDashTitle(username, title)}.wav`.replace(
+        /[^a-zA-Z0-9._-]/g,
+        '_',
+      );
       downloadWav(buffer, filename);
       onClose();
     } catch (e) {
