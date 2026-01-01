@@ -27,9 +27,9 @@ export default function FooterPlayer() {
     setCurrentPostById,
     startPlayTracking,
     stopPlayTracking,
-    // Loop & shuffle controls
-    loopEnabled,
-    setLoop,
+    // Auto-skip controls
+    autoSkipEnabled,
+    setAutoSkip,
     shufflePlaylist,
   } = usePlayerStore();
   const theme = useContext(ThemeContext);
@@ -220,7 +220,7 @@ export default function FooterPlayer() {
   // Auto-next timer with 3s fade-out before the switch
   useEffect(() => {
     // Only schedule when playing, auto enabled, have at least 2 tracks, and a current post
-    if (isPlaying && loopEnabled && currentPost && (playlist?.length ?? 0) >= 2) {
+    if (isPlaying && autoSkipEnabled && currentPost && (playlist?.length ?? 0) >= 2) {
       const FADE_BEFORE_MS = 3000;
       const TOTAL_DELAY_MS = AUTOPLAY_DEFAULT_DURATION * 1000;
       const MIN_REMAINING_MS = 5000; // Minimum 5 seconds before transition
@@ -273,7 +273,7 @@ export default function FooterPlayer() {
         // Schedule actual next track at 3s after fade start
         switchTimerRef.current = window.setTimeout(async () => {
           // If still playing and auto still enabled, advance
-          if (isPlaying && loopEnabled) {
+          if (isPlaying && autoSkipEnabled) {
             await playPost(next());
             // Restore volume immediately after switching
             setFadeGain(fadeStartGainRef.current);
@@ -295,7 +295,7 @@ export default function FooterPlayer() {
     // Recreate timers when these change
     // Note: fadeGain is intentionally excluded to prevent timer reset during fade animation
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPost?.id, isPlaying, loopEnabled, playlist?.length, currentPost]);
+  }, [currentPost?.id, isPlaying, autoSkipEnabled, playlist?.length, currentPost]);
 
   const handleFooterPlayPause = async () => {
     if (isPlaying) {
@@ -329,7 +329,7 @@ export default function FooterPlayer() {
   const handleToggleAuto = () => {
     // Auto maps to looping behavior for continuous play
     cancelAutoTransition();
-    setLoop(!loopEnabled);
+    setAutoSkip(!autoSkipEnabled);
   };
 
   const handleShuffle = () => {
@@ -657,7 +657,7 @@ export default function FooterPlayer() {
       <div className="play-queue-controls">
         <button
           type="button"
-          className={`play-queue-button toggle ${loopEnabled ? 'active' : ''}`}
+          className={`play-queue-button toggle ${autoSkipEnabled ? 'active' : ''}`}
           onClick={handleToggleAuto}
           disabled={(playlist?.length ?? 0) < 2}
         >
@@ -737,7 +737,7 @@ export default function FooterPlayer() {
                       ×
                     </button>
                   </div>
-                  {isCurrent && loopEnabled && isPlaying && (
+                  {isCurrent && autoSkipEnabled && isPlaying && (
                     <div className="play-queue-item-progress">
                       <div 
                         className="play-queue-item-progress-bar" 

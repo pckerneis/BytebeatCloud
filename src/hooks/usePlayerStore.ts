@@ -5,7 +5,7 @@ import { recordPlayEvent } from '../services/playEventsClient';
 interface PlayerStoreState {
   playlist: PostRow[];
   currentIndex: number;
-  loopEnabled?: boolean;
+  autoSkipEnabled?: boolean;
 }
 
 interface PlayerStoreSnapshot extends PlayerStoreState {
@@ -15,7 +15,7 @@ interface PlayerStoreSnapshot extends PlayerStoreState {
 // Simple module-level store shared across the app.
 let playlist: PostRow[] = [];
 let currentIndex = -1;
-let loopEnabled = false;
+let autoSkipEnabled = false;
 
 // Play tracking state
 let currentPlayStartTime: number | null = null;
@@ -30,6 +30,7 @@ function getSnapshot(): PlayerStoreSnapshot {
     currentIndex,
     currentPost:
       currentIndex >= 0 && currentIndex < playlist.length ? playlist[currentIndex] : null,
+    autoSkipEnabled,
   };
 }
 
@@ -79,7 +80,7 @@ function stepInternal(direction: 1 | -1): PlayerStoreSnapshot {
   } else {
     const nextIndex = currentIndex + direction;
     if (nextIndex < 0 || nextIndex >= playlist.length) {
-      if (loopEnabled) {
+      if (autoSkipEnabled) {
         currentIndex = nextIndex < 0 ? playlist.length - 1 : 0;
       } else {
         // Clamp at ends; stay on current index.
@@ -197,12 +198,12 @@ export function usePlayerStore() {
   useEffect(() => {
     if (typeof window === 'undefined') return;
     try {
-      const loopStr = window.localStorage.getItem('player-loop-enabled');
+      const autoSkipStr = window.localStorage.getItem('player-autoskip-enabled');
 
-      if (loopStr != null) {
-        const v = loopStr === 'true';
-        if (loopEnabled !== v) {
-          loopEnabled = v;
+      if (autoSkipStr != null) {
+        const v = autoSkipStr === 'true';
+        if (autoSkipEnabled !== v) {
+          autoSkipEnabled = v;
           emit();
         }
       }
@@ -225,13 +226,13 @@ export function usePlayerStore() {
     setCurrentUserId: (userId: string | null) => setCurrentUserIdInternal(userId),
     startPlayTracking: (postId: string) => startPlayTrackingInternal(postId),
     stopPlayTracking: () => stopPlayTrackingInternal(),
-    // Loop & shuffle controls
-    loopEnabled: loopEnabled,
-    setLoop: (enabled: boolean) => {
-      loopEnabled = enabled;
+    // Auto-skip controls
+    autoSkipEnabled: autoSkipEnabled,
+    setAutoSkip: (enabled: boolean) => {
+      autoSkipEnabled = enabled;
       try {
         if (typeof window !== 'undefined') {
-          window.localStorage.setItem('player-loop-enabled', String(enabled));
+          window.localStorage.setItem('player-autoskip-enabled', String(enabled));
         }
       } catch {}
       emit();
