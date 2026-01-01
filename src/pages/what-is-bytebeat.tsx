@@ -87,8 +87,8 @@ export default function WhatIsBytebeat() {
             target="_blank"
           >
             Greggman’s bytebeat engine
-          </Link>
-          {' '}are classic tools that introduced many people to the concept.
+          </Link>{' '}
+          are classic tools that introduced many people to the concept.
         </p>
 
         <p>

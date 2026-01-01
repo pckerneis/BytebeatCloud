@@ -132,8 +132,13 @@ function removeFromPlaylistInternal(postId: string) {
 }
 
 function reorderPlaylistInternal(fromIndex: number, toIndex: number) {
-  if (fromIndex === toIndex || fromIndex < 0 || toIndex < 0 || 
-      fromIndex >= playlist.length || toIndex >= playlist.length) {
+  if (
+    fromIndex === toIndex ||
+    fromIndex < 0 ||
+    toIndex < 0 ||
+    fromIndex >= playlist.length ||
+    toIndex >= playlist.length
+  ) {
     return;
   }
 
@@ -222,7 +227,8 @@ export function usePlayerStore() {
     updateFavoriteStateForPost: (postId: string, favorited: boolean, count: number) =>
       updateFavoriteStateInternal(postId, favorited, count),
     removeFromPlaylist: (postId: string) => removeFromPlaylistInternal(postId),
-    reorderPlaylist: (fromIndex: number, toIndex: number) => reorderPlaylistInternal(fromIndex, toIndex),
+    reorderPlaylist: (fromIndex: number, toIndex: number) =>
+      reorderPlaylistInternal(fromIndex, toIndex),
     setCurrentUserId: (userId: string | null) => setCurrentUserIdInternal(userId),
     startPlayTracking: (postId: string) => startPlayTrackingInternal(postId),
     stopPlayTracking: () => stopPlayTrackingInternal(),

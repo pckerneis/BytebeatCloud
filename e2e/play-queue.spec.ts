@@ -1,20 +1,12 @@
 import { test, expect } from '@playwright/test';
-import {
-  ensureTestUser,
-  ensureTestUserProfile,
-  supabaseAdmin,
-} from './utils/supabaseAdmin';
+import { ensureTestUser, ensureTestUserProfile, supabaseAdmin } from './utils/supabaseAdmin';
 import { clearSupabaseSession, signInAndInjectSession } from './utils/auth';
 
 const TEST_USER_EMAIL = 'e2e+playqueue@example.com';
 const TEST_USER_PASSWORD = 'password123';
 const TEST_USERNAME = 'e2e_queue_user';
 
-async function createTestPost(params: {
-  userId: string;
-  title: string;
-  expression: string;
-}) {
+async function createTestPost(params: { userId: string; title: string; expression: string }) {
   const { data, error } = await supabaseAdmin
     .from('posts')
     .insert({
@@ -238,17 +230,25 @@ test.describe('Play Queue', () => {
     await queueButton.click();
 
     // Get initial order
-    const secondItemTitle = await page.locator('.play-queue-item').nth(1).locator('.play-queue-item-title').textContent();
+    const secondItemTitle = await page
+      .locator('.play-queue-item')
+      .nth(1)
+      .locator('.play-queue-item-title')
+      .textContent();
 
     // Drag first item to second position
     const firstItem = page.locator('.play-queue-item').first();
     const secondItem = page.locator('.play-queue-item').nth(1);
-    
+
     await firstItem.dragTo(secondItem);
     await page.waitForTimeout(300);
 
     // Verify order changed
-    const newFirstItemTitle = await page.locator('.play-queue-item').first().locator('.play-queue-item-title').textContent();
+    const newFirstItemTitle = await page
+      .locator('.play-queue-item')
+      .first()
+      .locator('.play-queue-item-title')
+      .textContent();
     expect(newFirstItemTitle).toBe(secondItemTitle);
 
     // Cleanup
@@ -282,8 +282,10 @@ test.describe('Play Queue', () => {
     await queueButton.click();
 
     // Find auto-skip button
-    const autoButton = page.locator('.play-queue-controls button').filter({ hasText: /auto-skip/i });
-    
+    const autoButton = page
+      .locator('.play-queue-controls button')
+      .filter({ hasText: /auto-skip/i });
+
     // Should not be active initially
     await expect(autoButton).not.toHaveClass(/active/);
 
@@ -337,7 +339,9 @@ test.describe('Play Queue', () => {
     }
 
     // Click shuffle button
-    const shuffleButton = page.locator('.play-queue-controls button').filter({ hasText: /shuffle/i });
+    const shuffleButton = page
+      .locator('.play-queue-controls button')
+      .filter({ hasText: /shuffle/i });
     await shuffleButton.click();
     await page.waitForTimeout(300);
 
