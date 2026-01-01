@@ -412,3 +412,20 @@
   background-color: var(--chip-background-color);
   border-color: var(--accent-color);
 }
+
+.footer-progress {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--panel-border-color);
+  overflow: hidden;
+  z-index: 1;
+}
+
+.footer-progress-bar {
+  height: 100%;
+  background: var(--accent-color);
+  transition: width 50ms linear;
+}

@@ -490,6 +490,14 @@ export default function FooterPlayer() {
   return (
     <>
     <div className="footer">
+      {autoSkipEnabled && isPlaying && currentPost && (
+        <div className="footer-progress">
+          <div 
+            className="footer-progress-bar" 
+            style={{ width: `${autoProgress}%` }}
+          />
+        </div>
+      )}
       <div className="transport-buttons">
         <button
           type="button"
@@ -737,14 +745,6 @@ export default function FooterPlayer() {
                       ×
                     </button>
                   </div>
-                  {isCurrent && autoSkipEnabled && isPlaying && (
-                    <div className="play-queue-item-progress">
-                      <div 
-                        className="play-queue-item-progress-bar" 
-                        style={{ width: `${autoProgress}%` }}
-                      />
-                    </div>
-                  )}
                 </div>
               );
             })}

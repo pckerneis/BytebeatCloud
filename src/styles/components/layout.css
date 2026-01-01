@@ -39,6 +39,7 @@ main > section {
   padding: 10px;
   border-top: 1px solid var(--panel-border-color);
   font-size: 0.8em;
+  position: relative;
   background: linear-gradient(
     in srgb-linear 210deg,
     var(--sidebar-bg-color),
