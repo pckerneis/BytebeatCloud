@@ -96,8 +96,7 @@ export function PostDetailView({
   const [replyToCommentId, setReplyToCommentId] = useState<string | null>(null);
   const [replyToUsername, setReplyToUsername] = useState<string | null>(null);
   const [highlightedCommentId, setHighlightedCommentId] = useState<string | null>(null);
-  const commentsTabRef = useRef<HTMLDivElement | null>(null);
-
+  useRef<HTMLDivElement | null>(null);
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
   const [playlistsLoading, setPlaylistsLoading] = useState(false);
   const [addToPlaylistOpen, setAddToPlaylistOpen] = useState(false);
@@ -112,8 +111,7 @@ export function PostDetailView({
 
   const { user } = useSupabaseAuth();
   const { username: currentUsername } = useCurrentUserProfile();
-
-  const currentUserId = useMemo(() => (user ? (user as any).id : null), [user]);
+  useMemo(() => (user ? (user as any).id : null), [user]);
   const postPlaylistIdSet = useMemo(() => new Set(postPlaylists.map((p) => p.id)), [postPlaylists]);
 
   const handleReportPost = () => {

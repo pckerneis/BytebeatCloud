@@ -69,7 +69,8 @@ While most bytebeat composer apps allow arbitrary lengths, BytebeatCloud encoura
 - **Responsive design**: works on desktop and mobile
 - **Progressive Web App**: install on your device
 - **Live waveform visualizer**: see your audio in real-time
-- **Auto and shuffle play modes**: autoplay next track in a list, pick next track at random
+- **Auto-skip play modes**: autoplay next track in a list after some time
+- **Play queue**: organize play queue, reorder or shuffle items
 
 ## Run locally
 

@@ -16,7 +16,7 @@ const POST_SELECT_COLUMNS =
   'id,title,expression,is_draft,sample_rate,mode,created_at,profile_id,fork_of_post_id,is_fork,author_username,origin_title,origin_username,favorites_count,favorited_by_current_user,is_weekly_winner,license,comments_count';
 
 // Shared enrichment pipeline
-async function enrichPosts(rows: PostRow[], currentUserId?: string | null): Promise<PostRow[]> {
+async function enrichPosts(rows: PostRow[]): Promise<PostRow[]> {
   if (rows.length > 0) {
     rows = (await enrichWithTags(rows)) as PostRow[];
   }
@@ -62,7 +62,7 @@ function useLazyPostList(
         setError(errorMessage);
         setPosts([]);
       } else {
-        const rows = await enrichPosts((data ?? []) as PostRow[], currentUserId);
+        const rows = await enrichPosts((data ?? []) as PostRow[]);
         setPosts(rows);
         setHasLoaded(true);
       }
@@ -163,7 +163,7 @@ export function useUserPosts(profileId: string | null, currentUserId?: string) {
         setHasMore(false);
       } else {
         const rawLength = (data ?? []).length;
-        const rows = await enrichPosts((data ?? []) as PostRow[], currentUserId);
+        const rows = await enrichPosts((data ?? []) as PostRow[]);
         setPosts((prev) => (page === 0 ? rows : [...prev, ...rows]));
         // Check raw data length, not enriched length (enrichPosts filters invalid expressions)
         if (rawLength < pageSize) {

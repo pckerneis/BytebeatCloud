@@ -1,10 +1,10 @@
 import { useRouter } from 'next/router';
 import Head from 'next/head';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 import { useSupabaseAuth } from '../../hooks/useSupabaseAuth';
 import { PostList, type PostRow } from '../../components/PostList';
-import { formatAuthorUsername, formatPostTitle } from '../../utils/post-format';
+import { formatAuthorUsername } from '../../utils/post-format';
 import Link from 'next/link';
 
 interface PlaylistRow {

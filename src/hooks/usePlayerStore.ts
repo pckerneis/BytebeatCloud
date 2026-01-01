@@ -5,8 +5,7 @@ import { recordPlayEvent } from '../services/playEventsClient';
 interface PlayerStoreState {
   playlist: PostRow[];
   currentIndex: number;
-  loopEnabled?: boolean;
-  shuffleEnabled?: boolean;
+  autoSkipEnabled?: boolean;
 }
 
 interface PlayerStoreSnapshot extends PlayerStoreState {
@@ -16,8 +15,7 @@ interface PlayerStoreSnapshot extends PlayerStoreState {
 // Simple module-level store shared across the app.
 let playlist: PostRow[] = [];
 let currentIndex = -1;
-let loopEnabled = false;
-let shuffleEnabled = false;
+let autoSkipEnabled = false;
 
 // Play tracking state
 let currentPlayStartTime: number | null = null;
@@ -32,6 +30,7 @@ function getSnapshot(): PlayerStoreSnapshot {
     currentIndex,
     currentPost:
       currentIndex >= 0 && currentIndex < playlist.length ? playlist[currentIndex] : null,
+    autoSkipEnabled,
   };
 }
 
@@ -50,18 +49,7 @@ function shuffleArray<T>(arr: T[]): T[] {
 }
 
 function setPlaylistInternal(newPlaylist: PostRow[], startPostId: string | null) {
-  if (shuffleEnabled && newPlaylist.length > 1) {
-    // Preserve the starting post at the front if specified
-    if (startPostId) {
-      const start = newPlaylist.find((p) => p.id === startPostId) ?? newPlaylist[0];
-      const rest = newPlaylist.filter((p) => p.id !== start.id);
-      playlist = [start, ...shuffleArray(rest)];
-    } else {
-      playlist = shuffleArray(newPlaylist);
-    }
-  } else {
-    playlist = newPlaylist;
-  }
+  playlist = newPlaylist;
   if (!startPostId) {
     currentIndex = newPlaylist.length > 0 ? 0 : -1;
   } else {
@@ -92,7 +80,7 @@ function stepInternal(direction: 1 | -1): PlayerStoreSnapshot {
   } else {
     const nextIndex = currentIndex + direction;
     if (nextIndex < 0 || nextIndex >= playlist.length) {
-      if (loopEnabled) {
+      if (autoSkipEnabled) {
         currentIndex = nextIndex < 0 ? playlist.length - 1 : 0;
       } else {
         // Clamp at ends; stay on current index.
@@ -117,6 +105,57 @@ function updateFavoriteStateInternal(postId: string, favorited: boolean, count: 
         }
       : p,
   );
+  emit();
+}
+
+function removeFromPlaylistInternal(postId: string) {
+  const removedIndex = playlist.findIndex((p) => p.id === postId);
+  if (removedIndex === -1) return;
+
+  playlist = playlist.filter((p) => p.id !== postId);
+
+  // Adjust currentIndex if needed
+  if (currentIndex === removedIndex) {
+    // If we're removing the current post, move to the next one (or previous if at end)
+    if (playlist.length === 0) {
+      currentIndex = -1;
+    } else if (currentIndex >= playlist.length) {
+      currentIndex = playlist.length - 1;
+    }
+    // else keep currentIndex the same (it now points to what was the next item)
+  } else if (currentIndex > removedIndex) {
+    // If we removed something before the current index, shift down
+    currentIndex--;
+  }
+
+  emit();
+}
+
+function reorderPlaylistInternal(fromIndex: number, toIndex: number) {
+  if (
+    fromIndex === toIndex ||
+    fromIndex < 0 ||
+    toIndex < 0 ||
+    fromIndex >= playlist.length ||
+    toIndex >= playlist.length
+  ) {
+    return;
+  }
+
+  const newPlaylist = [...playlist];
+  const [movedItem] = newPlaylist.splice(fromIndex, 1);
+  newPlaylist.splice(toIndex, 0, movedItem);
+  playlist = newPlaylist;
+
+  // Update currentIndex to track the current post
+  if (currentIndex === fromIndex) {
+    currentIndex = toIndex;
+  } else if (fromIndex < currentIndex && toIndex >= currentIndex) {
+    currentIndex--;
+  } else if (fromIndex > currentIndex && toIndex <= currentIndex) {
+    currentIndex++;
+  }
+
   emit();
 }
 
@@ -164,42 +203,14 @@ export function usePlayerStore() {
   useEffect(() => {
     if (typeof window === 'undefined') return;
     try {
-      const loopStr = window.localStorage.getItem('player-loop-enabled');
-      const shuffleStr = window.localStorage.getItem('player-shuffle-enabled');
+      const autoSkipStr = window.localStorage.getItem('player-autoskip-enabled');
 
-      let changed = false;
-
-      if (loopStr != null) {
-        const v = loopStr === 'true';
-        if (loopEnabled !== v) {
-          loopEnabled = v;
-          changed = true;
+      if (autoSkipStr != null) {
+        const v = autoSkipStr === 'true';
+        if (autoSkipEnabled !== v) {
+          autoSkipEnabled = v;
+          emit();
         }
-      }
-
-      if (shuffleStr != null) {
-        const v = shuffleStr === 'true';
-        if (shuffleEnabled !== v) {
-          shuffleEnabled = v;
-          // Re-apply shuffle to current playlist, keeping current first when possible
-          if (playlist.length > 0) {
-            const current = getSnapshot().currentPost;
-            const newOrder = v
-              ? current
-                ? [current, ...shuffleArray(playlist.filter((p) => p.id !== current.id))]
-                : shuffleArray(playlist)
-              : playlist.slice();
-            playlist = newOrder;
-            if (current) {
-              currentIndex = newOrder.findIndex((p) => p.id === current.id);
-            }
-          }
-          changed = true;
-        }
-      }
-
-      if (changed) {
-        emit();
       }
     } catch {}
   }, []);
@@ -215,40 +226,36 @@ export function usePlayerStore() {
     prev: () => stepInternal(-1).currentPost,
     updateFavoriteStateForPost: (postId: string, favorited: boolean, count: number) =>
       updateFavoriteStateInternal(postId, favorited, count),
+    removeFromPlaylist: (postId: string) => removeFromPlaylistInternal(postId),
+    reorderPlaylist: (fromIndex: number, toIndex: number) =>
+      reorderPlaylistInternal(fromIndex, toIndex),
     setCurrentUserId: (userId: string | null) => setCurrentUserIdInternal(userId),
     startPlayTracking: (postId: string) => startPlayTrackingInternal(postId),
     stopPlayTracking: () => stopPlayTrackingInternal(),
-    // Loop & shuffle controls
-    loopEnabled: loopEnabled,
-    shuffleEnabled: shuffleEnabled,
-    setLoop: (enabled: boolean) => {
-      loopEnabled = enabled;
+    // Auto-skip controls
+    autoSkipEnabled: autoSkipEnabled,
+    setAutoSkip: (enabled: boolean) => {
+      autoSkipEnabled = enabled;
       try {
         if (typeof window !== 'undefined') {
-          window.localStorage.setItem('player-loop-enabled', String(enabled));
+          window.localStorage.setItem('player-autoskip-enabled', String(enabled));
         }
       } catch {}
       emit();
     },
-    setShuffle: (enabled: boolean) => {
-      shuffleEnabled = enabled;
-      // Re-apply shuffle to current playlist order, keeping current post in place as first
-      if (playlist.length > 0) {
+    shufflePlaylist: () => {
+      if (playlist.length > 1) {
         const current = state.currentPost;
-        const newOrder = enabled
-          ? current
-            ? [current, ...shuffleArray(playlist.filter((p) => p.id !== current.id))]
-            : shuffleArray(playlist)
-          : playlist.slice();
-        playlist = newOrder;
-        currentIndex = current ? newOrder.findIndex((p) => p.id === current.id) : currentIndex;
-      }
-      try {
-        if (typeof window !== 'undefined') {
-          window.localStorage.setItem('player-shuffle-enabled', String(enabled));
+        // Keep current post at the front, shuffle the rest
+        if (current) {
+          const rest = playlist.filter((p) => p.id !== current.id);
+          playlist = [current, ...shuffleArray(rest)];
+          currentIndex = 0;
+        } else {
+          playlist = shuffleArray(playlist);
         }
-      } catch {}
-      emit();
+        emit();
+      }
     },
   };
 }

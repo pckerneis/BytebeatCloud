@@ -31,6 +31,7 @@ main > section {
 }
 
 .footer {
+  height: 50px;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -38,6 +39,7 @@ main > section {
   padding: 10px;
   border-top: 1px solid var(--panel-border-color);
   font-size: 0.8em;
+  position: relative;
   background: linear-gradient(
     in srgb-linear 210deg,
     var(--sidebar-bg-color),
@@ -45,6 +47,7 @@ main > section {
     var(--sidebar-bg-gradient-color) 91%
   );
   position: relative;
+  z-index: 1000;
 }
 
 .home-section {
