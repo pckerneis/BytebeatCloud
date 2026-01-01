@@ -14,6 +14,12 @@ function generateSiteMap(posts: any[], tags: string[]) {
        <priority>1.0</priority>
      </url>
      <url>
+       <loc>${SITE_URL}/what-is-bytebeat</loc>
+       <lastmod>${new Date().toISOString()}</lastmod>
+       <changefreq>monthly</changefreq>
+       <priority>0.7</priority>
+     </url>
+     <url>
        <loc>${SITE_URL}/explore</loc>
        <lastmod>${new Date().toISOString()}</lastmod>
        <changefreq>daily</changefreq>
