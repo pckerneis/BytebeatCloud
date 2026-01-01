@@ -43,10 +43,12 @@ export default function FooterPlayer() {
   const fadeTimerRef = useRef<number | null>(null);
   const fadeStartGainRef = useRef<number>(1);
   const switchTimerRef = useRef<number | null>(null);
+  const playStartTimeRef = useRef<number | null>(null);
   const [isQueueOpen, setIsQueueOpen] = useState(false);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [dropIndicatorIndex, setDropIndicatorIndex] = useState<number | null>(null);
   const [queueFavoritePending, setQueueFavoritePending] = useState<Record<string, boolean>>({});
+  const [autoProgress, setAutoProgress] = useState(0);
 
   useEffect(() => {
     const unsubscribe = subscribePreviewSource(setPreview);
@@ -210,6 +212,7 @@ export default function FooterPlayer() {
       await toggle(post.expression, post.mode, sr);
       setCurrentPostById(post.id);
       startPlayTracking(post.id);
+      playStartTimeRef.current = Date.now();
     },
     [cancelAutoTransition, stopPlayTracking, stop, toggle, setCurrentPostById, startPlayTracking],
   );
@@ -220,7 +223,27 @@ export default function FooterPlayer() {
     if (isPlaying && loopEnabled && currentPost && (playlist?.length ?? 0) >= 2) {
       const FADE_BEFORE_MS = 3000;
       const TOTAL_DELAY_MS = AUTOPLAY_DEFAULT_DURATION * 1000;
-      const fadeStartDelay = Math.max(0, TOTAL_DELAY_MS - FADE_BEFORE_MS);
+      const MIN_REMAINING_MS = 5000; // Minimum 5 seconds before transition
+      
+      // Calculate elapsed time since playback started
+      const elapsedMs = playStartTimeRef.current ? Date.now() - playStartTimeRef.current : 0;
+      const remainingMs = TOTAL_DELAY_MS - elapsedMs;
+      
+      // Ensure at least MIN_REMAINING_MS before transition
+      const actualRemainingMs = Math.max(MIN_REMAINING_MS, remainingMs);
+      const fadeStartDelay = Math.max(0, actualRemainingMs - FADE_BEFORE_MS);
+      
+      // For progress bar, use the actual total time (elapsed + remaining)
+      const actualTotalMs = elapsedMs + actualRemainingMs;
+      const progressStartTime = Date.now();
+
+      // Update progress bar continuously
+      const progressInterval = window.setInterval(() => {
+        const progressElapsed = Date.now() - progressStartTime;
+        const totalElapsed = elapsedMs + progressElapsed;
+        const progress = Math.min(100, (totalElapsed / actualTotalMs) * 100);
+        setAutoProgress(progress);
+      }, 50);
 
       // Schedule fade start
       autoTimerRef.current = window.setTimeout(() => {
@@ -260,11 +283,15 @@ export default function FooterPlayer() {
           }
         }, FADE_BEFORE_MS);
       }, fadeStartDelay);
-    }
 
-    return () => {
-      clearTimers();
-    };
+      return () => {
+        clearTimers();
+        window.clearInterval(progressInterval);
+      };
+    } else {
+      // Reset progress when auto mode is not active
+      setAutoProgress(0);
+    }
     // Recreate timers when these change
     // Note: fadeGain is intentionally excluded to prevent timer reset during fade animation
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -634,7 +661,7 @@ export default function FooterPlayer() {
           onClick={handleToggleAuto}
           disabled={(playlist?.length ?? 0) < 2}
         >
-          auto
+          auto-skip
         </button>
         <button
           type="button"
@@ -710,6 +737,14 @@ export default function FooterPlayer() {
                       ×
                     </button>
                   </div>
+                  {isCurrent && loopEnabled && isPlaying && (
+                    <div className="play-queue-item-progress">
+                      <div 
+                        className="play-queue-item-progress-bar" 
+                        style={{ width: `${autoProgress}%` }}
+                      />
+                    </div>
+                  )}
                 </div>
               );
             })}
