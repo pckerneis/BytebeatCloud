@@ -166,6 +166,13 @@ button {
   color: var(--secondary-text-color);
 }
 
+.inline-code {
+  border: 1px solid var(--accent-color);
+  background: var(--sidebar-bg-gradient-color);
+  padding: 0 4px;
+  border-radius: 3px;
+}
+
 .link,
 a {
   text-decoration: none;
