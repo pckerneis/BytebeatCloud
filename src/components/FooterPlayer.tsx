@@ -9,6 +9,7 @@ import { PostRow } from './PostList';
 import { formatPostTitle } from '../utils/post-format';
 import { favoritePost, unfavoritePost } from '../services/favoritesClient';
 import { AUTOPLAY_DEFAULT_DURATION } from '../constants';
+import { useMediaSession } from '../hooks/useMediaSession';
 
 export default function FooterPlayer() {
   const { user } = useSupabaseAuth();
@@ -51,12 +52,6 @@ export default function FooterPlayer() {
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [dropIndicatorIndex, setDropIndicatorIndex] = useState<number | null>(null);
   const [queueFavoritePending, setQueueFavoritePending] = useState<Record<string, boolean>>({});
-  
-  // Refs to store latest handler functions for Media Session API
-  const handleFooterPlayPauseRef = useRef<(() => Promise<void>) | null>(null);
-  const handleFooterPrevRef = useRef<(() => Promise<void>) | null>(null);
-  const handleFooterNextRef = useRef<(() => Promise<void>) | null>(null);
-  const silentAudioRef = useRef<HTMLAudioElement | null>(null);
   const playPostRef = useRef<((post: PostRow | null) => Promise<void>) | null>(null);
 
   useEffect(() => {
@@ -66,56 +61,6 @@ export default function FooterPlayer() {
       unsubscribe();
     };
   }, []);
-
-  // Create silent audio element to anchor Media Session API
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    
-    // Create a silent audio element that loops
-    const audio = new Audio();
-    // Use a data URL for a very short silent audio file
-    audio.src = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=';
-    audio.loop = true;
-    audio.volume = 0;
-    silentAudioRef.current = audio;
-
-    return () => {
-      if (silentAudioRef.current) {
-        silentAudioRef.current.pause();
-        silentAudioRef.current = null;
-      }
-    };
-  }, []);
-
-  // Keep silent audio always playing when there's a track loaded
-  // This maintains the Media Session even when the actual player is paused
-  useEffect(() => {
-    const audio = silentAudioRef.current;
-    if (!audio) return;
-
-    if (currentPost) {
-      // Keep silent audio playing to maintain Media Session
-      audio.play().catch(() => {
-        // Ignore autoplay errors
-      });
-    } else {
-      // Only stop when no track is loaded
-      audio.pause();
-    }
-  }, [currentPost]);
-
-  // Media Session API: Update metadata when track changes
-  useEffect(() => {
-    if ('mediaSession' in navigator && currentPost) {
-      navigator.mediaSession.metadata = new MediaMetadata({
-        title: formatPostTitle(currentPost.title),
-        artist: currentPost.author_username
-          ? `@${currentPost.author_username}`
-          : '@unknown',
-        album: 'BytebeatCloud',
-      });
-    }
-  }, [currentPost]);
 
   useEffect(() => {
     const container = titleRef.current;
@@ -409,31 +354,25 @@ export default function FooterPlayer() {
       await toggle(preview.expression, preview.mode, preview.sampleRate);
     }
   }, [isPlaying, cancelAutoTransition, stopPlayTracking, stop, currentPost, playPost, preview, toggle]);
-  
-  // Update ref whenever handler changes
-  useEffect(() => {
-    handleFooterPlayPauseRef.current = handleFooterPlayPause;
-  }, [handleFooterPlayPause]);
 
   const handleFooterPrev = useCallback(async () => {
     cancelAutoTransition();
     await playPost(prev());
   }, [cancelAutoTransition, playPost, prev]);
-  
-  // Update ref whenever handler changes
-  useEffect(() => {
-    handleFooterPrevRef.current = handleFooterPrev;
-  }, [handleFooterPrev]);
 
   const handleFooterNext = useCallback(async () => {
     cancelAutoTransition();
     await playPost(next());
   }, [cancelAutoTransition, playPost, next]);
-  
-  // Update ref whenever handler changes
-  useEffect(() => {
-    handleFooterNextRef.current = handleFooterNext;
-  }, [handleFooterNext]);
+
+  // Initialize Media Session API
+  useMediaSession({
+    currentPost,
+    isPlaying,
+    onPlayPause: handleFooterPlayPause,
+    onPrevious: handleFooterPrev,
+    onNext: handleFooterNext,
+  });
 
   const handleToggleAuto = () => {
     // Auto maps to looping behavior for continuous play
@@ -491,57 +430,6 @@ export default function FooterPlayer() {
   };
 
   const isFooterFavorited = currentPost ? !!currentPost.favorited_by_current_user : false;
-
-  // Media Session API: Register action handlers (only once on mount)
-  useEffect(() => {
-    if ('mediaSession' in navigator) {
-      navigator.mediaSession.setActionHandler('play', () => {
-        handleFooterPlayPauseRef.current?.();
-      });
-
-      navigator.mediaSession.setActionHandler('pause', () => {
-        handleFooterPlayPauseRef.current?.();
-      });
-
-      navigator.mediaSession.setActionHandler('previoustrack', () => {
-        handleFooterPrevRef.current?.();
-      });
-
-      navigator.mediaSession.setActionHandler('nexttrack', () => {
-        handleFooterNextRef.current?.();
-      });
-
-      return () => {
-        // Clean up action handlers
-        navigator.mediaSession.setActionHandler('play', null);
-        navigator.mediaSession.setActionHandler('pause', null);
-        navigator.mediaSession.setActionHandler('previoustrack', null);
-        navigator.mediaSession.setActionHandler('nexttrack', null);
-      };
-    } else {
-      console.warn('[MediaSession] Media Session API not available');
-    }
-    // Empty dependency array - only register once on mount
-  }, []);
-
-  // Media Session API: Update playback state
-  useEffect(() => {
-    if ('mediaSession' in navigator && currentPost) {
-      navigator.mediaSession.playbackState = isPlaying ? 'playing' : 'paused';
-      
-      // Set position state to help maintain session when paused
-      // Use a fake duration since bytebeat tracks loop infinitely
-      try {
-        navigator.mediaSession.setPositionState({
-          duration: 300, // 5 minutes fake duration
-          playbackRate: 1,
-          position: 0,
-        });
-      } catch (e) {
-        // Ignore if not supported
-      }
-    }
-  }, [isPlaying, currentPost]);
 
   const handlePlayedPostInfoClick = () => {
     if (!currentPost) return;
