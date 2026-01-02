@@ -263,14 +263,12 @@ export default function FooterPlayer() {
     async (post: PostRow | null) => {
       if (!post) return;
 
-      console.log('[playPost] Starting playback for post:', post.id);
       cancelAutoTransition();
       stopPlayTracking();
       await stop();
 
       // Set timestamp BEFORE toggle to ensure it's ready when isPlaying changes
       playStartTimeRef.current = Date.now();
-      console.log('[playPost] Set playStartTimeRef to:', playStartTimeRef.current);
       const sr = post.sample_rate;
       await toggle(post.expression, post.mode, sr);
       setCurrentPostById(post.id);
@@ -296,12 +294,10 @@ export default function FooterPlayer() {
       if (lastPostIdRef.current !== currentPost.id) {
         playStartTimeRef.current = Date.now();
         lastPostIdRef.current = currentPost.id;
-        console.log('[AutoSkip Effect] New post detected, reset playStartTimeRef to:', playStartTimeRef.current);
       }
 
       // Calculate elapsed time since playback started
       const elapsedMs = playStartTimeRef.current ? Date.now() - playStartTimeRef.current : 0;
-      console.log('[AutoSkip Effect] Running for post:', currentPost.id, 'playStartTimeRef:', playStartTimeRef.current, 'elapsedMs:', elapsedMs);
       const remainingMs = TOTAL_DELAY_MS - elapsedMs;
 
       // Ensure at least MIN_REMAINING_MS before transition
@@ -397,7 +393,6 @@ export default function FooterPlayer() {
 
   const handleFooterPlayPause = useCallback(async () => {
     if (isPlaying) {
-      console.log('[handleFooterPlayPause] Stopping playback');
       cancelAutoTransition();
       stopPlayTracking();
       await stop();
@@ -405,7 +400,6 @@ export default function FooterPlayer() {
     }
 
     if (currentPost) {
-      console.log('[handleFooterPlayPause] Resuming playback for current post:', currentPost.id);
       cancelAutoTransition();
       await playPost(currentPost);
       return;
@@ -432,7 +426,6 @@ export default function FooterPlayer() {
   }, [handleFooterPrev]);
 
   const handleFooterNext = useCallback(async () => {
-    console.log('[handleFooterNext] Called, current playStartTimeRef:', playStartTimeRef.current);
     cancelAutoTransition();
     await playPost(next());
   }, [cancelAutoTransition, playPost, next]);
@@ -502,30 +495,23 @@ export default function FooterPlayer() {
   // Media Session API: Register action handlers (only once on mount)
   useEffect(() => {
     if ('mediaSession' in navigator) {
-      console.log('[MediaSession] Registering action handlers');
-      
       navigator.mediaSession.setActionHandler('play', () => {
-        console.log('[MediaSession] Play action triggered');
         handleFooterPlayPauseRef.current?.();
       });
 
       navigator.mediaSession.setActionHandler('pause', () => {
-        console.log('[MediaSession] Pause action triggered');
         handleFooterPlayPauseRef.current?.();
       });
 
       navigator.mediaSession.setActionHandler('previoustrack', () => {
-        console.log('[MediaSession] Previous track action triggered');
         handleFooterPrevRef.current?.();
       });
 
       navigator.mediaSession.setActionHandler('nexttrack', () => {
-        console.log('[MediaSession] Next track action triggered');
         handleFooterNextRef.current?.();
       });
 
       return () => {
-        console.log('[MediaSession] Cleaning up action handlers');
         // Clean up action handlers
         navigator.mediaSession.setActionHandler('play', null);
         navigator.mediaSession.setActionHandler('pause', null);
@@ -541,9 +527,7 @@ export default function FooterPlayer() {
   // Media Session API: Update playback state
   useEffect(() => {
     if ('mediaSession' in navigator && currentPost) {
-      const state = isPlaying ? 'playing' : 'paused';
-      console.log('[MediaSession] Setting playback state to:', state);
-      navigator.mediaSession.playbackState = state;
+      navigator.mediaSession.playbackState = isPlaying ? 'playing' : 'paused';
       
       // Set position state to help maintain session when paused
       // Use a fake duration since bytebeat tracks loop infinitely
@@ -570,7 +554,6 @@ export default function FooterPlayer() {
 
   const handleQueueItemClick = async (post: PostRow) => {
     if (post.id === currentPost?.id) return;
-    console.log('[handleQueueItemClick] Clicked post:', post.id, 'current playStartTimeRef:', playStartTimeRef.current);
     cancelAutoTransition();
     await playPost(post);
   };
