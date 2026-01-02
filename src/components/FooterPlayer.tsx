@@ -47,9 +47,12 @@ export default function FooterPlayer() {
   const progressBarRef = useRef<HTMLDivElement | null>(null);
   const progressAnimationRef = useRef<number | null>(null);
   const [isQueueOpen, setIsQueueOpen] = useState(false);
+  const lastPostIdRef = useRef<string | null>(null);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [dropIndicatorIndex, setDropIndicatorIndex] = useState<number | null>(null);
   const [queueFavoritePending, setQueueFavoritePending] = useState<Record<string, boolean>>({});
+  const playPostRef = useRef<((post: PostRow | null) => Promise<void>) | null>(null);
+
 
   useEffect(() => {
     const unsubscribe = subscribePreviewSource(setPreview);
@@ -209,14 +212,19 @@ export default function FooterPlayer() {
       stopPlayTracking();
       await stop();
 
+      playStartTimeRef.current = Date.now();
       const sr = post.sample_rate;
       await toggle(post.expression, post.mode, sr);
       setCurrentPostById(post.id);
       startPlayTracking(post.id);
-      playStartTimeRef.current = Date.now();
     },
     [cancelAutoTransition, stopPlayTracking, stop, toggle, setCurrentPostById, startPlayTracking],
   );
+
+  // Update ref whenever playPost changes
+  useEffect(() => {
+    playPostRef.current = playPost;
+  }, [playPost]);
 
   // Auto-next timer with 3s fade-out before the switch
   useEffect(() => {
@@ -225,6 +233,12 @@ export default function FooterPlayer() {
       const FADE_BEFORE_MS = 3000;
       const TOTAL_DELAY_MS = AUTOPLAY_DEFAULT_DURATION * 1000;
       const MIN_REMAINING_MS = 5000; // Minimum 5 seconds before transition
+
+      // Reset timestamp when the post changes (new post started playing)
+      if (lastPostIdRef.current !== currentPost.id) {
+        playStartTimeRef.current = Date.now();
+        lastPostIdRef.current = currentPost.id;
+      }
 
       // Calculate elapsed time since playback started
       const elapsedMs = playStartTimeRef.current ? Date.now() - playStartTimeRef.current : 0;
@@ -284,7 +298,10 @@ export default function FooterPlayer() {
         switchTimerRef.current = window.setTimeout(async () => {
           // If still playing and auto still enabled, advance
           if (isPlaying && autoSkipEnabled) {
-            await playPost(next());
+            const nextPost = next();
+            if (playPostRef.current) {
+              await playPostRef.current(nextPost);
+            }
             // Restore volume immediately after switching
             setFadeGain(fadeStartGainRef.current);
           } else {
@@ -300,6 +317,8 @@ export default function FooterPlayer() {
           cancelAnimationFrame(progressAnimationRef.current);
           progressAnimationRef.current = null;
         }
+        // Clear the last post ID when not in auto-skip mode
+        lastPostIdRef.current = null;
       };
     } else {
       // Reset progress when auto mode is not active
