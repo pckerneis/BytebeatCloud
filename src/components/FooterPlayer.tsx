@@ -50,6 +50,12 @@ export default function FooterPlayer() {
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [dropIndicatorIndex, setDropIndicatorIndex] = useState<number | null>(null);
   const [queueFavoritePending, setQueueFavoritePending] = useState<Record<string, boolean>>({});
+  
+  // Refs to store latest handler functions for Media Session API
+  const handleFooterPlayPauseRef = useRef<(() => Promise<void>) | null>(null);
+  const handleFooterPrevRef = useRef<(() => Promise<void>) | null>(null);
+  const handleFooterNextRef = useRef<(() => Promise<void>) | null>(null);
+  const silentAudioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     const unsubscribe = subscribePreviewSource(setPreview);
@@ -58,6 +64,54 @@ export default function FooterPlayer() {
       unsubscribe();
     };
   }, []);
+
+  // Create silent audio element to anchor Media Session API
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    
+    // Create a silent audio element that loops
+    const audio = new Audio();
+    // Use a data URL for a very short silent audio file
+    audio.src = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=';
+    audio.loop = true;
+    audio.volume = 0;
+    silentAudioRef.current = audio;
+
+    return () => {
+      if (silentAudioRef.current) {
+        silentAudioRef.current.pause();
+        silentAudioRef.current = null;
+      }
+    };
+  }, []);
+
+  // Sync silent audio element with bytebeat player state
+  useEffect(() => {
+    const audio = silentAudioRef.current;
+    if (!audio) return;
+
+    if (isPlaying && currentPost) {
+      // Start silent audio to activate Media Session
+      audio.play().catch(() => {
+        // Ignore autoplay errors
+      });
+    } else {
+      audio.pause();
+    }
+  }, [isPlaying, currentPost]);
+
+  // Media Session API: Update metadata when track changes
+  useEffect(() => {
+    if ('mediaSession' in navigator && currentPost) {
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title: formatPostTitle(currentPost.title),
+        artist: currentPost.author_username
+          ? `@${currentPost.author_username}`
+          : '@unknown',
+        album: 'BytebeatCloud',
+      });
+    }
+  }, [currentPost]);
 
   useEffect(() => {
     const container = titleRef.current;
@@ -316,7 +370,7 @@ export default function FooterPlayer() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPost?.id, isPlaying, autoSkipEnabled, playlist?.length, currentPost]);
 
-  const handleFooterPlayPause = async () => {
+  const handleFooterPlayPause = useCallback(async () => {
     if (isPlaying) {
       cancelAutoTransition();
       stopPlayTracking();
@@ -333,17 +387,32 @@ export default function FooterPlayer() {
     if (preview) {
       await toggle(preview.expression, preview.mode, preview.sampleRate);
     }
-  };
+  }, [isPlaying, cancelAutoTransition, stopPlayTracking, stop, currentPost, playPost, preview, toggle]);
+  
+  // Update ref whenever handler changes
+  useEffect(() => {
+    handleFooterPlayPauseRef.current = handleFooterPlayPause;
+  }, [handleFooterPlayPause]);
 
-  const handleFooterPrev = async () => {
+  const handleFooterPrev = useCallback(async () => {
     cancelAutoTransition();
     await playPost(prev());
-  };
+  }, [cancelAutoTransition, playPost, prev]);
+  
+  // Update ref whenever handler changes
+  useEffect(() => {
+    handleFooterPrevRef.current = handleFooterPrev;
+  }, [handleFooterPrev]);
 
-  const handleFooterNext = async () => {
+  const handleFooterNext = useCallback(async () => {
     cancelAutoTransition();
     await playPost(next());
-  };
+  }, [cancelAutoTransition, playPost, next]);
+  
+  // Update ref whenever handler changes
+  useEffect(() => {
+    handleFooterNextRef.current = handleFooterNext;
+  }, [handleFooterNext]);
 
   const handleToggleAuto = () => {
     // Auto maps to looping behavior for continuous play
@@ -401,6 +470,56 @@ export default function FooterPlayer() {
   };
 
   const isFooterFavorited = currentPost ? !!currentPost.favorited_by_current_user : false;
+
+  // Media Session API: Register action handlers (only once on mount)
+  useEffect(() => {
+    if ('mediaSession' in navigator) {
+      console.log('[MediaSession] Registering action handlers');
+      
+      navigator.mediaSession.setActionHandler('play', () => {
+        console.log('[MediaSession] Play action triggered');
+        // Immediately resume silent audio to keep Media Session active
+        if (silentAudioRef.current) {
+          silentAudioRef.current.play().catch(() => {});
+        }
+        handleFooterPlayPauseRef.current?.();
+      });
+
+      navigator.mediaSession.setActionHandler('pause', () => {
+        console.log('[MediaSession] Pause action triggered');
+        handleFooterPlayPauseRef.current?.();
+      });
+
+      navigator.mediaSession.setActionHandler('previoustrack', () => {
+        console.log('[MediaSession] Previous track action triggered');
+        handleFooterPrevRef.current?.();
+      });
+
+      navigator.mediaSession.setActionHandler('nexttrack', () => {
+        console.log('[MediaSession] Next track action triggered');
+        handleFooterNextRef.current?.();
+      });
+
+      return () => {
+        console.log('[MediaSession] Cleaning up action handlers');
+        // Clean up action handlers
+        navigator.mediaSession.setActionHandler('play', null);
+        navigator.mediaSession.setActionHandler('pause', null);
+        navigator.mediaSession.setActionHandler('previoustrack', null);
+        navigator.mediaSession.setActionHandler('nexttrack', null);
+      };
+    } else {
+      console.warn('[MediaSession] Media Session API not available');
+    }
+    // Empty dependency array - only register once on mount
+  }, []);
+
+  // Media Session API: Update playback state
+  useEffect(() => {
+    if ('mediaSession' in navigator) {
+      navigator.mediaSession.playbackState = isPlaying ? 'playing' : 'paused';
+    }
+  }, [isPlaying]);
 
   const handlePlayedPostInfoClick = () => {
     if (!currentPost) return;
