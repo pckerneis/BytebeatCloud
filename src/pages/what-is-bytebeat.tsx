@@ -5,16 +5,16 @@ export default function WhatIsBytebeat() {
   return (
     <>
       <Head>
-        <title>Bytebeat: Make Music with Code</title>
+        <title>What Is Bytebeat? Online Bytebeat Composer & Algorithmic Music</title>
         <meta
           name="description"
-          content="Bytebeat is a fun way to create music using simple code. Learn what it is, how it works, and try it yourself on BytebeatCloud."
+          content="Bytebeat is a form of algorithmic music where sound is generated from a single line of code. Learn how bytebeat works, hear examples, and try an online bytebeat composer on BytebeatCloud."
         />
       </Head>
       <section>
         <h1>Bytebeat: make music with just a line of code</h1>
 
-        <h2>Definition of Bytebeat</h2>
+        <h2>What is bytebeat?</h2>
 
         <p>
           <b>Bytebeat</b> is a playful way of making algorithmic music using very simple code.
@@ -70,21 +70,77 @@ export default function WhatIsBytebeat() {
         </p>
 
         <p>
-          Modern bytebeat tools run directly in the browser, so there’s nothing to install. You can
-          experiment, break things, and discover new sounds just by editing a single line of code.
+          Today, bytebeat is most commonly implemented in JavaScript and runs directly in the
+          browser. This makes bytebeat accessible as there’s nothing to install. You can experiment,
+          break things, and discover new sounds just by editing a single line of code.
+        </p>
+
+        <h2>Bytebeat today: history, culture, and evolution</h2>
+
+        <p>
+          Bytebeat originally emerged as a form of{' '}
+          <Link
+            href="https://en.wikipedia.org/wiki/Low-complexity_art"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            low-complexity digital art
+          </Link>
+          , closely related to the demoscene and experimental programming culture. In the late 2000s
+          and early 2010s, many bytebeat programs and experiments were shared on demoscene forums
+          such as{' '}
+          <Link
+            href="https://www.pouet.net/topic.php?which=8357&page=1"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Pouët
+          </Link>
+          , where extremely small programs producing sound were valued as a form of technical and
+          artistic expression.
+        </p>
+
+        <p>
+          Over time, bytebeat compositions have grown more sophisticated. While still constrained by
+          minimal expressions, many modern bytebeat pieces explore harmony, rhythm, sound effects
+          and structure, sometimes approaching the musical complexity found in traditional digital
+          audio workstations (DAWs) such as <b>Ableton Live</b> or
+          <b>FL Studio</b> — albeit through purely algorithmic means.
+        </p>
+
+        <p>
+          Bytebeat is also increasingly associated with live coding and algorithmic performance
+          practices. It shares conceptual ground with live coding environments like <b>Strudel</b>{' '}
+          and <b>TidalCycles</b>, and aligns with the ethos of the{' '}
+          <Link
+            href="https://en.wikipedia.org/wiki/Algorave"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Algorave movement
+          </Link>
+          , where code itself becomes a performative musical instrument.
+        </p>
+
+        <p>
+          Beyond music, bytebeat techniques have occasionally appeared in unexpected technical
+          contexts. One notable example is their use in malware such as <i>sailwin.exe</i>, where
+          bytebeat formulas were employed to generate sound procedurally — illustrating how these
+          simple algorithms can surface far outside artistic applications.
         </p>
 
         <h2>Bytebeat tools and platforms</h2>
 
         <p>
           Over time, several tools helped shape the bytebeat scene.{' '}
-          <Link href="https://dollchan.net/bytebeat" target="_blank">
+          <Link href="https://dollchan.net/bytebeat" target="_blank" rel="noopener noreferrer">
             Dollchan’s Bytebeat Composer
           </Link>{' '}
           and{' '}
           <Link
             href="https://greggman.com/downloads/examples/html5bytebeat/html5bytebeat.html"
             target="_blank"
+            rel="noopener noreferrer"
           >
             Greggman’s bytebeat engine
           </Link>{' '}
@@ -92,9 +148,9 @@ export default function WhatIsBytebeat() {
         </p>
 
         <p>
-          <b>BytebeatCloud</b> takes bytebeat a step further by focusing on creativity and
-          community. You can create bytebeats in your browser, listen to what others have made, and
-          share your own experiments with the world.
+          Building on this tradition, <b>BytebeatCloud</b> is a modern online bytebeat composer
+          focused on creativity, sharing, and community. You can create bytebeats in your browser,
+          listen to what others have made, and share your own experiments with the world.
         </p>
 
         <h2>Try bytebeat yourself</h2>

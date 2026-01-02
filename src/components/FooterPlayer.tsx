@@ -698,11 +698,7 @@ export default function FooterPlayer() {
             >
               auto-skip
             </button>
-            <button
-              type="button"
-              className="play-queue-button"
-              onClick={handleShuffle}
-            >
+            <button type="button" className="play-queue-button" onClick={handleShuffle}>
               shuffle
             </button>
           </div>
