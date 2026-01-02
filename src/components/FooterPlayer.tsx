@@ -47,6 +47,7 @@ export default function FooterPlayer() {
   const progressBarRef = useRef<HTMLDivElement | null>(null);
   const progressAnimationRef = useRef<number | null>(null);
   const [isQueueOpen, setIsQueueOpen] = useState(false);
+  const lastPostIdRef = useRef<string | null>(null);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [dropIndicatorIndex, setDropIndicatorIndex] = useState<number | null>(null);
   const [queueFavoritePending, setQueueFavoritePending] = useState<Record<string, boolean>>({});
@@ -56,6 +57,7 @@ export default function FooterPlayer() {
   const handleFooterPrevRef = useRef<(() => Promise<void>) | null>(null);
   const handleFooterNextRef = useRef<(() => Promise<void>) | null>(null);
   const silentAudioRef = useRef<HTMLAudioElement | null>(null);
+  const playPostRef = useRef<((post: PostRow | null) => Promise<void>) | null>(null);
 
   useEffect(() => {
     const unsubscribe = subscribePreviewSource(setPreview);
@@ -261,18 +263,26 @@ export default function FooterPlayer() {
     async (post: PostRow | null) => {
       if (!post) return;
 
+      console.log('[playPost] Starting playback for post:', post.id);
       cancelAutoTransition();
       stopPlayTracking();
       await stop();
 
+      // Set timestamp BEFORE toggle to ensure it's ready when isPlaying changes
+      playStartTimeRef.current = Date.now();
+      console.log('[playPost] Set playStartTimeRef to:', playStartTimeRef.current);
       const sr = post.sample_rate;
       await toggle(post.expression, post.mode, sr);
-      playStartTimeRef.current = Date.now();
       setCurrentPostById(post.id);
       startPlayTracking(post.id);
     },
     [cancelAutoTransition, stopPlayTracking, stop, toggle, setCurrentPostById, startPlayTracking],
   );
+
+  // Update ref whenever playPost changes
+  useEffect(() => {
+    playPostRef.current = playPost;
+  }, [playPost]);
 
   // Auto-next timer with 3s fade-out before the switch
   useEffect(() => {
@@ -282,8 +292,16 @@ export default function FooterPlayer() {
       const TOTAL_DELAY_MS = AUTOPLAY_DEFAULT_DURATION * 1000;
       const MIN_REMAINING_MS = 5000; // Minimum 5 seconds before transition
 
+      // Reset timestamp when the post changes (new post started playing)
+      if (lastPostIdRef.current !== currentPost.id) {
+        playStartTimeRef.current = Date.now();
+        lastPostIdRef.current = currentPost.id;
+        console.log('[AutoSkip Effect] New post detected, reset playStartTimeRef to:', playStartTimeRef.current);
+      }
+
       // Calculate elapsed time since playback started
       const elapsedMs = playStartTimeRef.current ? Date.now() - playStartTimeRef.current : 0;
+      console.log('[AutoSkip Effect] Running for post:', currentPost.id, 'playStartTimeRef:', playStartTimeRef.current, 'elapsedMs:', elapsedMs);
       const remainingMs = TOTAL_DELAY_MS - elapsedMs;
 
       // Ensure at least MIN_REMAINING_MS before transition
@@ -340,7 +358,10 @@ export default function FooterPlayer() {
         switchTimerRef.current = window.setTimeout(async () => {
           // If still playing and auto still enabled, advance
           if (isPlaying && autoSkipEnabled) {
-            await playPost(next());
+            const nextPost = next();
+            if (playPostRef.current) {
+              await playPostRef.current(nextPost);
+            }
             // Restore volume immediately after switching
             setFadeGain(fadeStartGainRef.current);
           } else {
@@ -366,6 +387,8 @@ export default function FooterPlayer() {
         cancelAnimationFrame(progressAnimationRef.current);
         progressAnimationRef.current = null;
       }
+      // Clear the last post ID when not in auto-skip mode
+      lastPostIdRef.current = null;
     }
     // Recreate timers when these change
     // Note: fadeGain is intentionally excluded to prevent timer reset during fade animation
@@ -374,6 +397,7 @@ export default function FooterPlayer() {
 
   const handleFooterPlayPause = useCallback(async () => {
     if (isPlaying) {
+      console.log('[handleFooterPlayPause] Stopping playback');
       cancelAutoTransition();
       stopPlayTracking();
       await stop();
@@ -381,6 +405,7 @@ export default function FooterPlayer() {
     }
 
     if (currentPost) {
+      console.log('[handleFooterPlayPause] Resuming playback for current post:', currentPost.id);
       cancelAutoTransition();
       await playPost(currentPost);
       return;
@@ -407,6 +432,7 @@ export default function FooterPlayer() {
   }, [handleFooterPrev]);
 
   const handleFooterNext = useCallback(async () => {
+    console.log('[handleFooterNext] Called, current playStartTimeRef:', playStartTimeRef.current);
     cancelAutoTransition();
     await playPost(next());
   }, [cancelAutoTransition, playPost, next]);
@@ -544,6 +570,7 @@ export default function FooterPlayer() {
 
   const handleQueueItemClick = async (post: PostRow) => {
     if (post.id === currentPost?.id) return;
+    console.log('[handleQueueItemClick] Clicked post:', post.id, 'current playStartTimeRef:', playStartTimeRef.current);
     cancelAutoTransition();
     await playPost(post);
   };
