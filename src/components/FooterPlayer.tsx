@@ -211,9 +211,9 @@ export default function FooterPlayer() {
 
       const sr = post.sample_rate;
       await toggle(post.expression, post.mode, sr);
+      playStartTimeRef.current = Date.now();
       setCurrentPostById(post.id);
       startPlayTracking(post.id);
-      playStartTimeRef.current = Date.now();
     },
     [cancelAutoTransition, stopPlayTracking, stop, toggle, setCurrentPostById, startPlayTracking],
   );
