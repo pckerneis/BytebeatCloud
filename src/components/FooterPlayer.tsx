@@ -85,20 +85,22 @@ export default function FooterPlayer() {
     };
   }, []);
 
-  // Sync silent audio element with bytebeat player state
+  // Keep silent audio always playing when there's a track loaded
+  // This maintains the Media Session even when the actual player is paused
   useEffect(() => {
     const audio = silentAudioRef.current;
     if (!audio) return;
 
-    if (isPlaying && currentPost) {
-      // Start silent audio to activate Media Session
+    if (currentPost) {
+      // Keep silent audio playing to maintain Media Session
       audio.play().catch(() => {
         // Ignore autoplay errors
       });
     } else {
+      // Only stop when no track is loaded
       audio.pause();
     }
-  }, [isPlaying, currentPost]);
+  }, [currentPost]);
 
   // Media Session API: Update metadata when track changes
   useEffect(() => {
@@ -478,10 +480,6 @@ export default function FooterPlayer() {
       
       navigator.mediaSession.setActionHandler('play', () => {
         console.log('[MediaSession] Play action triggered');
-        // Immediately resume silent audio to keep Media Session active
-        if (silentAudioRef.current) {
-          silentAudioRef.current.play().catch(() => {});
-        }
         handleFooterPlayPauseRef.current?.();
       });
 
@@ -516,10 +514,24 @@ export default function FooterPlayer() {
 
   // Media Session API: Update playback state
   useEffect(() => {
-    if ('mediaSession' in navigator) {
-      navigator.mediaSession.playbackState = isPlaying ? 'playing' : 'paused';
+    if ('mediaSession' in navigator && currentPost) {
+      const state = isPlaying ? 'playing' : 'paused';
+      console.log('[MediaSession] Setting playback state to:', state);
+      navigator.mediaSession.playbackState = state;
+      
+      // Set position state to help maintain session when paused
+      // Use a fake duration since bytebeat tracks loop infinitely
+      try {
+        navigator.mediaSession.setPositionState({
+          duration: 300, // 5 minutes fake duration
+          playbackRate: 1,
+          position: 0,
+        });
+      } catch (e) {
+        // Ignore if not supported
+      }
     }
-  }, [isPlaying]);
+  }, [isPlaying, currentPost]);
 
   const handlePlayedPostInfoClick = () => {
     if (!currentPost) return;
