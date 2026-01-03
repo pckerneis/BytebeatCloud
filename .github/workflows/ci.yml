@@ -67,7 +67,7 @@ jobs:
           - group: playlists
             spec: e2e/playlists.spec.ts e2e/play-queue.spec.ts e2e/analytics.spec.ts
           - group: core
-            spec: e2e/explore.spec.ts e2e/favorites.spec.ts e2e/infinite-scroll.spec.ts e2e/post-detail.spec.ts e2e/profile.spec.ts e2e/smoke.spec.ts e2e/tags.spec.ts e2e/back-to-top.spec.ts
+            spec: e2e/explore.spec.ts e2e/favorites.spec.ts e2e/infinite-scroll.spec.ts e2e/post-detail.spec.ts e2e/profile.spec.ts e2e/smoke.spec.ts e2e/tags.spec.ts e2e/back-to-top.spec.ts e2e/tab-swipe.spec.ts
     steps:
       - name: Checkout
         uses: actions/checkout@v4
