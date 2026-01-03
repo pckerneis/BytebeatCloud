@@ -34,7 +34,7 @@ const page: NextPageWithLayout = function EditPostFocusPage() {
   const [license, setLicense] = useState<LicenseOption>(DEFAULT_LICENSE);
   const [publishedAt, setPublishedAt] = useState<string | null>(null);
   const [isPublishPanelOpen, setIsPublishPanelOpen] = useState(false);
-  
+
   const { isPlaying, toggle, stop, updateExpression } = useBytebeatPlayer({
     enableVisualizer: false,
   });
@@ -52,10 +52,7 @@ const page: NextPageWithLayout = function EditPostFocusPage() {
   const isDirtyRef = useRef(false);
   const isApplyingServerStateRef = useRef(false);
 
-  const {
-    handleExpressionChange,
-    handlePlayClick: handlePlayClickBase,
-  } = useExpressionPlayer({
+  const { handleExpressionChange, handlePlayClick: handlePlayClickBase } = useExpressionPlayer({
     expression,
     setExpression,
     mode,
@@ -173,7 +170,7 @@ const page: NextPageWithLayout = function EditPostFocusPage() {
           // Only load if draft is less than 7 days old
           const age = Date.now() - (draft.timestamp || 0);
           const maxAge = 7 * 24 * 60 * 60 * 1000; // 7 days
-          
+
           if (age < maxAge) {
             // Override server data with local changes
             setTitle(draft.title || '');
@@ -382,7 +379,7 @@ const page: NextPageWithLayout = function EditPostFocusPage() {
         <meta property="og:image:height" content="630" />
         <meta name="twitter:card" content="summary_large_image" />
       </Head>
-      
+
       <FocusLayout
         expression={expression}
         mode={mode}
@@ -404,7 +401,7 @@ const page: NextPageWithLayout = function EditPostFocusPage() {
           <FocusExpressionEditor value={expression} onChange={onExpressionChange} />
         </section>
       </FocusLayout>
-      
+
       <PublishPanel
         isOpen={isPublishPanelOpen}
         onClose={() => setIsPublishPanelOpen(false)}
@@ -478,8 +475,8 @@ const page: NextPageWithLayout = function EditPostFocusPage() {
       )}
     </>
   );
-}
+};
 
-page.getLayout = (page) => page
+page.getLayout = (page) => page;
 
 export default page;

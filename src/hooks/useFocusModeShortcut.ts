@@ -12,9 +12,9 @@ export function useFocusModeShortcut() {
       // Check for Ctrl+Shift+F (or Cmd+Shift+F on Mac)
       if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'F') {
         e.preventDefault();
-        
+
         const { pathname, query } = router;
-        
+
         // Toggle between standard and focus modes for different pages
         if (pathname === '/create/focus') {
           void router.push('/create');

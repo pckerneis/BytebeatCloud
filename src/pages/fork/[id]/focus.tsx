@@ -30,7 +30,7 @@ const page: NextPageWithLayout = function ForkPostFocusPage() {
   const [sampleRate, setSampleRate] = useState<number>(DEFAULT_SAMPLE_RATE);
   const [license, setLicense] = useState<LicenseOption>(DEFAULT_LICENSE);
   const [isPublishPanelOpen, setIsPublishPanelOpen] = useState(false);
-  
+
   const { isPlaying, toggle, stop, updateExpression } = useBytebeatPlayer({
     enableVisualizer: false,
   });
@@ -41,9 +41,7 @@ const page: NextPageWithLayout = function ForkPostFocusPage() {
   const [isShareAlike, setIsShareAlike] = useState(false);
   const [liveUpdateEnabled, setLiveUpdateEnabled] = useState(true);
 
-  const {
-    handlePlayClick: handlePlayClickBase,
-  } = useExpressionPlayer({
+  const { handlePlayClick: handlePlayClickBase } = useExpressionPlayer({
     expression,
     setExpression,
     mode,
@@ -100,10 +98,12 @@ const page: NextPageWithLayout = function ForkPostFocusPage() {
 
       const { data, error } = await supabase
         .from('posts')
-        .select(`
+        .select(
+          `
           *,
           profile:profiles(username)
-        `)
+        `,
+        )
         .eq('id', id)
         .single();
 
@@ -136,7 +136,7 @@ const page: NextPageWithLayout = function ForkPostFocusPage() {
           // Only load if draft is less than 7 days old
           const age = Date.now() - (draft.timestamp || 0);
           const maxAge = 7 * 24 * 60 * 60 * 1000; // 7 days
-          
+
           if (age < maxAge) {
             // Override server data with local changes
             setTitle(draft.title || '');
@@ -283,7 +283,7 @@ const page: NextPageWithLayout = function ForkPostFocusPage() {
         <meta property="og:image:height" content="630" />
         <meta name="twitter:card" content="summary_large_image" />
       </Head>
-      
+
       <FocusLayout
         expression={expression}
         mode={mode}
@@ -305,7 +305,7 @@ const page: NextPageWithLayout = function ForkPostFocusPage() {
           <FocusExpressionEditor value={expression} onChange={setExpression} />
         </section>
       </FocusLayout>
-      
+
       <PublishPanel
         isOpen={isPublishPanelOpen}
         onClose={() => setIsPublishPanelOpen(false)}
@@ -322,8 +322,8 @@ const page: NextPageWithLayout = function ForkPostFocusPage() {
       />
     </>
   );
-}
+};
 
-page.getLayout = (page) => page
+page.getLayout = (page) => page;
 
 export default page;

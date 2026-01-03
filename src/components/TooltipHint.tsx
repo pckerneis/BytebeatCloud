@@ -9,12 +9,12 @@ interface TooltipHintProps {
   placement?: 'top' | 'bottom' | 'left' | 'right';
 }
 
-export function TooltipHint({ 
-  children, 
-  content, 
-  storageKey, 
+export function TooltipHint({
+  children,
+  content,
+  storageKey,
   className = '',
-  placement = 'top'
+  placement = 'top',
 }: TooltipHintProps) {
   const [isVisible, setIsVisible] = useState(false);
   const [shouldShow, setShouldShow] = useState(false);
@@ -25,7 +25,7 @@ export function TooltipHint({
   // Check if hint should be shown
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    
+
     const dismissed = localStorage.getItem(`hint-dismissed-${storageKey}`);
     if (!dismissed) {
       setShouldShow(true);
@@ -40,7 +40,7 @@ export function TooltipHint({
 
     const triggerRect = triggerRef.current.getBoundingClientRect();
     const tooltipRect = tooltipRef.current.getBoundingClientRect();
-    
+
     let top = 0;
     let left = 0;
 
@@ -77,7 +77,7 @@ export function TooltipHint({
       updatePosition();
       window.addEventListener('scroll', updatePosition);
       window.addEventListener('resize', updatePosition);
-      
+
       return () => {
         window.removeEventListener('scroll', updatePosition);
         window.removeEventListener('resize', updatePosition);
@@ -109,84 +109,86 @@ export function TooltipHint({
       <div ref={triggerRef} className={className} onClick={handleTriggerClick}>
         {children}
       </div>
-      
-      {isVisible && typeof window !== 'undefined' && createPortal(
-        <div
-          ref={tooltipRef}
-          className="tooltip-hint"
-          style={{
-            position: 'fixed',
-            top: `${position.top}px`,
-            left: `${position.left}px`,
-            zIndex: 10000,
-            backgroundColor: '#1f2937',
-            color: 'white',
-            padding: '8px 12px',
-            borderRadius: '6px',
-            fontSize: '14px',
-            maxWidth: '250px',
-            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06)',
-            animation: 'tooltipFadeIn 0.2s ease-out',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
-            <span style={{ flex: 1, lineHeight: '1.4', fontSize: 'small' }}>{content}</span>
-            <button
-              onClick={handleDismiss}
-              style={{
-                background: 'none',
-                border: 'none',
-                color: 'white',
-                cursor: 'pointer',
-                padding: '0',
-                fontSize: '16px',
-                lineHeight: '1',
-                opacity: '0.7',
-                transition: 'opacity 0.2s',
-              }}
-              onMouseOver={(e) => e.currentTarget.style.opacity = '1'}
-              onMouseOut={(e) => e.currentTarget.style.opacity = '0.7'}
-              aria-label="Dismiss hint"
-            >
-              ×
-            </button>
-          </div>
+
+      {isVisible &&
+        typeof window !== 'undefined' &&
+        createPortal(
           <div
+            ref={tooltipRef}
+            className="tooltip-hint"
             style={{
-              position: 'absolute',
-              width: '0',
-              height: '0',
-              border: '4px solid transparent',
-              ...(placement === 'top' && {
-                bottom: '-8px',
-                left: '50%',
-                transform: 'translateX(-50%)',
-                borderTopColor: '#1f2937',
-              }),
-              ...(placement === 'bottom' && {
-                top: '-8px',
-                left: '50%',
-                transform: 'translateX(-50%)',
-                borderBottomColor: '#1f2937',
-              }),
-              ...(placement === 'left' && {
-                right: '-8px',
-                top: '50%',
-                transform: 'translateY(-50%)',
-                borderLeftColor: '#1f2937',
-              }),
-              ...(placement === 'right' && {
-                left: '-8px',
-                top: '50%',
-                transform: 'translateY(-50%)',
-                borderRightColor: '#1f2937',
-              }),
+              position: 'fixed',
+              top: `${position.top}px`,
+              left: `${position.left}px`,
+              zIndex: 10000,
+              backgroundColor: '#1f2937',
+              color: 'white',
+              padding: '8px 12px',
+              borderRadius: '6px',
+              fontSize: '14px',
+              maxWidth: '250px',
+              boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06)',
+              animation: 'tooltipFadeIn 0.2s ease-out',
             }}
-          />
-        </div>,
-        document.body
-      )}
-      
+          >
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+              <span style={{ flex: 1, lineHeight: '1.4', fontSize: 'small' }}>{content}</span>
+              <button
+                onClick={handleDismiss}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'white',
+                  cursor: 'pointer',
+                  padding: '0',
+                  fontSize: '16px',
+                  lineHeight: '1',
+                  opacity: '0.7',
+                  transition: 'opacity 0.2s',
+                }}
+                onMouseOver={(e) => (e.currentTarget.style.opacity = '1')}
+                onMouseOut={(e) => (e.currentTarget.style.opacity = '0.7')}
+                aria-label="Dismiss hint"
+              >
+                ×
+              </button>
+            </div>
+            <div
+              style={{
+                position: 'absolute',
+                width: '0',
+                height: '0',
+                border: '4px solid transparent',
+                ...(placement === 'top' && {
+                  bottom: '-8px',
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  borderTopColor: '#1f2937',
+                }),
+                ...(placement === 'bottom' && {
+                  top: '-8px',
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  borderBottomColor: '#1f2937',
+                }),
+                ...(placement === 'left' && {
+                  right: '-8px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  borderLeftColor: '#1f2937',
+                }),
+                ...(placement === 'right' && {
+                  left: '-8px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  borderRightColor: '#1f2937',
+                }),
+              }}
+            />
+          </div>,
+          document.body,
+        )}
+
       <style jsx>{`
         @keyframes tooltipFadeIn {
           from {
