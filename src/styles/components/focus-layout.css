@@ -1,9 +1,9 @@
 .focus-header {
-    background: var(--navbar-background-color);
-    border-bottom: 1px solid var(--border-color);
+    background: var(--sidebar-bg-gradient-color);
+    border-bottom: 1px solid var(--panel-border-color);
 }
 
 .focus-footer {
-    background: var(--navbar-background-color);
-    border-top: 1px solid var(--border-color);
+    background: var(--sidebar-bg-gradient-color);
+    border-top: 1px solid var(--panel-border-color);
 }
