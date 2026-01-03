@@ -1,4 +1,5 @@
 import { PropsWithChildren } from 'react';
+import { useRouter } from 'next/router';
 import { useTheme } from '../hooks/useTheme';
 import { useBytebeatPlayer } from '../hooks/useBytebeatPlayer';
 import { DEFAULT_THEME_ID } from '../theme/themes';
@@ -17,11 +18,17 @@ import { EXPRESSION_MAX } from '../constants';
 import { validateExpression } from '../utils/expression-validator';
 
 function FocusHeader() {
+  const router = useRouter();
+  
+  const handleExitFocusMode = () => {
+    void router.push('/create');
+  };
+  
   return (
     <div className='focus-header px-12 py-8 flex-row align-items-center'>
       <h1>Create</h1>
-      <button className="button secondary small ml-auto">
-        Exit focus mode
+      <button className="button secondary small ghost ml-auto" onClick={handleExitFocusMode}>
+        ⛶ Exit focus mode
       </button>
     </div>
   )
@@ -160,6 +167,7 @@ function FocusFooter({
         <VolumeButton
           masterGain={masterGain}
           onMasterGainChange={onMasterGainChange}
+          rightAligned={true}
         />
 
       </div>
