@@ -78,6 +78,30 @@ const page: NextPageWithLayout = function EditPostFocusPage() {
     handleExpressionChange(value);
   };
 
+  // Save to localStorage whenever state changes
+  useEffect(() => {
+    if (!id || typeof id !== 'string') return;
+    if (isApplyingServerStateRef.current) return;
+    if (!isDirtyRef.current) return;
+
+    const draftKey = `edit-draft-${id}`;
+    const draft = {
+      title,
+      description,
+      expression,
+      mode,
+      sampleRate,
+      license,
+      timestamp: Date.now(),
+    };
+
+    try {
+      localStorage.setItem(draftKey, JSON.stringify(draft));
+    } catch (error) {
+      console.error('Failed to save draft to localStorage:', error);
+    }
+  }, [id, title, description, expression, mode, sampleRate, license]);
+
   useEffect(() => {
     return () => {
       if (!currentPost) {
@@ -140,8 +164,38 @@ const page: NextPageWithLayout = function EditPostFocusPage() {
         setDescription('');
       }
 
+      // After loading server data, check for localStorage override
+      const draftKey = `edit-draft-${id}`;
+      try {
+        const stored = localStorage.getItem(draftKey);
+        if (stored) {
+          const draft = JSON.parse(stored);
+          // Only load if draft is less than 7 days old
+          const age = Date.now() - (draft.timestamp || 0);
+          const maxAge = 7 * 24 * 60 * 60 * 1000; // 7 days
+          
+          if (age < maxAge) {
+            // Override server data with local changes
+            setTitle(draft.title || '');
+            setDescription(draft.description || '');
+            setExpression(draft.expression || '');
+            setMode(draft.mode || ModeOption.Float);
+            setSampleRate(draft.sampleRate || DEFAULT_SAMPLE_RATE);
+            setLicense(draft.license || DEFAULT_LICENSE);
+            isDirtyRef.current = true;
+          } else {
+            // Clean up old draft
+            localStorage.removeItem(draftKey);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to load draft from localStorage:', error);
+      }
+
       isApplyingServerStateRef.current = false;
-      isDirtyRef.current = false;
+      if (!localStorage.getItem(draftKey)) {
+        isDirtyRef.current = false;
+      }
       lastLoadedPostIdRef.current = id;
       setLoading(false);
     };
@@ -205,6 +259,15 @@ const page: NextPageWithLayout = function EditPostFocusPage() {
 
     setSaveStatus('success');
     isDirtyRef.current = false;
+
+    // Clear localStorage draft on successful save
+    if (id && typeof id === 'string') {
+      try {
+        localStorage.removeItem(`edit-draft-${id}`);
+      } catch (error) {
+        console.error('Failed to clear draft from localStorage:', error);
+      }
+    }
 
     if (!asDraft) {
       await router.push(`/post/${id}`);
