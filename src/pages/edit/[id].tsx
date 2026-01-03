@@ -14,6 +14,7 @@ import { useCtrlSpacePlayShortcut } from '../../hooks/useCtrlSpacePlayShortcut';
 import { convertMentionsToIds, convertMentionsToUsernames } from '../../utils/mentions';
 import { TooltipHint } from '../../components/TooltipHint';
 import { useFocusModeShortcut } from '../../hooks/useFocusModeShortcut';
+import OverflowMenu from '../../components/OverflowMenu';
 
 export default function EditPostPage() {
   const router = useRouter();
@@ -28,7 +29,6 @@ export default function EditPostPage() {
   const [mode, setMode] = useState<ModeOption>(ModeOption.Float);
   const [sampleRate, setSampleRate] = useState<number>(DEFAULT_SAMPLE_RATE);
   const [license, setLicense] = useState<LicenseOption>(DEFAULT_LICENSE);
-  const [publishedAt, setPublishedAt] = useState<string | null>(null);
   const { isPlaying, toggle, lastError, stop, updateExpression } = useBytebeatPlayer({
     enableVisualizer: false,
   });
@@ -403,7 +403,6 @@ export default function EditPostPage() {
     sampleRate !== originalSampleRate ||
     description !== originalDescription;
 
-
   return (
     <>
       <Head>
@@ -471,36 +470,36 @@ export default function EditPostPage() {
           {user && (
             <div className="form-actions">
               <div className="form-actions-buttons">
-                <button
-                  type="button"
-                  className="button danger"
-                  onClick={() => setShowDeleteConfirm(true)}
-                  disabled={saveStatus === 'saving'}
-                >
-                  Delete
-                </button>
-
-                <button
-                  type="button"
-                  className="button danger"
-                  onClick={() => setShowDiscardConfirm(true)}
-                  disabled={saveStatus === 'saving' || !hasUnsavedChanges}
-                >
-                  Discard changes
-                </button>
-
-                <button
-                  type="button"
-                  className="button secondary"
-                  onClick={!isDraft && publishedAt ? () => setShowUnpublishConfirm(true) : handleSaveAsDraft}
-                  disabled={!expression.trim() || !!validationIssue || saveStatus === 'saving'}
-                >
-                  {saveStatus === 'saving' && isDraft
-                    ? 'Saving…'
-                    : !isDraft && publishedAt
-                      ? 'Unpublish'
-                      : 'Save as draft'}
-                </button>
+                <OverflowMenu disabled={saveStatus === 'saving'}>
+                  <button
+                    type="button"
+                    className="overflow-menu-item"
+                    onClick={!isDraft ? () => setShowUnpublishConfirm(true) : handleSaveAsDraft}
+                    disabled={!expression.trim() || !!validationIssue || saveStatus === 'saving'}
+                  >
+                    {saveStatus === 'saving' && isDraft
+                      ? 'Saving…'
+                      : !isDraft
+                        ? 'Unpublish'
+                        : 'Save as draft'}
+                  </button>
+                  <button
+                    type="button"
+                    className="overflow-menu-item danger"
+                    onClick={() => setShowDiscardConfirm(true)}
+                    disabled={saveStatus === 'saving' || !hasUnsavedChanges}
+                  >
+                    Discard changes
+                  </button>
+                  <button
+                    type="button"
+                    className="overflow-menu-item danger"
+                    onClick={() => setShowDeleteConfirm(true)}
+                    disabled={saveStatus === 'saving'}
+                  >
+                    Delete
+                  </button>
+                </OverflowMenu>
 
                 <button
                   type="submit"

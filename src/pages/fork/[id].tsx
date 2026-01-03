@@ -15,6 +15,7 @@ import { convertMentionsToIds, convertMentionsToUsernames } from '../../utils/me
 import { formatPostTitle } from '../../utils/post-format';
 import { TooltipHint } from '../../components/TooltipHint';
 import { useFocusModeShortcut } from '../../hooks/useFocusModeShortcut';
+import OverflowMenu from '../../components/OverflowMenu';
 
 export default function ForkPostPage() {
   const router = useRouter();
@@ -437,23 +438,24 @@ export default function ForkPostPage() {
           {user && (
             <div className="form-actions">
               <div className="form-actions-buttons">
-                <button
-                  type="button"
-                  className="button danger"
-                  onClick={() => setShowDiscardConfirm(true)}
-                  disabled={saveStatus === 'saving' || !hasUnsavedChanges}
-                >
-                  Discard changes
-                </button>
-
-                <button
-                  type="button"
-                  className="button secondary"
-                  onClick={handleSaveAsDraft}
-                  disabled={!expression.trim() || !!validationIssue || saveStatus === 'saving'}
-                >
-                  {saveStatus === 'saving' && isDraft ? 'Saving…' : 'Save as draft'}
-                </button>
+                <OverflowMenu disabled={saveStatus === 'saving'}>
+                  <button
+                    type="button"
+                    className="overflow-menu-item danger"
+                    onClick={() => setShowDiscardConfirm(true)}
+                    disabled={saveStatus === 'saving' || !hasUnsavedChanges}
+                  >
+                    Discard changes
+                  </button>
+                  <button
+                    type="button"
+                    className="overflow-menu-item"
+                    onClick={handleSaveAsDraft}
+                    disabled={!expression.trim() || !!validationIssue || saveStatus === 'saving'}
+                  >
+                    {saveStatus === 'saving' && isDraft ? 'Saving…' : 'Save as draft'}
+                  </button>
+                </OverflowMenu>
 
                 <button
                   type="button"
