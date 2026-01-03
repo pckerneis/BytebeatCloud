@@ -14,6 +14,7 @@ interface PublishPanelProps {
   onPublish: () => void;
   isPublishing: boolean;
   canPublish: boolean;
+  saveError?: string;
 }
 
 export function PublishPanel({
@@ -28,6 +29,7 @@ export function PublishPanel({
   onPublish,
   isPublishing,
   canPublish,
+  saveError,
 }: PublishPanelProps) {
   const [isClient, setIsClient] = useState(false);
 
@@ -128,6 +130,13 @@ export function PublishPanel({
               {isPublishing ? 'Publishing…' : 'Publish'}
             </button>
           </div>
+
+          {/* Error message */}
+          {saveError && (
+            <div className="error-message">
+              {saveError}
+            </div>
+          )}
         </div>
       </div>
     </>,
