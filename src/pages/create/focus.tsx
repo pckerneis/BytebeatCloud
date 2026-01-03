@@ -330,6 +330,7 @@ const page: NextPageWithLayout = function FocusCreatePage() {
         isLoggedIn={!!user}
         username={username}
         title={title}
+        onTitleChange={setTitle}
         onExitFocusMode={() => void router.push('/create')}
       >
         <section style={{ width: '100%', height: '100%', overflow: 'auto' }}>
