@@ -20,6 +20,7 @@ import Link from 'next/link';
 import { useCurrentWeeklyChallenge } from '../hooks/useCurrentWeeklyChallenge';
 import { TooltipHint } from '../components/TooltipHint';
 import { usePublishPost } from '../hooks/usePublishPost';
+import { useFocusModeShortcut } from '../hooks/useFocusModeShortcut';
 
 const CREATE_DRAFT_STORAGE_KEY = 'bytebeat-cloud-create-draft-v1';
 
@@ -87,6 +88,7 @@ export default function CreatePage() {
   }, [stop, currentPost]);
 
   useCtrlSpacePlayShortcut(handlePlayClick);
+  useFocusModeShortcut();
 
   // Check if user already has a submission for current week
   useEffect(() => {
@@ -383,6 +385,7 @@ export default function CreatePage() {
                 type="button"
                 className="button secondary ghost small ml-auto"
                 onClick={handleEnterFocusMode}
+                title='Enter focus mode (Ctrl+Shift+F)'
               >
                 ⛶ Enter Focus Mode
               </button>
