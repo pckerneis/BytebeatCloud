@@ -18,6 +18,7 @@ import {
 } from '../../model/expression';
 import { validateExpression } from '../../utils/expression-validator';
 import { usePublishPost } from '../../hooks/usePublishPost';
+import { useCurrentUserProfile } from '../../hooks/useCurrentUserProfile';
 
 const CREATE_DRAFT_STORAGE_KEY = 'bytebeat-cloud-create-draft-v1';
 
@@ -34,6 +35,7 @@ interface CreateDraftState {
 
 const page: NextPageWithLayout = function FocusCreatePage() {
   const router = useRouter();
+  const { username, user } = useCurrentUserProfile();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [expression, setExpression] = useState('');
@@ -323,6 +325,9 @@ const page: NextPageWithLayout = function FocusCreatePage() {
         liveUpdateEnabled={liveUpdateEnabled}
         onLiveUpdateChange={handleLiveUpdateChange}
         onPublish={handlePublish}
+        isLoggedIn={!!user}
+        username={username}
+        title={title}
       >
         <section style={{ width: '100%', height: '100%', overflow: 'auto' }}>
           <FocusExpressionEditor value={expression} onChange={onExpressionChange} />
