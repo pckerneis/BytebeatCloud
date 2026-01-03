@@ -1,8 +1,10 @@
 import { PropsWithChildren } from 'react';
 import { useTheme } from '../hooks/useTheme';
+import { useBytebeatPlayer } from '../hooks/useBytebeatPlayer';
 import { DEFAULT_THEME_ID } from '../theme/themes';
 import { ThemeContext } from '../theme/ThemeContext';
 import useAudioWarmup from '../hooks/useAudioWarmup';
+import { VolumeButton } from './VolumeButton';
 import {
   ModeOption,
   SAMPLE_RATE_PRESETS,
@@ -61,6 +63,8 @@ function FocusFooter({
   liveUpdateEnabled,
   onLiveUpdateChange,
   onPublish,
+  masterGain,
+  onMasterGainChange,
 }: {
   expression: string;
   mode: ModeOption;
@@ -72,6 +76,8 @@ function FocusFooter({
   liveUpdateEnabled: boolean;
   onLiveUpdateChange: (enabled: boolean) => void;
   onPublish: () => void;
+  masterGain: number;
+  onMasterGainChange: (gain: number) => void;
 }) {
   const expressionLength = expression.length;
   const isExpressionTooLong = expressionLength > EXPRESSION_MAX;
@@ -119,11 +125,11 @@ function FocusFooter({
       <div className="flex-row gap-10 align-items-center">
         <button
           type="button"
-          className="button primary small"
+          className={`transport-button play ${isPlaying ? 'playing' : 'pause'}`}
           disabled={!isPlaying && !canPlay}
           onClick={onPlayClick}
         >
-          {isPlaying ? 'Stop' : 'Play'}
+          {isPlaying ? '❚❚' : '▶'}
         </button>
         
         <label className="checkbox">
@@ -151,6 +157,11 @@ function FocusFooter({
           Publish
         </button>
 
+        <VolumeButton
+          masterGain={masterGain}
+          onMasterGainChange={onMasterGainChange}
+        />
+
       </div>
     </div>
   );
@@ -170,6 +181,7 @@ export function FocusLayout({
   onPublish = () => {},
 }: FocusLayoutProps) {
   const { theme } = useTheme();
+  const { masterGain, setMasterGain } = useBytebeatPlayer();
   useAudioWarmup();
   
   const handleModeChange = (newMode: ModeOption) => {
@@ -215,6 +227,8 @@ export function FocusLayout({
           liveUpdateEnabled={liveUpdateEnabled}
           onLiveUpdateChange={handleLiveUpdateChange}
           onPublish={handlePublish}
+          masterGain={masterGain}
+          onMasterGainChange={setMasterGain}
         />
       </div>
     </ThemeContext.Provider>
