@@ -9,6 +9,7 @@ import { LicenseOption, DEFAULT_LICENSE } from '../../model/postEditor';
 import { FocusLayout } from '../../components/FocusLayout';
 import { NextPageWithLayout } from '../_app';
 import { FocusExpressionEditor } from '../../components/FocusExpressionEditor';
+import { PublishPanel } from '../../components/PublishPanel';
 import {
   ModeOption,
   MAX_SAMPLE_RATE,
@@ -40,12 +41,15 @@ const page: NextPageWithLayout = function FocusCreatePage() {
   const [sampleRate, setSampleRate] = useState<number>(DEFAULT_SAMPLE_RATE);
   const [license, setLicense] = useState<LicenseOption>(DEFAULT_LICENSE);
   const [draftLoaded, setDraftLoaded] = useState(false);
+  const [isStateLoaded, setIsStateLoaded] = useState(false);
+  const [isPublishPanelOpen, setIsPublishPanelOpen] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'success'>('idle');
+  const [saveError, setSaveError] = useState('');
   const { isPlaying, toggle, stop, updateExpression } = useBytebeatPlayer({
     enableVisualizer: false,
   });
   const { currentPost, setCurrentPostById } = usePlayerStore();
   const [liveUpdateEnabled, setLiveUpdateEnabled] = useState(true);
-  const [isStateLoaded, setIsStateLoaded] = useState(false);
 
   const {
     handlePlayClick: handlePlayClickBase,
@@ -84,9 +88,12 @@ const page: NextPageWithLayout = function FocusCreatePage() {
       const raw = localStorage.getItem(CREATE_DRAFT_STORAGE_KEY);
       if (raw) {
         const parsed: CreateDraftState = JSON.parse(raw);
+        if (typeof parsed.title === 'string') setTitle(parsed.title);
+        if (typeof parsed.description === 'string') setDescription(parsed.description);
         if (typeof parsed.expression === 'string') setExpression(parsed.expression);
         if (parsed.mode) setMode(parsed.mode);
         if (parsed.sampleRate) setSampleRate(parsed.sampleRate);
+        if (parsed.license) setLicense(parsed.license);
         if (typeof parsed.liveUpdateEnabled === 'boolean') setLiveUpdateEnabled(parsed.liveUpdateEnabled);
       }
     } catch (e) {
@@ -106,9 +113,12 @@ const page: NextPageWithLayout = function FocusCreatePage() {
       
       const updated: CreateDraftState = {
         ...existing,
+        title,
+        description,
         expression,
         mode,
         sampleRate,
+        license,
         liveUpdateEnabled,
       };
       
@@ -116,7 +126,7 @@ const page: NextPageWithLayout = function FocusCreatePage() {
     } catch (e) {
       console.error('Failed to save focus mode state:', e);
     }
-  }, [expression, mode, sampleRate, liveUpdateEnabled, isStateLoaded]);
+  }, [title, description, expression, mode, sampleRate, license, liveUpdateEnabled, isStateLoaded]);
 
   useEffect(() => {
     // Only apply live updates when no post is playing (editor's expression is playing)
@@ -244,9 +254,30 @@ const page: NextPageWithLayout = function FocusCreatePage() {
   };
 
   const handlePublish = () => {
-    // TODO: Implement publish functionality
-    console.log('Publish clicked from focus page');
+    setIsPublishPanelOpen(true);
   };
+
+  const handlePublishSubmit = async () => {
+    setSaveStatus('saving');
+    setSaveError('');
+    
+    try {
+      // TODO: Implement actual publish functionality
+      // For now, just simulate publishing
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      setSaveStatus('success');
+      setIsPublishPanelOpen(false);
+      
+      // Navigate to the created post or back to create page
+      // void router.push('/some-post-url');
+    } catch (error) {
+      setSaveError('Failed to publish post');
+      setSaveStatus('idle');
+    }
+  };
+
+  const canPublish = expression.trim().length > 0 && saveStatus !== 'saving';
 
   return (
     <>
@@ -297,6 +328,20 @@ const page: NextPageWithLayout = function FocusCreatePage() {
           <FocusExpressionEditor value={expression} onChange={onExpressionChange} />
         </section>
       </FocusLayout>
+      
+      <PublishPanel
+        isOpen={isPublishPanelOpen}
+        onClose={() => setIsPublishPanelOpen(false)}
+        title={title}
+        onTitleChange={setTitle}
+        description={description}
+        onDescriptionChange={setDescription}
+        license={license}
+        onLicenseChange={setLicense}
+        onPublish={handlePublishSubmit}
+        isPublishing={saveStatus === 'saving'}
+        canPublish={canPublish}
+      />
     </>
   );
 }
