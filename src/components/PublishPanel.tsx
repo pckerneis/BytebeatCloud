@@ -53,7 +53,7 @@ export function PublishPanel({
           {/* Header */}
           <div className="publish-panel-header">
             <h2 className="publish-panel-title">
-              Publish Post
+              Post details
             </h2>
             <button
               onClick={onClose}

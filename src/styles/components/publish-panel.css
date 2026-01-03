@@ -6,7 +6,7 @@
   bottom: 0;
   background-color: var(--modal-overlay-color);
   z-index: 9999;
-  animation: fadeIn 0.2s ease-out;
+  animation: fadeIn 0.1s ease-out;
 }
 
 .publish-panel {
@@ -20,7 +20,7 @@
   border-left: 1px solid var(--border-color);
   z-index: 10000;
   overflow: auto;
-  animation: slideIn 0.3s ease-out;
+  animation: slideIn 0.2s ease-out;
 }
 
 .publish-panel-content {
