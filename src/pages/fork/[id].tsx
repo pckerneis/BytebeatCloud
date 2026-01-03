@@ -83,7 +83,6 @@ export default function ForkPostPage() {
       timestamp: Date.now(),
     };
 
-    console.log('about to save draft', draft);
 
     try {
       localStorage.setItem(draftKey, JSON.stringify(draft));
@@ -432,13 +431,44 @@ export default function ForkPostPage() {
             isFork={true}
             liveUpdateEnabled={liveUpdateEnabled}
             onLiveUpdateChange={setLiveUpdateEnabled}
-            onSaveAsDraft={handleSaveAsDraft}
-            onPublish={handlePublish}
             lockLicense={isShareAlike}
-            showDiscardChangesButton={true}
-            onDiscardChangesClick={() => setShowDiscardConfirm(true)}
-            hasUnsavedChanges={hasUnsavedChanges}
           />
+
+          {user && (
+            <div className="form-actions">
+              <div className="form-actions-buttons">
+                <button
+                  type="button"
+                  className="button danger"
+                  onClick={() => setShowDiscardConfirm(true)}
+                  disabled={saveStatus === 'saving' || !hasUnsavedChanges}
+                >
+                  Discard changes
+                </button>
+
+                <button
+                  type="button"
+                  className="button secondary"
+                  onClick={handleSaveAsDraft}
+                  disabled={!expression.trim() || !!validationIssue || saveStatus === 'saving'}
+                >
+                  {saveStatus === 'saving' && isDraft ? 'Saving…' : 'Save as draft'}
+                </button>
+
+                <button
+                  type="button"
+                  className="button primary"
+                  onClick={handlePublish}
+                  disabled={!expression.trim() || !!validationIssue || saveStatus === 'saving'}
+                >
+                  {saveStatus === 'saving' && !isDraft ? 'Publishing…' : 'Publish'}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {saveError && <p className="error-message">{saveError}</p>}
+          {saveStatus === 'success' && !saveError && <p className="counter">Fork saved.</p>}
         </form>
 
         {showDiscardConfirm && (

@@ -61,7 +61,6 @@ export default function CreatePage() {
     validationIssue,
     handleExpressionChange,
     handlePlayClick: handlePlayClickBase,
-    setValidationIssue,
   } = useExpressionPlayer({
     expression,
     setExpression,
@@ -417,9 +416,33 @@ export default function CreatePage() {
             isFork={false}
             liveUpdateEnabled={liveUpdateEnabled}
             onLiveUpdateChange={setLiveUpdateEnabled}
-            onSaveAsDraft={handleSaveAsDraft}
-            onPublish={handlePublish}
           />
+
+          {user && (
+            <div className="form-actions">
+              <div className="form-actions-buttons">
+                <button
+                  type="button"
+                  className="button secondary"
+                  onClick={handleSaveAsDraft}
+                  disabled={!expression.trim() || !!validationIssue || saveStatus === 'saving'}
+                >
+                  {saveStatus === 'saving' && isDraft ? 'Saving…' : 'Save as draft'}
+                </button>
+
+                <button
+                  type="submit"
+                  className="button primary"
+                  disabled={!expression.trim() || !!validationIssue || saveStatus === 'saving'}
+                >
+                  {saveStatus === 'saving' && !isDraft ? 'Publishing…' : 'Publish'}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {saveError && <p className="error-message">{saveError}</p>}
+          {saveStatus === 'success' && !saveError && <p className="counter">Post saved.</p>}
         </form>
       </section>
     </>
