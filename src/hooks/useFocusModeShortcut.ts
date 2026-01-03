@@ -13,11 +13,21 @@ export function useFocusModeShortcut() {
       if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'F') {
         e.preventDefault();
         
-        // Toggle between /create and /create/focus
-        if (router.pathname === '/create/focus') {
+        const { pathname, query } = router;
+        
+        // Toggle between standard and focus modes for different pages
+        if (pathname === '/create/focus') {
           void router.push('/create');
-        } else if (router.pathname === '/create') {
+        } else if (pathname === '/create') {
           void router.push('/create/focus');
+        } else if (pathname === '/edit/[id]/focus') {
+          void router.push(`/edit/${query.id}`);
+        } else if (pathname === '/edit/[id]') {
+          void router.push(`/edit/${query.id}/focus`);
+        } else if (pathname === '/fork/[id]/focus') {
+          void router.push(`/fork/${query.id}`);
+        } else if (pathname === '/fork/[id]') {
+          void router.push(`/fork/${query.id}/focus`);
         }
       }
     };
