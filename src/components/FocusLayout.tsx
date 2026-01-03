@@ -1,4 +1,4 @@
-import { PropsWithChildren } from 'react';
+import { PropsWithChildren, useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { useTheme } from '../hooks/useTheme';
 import { useBytebeatPlayer } from '../hooks/useBytebeatPlayer';
@@ -17,8 +17,9 @@ import {
 import { EXPRESSION_MAX } from '../constants';
 import { validateExpression } from '../utils/expression-validator';
 import { TooltipHint } from './TooltipHint';
+import { copyShareLinkToClipboard } from '../utils/shareLink';
 
-function FocusHeader() {
+function FocusHeader({ isLoggedIn, username }: { isLoggedIn: boolean, username?: string | null }) {
   const router = useRouter();
   
   const handleExitFocusMode = () => {
@@ -26,20 +27,29 @@ function FocusHeader() {
   };
   
   return (
-    <div className='focus-header px-12 py-8 flex-row align-items-center'>
-      <h1>Create • Focus</h1>
+    <>
+      <div className='focus-header px-12 py-8 flex-row align-items-center justify-content-space-between'>
+          <h1>Create • Focus</h1>
 
-      <TooltipHint
-        className="ml-auto"
-        storageKey="exit-focus-mode"
-        content="Return to the standard view."
-        placement="bottom"
-      >
-        <button className="button secondary small ghost ml-auto" onClick={handleExitFocusMode}>
-          ⛶ Exit focus mode
-        </button>
-      </TooltipHint>
-    </div>
+          <span className="secondary-text">
+            {!isLoggedIn ? (
+              <>
+                <a href={'/login'}>Sign in</a> to publish.
+              </>
+            ) : (<span>@{username}</span>)}
+          </span>
+
+          <TooltipHint
+            storageKey="exit-focus-mode"
+            content="Return to the standard view."
+            placement="bottom"
+          >
+            <button className="button secondary small ghost" onClick={handleExitFocusMode}>
+              ⛶ Exit focus mode
+            </button>
+          </TooltipHint>
+        </div>
+    </>
   )
 }
 
@@ -66,6 +76,9 @@ interface FocusLayoutProps extends Readonly<PropsWithChildren> {
   liveUpdateEnabled?: boolean;
   onLiveUpdateChange?: (enabled: boolean) => void;
   onPublish?: () => void;
+  isLoggedIn?: boolean;
+  username?: string | null;
+  title?: string;
 }
 
 function FocusFooter({
@@ -81,6 +94,8 @@ function FocusFooter({
   onPublish,
   masterGain,
   onMasterGainChange,
+  isLoggedIn,
+  title,
 }: {
   expression: string;
   mode: ModeOption;
@@ -94,10 +109,33 @@ function FocusFooter({
   onPublish: () => void;
   masterGain: number;
   onMasterGainChange: (gain: number) => void;
+  isLoggedIn: boolean;
+  title: string;
 }) {
   const expressionLength = expression.length;
   const isExpressionTooLong = expressionLength > EXPRESSION_MAX;
-  const canSubmit = true//Boolean(expression.trim()) && !validateExpression(expression.trim()).issues;
+  const canSubmit = Boolean(expression.trim()) && !validateExpression(expression.trim()).issues;
+  const [shareLinkCopied, setShareLinkCopied] = useState(false);
+
+  useEffect(() => {
+    if (shareLinkCopied) {
+      const timer = setTimeout(() => setShareLinkCopied(false), 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [shareLinkCopied]);
+
+  const handleCopyShareLink = async () => {
+    const success = await copyShareLinkToClipboard({
+      title,
+      expression,
+      mode,
+      sampleRate,
+    });
+    
+    if (success) {
+      setShareLinkCopied(true);
+    }
+  };
 
   const toggleMode = () => {
     if (mode === ModeOption.Float) {
@@ -160,18 +198,31 @@ function FocusFooter({
       </div>
 
       <div className="flex-row gap-10 align-items-center">
-        <span className={isExpressionTooLong ? 'counter error' : 'counter'}>
-          {expressionLength} / {EXPRESSION_MAX}
-        </span>
+        {isLoggedIn && (
+          <span className={isExpressionTooLong ? 'counter error' : 'counter'}>
+            {expressionLength} / {EXPRESSION_MAX}
+          </span>
+        )}
 
-        <button
-          type="button"
-          className="button primary"
-          onClick={onPublish}
-          disabled={!canSubmit}
-        >
-          Publish
-        </button>
+        {isLoggedIn ? (
+          <button
+            type="button"
+            className="button primary"
+            onClick={onPublish}
+            disabled={!canSubmit}
+          >
+            Publish
+          </button>
+        ) : (
+          <button
+            type="button"
+            className="button secondary ghost"
+            onClick={handleCopyShareLink}
+            disabled={!expression.trim()}
+          >
+            {shareLinkCopied ? 'Link copied' : 'Copy share link'}
+          </button>
+        )}
 
         <VolumeButton
           masterGain={masterGain}
@@ -196,6 +247,9 @@ export function FocusLayout({
   liveUpdateEnabled = true,
   onLiveUpdateChange = () => {},
   onPublish = () => {},
+  isLoggedIn = false,
+  username = undefined,
+  title = '',
 }: FocusLayoutProps) {
   const { theme } = useTheme();
   const { masterGain, setMasterGain } = useBytebeatPlayer();
@@ -224,7 +278,7 @@ export function FocusLayout({
   return (
     <ThemeContext.Provider value={theme ?? DEFAULT_THEME_ID}>
       <div className="root">
-        <FocusHeader />
+        <FocusHeader isLoggedIn={isLoggedIn} username={username} />
         <div className="top-content">
           {children}
         </div>
@@ -241,6 +295,8 @@ export function FocusLayout({
           onPublish={handlePublish}
           masterGain={masterGain}
           onMasterGainChange={setMasterGain}
+          isLoggedIn={isLoggedIn}
+          title={title}
         />
       </div>
     </ThemeContext.Provider>

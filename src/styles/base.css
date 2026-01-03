@@ -172,6 +172,10 @@ button {
   align-items: center;
 }
 
+.justify-content-space-between {
+  justify-content: space-between;
+}
+
 .smaller {
   font-size: smaller;
 }
