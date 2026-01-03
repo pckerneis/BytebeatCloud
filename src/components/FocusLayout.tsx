@@ -27,7 +27,7 @@ function FocusHeader() {
   
   return (
     <div className='focus-header px-12 py-8 flex-row align-items-center'>
-      <h1>Create</h1>
+      <h1>Create • Focus</h1>
 
       <TooltipHint
         className="ml-auto"
@@ -97,7 +97,7 @@ function FocusFooter({
 }) {
   const expressionLength = expression.length;
   const isExpressionTooLong = expressionLength > EXPRESSION_MAX;
-  const canSubmit = Boolean(expression.trim()) && !validateExpression(expression.trim()).issues;
+  const canSubmit = true//Boolean(expression.trim()) && !validateExpression(expression.trim()).issues;
 
   const toggleMode = () => {
     if (mode === ModeOption.Float) {
@@ -218,12 +218,7 @@ export function FocusLayout({
   };
   
   const handlePublish = () => {
-    if (onPublish) {
-      onPublish();
-    } else {
-      // TODO: Implement publish functionality
-      console.log('Publish clicked');
-    }
+    onPublish();
   };
 
   return (
