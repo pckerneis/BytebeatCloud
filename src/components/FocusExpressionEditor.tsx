@@ -5,9 +5,7 @@ import { keymap } from '@codemirror/view';
 import { linter, type Diagnostic } from '@codemirror/lint';
 import { insertNewline } from '@codemirror/commands';
 import { Prec } from '@codemirror/state';
-import { validateExpression, ValidationIssue } from '../utils/expression-validator';
-import { minimizeExpression } from '../utils/minimize-expression';
-import { memo, useMemo, useState, useCallback } from 'react';
+import { validateExpression } from '../utils/expression-validator';
 import { getUiTheme } from '../theme/themes';
 import { useThemeId } from '../theme/ThemeContext';
 

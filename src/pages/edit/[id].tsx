@@ -184,7 +184,6 @@ export default function EditPostPage() {
       setSampleRate(data.sample_rate);
       setOriginalSampleRate(data.sample_rate);
       setLicense(data.license ?? DEFAULT_LICENSE);
-      setPublishedAt(data.published_at ?? null);
 
       // After loading server data, check for localStorage override
       const draftKey = `edit-draft-${id}`;
@@ -404,18 +403,6 @@ export default function EditPostPage() {
     sampleRate !== originalSampleRate ||
     description !== originalDescription;
 
-  console.log({
-    title,
-    originalTitle,
-    expression,
-    originalExpression,
-    mode,
-    originalMode,
-    sampleRate,
-    originalSampleRate,
-    description,
-    originalDescription,
-  });
 
   return (
     <>
@@ -475,19 +462,59 @@ export default function EditPostPage() {
             lastError={lastError || null}
             saveStatus={saveStatus}
             saveError={saveError}
-            showDeleteButton
-            onDeleteClick={() => setShowDeleteConfirm(true)}
             showActions={!!user}
             isFork={false}
             liveUpdateEnabled={liveUpdateEnabled}
             onLiveUpdateChange={setLiveUpdateEnabled}
-            onSaveAsDraft={handleSaveAsDraft}
-            showDiscardChangesButton={true}
-            hasUnsavedChanges={hasUnsavedChanges}
-            onDiscardChangesClick={() => setShowDiscardConfirm(true)}
-            onUnpublish={() => setShowUnpublishConfirm(true)}
-            isEditMode={true}
           />
+
+          {user && (
+            <div className="form-actions">
+              <div className="form-actions-buttons">
+                <button
+                  type="button"
+                  className="button danger"
+                  onClick={() => setShowDeleteConfirm(true)}
+                  disabled={saveStatus === 'saving'}
+                >
+                  Delete
+                </button>
+
+                <button
+                  type="button"
+                  className="button danger"
+                  onClick={() => setShowDiscardConfirm(true)}
+                  disabled={saveStatus === 'saving' || !hasUnsavedChanges}
+                >
+                  Discard changes
+                </button>
+
+                <button
+                  type="button"
+                  className="button secondary"
+                  onClick={!isDraft && publishedAt ? () => setShowUnpublishConfirm(true) : handleSaveAsDraft}
+                  disabled={!expression.trim() || !!validationIssue || saveStatus === 'saving'}
+                >
+                  {saveStatus === 'saving' && isDraft
+                    ? 'Saving…'
+                    : !isDraft && publishedAt
+                      ? 'Unpublish'
+                      : 'Save as draft'}
+                </button>
+
+                <button
+                  type="submit"
+                  className="button primary"
+                  disabled={!expression.trim() || !!validationIssue || saveStatus === 'saving'}
+                >
+                  {saveStatus === 'saving' && !isDraft ? 'Publishing…' : 'Publish'}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {saveError && <p className="error-message">{saveError}</p>}
+          {saveStatus === 'success' && !saveError && <p className="counter">Post saved.</p>}
         </form>
 
         {showDeleteConfirm && (
