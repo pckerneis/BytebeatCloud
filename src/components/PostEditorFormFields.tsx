@@ -329,17 +329,6 @@ export function PostEditorFormFields(props: Readonly<PostEditorFormFieldsProps>)
 
           <div className="form-actions">
             <div className="form-actions-buttons">
-              {showDiscardChangesButton && onDiscardChangesClick && (
-                <button
-                  type="button"
-                  className="button danger"
-                  onClick={onDiscardChangesClick}
-                  disabled={saveStatus === 'saving' || !hasUnsavedChanges}
-                >
-                  Discard changes
-                </button>
-              )}
-
               {showDeleteButton && onDeleteClick && (
                 <button
                   type="button"
@@ -351,7 +340,18 @@ export function PostEditorFormFields(props: Readonly<PostEditorFormFieldsProps>)
                 </button>
               )}
 
-              {onSaveAsDraft && (
+              {showDiscardChangesButton && onDiscardChangesClick && (
+                <button
+                  type="button"
+                  className="button danger"
+                  onClick={onDiscardChangesClick}
+                  disabled={saveStatus === 'saving' || !hasUnsavedChanges}
+                >
+                  Discard changes
+                </button>
+              )}
+
+              {(onSaveAsDraft || onUnpublish) && (
                 <button
                   type="button"
                   className="button secondary"
