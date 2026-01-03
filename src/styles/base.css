@@ -66,6 +66,10 @@ button {
   gap: 2px;
 }
 
+.gap-10 {
+  gap: 10px;
+}
+
 .space-between {
   justify-content: space-between;
 }

@@ -6,4 +6,7 @@
 .focus-footer {
     background: var(--sidebar-bg-gradient-color);
     border-top: 1px solid var(--panel-border-color);
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
 }
