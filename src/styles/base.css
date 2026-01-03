@@ -146,12 +146,26 @@ button {
   padding-left: 0 !important;
 }
 
+.px-12 {
+  padding-left: 12px;
+  padding-right: 12px;
+}
+
+.py-8 {
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
 .weight-600 {
   font-weight: 600;
 }
 
 .align-items-flex-end {
   align-items: flex-end;
+}
+
+.align-items-center {
+  align-items: center;
 }
 
 .smaller {

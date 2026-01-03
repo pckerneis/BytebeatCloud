@@ -94,6 +94,7 @@ export function PostEditorFormFields(props: Readonly<PostEditorFormFieldsProps>)
   const longPressTimeoutRef = useRef<number | null>(null);
   const longPressTriggeredRef = useRef(false);
   const currentLicenseLabel = LICENSE_OPTIONS.find((opt) => opt.value === license)?.label;
+  const isLargeMode = true;
 
   const openSampleRateModal = () => {
     setSampleRateInput(sampleRate.toString());
@@ -230,7 +231,7 @@ export function PostEditorFormFields(props: Readonly<PostEditorFormFieldsProps>)
       <div className="field-footer">
         <button
           type="button"
-          className="button secondary"
+          className="button primary"
           disabled={!isPlaying && (!expression.trim() || !!validationIssue)}
           onClick={onPlayClick}
         >
