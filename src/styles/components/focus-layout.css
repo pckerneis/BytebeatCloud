@@ -1,0 +1,9 @@
+.focus-header {
+    background: var(--navbar-background-color);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.focus-footer {
+    background: var(--navbar-background-color);
+    border-top: 1px solid var(--border-color);
+}
