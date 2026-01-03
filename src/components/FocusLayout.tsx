@@ -1,4 +1,4 @@
-import { PropsWithChildren, useState, useEffect } from 'react';
+import { PropsWithChildren, useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 import { useTheme } from '../hooks/useTheme';
 import { useBytebeatPlayer } from '../hooks/useBytebeatPlayer';
@@ -18,13 +18,68 @@ import { EXPRESSION_MAX } from '../constants';
 import { validateExpression } from '../utils/expression-validator';
 import { TooltipHint } from './TooltipHint';
 import { copyShareLinkToClipboard } from '../utils/shareLink';
+import { UNTITLED_POST } from '../utils/post-format';
 
-function FocusHeader({ isLoggedIn, username, onExitFocusMode }: { isLoggedIn: boolean, username?: string | null, onExitFocusMode: () => void }) {
+function FocusHeader({ 
+  isLoggedIn, 
+  username, 
+  onExitFocusMode,
+  title,
+  onTitleChange,
+}: { 
+  isLoggedIn: boolean, 
+  username?: string | null, 
+  onExitFocusMode: () => void,
+  title: string,
+  onTitleChange: (title: string) => void,
+}) {
+  const [isEditing, setIsEditing] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const handleSpanClick = () => {
+    setIsEditing(true);
+  };
+
+  const handleBlur = () => {
+    setIsEditing(false);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      setIsEditing(false);
+    }
+  };
+
+  useEffect(() => {
+    if (isEditing && inputRef.current) {
+      inputRef.current.focus();
+      inputRef.current.select();
+    }
+  }, [isEditing]);
   
   return (
     <>
       <div className='focus-header px-12 py-8 flex-row align-items-center justify-content-space-between'>
-          <h1>Create • Focus</h1>
+          {isEditing ? (
+            <input
+              ref={inputRef}
+              type="text"
+              value={title}
+              onChange={(e) => onTitleChange(e.target.value)}
+              onBlur={handleBlur}
+              onKeyDown={handleKeyDown}
+              placeholder={UNTITLED_POST}
+              className="focus-title-input editing"
+            />
+          ) : (
+            <span
+              onClick={handleSpanClick}
+              className={`focus-title-display${ !title ? ' secondary-text' : ''}`}
+              title="Click to edit title"
+            >
+              {title || UNTITLED_POST}
+            </span>
+          )}
 
           <span className="secondary-text">
             {!isLoggedIn ? (
@@ -74,6 +129,7 @@ interface FocusLayoutProps extends PropsWithChildren {
   isLoggedIn?: boolean;
   username?: string | null;
   title?: string;
+  onTitleChange?: (title: string) => void;
   onExitFocusMode?: () => void;
 }
 
@@ -247,6 +303,7 @@ export function FocusLayout({
   isLoggedIn = false,
   username = undefined,
   title = '',
+  onTitleChange = () => {},
   onExitFocusMode,
 }: FocusLayoutProps) {
   const router = useRouter();
@@ -286,7 +343,13 @@ export function FocusLayout({
   return (
     <ThemeContext.Provider value={theme ?? DEFAULT_THEME_ID}>
       <div className="root">
-        <FocusHeader isLoggedIn={isLoggedIn} username={username} onExitFocusMode={handleExitFocusMode} />
+        <FocusHeader 
+          isLoggedIn={isLoggedIn} 
+          username={username} 
+          onExitFocusMode={handleExitFocusMode}
+          title={title}
+          onTitleChange={onTitleChange}
+        />
         <div className="top-content">
           {children}
         </div>

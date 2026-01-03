@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
 import { useBytebeatPlayer } from '../../../hooks/useBytebeatPlayer';
 import { usePlayerStore } from '../../../hooks/usePlayerStore';
-import { useSupabaseAuth } from '../../../hooks/useSupabaseAuth';
 import { supabase } from '../../../lib/supabaseClient';
 import Head from 'next/head';
 import { ModeOption, DEFAULT_SAMPLE_RATE } from '../../../model/expression';
@@ -11,7 +10,7 @@ import { validateExpression } from '../../../utils/expression-validator';
 import { useExpressionPlayer } from '../../../hooks/useExpressionPlayer';
 import { useCtrlSpacePlayShortcut } from '../../../hooks/useCtrlSpacePlayShortcut';
 import { convertMentionsToIds, convertMentionsToUsernames } from '../../../utils/mentions';
-import { formatPostTitle } from '../../../utils/post-format';
+import { formatPostTitle, UNTITLED_POST } from '../../../utils/post-format';
 import { FocusLayout } from '../../../components/FocusLayout';
 import { NextPageWithLayout } from '../../_app';
 import { FocusExpressionEditor } from '../../../components/FocusExpressionEditor';
@@ -109,9 +108,9 @@ const page: NextPageWithLayout = function ForkPostFocusPage() {
 
       isApplyingServerStateRef.current = true;
 
-      const originalTitleValue = data.title || 'Untitled';
+      const originalTitleValue = data.title || UNTITLED_POST;
       setOriginalTitle(originalTitleValue);
-      setTitle(formatPostTitle(originalTitleValue, 'Fork'));
+      setTitle(formatPostTitle(originalTitleValue));
       setExpression(data.expression || '');
       setMode((data.mode as ModeOption) || ModeOption.Float);
       setSampleRate(data.sample_rate || DEFAULT_SAMPLE_RATE);
@@ -122,7 +121,7 @@ const page: NextPageWithLayout = function ForkPostFocusPage() {
 
       if (data.description) {
         const displayDescription = await convertMentionsToUsernames(data.description);
-        setDescription(displayDescription);
+        setDescription(displayDescription.text);
       } else {
         setDescription('');
       }
@@ -283,6 +282,7 @@ const page: NextPageWithLayout = function ForkPostFocusPage() {
         isLoggedIn={!!user}
         username={username}
         title={title}
+        onTitleChange={setTitle}
         onExitFocusMode={() => void router.push(`/fork/${id}`)}
       >
         <section style={{ width: '100%', height: '100%', overflow: 'auto' }}>

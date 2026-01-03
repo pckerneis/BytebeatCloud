@@ -10,3 +10,36 @@
     justify-content: space-between;
     width: 100%;
 }
+
+.focus-title-display {
+    font-weight: 600;
+    cursor: pointer;
+    padding: 0;
+    margin: 0;
+    min-width: 200px;
+    max-width: 400px;
+    flex: 0 1 auto;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.focus-title-input {
+    font-family: inherit;
+    font-size: inherit;
+    font-weight: 600;
+    color: var(--text-color);
+    background: transparent;
+    border: none;
+    outline: none;
+    padding: 0;
+    margin: 0;
+    min-width: 200px;
+    max-width: 400px;
+    flex: 0 1 auto;
+}
+
+.focus-title-input::placeholder {
+    color: var(--secondary-text-color);
+    opacity: 0.6;
+}

@@ -135,7 +135,7 @@ const page: NextPageWithLayout = function EditPostFocusPage() {
 
       if (data.description) {
         const displayDescription = await convertMentionsToUsernames(data.description);
-        setDescription(displayDescription);
+        setDescription(displayDescription.text);
       } else {
         setDescription('');
       }
@@ -334,6 +334,7 @@ const page: NextPageWithLayout = function EditPostFocusPage() {
         isLoggedIn={!!user}
         username={username}
         title={title}
+        onTitleChange={setTitle}
         onExitFocusMode={() => void router.push(`/edit/${id}`)}
       >
         <section style={{ width: '100%', height: '100%', overflow: 'auto' }}>
