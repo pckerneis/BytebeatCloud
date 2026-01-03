@@ -29,7 +29,7 @@ body {
   --error-text-color: #b91c1c;
   --error-bg-color: #fee2e2;
   --shadow-soft-color: #00000033;
-  --modal-overlay-color: rgba(0, 0, 0, 0.35);
+  --modal-overlay-color: rgba(0, 0, 0, 0.15);
   --tab-active-bg-color: #efefef;
   --panel-border-color: var(--border-color);
   --chip-border-color: var(--border-color);
