@@ -19,12 +19,7 @@ import { validateExpression } from '../utils/expression-validator';
 import { TooltipHint } from './TooltipHint';
 import { copyShareLinkToClipboard } from '../utils/shareLink';
 
-function FocusHeader({ isLoggedIn, username }: { isLoggedIn: boolean, username?: string | null }) {
-  const router = useRouter();
-  
-  const handleExitFocusMode = () => {
-    void router.push('/create');
-  };
+function FocusHeader({ isLoggedIn, username, onExitFocusMode }: { isLoggedIn: boolean, username?: string | null, onExitFocusMode: () => void }) {
   
   return (
     <>
@@ -44,7 +39,7 @@ function FocusHeader({ isLoggedIn, username }: { isLoggedIn: boolean, username?:
             content="Return to the standard view."
             placement="bottom"
           >
-            <button className="button secondary small ghost" onClick={handleExitFocusMode} title='Exit focus mode (Ctrl+Shift+F)'>
+            <button className="button secondary small ghost" onClick={onExitFocusMode} title='Exit focus mode (Ctrl+Shift+F)'>
               ⛶ Exit focus mode
             </button>
           </TooltipHint>
@@ -65,7 +60,7 @@ function findNextPresetSampleRate(sampleRate: number): number {
   return MAX_SAMPLE_RATE;
 }
 
-interface FocusLayoutProps extends Readonly<PropsWithChildren> {
+interface FocusLayoutProps extends PropsWithChildren {
   expression?: string;
   mode?: ModeOption;
   onModeChange?: (mode: ModeOption) => void;
@@ -79,6 +74,7 @@ interface FocusLayoutProps extends Readonly<PropsWithChildren> {
   isLoggedIn?: boolean;
   username?: string | null;
   title?: string;
+  onExitFocusMode?: () => void;
 }
 
 function FocusFooter({
@@ -251,7 +247,18 @@ export function FocusLayout({
   isLoggedIn = false,
   username = undefined,
   title = '',
+  onExitFocusMode,
 }: FocusLayoutProps) {
+  const router = useRouter();
+  
+  const handleExitFocusMode = () => {
+    if (onExitFocusMode) {
+      onExitFocusMode();
+    } else {
+      // Default behavior: go to /create
+      void router.push('/create');
+    }
+  };
   const { theme } = useTheme();
   const { masterGain, setMasterGain } = useBytebeatPlayer();
   useAudioWarmup();
@@ -279,7 +286,7 @@ export function FocusLayout({
   return (
     <ThemeContext.Provider value={theme ?? DEFAULT_THEME_ID}>
       <div className="root">
-        <FocusHeader isLoggedIn={isLoggedIn} username={username} />
+        <FocusHeader isLoggedIn={isLoggedIn} username={username} onExitFocusMode={handleExitFocusMode} />
         <div className="top-content">
           {children}
         </div>

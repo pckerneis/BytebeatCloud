@@ -12,6 +12,8 @@ import { validateExpression } from '../../utils/expression-validator';
 import { useExpressionPlayer } from '../../hooks/useExpressionPlayer';
 import { useCtrlSpacePlayShortcut } from '../../hooks/useCtrlSpacePlayShortcut';
 import { convertMentionsToIds, convertMentionsToUsernames } from '../../utils/mentions';
+import { TooltipHint } from '../../components/TooltipHint';
+import { useFocusModeShortcut } from '../../hooks/useFocusModeShortcut';
 
 export default function EditPostPage() {
   const router = useRouter();
@@ -93,6 +95,7 @@ export default function EditPostPage() {
   }, [stop, currentPost]);
 
   useCtrlSpacePlayShortcut(handlePlayClick);
+  useFocusModeShortcut();
 
   useEffect(() => {
     // Only apply live updates when no post is playing (editor's expression is playing)
@@ -363,6 +366,23 @@ export default function EditPostPage() {
           </div>
         )}
         <form className="create-form" onSubmit={handleSubmit}>
+          <div className="flex-row justify-content-end mb-8">
+            <TooltipHint
+              className="ml-auto"
+              storageKey="enter-focus-mode-edit"
+              content="Distraction-free editor. Your work is preserved."
+              placement="bottom"
+            >
+              <button
+                type="button"
+                className="button secondary ghost small ml-auto"
+                onClick={() => void router.push(`/edit/${id}/focus`)}
+                title='Enter focus mode (Ctrl+Shift+F)'
+              >
+                ⛶ Enter Focus Mode
+              </button>
+            </TooltipHint>
+          </div>
           <PostEditorFormFields
             meta={meta}
             onMetaChange={handleMetaChange}
