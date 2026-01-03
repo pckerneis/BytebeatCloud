@@ -54,9 +54,7 @@ const page: NextPageWithLayout = function FocusCreatePage() {
   const { currentPost, setCurrentPostById } = usePlayerStore();
   const [liveUpdateEnabled, setLiveUpdateEnabled] = useState(true);
 
-  const {
-    handlePlayClick: handlePlayClickBase,
-  } = useExpressionPlayer({
+  const { handlePlayClick: handlePlayClickBase } = useExpressionPlayer({
     expression,
     setExpression,
     mode,
@@ -87,7 +85,7 @@ const page: NextPageWithLayout = function FocusCreatePage() {
   // Restore state from localStorage on mount (client-side only)
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    
+
     try {
       const raw = localStorage.getItem(CREATE_DRAFT_STORAGE_KEY);
       if (raw) {
@@ -98,7 +96,8 @@ const page: NextPageWithLayout = function FocusCreatePage() {
         if (parsed.mode) setMode(parsed.mode);
         if (parsed.sampleRate) setSampleRate(parsed.sampleRate);
         if (parsed.license) setLicense(parsed.license);
-        if (typeof parsed.liveUpdateEnabled === 'boolean') setLiveUpdateEnabled(parsed.liveUpdateEnabled);
+        if (typeof parsed.liveUpdateEnabled === 'boolean')
+          setLiveUpdateEnabled(parsed.liveUpdateEnabled);
       }
     } catch (e) {
       console.error('Failed to restore focus mode state:', e);
@@ -110,11 +109,11 @@ const page: NextPageWithLayout = function FocusCreatePage() {
   // Save state to localStorage when it changes (client-side only)
   useEffect(() => {
     if (typeof window === 'undefined' || !isStateLoaded) return;
-    
+
     try {
       const raw = localStorage.getItem(CREATE_DRAFT_STORAGE_KEY);
       const existing: CreateDraftState = raw ? JSON.parse(raw) : {};
-      
+
       const updated: CreateDraftState = {
         ...existing,
         title,
@@ -125,7 +124,7 @@ const page: NextPageWithLayout = function FocusCreatePage() {
         license,
         liveUpdateEnabled,
       };
-      
+
       localStorage.setItem(CREATE_DRAFT_STORAGE_KEY, JSON.stringify(updated));
     } catch (e) {
       console.error('Failed to save focus mode state:', e);
@@ -275,7 +274,7 @@ const page: NextPageWithLayout = function FocusCreatePage() {
     if (postId) {
       setIsPublishPanelOpen(false);
       window.localStorage.removeItem(CREATE_DRAFT_STORAGE_KEY);
-      
+
       // Navigate to the created post
       await router.push(`/post/${postId}`);
     }
@@ -300,19 +299,21 @@ const page: NextPageWithLayout = function FocusCreatePage() {
         <meta name="twitter:card" content="summary_large_image" />
       </Head>
       {!isStateLoaded && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.8)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 9999,
-          color: 'white'
-        }}>
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999,
+            color: 'white',
+          }}
+        >
           Loading...
         </div>
       )}
@@ -337,7 +338,7 @@ const page: NextPageWithLayout = function FocusCreatePage() {
           <FocusExpressionEditor value={expression} onChange={onExpressionChange} />
         </section>
       </FocusLayout>
-      
+
       <PublishPanel
         isOpen={isPublishPanelOpen}
         onClose={() => setIsPublishPanelOpen(false)}
@@ -354,8 +355,8 @@ const page: NextPageWithLayout = function FocusCreatePage() {
       />
     </>
   );
-}
+};
 
-page.getLayout = (page) => page
+page.getLayout = (page) => page;
 
 export default page;

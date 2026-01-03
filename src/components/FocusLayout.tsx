@@ -20,18 +20,18 @@ import { TooltipHint } from './TooltipHint';
 import { copyShareLinkToClipboard } from '../utils/shareLink';
 import { UNTITLED_POST } from '../utils/post-format';
 
-function FocusHeader({ 
-  isLoggedIn, 
-  username, 
+function FocusHeader({
+  isLoggedIn,
+  username,
   onExitFocusMode,
   title,
   onTitleChange,
-}: { 
-  isLoggedIn: boolean, 
-  username?: string | null, 
-  onExitFocusMode: () => void,
-  title: string,
-  onTitleChange: (title: string) => void,
+}: {
+  isLoggedIn: boolean;
+  username?: string | null;
+  onExitFocusMode: () => void;
+  title: string;
+  onTitleChange: (title: string) => void;
 }) {
   const [isEditing, setIsEditing] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -56,51 +56,57 @@ function FocusHeader({
       inputRef.current.select();
     }
   }, [isEditing]);
-  
+
   return (
     <>
-      <div className='focus-header px-12 py-8 flex-row align-items-center justify-content-space-between'>
-          {isEditing ? (
-            <input
-              ref={inputRef}
-              type="text"
-              value={title}
-              onChange={(e) => onTitleChange(e.target.value)}
-              onBlur={handleBlur}
-              onKeyDown={handleKeyDown}
-              placeholder={UNTITLED_POST}
-              className="focus-title-input editing"
-            />
-          ) : (
-            <span
-              onClick={handleSpanClick}
-              className={`focus-title-display${ !title ? ' secondary-text' : ''}`}
-              title="Click to edit title"
-            >
-              {title || UNTITLED_POST}
-            </span>
-          )}
-
-          <span className="secondary-text">
-            {!isLoggedIn ? (
-              <>
-                <a href={'/login'}>Sign in</a> to publish.
-              </>
-            ) : (<span>@{username}</span>)}
-          </span>
-
-          <TooltipHint
-            storageKey="exit-focus-mode"
-            content="Return to the standard view."
-            placement="bottom"
+      <div className="focus-header px-12 py-8 flex-row align-items-center justify-content-space-between">
+        {isEditing ? (
+          <input
+            ref={inputRef}
+            type="text"
+            value={title}
+            onChange={(e) => onTitleChange(e.target.value)}
+            onBlur={handleBlur}
+            onKeyDown={handleKeyDown}
+            placeholder={UNTITLED_POST}
+            className="focus-title-input editing"
+          />
+        ) : (
+          <span
+            onClick={handleSpanClick}
+            className={`focus-title-display${!title ? ' secondary-text' : ''}`}
+            title="Click to edit title"
           >
-            <button className="button secondary small ghost" onClick={onExitFocusMode} title='Exit focus mode (Ctrl+Shift+F)'>
-              ⛶ Exit focus mode
-            </button>
-          </TooltipHint>
-        </div>
+            {title || UNTITLED_POST}
+          </span>
+        )}
+
+        <span className="secondary-text">
+          {!isLoggedIn ? (
+            <>
+              <a href={'/login'}>Sign in</a> to publish.
+            </>
+          ) : (
+            <span>@{username}</span>
+          )}
+        </span>
+
+        <TooltipHint
+          storageKey="exit-focus-mode"
+          content="Return to the standard view."
+          placement="bottom"
+        >
+          <button
+            className="button secondary small ghost"
+            onClick={onExitFocusMode}
+            title="Exit focus mode (Ctrl+Shift+F)"
+          >
+            ⛶ Exit focus mode
+          </button>
+        </TooltipHint>
+      </div>
     </>
-  )
+  );
 }
 
 function findNextPresetSampleRate(sampleRate: number): number {
@@ -184,7 +190,7 @@ function FocusFooter({
       mode,
       sampleRate,
     });
-    
+
     if (success) {
       setShareLinkCopied(true);
     }
@@ -206,28 +212,25 @@ function FocusFooter({
     onSampleRateChange(findNextPresetSampleRate(sampleRate));
   };
 
-  const canPlay = !isPlaying && (!expression.trim() || !!validateExpression(expression.trim()).issues);
+  const canPlay =
+    !isPlaying && (!expression.trim() || !!validateExpression(expression.trim()).issues);
 
   return (
     <div className="focus-footer px-12 py-8 flex-row align-items-center justify-content-between">
-        <div className="chips flex-row gap-10">
-          <label className="flex-row gap-10 smaller align-items-center" style={{minWidth: '90px'}}>
-            Mode
-            <button type="button" className="chip" onClick={toggleMode}>
-              {mode}
-            </button>
-          </label>
-          <label className="flex-row gap-10 smaller align-items-center" style={{minWidth: '160px'}}>
-            Sample rate
-            <button
-              type="button"
-              className="chip"
-              onClick={rotateSampleRate}
-            >
-              {formatSampleRate(sampleRate)}
-            </button>
-          </label>
-        </div>
+      <div className="chips flex-row gap-10">
+        <label className="flex-row gap-10 smaller align-items-center" style={{ minWidth: '90px' }}>
+          Mode
+          <button type="button" className="chip" onClick={toggleMode}>
+            {mode}
+          </button>
+        </label>
+        <label className="flex-row gap-10 smaller align-items-center" style={{ minWidth: '160px' }}>
+          Sample rate
+          <button type="button" className="chip" onClick={rotateSampleRate}>
+            {formatSampleRate(sampleRate)}
+          </button>
+        </label>
+      </div>
 
       <div className="flex-row gap-10 align-items-center">
         <button
@@ -238,7 +241,7 @@ function FocusFooter({
         >
           {isPlaying ? '❚❚' : '▶'}
         </button>
-        
+
         <label className="checkbox">
           <input
             type="checkbox"
@@ -247,7 +250,6 @@ function FocusFooter({
           />{' '}
           Live update
         </label>
-
       </div>
 
       <div className="flex-row gap-10 align-items-center">
@@ -282,13 +284,12 @@ function FocusFooter({
           onMasterGainChange={onMasterGainChange}
           rightAligned={true}
         />
-
       </div>
     </div>
   );
 }
 
-export function FocusLayout({ 
+export function FocusLayout({
   children,
   expression = '',
   mode = ModeOption.Uint8,
@@ -307,7 +308,7 @@ export function FocusLayout({
   onExitFocusMode,
 }: FocusLayoutProps) {
   const router = useRouter();
-  
+
   const handleExitFocusMode = () => {
     if (onExitFocusMode) {
       onExitFocusMode();
@@ -319,23 +320,23 @@ export function FocusLayout({
   const { theme } = useTheme();
   const { masterGain, setMasterGain } = useBytebeatPlayer();
   useAudioWarmup();
-  
+
   const handleModeChange = (newMode: ModeOption) => {
     onModeChange(newMode);
   };
-  
+
   const handleSampleRateChange = (newRate: number) => {
     onSampleRateChange(newRate);
   };
-  
+
   const handleLiveUpdateChange = (enabled: boolean) => {
     onLiveUpdateChange(enabled);
   };
-  
+
   const handlePlayClick = () => {
     onPlayClick();
   };
-  
+
   const handlePublish = () => {
     onPublish();
   };
@@ -343,16 +344,14 @@ export function FocusLayout({
   return (
     <ThemeContext.Provider value={theme ?? DEFAULT_THEME_ID}>
       <div className="root">
-        <FocusHeader 
-          isLoggedIn={isLoggedIn} 
-          username={username} 
+        <FocusHeader
+          isLoggedIn={isLoggedIn}
+          username={username}
           onExitFocusMode={handleExitFocusMode}
           title={title}
           onTitleChange={onTitleChange}
         />
-        <div className="top-content">
-          {children}
-        </div>
+        <div className="top-content">{children}</div>
         <FocusFooter
           expression={expression}
           mode={mode}

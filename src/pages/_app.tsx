@@ -6,7 +6,6 @@ import { ReactElement, ReactNode, useEffect } from 'react';
 import { WeeklyChallengeProvider } from '../hooks/useCurrentWeeklyChallenge';
 import { NextPage } from 'next';
 
-
 export type NextPageWithLayout = NextPage & {
   getLayout?: (page: ReactElement) => ReactNode;
 };
@@ -37,12 +36,13 @@ export default function App({ Component, pageProps }: AppPropsWithLayout) {
         <title>BytebeatCloud</title>
       </Head>
       <WeeklyChallengeProvider>
-        {
-          getLayout ? getLayout(<Component {...pageProps} />) :
-            <Layout {...pageProps}>
-              <Component/>
-            </Layout>
-        }
+        {getLayout ? (
+          getLayout(<Component {...pageProps} />)
+        ) : (
+          <Layout {...pageProps}>
+            <Component />
+          </Layout>
+        )}
       </WeeklyChallengeProvider>
     </>
   );

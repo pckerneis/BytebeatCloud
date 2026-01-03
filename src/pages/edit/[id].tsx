@@ -195,7 +195,7 @@ export default function EditPostPage() {
           // Only load if draft is less than 7 days old
           const age = Date.now() - (draft.timestamp || 0);
           const maxAge = 7 * 24 * 60 * 60 * 1000; // 7 days
-          
+
           if (age < maxAge) {
             // Override server data with local changes
             setTitle(draft.title || '');
@@ -309,7 +309,7 @@ export default function EditPostPage() {
 
     // Reset dirty flag and reload
     setShowDiscardConfirm(false);
-    
+
     // Trigger reload by clearing the last loaded ref
     // The useEffect will reload the post from server
     window.location.reload();
@@ -398,11 +398,11 @@ export default function EditPostPage() {
   }
 
   const hasUnsavedChanges =
-    title !== originalTitle
-      || expression !== originalExpression
-      || mode !== originalMode
-      || sampleRate !== originalSampleRate
-      || description !== originalDescription;
+    title !== originalTitle ||
+    expression !== originalExpression ||
+    mode !== originalMode ||
+    sampleRate !== originalSampleRate ||
+    description !== originalDescription;
 
   console.log({
     title,
@@ -413,8 +413,9 @@ export default function EditPostPage() {
     originalMode,
     sampleRate,
     originalSampleRate,
-    description, originalDescription
-  })
+    description,
+    originalDescription,
+  });
 
   return (
     <>
@@ -457,7 +458,7 @@ export default function EditPostPage() {
                 type="button"
                 className="button secondary ghost small ml-auto"
                 onClick={() => void router.push(`/edit/${id}/focus`)}
-                title='Enter focus mode (Ctrl+Shift+F)'
+                title="Enter focus mode (Ctrl+Shift+F)"
               >
                 ⛶ Enter Focus Mode
               </button>

@@ -186,7 +186,7 @@ export default function ForkPostPage() {
           // Only load if draft is less than 7 days old
           const age = Date.now() - (draft.timestamp || 0);
           const maxAge = 7 * 24 * 60 * 60 * 1000; // 7 days
-          
+
           if (age < maxAge) {
             // Override server data with local changes
             setTitle(draft.title || '');
@@ -304,7 +304,7 @@ export default function ForkPostPage() {
     }
 
     setShowDiscardConfirm(false);
-    
+
     // Trigger reload by clearing the last loaded ref
     // The useEffect will reload the post from server
     window.location.reload();
@@ -332,11 +332,11 @@ export default function ForkPostPage() {
   };
 
   const hasUnsavedChanges =
-    title !== originalTitle
-  || expression !== originalExpression
-  || mode !== originalMode
-  || sampleRate !== originalSampleRate
-  || description !== originalDescription;
+    title !== originalTitle ||
+    expression !== originalExpression ||
+    mode !== originalMode ||
+    sampleRate !== originalSampleRate ||
+    description !== originalDescription;
 
   const handleBack = () => {
     if (typeof window !== 'undefined' && window.history.length > 1) {
@@ -411,7 +411,7 @@ export default function ForkPostPage() {
                 type="button"
                 className="button secondary ghost small ml-auto"
                 onClick={() => void router.push(`/fork/${id}/focus`)}
-                title='Enter focus mode (Ctrl+Shift+F)'
+                title="Enter focus mode (Ctrl+Shift+F)"
               >
                 ⛶ Enter Focus Mode
               </button>

@@ -55,24 +55,15 @@ export function PublishPanel({
   return createPortal(
     <>
       {/* Backdrop */}
-      <div
-        className="publish-panel-backdrop"
-        onClick={onClose}
-      />
-      
+      <div className="publish-panel-backdrop" onClick={onClose} />
+
       {/* Slide-in panel */}
       <div className="publish-panel">
         <div className="publish-panel-content">
           {/* Header */}
           <div className="publish-panel-header">
-            <h2 className="publish-panel-title">
-              Post details
-            </h2>
-            <button
-              onClick={onClose}
-              className="publish-panel-close"
-              aria-label="Close panel"
-            >
+            <h2 className="publish-panel-title">Post details</h2>
+            <button onClick={onClose} className="publish-panel-close" aria-label="Close panel">
               ×
             </button>
           </div>
@@ -81,7 +72,14 @@ export function PublishPanel({
           <div className="publish-panel-form">
             {/* Title field */}
             <label className="field">
-              <span style={{ fontSize: '12px', color: 'var(--secondary-text-color)', marginBottom: '4px', display: 'block' }}>
+              <span
+                style={{
+                  fontSize: '12px',
+                  color: 'var(--secondary-text-color)',
+                  marginBottom: '4px',
+                  display: 'block',
+                }}
+              >
                 Title
               </span>
               <input
@@ -95,7 +93,14 @@ export function PublishPanel({
 
             {/* Description field */}
             <label className="field">
-              <span style={{ fontSize: '12px', color: 'var(--secondary-text-color)', marginBottom: '4px', display: 'block' }}>
+              <span
+                style={{
+                  fontSize: '12px',
+                  color: 'var(--secondary-text-color)',
+                  marginBottom: '4px',
+                  display: 'block',
+                }}
+              >
                 Description
               </span>
               <textarea
@@ -109,7 +114,14 @@ export function PublishPanel({
 
             {/* License field */}
             <label className="field">
-              <span style={{ fontSize: '12px', color: 'var(--secondary-text-color)', marginBottom: '4px', display: 'block' }}>
+              <span
+                style={{
+                  fontSize: '12px',
+                  color: 'var(--secondary-text-color)',
+                  marginBottom: '4px',
+                  display: 'block',
+                }}
+              >
                 License
               </span>
               <select
@@ -127,11 +139,7 @@ export function PublishPanel({
 
           {/* Actions */}
           <div className="publish-panel-actions">
-            <button
-              onClick={onClose}
-              className="button secondary"
-              style={{ flex: 1 }}
-            >
+            <button onClick={onClose} className="button secondary" style={{ flex: 1 }}>
               Cancel
             </button>
             <button
@@ -145,14 +153,10 @@ export function PublishPanel({
           </div>
 
           {/* Error message */}
-          {saveError && (
-            <div className="error-message">
-              {saveError}
-            </div>
-          )}
+          {saveError && <div className="error-message">{saveError}</div>}
         </div>
       </div>
     </>,
-    document.body
+    document.body,
   );
 }

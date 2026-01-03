@@ -25,7 +25,7 @@ export function usePublishPost() {
 
   const publishPost = async (params: PublishPostParams) => {
     const { title, description, expression, mode, sampleRate, license, isDraft } = params;
-    
+
     const trimmedTitle = title.trim();
     const trimmedExpr = expression.trim();
     const trimmedDescription = description.trim();

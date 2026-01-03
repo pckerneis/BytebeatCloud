@@ -581,10 +581,7 @@ export default function FooterPlayer() {
         </div>
 
         <div className="player-buttons-group">
-          <VolumeButton
-            masterGain={masterGain}
-            onMasterGainChange={setMasterGain}
-          />
+          <VolumeButton masterGain={masterGain} onMasterGainChange={setMasterGain} />
           <button
             type="button"
             className={`volume-button${isQueueOpen ? ' active' : ''}`}

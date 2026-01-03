@@ -186,7 +186,8 @@ export default function CreatePage() {
         if (parsed.mode) setMode(parsed.mode);
         if (parsed.sampleRate) setSampleRate(parsed.sampleRate);
         if (parsed.license) setLicense(parsed.license);
-        if (typeof parsed.liveUpdateEnabled === 'boolean') setLiveUpdateEnabled(parsed.liveUpdateEnabled);
+        if (typeof parsed.liveUpdateEnabled === 'boolean')
+          setLiveUpdateEnabled(parsed.liveUpdateEnabled);
       } catch (e) {
         console.error(e);
       }
@@ -238,7 +239,17 @@ export default function CreatePage() {
     } catch (e) {
       console.error(e);
     }
-  }, [title, description, expression, isDraft, mode, sampleRate, license, liveUpdateEnabled, draftLoaded]);
+  }, [
+    title,
+    description,
+    expression,
+    isDraft,
+    mode,
+    sampleRate,
+    license,
+    liveUpdateEnabled,
+    draftLoaded,
+  ]);
 
   const savePost = async (asDraft: boolean) => {
     setIsDraft(asDraft);
@@ -385,7 +396,7 @@ export default function CreatePage() {
                 type="button"
                 className="button secondary ghost small ml-auto"
                 onClick={handleEnterFocusMode}
-                title='Enter focus mode (Ctrl+Shift+F)'
+                title="Enter focus mode (Ctrl+Shift+F)"
               >
                 ⛶ Enter Focus Mode
               </button>

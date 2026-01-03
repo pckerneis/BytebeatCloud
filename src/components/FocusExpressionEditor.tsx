@@ -72,7 +72,7 @@ export function FocusExpressionEditor({ value, onChange }: FocusExpressionEditor
 
   return (
     <CodeMirror
-      style={{height: '100%'}}
+      style={{ height: '100%' }}
       value={value}
       height="100%"
       extensions={editorExtensions}

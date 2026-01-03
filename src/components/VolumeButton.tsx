@@ -5,18 +5,17 @@ interface VolumeButtonProps {
   rightAligned?: boolean;
 }
 
-export function VolumeButton({ masterGain, onMasterGainChange, className = '', rightAligned = false }: VolumeButtonProps) {
+export function VolumeButton({
+  masterGain,
+  onMasterGainChange,
+  className = '',
+  rightAligned = false,
+}: VolumeButtonProps) {
   return (
     <div className={`footer-volume ${className}`}>
       <button type="button" className="volume-button" aria-label="Master volume">
         {masterGain > 0 ? (
-          <svg
-            width="64"
-            height="64"
-            viewBox="0 0 64 64"
-            fill="none"
-            style={{ height: '100%' }}
-          >
+          <svg width="64" height="64" viewBox="0 0 64 64" fill="none" style={{ height: '100%' }}>
             <rect x="1" y="18" width="22" height="29" rx="2" fill="currentColor" />
             <path
               d="M14 23.9613C14 23.3537 14.2762 22.7791 14.7506 22.3995L35.7506 5.59951C37.0601 4.55189 39 5.48424 39 7.16125V57.8387C39 59.5158 37.0601 60.4481 35.7506 59.4005L14.7506 42.6005C14.2762 42.2209 14 41.6463 14 41.0387V23.9613Z"
@@ -44,13 +43,7 @@ export function VolumeButton({ masterGain, onMasterGainChange, className = '', r
             )}
           </svg>
         ) : (
-          <svg
-            width="64"
-            height="64"
-            viewBox="0 0 64 64"
-            fill="none"
-            style={{ height: '100%' }}
-          >
+          <svg width="64" height="64" viewBox="0 0 64 64" fill="none" style={{ height: '100%' }}>
             <rect x="1" y="18" width="22" height="29" rx="2" fill="currentColor" />
             <path
               d="M14 23.9613C14 23.3537 14.2762 22.7791 14.7506 22.3995L35.7506 5.59951C37.0601 4.55189 39 5.48424 39 7.16125V57.8387C39 59.5158 37.0601 60.4481 35.7506 59.4005L14.7506 42.6005C14.2762 42.2209 14 41.6463 14 41.0387V23.9613Z"

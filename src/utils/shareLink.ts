@@ -10,9 +10,9 @@ interface ShareLinkParams {
 
 export function generateShareLink(params: ShareLinkParams): string | null {
   const { title, expression, mode, sampleRate, isFork = false } = params;
-  
+
   if (typeof window === 'undefined') return null;
-  
+
   const trimmedExpr = expression.trim();
   if (!trimmedExpr) return null;
 
