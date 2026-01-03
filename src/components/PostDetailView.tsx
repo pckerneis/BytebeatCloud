@@ -101,7 +101,7 @@ export function PostDetailView({
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
 
   const tabs = ['comments', 'playlists', 'lineage'] as const;
-  type TabType = typeof tabs[number];
+  type TabType = (typeof tabs)[number];
 
   // Handle swipe gestures to switch tabs
   const handleSwipeLeft = () => {
@@ -906,209 +906,212 @@ export function PostDetailView({
 
             <div style={{ overflowX: 'hidden' }}>
               <div className="tab-header mt-30 mb-30">
-              <span
-                className={`tab-button ${activeTab === 'comments' ? 'active' : ''}`}
-                onClick={() => setActiveTab('comments')}
-              >
-                Comments ({comments.length})
-              </span>
-              <span
-                className={`tab-button ${activeTab === 'playlists' ? 'active' : ''}`}
-                onClick={() => setActiveTab('playlists')}
-              >
-                Playlists ({postPlaylists.length})
-              </span>
-              <span
-                className={`tab-button ${activeTab === 'lineage' ? 'active' : ''}`}
-                onClick={() => setActiveTab('lineage')}
-              >
-                Lineage
-              </span>
-            </div>
+                <span
+                  className={`tab-button ${activeTab === 'comments' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('comments')}
+                >
+                  Comments ({comments.length})
+                </span>
+                <span
+                  className={`tab-button ${activeTab === 'playlists' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('playlists')}
+                >
+                  Playlists ({postPlaylists.length})
+                </span>
+                <span
+                  className={`tab-button ${activeTab === 'lineage' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('lineage')}
+                >
+                  Lineage
+                </span>
+              </div>
 
-            {activeTab === 'comments' && (
-              <div
-                style={{
-                  transform: `translateX(${swipeState.translateX}px)`,
-                  transition: swipeState.isDragging ? 'none' : 'transform 0.3s ease-out',
-                }}
-              >
-                <div id="comments" className="comments-section">
-                {commentsLoading && <p className="text-centered">Loading comments…</p>}
-                {!commentsLoading && comments.length === 0 && (
-                  <p className="secondary-text text-centered">
-                    No comments yet. Be the first to comment!
-                  </p>
-                )}
-                {!commentsLoading && comments.length > 0 && (
-                  <ul className="comments-list">
-                    {comments.map((c) => {
-                      const replyToComment = c.reply_to_comment_id
-                        ? comments.find((comment) => comment.id === c.reply_to_comment_id)
-                        : null;
-                      return (
-                        <li
-                          key={c.id}
-                          className={`comment-item${highlightedCommentId === c.id ? ' highlighted' : ''}`}
-                          data-comment-id={c.id}
-                        >
-                          {replyToComment && (
-                            <div
-                              className="comment-reply-indicator"
-                              onClick={() => handleScrollToComment(c.reply_to_comment_id!)}
-                              style={{ cursor: 'pointer' }}
+              {activeTab === 'comments' && (
+                <div
+                  style={{
+                    transform: `translateX(${swipeState.translateX}px)`,
+                    transition: swipeState.isDragging ? 'none' : 'transform 0.3s ease-out',
+                  }}
+                >
+                  <div id="comments" className="comments-section">
+                    {commentsLoading && <p className="text-centered">Loading comments…</p>}
+                    {!commentsLoading && comments.length === 0 && (
+                      <p className="secondary-text text-centered">
+                        No comments yet. Be the first to comment!
+                      </p>
+                    )}
+                    {!commentsLoading && comments.length > 0 && (
+                      <ul className="comments-list">
+                        {comments.map((c) => {
+                          const replyToComment = c.reply_to_comment_id
+                            ? comments.find((comment) => comment.id === c.reply_to_comment_id)
+                            : null;
+                          return (
+                            <li
+                              key={c.id}
+                              className={`comment-item${highlightedCommentId === c.id ? ' highlighted' : ''}`}
+                              data-comment-id={c.id}
                             >
-                              Replying to @{formatAuthorUsername(replyToComment.author_username)}
-                            </div>
-                          )}
-                          <div className="comment-header">
-                            <Link href={`/u/${c.author_username}`} className="comment-author">
-                              @{formatAuthorUsername(c.author_username)}
-                            </Link>
-                            <span className="comment-date">{formatRelativeTime(c.created_at)}</span>
-                          </div>
-                          <p className="comment-content white-space-pre-wrap">
-                            {renderDescriptionWithTagsAndMentions(
-                              c.content,
-                              commentMentionUserMap,
-                              commentPostMap,
-                            )}
-                          </p>
-                          {user && (
-                            <div className="comment-actions">
-                              <button
-                                type="button"
-                                className="button ghost small pl-0"
-                                onClick={() => handleReply(c.id, c.author_username)}
-                              >
-                                Reply
-                              </button>
-                              {((user as any).id === c.author_id ||
-                                posts[0]?.profile_id === (user as any).id) && (
-                                <button
-                                  type="button"
-                                  className="button ghost small"
-                                  onClick={() => handleOpenDeleteConfirm(c.id, c.author_id)}
+                              {replyToComment && (
+                                <div
+                                  className="comment-reply-indicator"
+                                  onClick={() => handleScrollToComment(c.reply_to_comment_id!)}
+                                  style={{ cursor: 'pointer' }}
                                 >
-                                  Delete
-                                </button>
+                                  Replying to @
+                                  {formatAuthorUsername(replyToComment.author_username)}
+                                </div>
                               )}
-                              {(user as any).id !== c.author_id &&
-                                posts[0]?.profile_id !== (user as any).id && (
+                              <div className="comment-header">
+                                <Link href={`/u/${c.author_username}`} className="comment-author">
+                                  @{formatAuthorUsername(c.author_username)}
+                                </Link>
+                                <span className="comment-date">
+                                  {formatRelativeTime(c.created_at)}
+                                </span>
+                              </div>
+                              <p className="comment-content white-space-pre-wrap">
+                                {renderDescriptionWithTagsAndMentions(
+                                  c.content,
+                                  commentMentionUserMap,
+                                  commentPostMap,
+                                )}
+                              </p>
+                              {user && (
+                                <div className="comment-actions">
                                   <button
                                     type="button"
-                                    className="button ghost small"
-                                    onClick={() => handleOpenCommentReport(c.id)}
-                                    disabled={reportedCommentIds.has(c.id)}
+                                    className="button ghost small pl-0"
+                                    onClick={() => handleReply(c.id, c.author_username)}
                                   >
-                                    {reportedCommentIds.has(c.id) ? 'Reported' : 'Report'}
+                                    Reply
                                   </button>
-                                )}
-                            </div>
-                          )}
-                        </li>
-                      );
-                    })}
-                  </ul>
-                )}
-                {user ? (
-                  <div className="comment-form">
-                    {replyToUsername && (
-                      <div
-                        style={{
-                          marginBottom: '8px',
-                          fontSize: '14px',
-                          color: 'var(--secondary-text-color)',
-                        }}
-                      >
-                        Replying to @{replyToUsername}{' '}
-                        <button
-                          type="button"
-                          className="button ghost small"
-                          onClick={handleCancelReply}
-                          style={{ padding: '0 4px' }}
-                        >
-                          Cancel
-                        </button>
-                      </div>
+                                  {((user as any).id === c.author_id ||
+                                    posts[0]?.profile_id === (user as any).id) && (
+                                    <button
+                                      type="button"
+                                      className="button ghost small"
+                                      onClick={() => handleOpenDeleteConfirm(c.id, c.author_id)}
+                                    >
+                                      Delete
+                                    </button>
+                                  )}
+                                  {(user as any).id !== c.author_id &&
+                                    posts[0]?.profile_id !== (user as any).id && (
+                                      <button
+                                        type="button"
+                                        className="button ghost small"
+                                        onClick={() => handleOpenCommentReport(c.id)}
+                                        disabled={reportedCommentIds.has(c.id)}
+                                      >
+                                        {reportedCommentIds.has(c.id) ? 'Reported' : 'Report'}
+                                      </button>
+                                    )}
+                                </div>
+                              )}
+                            </li>
+                          );
+                        })}
+                      </ul>
                     )}
-                    <AutocompleteTextarea
-                      value={newComment}
-                      onChange={setNewComment}
-                      placeholder="Add a comment..."
-                      rows={2}
-                      maxLength={COMMENT_MAX}
-                      className="border-bottom-accent-focus"
-                    />
-                    <div className="comment-form-footer">
-                      <span className="secondary-text" style={{ fontSize: '12px' }}>
-                        {newComment.length}/{COMMENT_MAX}
-                      </span>
-                      <button
-                        type="button"
-                        className="button secondary"
-                        onClick={() => void handleSubmitComment()}
-                        disabled={commentPending || !newComment.trim()}
-                      >
-                        {commentPending ? 'Posting…' : 'Post comment'}
-                      </button>
-                    </div>
-                    {commentError && (
-                      <p className="error-message" style={{ marginTop: '8px' }}>
-                        {commentError}
+                    {user ? (
+                      <div className="comment-form">
+                        {replyToUsername && (
+                          <div
+                            style={{
+                              marginBottom: '8px',
+                              fontSize: '14px',
+                              color: 'var(--secondary-text-color)',
+                            }}
+                          >
+                            Replying to @{replyToUsername}{' '}
+                            <button
+                              type="button"
+                              className="button ghost small"
+                              onClick={handleCancelReply}
+                              style={{ padding: '0 4px' }}
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        )}
+                        <AutocompleteTextarea
+                          value={newComment}
+                          onChange={setNewComment}
+                          placeholder="Add a comment..."
+                          rows={2}
+                          maxLength={COMMENT_MAX}
+                          className="border-bottom-accent-focus"
+                        />
+                        <div className="comment-form-footer">
+                          <span className="secondary-text" style={{ fontSize: '12px' }}>
+                            {newComment.length}/{COMMENT_MAX}
+                          </span>
+                          <button
+                            type="button"
+                            className="button secondary"
+                            onClick={() => void handleSubmitComment()}
+                            disabled={commentPending || !newComment.trim()}
+                          >
+                            {commentPending ? 'Posting…' : 'Post comment'}
+                          </button>
+                        </div>
+                        {commentError && (
+                          <p className="error-message" style={{ marginTop: '8px' }}>
+                            {commentError}
+                          </p>
+                        )}
+                      </div>
+                    ) : (
+                      <p className="secondary-text">
+                        <Link href="/login">Log in</Link> to leave a comment.
                       </p>
                     )}
                   </div>
-                ) : (
-                  <p className="secondary-text">
-                    <Link href="/login">Log in</Link> to leave a comment.
-                  </p>
-                )}
                 </div>
-              </div>
-            )}
+              )}
 
-            {activeTab === 'playlists' && (
-              <div
-                style={{
-                  transform: `translateX(${swipeState.translateX}px)`,
-                  transition: swipeState.isDragging ? 'none' : 'transform 0.3s ease-out',
-                }}
-              >
-                <div className="playlists-section">
-                {postPlaylistsLoading && <p className="text-centered">Loading playlists…</p>}
-                {!postPlaylistsLoading && postPlaylists.length === 0 && (
-                  <p className="secondary-text text-centered">
-                    No playlists yet. Add this track to a playlist.
-                  </p>
-                )}
-                {!postPlaylistsLoading && postPlaylists.length > 0 && (
-                  <ul>
-                    {postPlaylists.map((pl) => (
-                      <PlaylistCard
-                        key={pl.id}
-                        id={pl.id}
-                        name={pl.name}
-                        description={pl.description}
-                        postsCount={pl.postsCount}
-                      />
-                    ))}
-                  </ul>
-                )}
+              {activeTab === 'playlists' && (
+                <div
+                  style={{
+                    transform: `translateX(${swipeState.translateX}px)`,
+                    transition: swipeState.isDragging ? 'none' : 'transform 0.3s ease-out',
+                  }}
+                >
+                  <div className="playlists-section">
+                    {postPlaylistsLoading && <p className="text-centered">Loading playlists…</p>}
+                    {!postPlaylistsLoading && postPlaylists.length === 0 && (
+                      <p className="secondary-text text-centered">
+                        No playlists yet. Add this track to a playlist.
+                      </p>
+                    )}
+                    {!postPlaylistsLoading && postPlaylists.length > 0 && (
+                      <ul>
+                        {postPlaylists.map((pl) => (
+                          <PlaylistCard
+                            key={pl.id}
+                            id={pl.id}
+                            name={pl.name}
+                            description={pl.description}
+                            postsCount={pl.postsCount}
+                          />
+                        ))}
+                      </ul>
+                    )}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {activeTab === 'lineage' && (
-              <div
-                style={{
-                  transform: `translateX(${swipeState.translateX}px)`,
-                  transition: swipeState.isDragging ? 'none' : 'transform 0.3s ease-out',
-                }}
-              >
-                <PostLineage postId={posts[0].id} />
-              </div>
-            )}
+              {activeTab === 'lineage' && (
+                <div
+                  style={{
+                    transform: `translateX(${swipeState.translateX}px)`,
+                    transition: swipeState.isDragging ? 'none' : 'transform 0.3s ease-out',
+                  }}
+                >
+                  <PostLineage postId={posts[0].id} />
+                </div>
+              )}
             </div>
           </>
         )}

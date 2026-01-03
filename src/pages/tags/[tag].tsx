@@ -221,44 +221,49 @@ export default function TagPage() {
 
         <div style={{ overflowX: 'hidden' }}>
           <div className="tab-header">
-          <span
-            className={`tab-button ${activeTab === 'recent' ? 'active' : ''}`}
-            onClick={() => handleTabClick('recent')}
-          >
-            Recent
-          </span>
-          <span
-            className={`tab-button ${activeTab === 'trending' ? 'active' : ''}`}
-            onClick={() => handleTabClick('trending')}
-          >
-            Trending
-          </span>
-        </div>
-
-        {loading && <p className="text-centered">Loading posts…</p>}
-        {error && !loading && <p className="error-message">{error}</p>}
-
-        {!loading && !error && posts.length === 0 && (
-          <p className="text-centered">No posts found for this tag.</p>
-        )}
-
-        {!loading && !error && posts.length > 0 && (
-          <div
-            style={{
-              transform: `translateX(${swipeState.translateX}px)`,
-              transition: swipeState.isDragging ? 'none' : 'transform 0.3s ease-out',
-            }}
-          >
-            <PostList posts={posts} currentUserId={user ? ((user as any).id as string) : undefined} />
+            <span
+              className={`tab-button ${activeTab === 'recent' ? 'active' : ''}`}
+              onClick={() => handleTabClick('recent')}
+            >
+              Recent
+            </span>
+            <span
+              className={`tab-button ${activeTab === 'trending' ? 'active' : ''}`}
+              onClick={() => handleTabClick('trending')}
+            >
+              Trending
+            </span>
           </div>
-        )}
 
-        <div ref={sentinelRef} style={{ height: 1 }} data-testid="scroll-sentinel" />
-        {hasMore && !loading && posts.length > 0 && <p className="text-centered">Loading more…</p>}
+          {loading && <p className="text-centered">Loading posts…</p>}
+          {error && !loading && <p className="error-message">{error}</p>}
 
-        {!hasMore && !loading && posts.length > 0 && (
-          <p className="text-centered">You reached the end!</p>
-        )}
+          {!loading && !error && posts.length === 0 && (
+            <p className="text-centered">No posts found for this tag.</p>
+          )}
+
+          {!loading && !error && posts.length > 0 && (
+            <div
+              style={{
+                transform: `translateX(${swipeState.translateX}px)`,
+                transition: swipeState.isDragging ? 'none' : 'transform 0.3s ease-out',
+              }}
+            >
+              <PostList
+                posts={posts}
+                currentUserId={user ? ((user as any).id as string) : undefined}
+              />
+            </div>
+          )}
+
+          <div ref={sentinelRef} style={{ height: 1 }} data-testid="scroll-sentinel" />
+          {hasMore && !loading && posts.length > 0 && (
+            <p className="text-centered">Loading more…</p>
+          )}
+
+          {!hasMore && !loading && posts.length > 0 && (
+            <p className="text-centered">You reached the end!</p>
+          )}
         </div>
       </section>
     </>

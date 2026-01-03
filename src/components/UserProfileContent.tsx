@@ -625,119 +625,117 @@ export function UserProfileContent({
 
       <div style={{ overflowX: 'hidden' }}>
         <div className="tab-header">
-        <span
-          className={optimisticTab === 'posts' ? 'tab-button active' : 'tab-button'}
-          onClick={() => handleTabClick('posts')}
-        >
-          Posts
-        </span>
-        {isOwnProfile && (
           <span
-            className={optimisticTab === 'drafts' ? 'tab-button active' : 'tab-button'}
-            onClick={() => handleTabClick('drafts')}
+            className={optimisticTab === 'posts' ? 'tab-button active' : 'tab-button'}
+            onClick={() => handleTabClick('posts')}
           >
-            Drafts
+            Posts
           </span>
-        )}
-        <span
-          className={optimisticTab === 'favorites' ? 'tab-button active' : 'tab-button'}
-          onClick={() => handleTabClick('favorites')}
-        >
-          Favorites
-        </span>
-        <span
-          className={optimisticTab === 'playlists' ? 'tab-button active' : 'tab-button'}
-          onClick={() => handleTabClick('playlists')}
-        >
-          Playlists
-        </span>
-      </div>
+          {isOwnProfile && (
+            <span
+              className={optimisticTab === 'drafts' ? 'tab-button active' : 'tab-button'}
+              onClick={() => handleTabClick('drafts')}
+            >
+              Drafts
+            </span>
+          )}
+          <span
+            className={optimisticTab === 'favorites' ? 'tab-button active' : 'tab-button'}
+            onClick={() => handleTabClick('favorites')}
+          >
+            Favorites
+          </span>
+          <span
+            className={optimisticTab === 'playlists' ? 'tab-button active' : 'tab-button'}
+            onClick={() => handleTabClick('playlists')}
+          >
+            Playlists
+          </span>
+        </div>
 
-      <div
-        style={{
-          transform: `translateX(${swipeState.translateX}px)`,
-          transition: swipeState.isDragging ? 'none' : 'transform 0.3s ease-out',
-        }}
-      >
-        {/* Show loading state when optimistic tab doesn't match actual tab */}
-        {optimisticTab !== activeTab && (
-          <p className="text-centered">Loading…</p>
-        )}
+        <div
+          style={{
+            transform: `translateX(${swipeState.translateX}px)`,
+            transition: swipeState.isDragging ? 'none' : 'transform 0.3s ease-out',
+          }}
+        >
+          {/* Show loading state when optimistic tab doesn't match actual tab */}
+          {optimisticTab !== activeTab && <p className="text-centered">Loading…</p>}
 
-        {/* Only show content when optimistic tab matches actual tab */}
-        {optimisticTab === activeTab && activeTab === 'posts' && (
-          <>
+          {/* Only show content when optimistic tab matches actual tab */}
+          {optimisticTab === activeTab && activeTab === 'posts' && (
+            <>
+              <TabContent
+                loading={postsQuery.loading}
+                error={postsQuery.error}
+                posts={postsQuery.posts}
+                emptyMessage="This user has no public posts yet."
+                currentUserId={currentUserId}
+                extraError={followError}
+              />
+              <div ref={sentinelRef} style={{ height: 1 }} data-testid="scroll-sentinel" />
+              {postsQuery.hasMore && !postsQuery.loading && postsQuery.posts.length > 0 && (
+                <p className="text-centered">Loading more…</p>
+              )}
+              {!postsQuery.hasMore && !postsQuery.loading && postsQuery.posts.length > 0 && (
+                <p className="text-centered">You reached the end!</p>
+              )}
+            </>
+          )}
+
+          {optimisticTab === activeTab && activeTab === 'favorites' && (
             <TabContent
-              loading={postsQuery.loading}
-              error={postsQuery.error}
-              posts={postsQuery.posts}
-              emptyMessage="This user has no public posts yet."
+              loading={favoritesQuery.loading}
+              error={favoritesQuery.error}
+              posts={favoritesQuery.posts}
+              emptyMessage="This user has no public favorites yet."
               currentUserId={currentUserId}
-              extraError={followError}
+              loadingMessage="Loading favorites…"
             />
-          <div ref={sentinelRef} style={{ height: 1 }} data-testid="scroll-sentinel" />
-          {postsQuery.hasMore && !postsQuery.loading && postsQuery.posts.length > 0 && (
-            <p className="text-centered">Loading more…</p>
           )}
-          {!postsQuery.hasMore && !postsQuery.loading && postsQuery.posts.length > 0 && (
-            <p className="text-centered">You reached the end!</p>
+
+          {optimisticTab === activeTab && activeTab === 'drafts' && isOwnProfile && (
+            <TabContent
+              loading={draftsQuery.loading}
+              error={draftsQuery.error}
+              posts={draftsQuery.posts}
+              emptyMessage="You have no drafts yet."
+              currentUserId={currentUserId}
+              loadingMessage="Loading drafts…"
+            />
           )}
-          </>
-        )}
 
-        {optimisticTab === activeTab && activeTab === 'favorites' && (
-          <TabContent
-            loading={favoritesQuery.loading}
-            error={favoritesQuery.error}
-            posts={favoritesQuery.posts}
-            emptyMessage="This user has no public favorites yet."
-            currentUserId={currentUserId}
-            loadingMessage="Loading favorites…"
-          />
-        )}
-
-        {optimisticTab === activeTab && activeTab === 'drafts' && isOwnProfile && (
-          <TabContent
-            loading={draftsQuery.loading}
-            error={draftsQuery.error}
-            posts={draftsQuery.posts}
-            emptyMessage="You have no drafts yet."
-            currentUserId={currentUserId}
-            loadingMessage="Loading drafts…"
-          />
-        )}
-
-        {optimisticTab === activeTab && activeTab === 'playlists' && (
-          <div className="playlists-section">
-          {playlistsQuery.loading && <p className="text-centered">Loading playlists…</p>}
-          {playlistsQuery.error && <p className="error-message">{playlistsQuery.error}</p>}
-          {!playlistsQuery.loading &&
-            !playlistsQuery.error &&
-            playlistsQuery.playlists.length === 0 && (
-              <p className="text-centered">
-                {isOwnProfile
-                  ? 'You have no playlists yet.'
-                  : 'This user has no public playlists yet.'}
-              </p>
-            )}
-          {!playlistsQuery.loading &&
-            !playlistsQuery.error &&
-            playlistsQuery.playlists.length > 0 && (
-              <ul>
-                {playlistsQuery.playlists.map((pl) => (
-                  <PlaylistCard
-                    key={pl.id}
-                    id={pl.id}
-                    name={pl.title}
-                    description={pl.description}
-                    postsCount={pl.posts_count}
-                  />
-                ))}
-              </ul>
-            )}
-          </div>
-        )}
-      </div>
+          {optimisticTab === activeTab && activeTab === 'playlists' && (
+            <div className="playlists-section">
+              {playlistsQuery.loading && <p className="text-centered">Loading playlists…</p>}
+              {playlistsQuery.error && <p className="error-message">{playlistsQuery.error}</p>}
+              {!playlistsQuery.loading &&
+                !playlistsQuery.error &&
+                playlistsQuery.playlists.length === 0 && (
+                  <p className="text-centered">
+                    {isOwnProfile
+                      ? 'You have no playlists yet.'
+                      : 'This user has no public playlists yet.'}
+                  </p>
+                )}
+              {!playlistsQuery.loading &&
+                !playlistsQuery.error &&
+                playlistsQuery.playlists.length > 0 && (
+                  <ul>
+                    {playlistsQuery.playlists.map((pl) => (
+                      <PlaylistCard
+                        key={pl.id}
+                        id={pl.id}
+                        name={pl.title}
+                        description={pl.description}
+                        postsCount={pl.posts_count}
+                      />
+                    ))}
+                  </ul>
+                )}
+            </div>
+          )}
+        </div>
       </div>
     </section>
   );
