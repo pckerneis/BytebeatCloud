@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { useRouter } from 'next/router';
 import { useBytebeatPlayer } from '../../hooks/useBytebeatPlayer';
 import { usePlayerStore } from '../../hooks/usePlayerStore';
@@ -39,12 +39,13 @@ export default function ForkPostPage() {
   const [saveError, setSaveError] = useState('');
   const [originalTitle, setOriginalTitle] = useState<string>('');
   const [originalAuthor, setOriginalAuthor] = useState<string | null>(null);
+  const [originalDescription, setOriginalDescription] = useState<string | null>(null);
+  const [originalExpression, setOriginalExpression] = useState<string | null>(null);
+  const [originalMode, setOriginalMode] = useState<string | null>(null);
+  const [originalSampleRate, setOriginalSampleRate] = useState<number | null>(null);
   const [isShareAlike, setIsShareAlike] = useState(false);
+  const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
   const [liveUpdateEnabled, setLiveUpdateEnabled] = useState(true);
-
-  const lastLoadedPostIdRef = useRef<string | null>(null);
-  const isDirtyRef = useRef(false);
-  const isApplyingServerStateRef = useRef(false);
 
   const {
     validationIssue,
@@ -66,12 +67,30 @@ export default function ForkPostPage() {
 
   const handlePlayClick = () => handlePlayClickBase(currentPost);
 
-  const handleExpressionChangeWithDirty = (value: string) => {
-    if (!isApplyingServerStateRef.current) {
-      isDirtyRef.current = true;
+  // Save to localStorage whenever state changes
+  useEffect(() => {
+    if (!id || typeof id !== 'string') return;
+    if (loading) return;
+
+    const draftKey = `fork-draft-${id}`;
+    const draft = {
+      title,
+      description,
+      expression,
+      mode,
+      sampleRate,
+      license,
+      timestamp: Date.now(),
+    };
+
+    console.log('about to save draft', draft);
+
+    try {
+      localStorage.setItem(draftKey, JSON.stringify(draft));
+    } catch (error) {
+      console.error('Failed to save draft to localStorage:', error);
     }
-    handleExpressionChange(value);
-  };
+  }, [id, title, description, expression, mode, sampleRate, license, loading]);
 
   useEffect(() => {
     return () => {
@@ -100,13 +119,6 @@ export default function ForkPostPage() {
 
   useEffect(() => {
     if (!id || typeof id !== 'string') return;
-
-    // If we already loaded this post and the user has unsaved local edits,
-    // don't re-load and overwrite the form state (e.g. when returning to a tab
-    // after auth refresh or visibility changes).
-    if (lastLoadedPostIdRef.current === id && isDirtyRef.current) {
-      return;
-    }
 
     let cancelled = false;
 
@@ -152,19 +164,45 @@ export default function ForkPostPage() {
       // Convert @[userId] mentions back to @username for editing
       const { text: displayDescription } = await convertMentionsToUsernames(data.description ?? '');
 
-      isApplyingServerStateRef.current = true;
       setTitle(baseTitle ?? '');
       setDescription(displayDescription);
+      setOriginalDescription(displayDescription);
       setExpression(data.expression ?? '');
+      setOriginalExpression(data.expression ?? '');
       setIsDraft(Boolean(data.is_draft));
       setMode(data.mode);
+      setOriginalMode(data.mode);
       setSampleRate(data.sample_rate);
+      setOriginalSampleRate(data.sample_rate);
       // Set license to share-alike if original is share-alike, otherwise use default
       setLicense(originalIsShareAlike ? 'cc-by-sa' : DEFAULT_LICENSE);
-      isApplyingServerStateRef.current = false;
 
-      lastLoadedPostIdRef.current = id;
-      isDirtyRef.current = false;
+      // After loading server data, check for localStorage override
+      const draftKey = `fork-draft-${id}`;
+      try {
+        const stored = localStorage.getItem(draftKey);
+        if (stored) {
+          const draft = JSON.parse(stored);
+          // Only load if draft is less than 7 days old
+          const age = Date.now() - (draft.timestamp || 0);
+          const maxAge = 7 * 24 * 60 * 60 * 1000; // 7 days
+          
+          if (age < maxAge) {
+            // Override server data with local changes
+            setTitle(draft.title || '');
+            setDescription(draft.description || '');
+            setExpression(draft.expression || '');
+            setMode(draft.mode || ModeOption.Float);
+            setSampleRate(draft.sampleRate || DEFAULT_SAMPLE_RATE);
+            setLicense(draft.license || DEFAULT_LICENSE);
+          } else {
+            // Clean up old draft
+            localStorage.removeItem(draftKey);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to load draft from localStorage:', error);
+      }
 
       setLoading(false);
     };
@@ -226,8 +264,16 @@ export default function ForkPostPage() {
 
     setSaveStatus('success');
 
+    // Clear localStorage draft on successful save
+    if (id && typeof id === 'string') {
+      try {
+        localStorage.removeItem(`fork-draft-${id}`);
+      } catch (error) {
+        console.error('Failed to clear draft from localStorage:', error);
+      }
+    }
+
     if (asDraft) {
-      // Redirect to edit page for drafts
       await router.push(`/edit/${data.id}`);
     } else {
       await router.push(`/post/${data.id}`);
@@ -247,6 +293,23 @@ export default function ForkPostPage() {
     void savePost(false);
   };
 
+  const handleDiscardChanges = async () => {
+    if (id && typeof id === 'string') {
+      // Clear localStorage
+      try {
+        localStorage.removeItem(`fork-draft-${id}`);
+      } catch (error) {
+        console.error('Failed to clear draft from localStorage:', error);
+      }
+    }
+
+    setShowDiscardConfirm(false);
+    
+    // Trigger reload by clearing the last loaded ref
+    // The useEffect will reload the post from server
+    window.location.reload();
+  };
+
   const meta = {
     title,
     description,
@@ -257,9 +320,6 @@ export default function ForkPostPage() {
   };
 
   const handleMetaChange = (next: typeof meta) => {
-    if (!isApplyingServerStateRef.current) {
-      isDirtyRef.current = true;
-    }
     setTitle(next.title);
     setDescription(next.description);
     setMode(next.mode);
@@ -270,6 +330,13 @@ export default function ForkPostPage() {
       setLicense(next.license);
     }
   };
+
+  const hasUnsavedChanges =
+    title !== originalTitle
+  || expression !== originalExpression
+  || mode !== originalMode
+  || sampleRate !== originalSampleRate
+  || description !== originalDescription;
 
   const handleBack = () => {
     if (typeof window !== 'undefined' && window.history.length > 1) {
@@ -354,7 +421,7 @@ export default function ForkPostPage() {
             meta={meta}
             onMetaChange={handleMetaChange}
             expression={expression}
-            onExpressionChange={handleExpressionChangeWithDirty}
+            onExpressionChange={handleExpressionChange}
             isPlaying={isPlaying}
             onPlayClick={handlePlayClick}
             validationIssue={validationIssue}
@@ -368,8 +435,39 @@ export default function ForkPostPage() {
             onSaveAsDraft={handleSaveAsDraft}
             onPublish={handlePublish}
             lockLicense={isShareAlike}
+            showDiscardChangesButton={true}
+            onDiscardChangesClick={() => setShowDiscardConfirm(true)}
+            hasUnsavedChanges={hasUnsavedChanges}
           />
         </form>
+
+        {showDiscardConfirm && (
+          <div className="modal-backdrop">
+            <div className="modal">
+              <h3>Discard changes</h3>
+              <p>
+                Your local changes will be discarded and the original post will be reloaded. This
+                cannot be undone.
+              </p>
+              <div className="modal-actions">
+                <button
+                  type="button"
+                  className="button secondary"
+                  onClick={() => setShowDiscardConfirm(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className="button danger"
+                  onClick={() => void handleDiscardChanges()}
+                >
+                  Discard changes
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </section>
     </>
   );

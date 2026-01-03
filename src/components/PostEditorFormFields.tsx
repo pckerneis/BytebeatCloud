@@ -45,6 +45,10 @@ interface PostEditorFormFieldsProps {
   isEditMode?: boolean;
   onUnpublish?: () => void;
   lockLicense?: boolean;
+
+  showDiscardChangesButton?: boolean;
+  onDiscardChangesClick?: () => void;
+  hasUnsavedChanges?: boolean;
 }
 
 function findNextPresetSampleRate(sampleRate: number): number {
@@ -81,6 +85,9 @@ export function PostEditorFormFields(props: Readonly<PostEditorFormFieldsProps>)
     onPublish,
     isEditMode,
     onUnpublish,
+    showDiscardChangesButton,
+    onDiscardChangesClick,
+    hasUnsavedChanges,
   } = props;
 
   const expressionLength = expression.length;
@@ -94,7 +101,6 @@ export function PostEditorFormFields(props: Readonly<PostEditorFormFieldsProps>)
   const longPressTimeoutRef = useRef<number | null>(null);
   const longPressTriggeredRef = useRef(false);
   const currentLicenseLabel = LICENSE_OPTIONS.find((opt) => opt.value === license)?.label;
-  const isLargeMode = true;
 
   const openSampleRateModal = () => {
     setSampleRateInput(sampleRate.toString());
@@ -323,6 +329,17 @@ export function PostEditorFormFields(props: Readonly<PostEditorFormFieldsProps>)
 
           <div className="form-actions">
             <div className="form-actions-buttons">
+              {showDiscardChangesButton && onDiscardChangesClick && (
+                <button
+                  type="button"
+                  className="button danger"
+                  onClick={onDiscardChangesClick}
+                  disabled={saveStatus === 'saving' || !hasUnsavedChanges}
+                >
+                  Discard changes
+                </button>
+              )}
+
               {showDeleteButton && onDeleteClick && (
                 <button
                   type="button"

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { useBytebeatPlayer } from '../../../hooks/useBytebeatPlayer';
 import { usePlayerStore } from '../../../hooks/usePlayerStore';
@@ -10,7 +10,6 @@ import { validateExpression } from '../../../utils/expression-validator';
 import { useExpressionPlayer } from '../../../hooks/useExpressionPlayer';
 import { useCtrlSpacePlayShortcut } from '../../../hooks/useCtrlSpacePlayShortcut';
 import { convertMentionsToIds, convertMentionsToUsernames } from '../../../utils/mentions';
-import { formatPostTitle, UNTITLED_POST } from '../../../utils/post-format';
 import { FocusLayout } from '../../../components/FocusLayout';
 import { NextPageWithLayout } from '../../_app';
 import { FocusExpressionEditor } from '../../../components/FocusExpressionEditor';
@@ -27,7 +26,6 @@ const page: NextPageWithLayout = function ForkPostFocusPage() {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [expression, setExpression] = useState('');
-  const [isDraft, setIsDraft] = useState(false);
   const [mode, setMode] = useState<ModeOption>(ModeOption.Float);
   const [sampleRate, setSampleRate] = useState<number>(DEFAULT_SAMPLE_RATE);
   const [license, setLicense] = useState<LicenseOption>(DEFAULT_LICENSE);
@@ -40,17 +38,10 @@ const page: NextPageWithLayout = function ForkPostFocusPage() {
 
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'success'>('idle');
   const [saveError, setSaveError] = useState('');
-  const [originalTitle, setOriginalTitle] = useState<string>('');
-  const [originalAuthor, setOriginalAuthor] = useState<string | null>(null);
   const [isShareAlike, setIsShareAlike] = useState(false);
   const [liveUpdateEnabled, setLiveUpdateEnabled] = useState(true);
 
-  const lastLoadedPostIdRef = useRef<string | null>(null);
-  const isDirtyRef = useRef(false);
-  const isApplyingServerStateRef = useRef(false);
-
   const {
-    handleExpressionChange,
     handlePlayClick: handlePlayClickBase,
   } = useExpressionPlayer({
     expression,
@@ -67,12 +58,28 @@ const page: NextPageWithLayout = function ForkPostFocusPage() {
 
   const handlePlayClick = () => handlePlayClickBase(currentPost);
 
-  const onExpressionChange = (value: string) => {
-    if (!isApplyingServerStateRef.current) {
-      isDirtyRef.current = true;
+  // Save to localStorage whenever state changes
+  useEffect(() => {
+    if (!id || typeof id !== 'string') return;
+    if (loading) return;
+
+    const draftKey = `fork-draft-${id}`;
+    const draft = {
+      title,
+      description,
+      expression,
+      mode,
+      sampleRate,
+      license,
+      timestamp: Date.now(),
+    };
+
+    try {
+      localStorage.setItem(draftKey, JSON.stringify(draft));
+    } catch (error) {
+      console.error('Failed to save draft to localStorage:', error);
     }
-    handleExpressionChange(value);
-  };
+  }, [id, title, description, expression, mode, sampleRate, license, loading]);
 
   useEffect(() => {
     return () => {
@@ -87,7 +94,6 @@ const page: NextPageWithLayout = function ForkPostFocusPage() {
 
   useEffect(() => {
     if (!id || typeof id !== 'string') return;
-    if (lastLoadedPostIdRef.current === id) return;
 
     const loadPost = async () => {
       setLoading(true);
@@ -106,11 +112,6 @@ const page: NextPageWithLayout = function ForkPostFocusPage() {
         return;
       }
 
-      isApplyingServerStateRef.current = true;
-
-      const originalTitleValue = data.title || UNTITLED_POST;
-      setOriginalTitle(originalTitleValue);
-      setTitle(formatPostTitle(originalTitleValue));
       setExpression(data.expression || '');
       setMode((data.mode as ModeOption) || ModeOption.Float);
       setSampleRate(data.sample_rate || DEFAULT_SAMPLE_RATE);
@@ -126,13 +127,33 @@ const page: NextPageWithLayout = function ForkPostFocusPage() {
         setDescription('');
       }
 
-      if (data.profile && typeof data.profile === 'object' && 'username' in data.profile) {
-        setOriginalAuthor((data.profile as any).username);
+      // After loading server data, check for localStorage override
+      const draftKey = `fork-draft-${id}`;
+      try {
+        const stored = localStorage.getItem(draftKey);
+        if (stored) {
+          const draft = JSON.parse(stored);
+          // Only load if draft is less than 7 days old
+          const age = Date.now() - (draft.timestamp || 0);
+          const maxAge = 7 * 24 * 60 * 60 * 1000; // 7 days
+          
+          if (age < maxAge) {
+            // Override server data with local changes
+            setTitle(draft.title || '');
+            setDescription(draft.description || '');
+            setExpression(draft.expression || '');
+            setMode(draft.mode || ModeOption.Float);
+            setSampleRate(draft.sampleRate || DEFAULT_SAMPLE_RATE);
+            setLicense(draft.license || DEFAULT_LICENSE);
+          } else {
+            // Clean up old draft
+            localStorage.removeItem(draftKey);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to load draft from localStorage:', error);
       }
 
-      isApplyingServerStateRef.current = false;
-      isDirtyRef.current = false;
-      lastLoadedPostIdRef.current = id;
       setLoading(false);
     };
 
@@ -186,7 +207,15 @@ const page: NextPageWithLayout = function ForkPostFocusPage() {
       }
 
       setSaveStatus('success');
-      isDirtyRef.current = false;
+
+      // Clear localStorage draft on successful save
+      if (id && typeof id === 'string') {
+        try {
+          localStorage.removeItem(`fork-draft-${id}`);
+        } catch (error) {
+          console.error('Failed to clear draft from localStorage:', error);
+        }
+      }
 
       if (asDraft) {
         await router.push(`/edit/${data.id}`);
@@ -206,24 +235,11 @@ const page: NextPageWithLayout = function ForkPostFocusPage() {
     }
   };
 
-  const handleSaveAsDraft = async () => {
-    await savePost(true);
-    if (saveStatus === 'success') {
-      setIsPublishPanelOpen(false);
-    }
-  };
-
   const handleModeChange = (newMode: ModeOption) => {
-    if (!isApplyingServerStateRef.current) {
-      isDirtyRef.current = true;
-    }
     setMode(newMode);
   };
 
   const handleSampleRateChange = (newRate: number) => {
-    if (!isApplyingServerStateRef.current) {
-      isDirtyRef.current = true;
-    }
     setSampleRate(newRate);
   };
 
@@ -245,7 +261,7 @@ const page: NextPageWithLayout = function ForkPostFocusPage() {
         </Head>
         <section>
           <h2>Fork post</h2>
-          <p>Loading…</p>
+          <p className="text-centered secondary-text">Loading…</p>
         </section>
       </>
     );
@@ -286,7 +302,7 @@ const page: NextPageWithLayout = function ForkPostFocusPage() {
         onExitFocusMode={() => void router.push(`/fork/${id}`)}
       >
         <section style={{ width: '100%', height: '100%', overflow: 'auto' }}>
-          <FocusExpressionEditor value={expression} onChange={onExpressionChange} />
+          <FocusExpressionEditor value={expression} onChange={setExpression} />
         </section>
       </FocusLayout>
       
