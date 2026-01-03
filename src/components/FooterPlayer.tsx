@@ -53,7 +53,6 @@ export default function FooterPlayer() {
   const [queueFavoritePending, setQueueFavoritePending] = useState<Record<string, boolean>>({});
   const playPostRef = useRef<((post: PostRow | null) => Promise<void>) | null>(null);
 
-
   useEffect(() => {
     const unsubscribe = subscribePreviewSource(setPreview);
     return () => {
