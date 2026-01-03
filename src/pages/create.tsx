@@ -16,10 +16,10 @@ import { validateExpression } from '../utils/expression-validator';
 import { useExpressionPlayer } from '../hooks/useExpressionPlayer';
 import { useCtrlSpacePlayShortcut } from '../hooks/useCtrlSpacePlayShortcut';
 import { PostMetadataModel, LicenseOption, DEFAULT_LICENSE } from '../model/postEditor';
-import { convertMentionsToIds } from '../utils/mentions';
 import Link from 'next/link';
 import { useCurrentWeeklyChallenge } from '../hooks/useCurrentWeeklyChallenge';
 import { TooltipHint } from '../components/TooltipHint';
+import { usePublishPost } from '../hooks/usePublishPost';
 
 const CREATE_DRAFT_STORAGE_KEY = 'bytebeat-cloud-create-draft-v1';
 
@@ -51,8 +51,7 @@ export default function CreatePage() {
 
   const { user } = useSupabaseAuth();
 
-  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'success'>('idle');
-  const [saveError, setSaveError] = useState('');
+  const { publishPost, saveStatus, saveError } = usePublishPost();
   const [liveUpdateEnabled, setLiveUpdateEnabled] = useState(true);
   const { weekNumber: currentWeekNumber, theme: currentTheme } = useCurrentWeeklyChallenge();
   const [hasWeeklySubmission, setHasWeeklySubmission] = useState(false);
@@ -240,57 +239,27 @@ export default function CreatePage() {
   }, [title, description, expression, isDraft, mode, sampleRate, license, liveUpdateEnabled, draftLoaded]);
 
   const savePost = async (asDraft: boolean) => {
-    const trimmedTitle = title.trim();
-    const trimmedExpr = expression.trim();
-    const trimmedDescription = description.trim();
-
-    const result = validateExpression(trimmedExpr);
-    if (!result.valid) {
-      setValidationIssue(result.issues[0] ?? null);
-      return;
-    }
-
-    if (!user) {
-      setSaveError('You must be logged in to save a post.');
-      return;
-    }
-
     setIsDraft(asDraft);
-    setSaveStatus('saving');
-    setSaveError('');
 
-    // Convert @username mentions to @[userId] format for storage
-    const storedDescription = await convertMentionsToIds(trimmedDescription ?? '');
+    const postId = await publishPost({
+      title,
+      description,
+      expression,
+      mode,
+      sampleRate,
+      license,
+      isDraft: asDraft,
+    });
 
-    const { data, error } = await supabase
-      .from('posts')
-      .insert({
-        profile_id: (user as any).id,
-        title: trimmedTitle,
-        description: storedDescription,
-        expression: trimmedExpr,
-        is_draft: asDraft,
-        sample_rate: sampleRate,
-        mode,
-        license,
-      })
-      .select('id')
-      .single();
+    if (postId) {
+      window.localStorage.removeItem(CREATE_DRAFT_STORAGE_KEY);
 
-    if (error || !data) {
-      setSaveError(error ? error.message : 'Unknown error while saving post.');
-      setSaveStatus('idle');
-      return;
-    }
-
-    setSaveStatus('success');
-    window.localStorage.removeItem(CREATE_DRAFT_STORAGE_KEY);
-
-    if (asDraft) {
-      // Redirect to edit page for drafts
-      await router.push(`/edit/${data.id}`);
-    } else {
-      await router.push(`/post/${data.id}`);
+      if (asDraft) {
+        // Redirect to edit page for drafts
+        await router.push(`/edit/${postId}`);
+      } else {
+        await router.push(`/post/${postId}`);
+      }
     }
   };
 

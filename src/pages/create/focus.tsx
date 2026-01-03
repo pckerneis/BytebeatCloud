@@ -17,6 +17,7 @@ import {
   DEFAULT_SAMPLE_RATE,
 } from '../../model/expression';
 import { validateExpression } from '../../utils/expression-validator';
+import { usePublishPost } from '../../hooks/usePublishPost';
 
 const CREATE_DRAFT_STORAGE_KEY = 'bytebeat-cloud-create-draft-v1';
 
@@ -43,8 +44,7 @@ const page: NextPageWithLayout = function FocusCreatePage() {
   const [draftLoaded, setDraftLoaded] = useState(false);
   const [isStateLoaded, setIsStateLoaded] = useState(false);
   const [isPublishPanelOpen, setIsPublishPanelOpen] = useState(false);
-  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'success'>('idle');
-  const [saveError, setSaveError] = useState('');
+  const { publishPost, saveStatus, saveError } = usePublishPost();
   const { isPlaying, toggle, stop, updateExpression } = useBytebeatPlayer({
     enableVisualizer: false,
   });
@@ -258,22 +258,22 @@ const page: NextPageWithLayout = function FocusCreatePage() {
   };
 
   const handlePublishSubmit = async () => {
-    setSaveStatus('saving');
-    setSaveError('');
-    
-    try {
-      // TODO: Implement actual publish functionality
-      // For now, just simulate publishing
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      setSaveStatus('success');
+    const postId = await publishPost({
+      title,
+      description,
+      expression,
+      mode,
+      sampleRate,
+      license,
+      isDraft: false,
+    });
+
+    if (postId) {
       setIsPublishPanelOpen(false);
+      window.localStorage.removeItem(CREATE_DRAFT_STORAGE_KEY);
       
-      // Navigate to the created post or back to create page
-      // void router.push('/some-post-url');
-    } catch (error) {
-      setSaveError('Failed to publish post');
-      setSaveStatus('idle');
+      // Navigate to the created post
+      await router.push(`/post/${postId}`);
     }
   };
 
@@ -341,6 +341,7 @@ const page: NextPageWithLayout = function FocusCreatePage() {
         onPublish={handlePublishSubmit}
         isPublishing={saveStatus === 'saving'}
         canPublish={canPublish}
+        saveError={saveError}
       />
     </>
   );
