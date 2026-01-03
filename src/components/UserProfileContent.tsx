@@ -1,4 +1,4 @@
-import { ReactNode, useCallback, useEffect, useRef, useState } from 'react';
+import { ReactNode, useCallback, useEffect, useRef, useState, useTransition } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { enrichWithTags } from '../utils/tags';
 import { validateExpression } from '../utils/expression-validator';
@@ -8,6 +8,7 @@ import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
 import { PostList } from './PostList';
 import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
 import { useTabState } from '../hooks/useTabState';
+import { useSwipeGesture } from '../hooks/useSwipeGesture';
 import { ActivityHeatmap } from './ActivityHeatmap';
 import { PlaylistCard } from './PlaylistCard';
 
@@ -464,7 +465,9 @@ export function UserProfileContent({
   const currentUserId = user ? (user as any).id : undefined;
   const isOwnProfile = Boolean(currentUserId && currentUserId === profileId);
 
+  const [isPending, startTransition] = useTransition();
   const [activeTab, setActiveTab] = useTabState(tabs, 'posts');
+  const [optimisticTab, setOptimisticTab] = useState<TabName>(activeTab);
 
   // Load data based on active tab
   const postsQuery = useUserPosts(profileId, currentUserId);
@@ -505,8 +508,46 @@ export function UserProfileContent({
 
   const handleTabClick = (tab: TabName) => {
     if (tab === activeTab) return;
-    setActiveTab(tab);
+    // Update optimistic state immediately for instant visual feedback
+    setOptimisticTab(tab);
+    // Then update actual state in a transition
+    startTransition(() => {
+      setActiveTab(tab);
+    });
   };
+
+  // Get available tabs based on whether this is own profile
+  const availableTabs = isOwnProfile ? tabs : tabs.filter((t) => t !== 'drafts');
+
+  // Handle swipe gestures to switch tabs
+  const handleSwipeLeft = () => {
+    const currentIndex = (availableTabs as readonly TabName[]).indexOf(activeTab);
+    if (currentIndex < availableTabs.length - 1 && currentIndex !== -1) {
+      const nextTab = availableTabs[currentIndex + 1];
+      setOptimisticTab(nextTab as TabName);
+      startTransition(() => {
+        setActiveTab(nextTab as TabName);
+      });
+    }
+  };
+
+  const handleSwipeRight = () => {
+    const currentIndex = (availableTabs as readonly TabName[]).indexOf(activeTab);
+    if (currentIndex > 0) {
+      const prevTab = availableTabs[currentIndex - 1];
+      setOptimisticTab(prevTab as TabName);
+      startTransition(() => {
+        setActiveTab(prevTab as TabName);
+      });
+    }
+  };
+
+  const swipeState = useSwipeGesture({
+    onSwipeLeft: handleSwipeLeft,
+    onSwipeRight: handleSwipeRight,
+    threshold: 100,
+    enabled: true,
+  });
 
   const handleToggleFollow = async () => {
     if (!user) {
@@ -582,45 +623,58 @@ export function UserProfileContent({
         </button>
       )}
 
-      <div className="tab-header">
+      <div style={{ overflowX: 'hidden' }}>
+        <div className="tab-header">
         <span
-          className={activeTab === 'posts' ? 'tab-button active' : 'tab-button'}
+          className={optimisticTab === 'posts' ? 'tab-button active' : 'tab-button'}
           onClick={() => handleTabClick('posts')}
         >
           Posts
         </span>
         {isOwnProfile && (
           <span
-            className={activeTab === 'drafts' ? 'tab-button active' : 'tab-button'}
+            className={optimisticTab === 'drafts' ? 'tab-button active' : 'tab-button'}
             onClick={() => handleTabClick('drafts')}
           >
             Drafts
           </span>
         )}
         <span
-          className={activeTab === 'favorites' ? 'tab-button active' : 'tab-button'}
+          className={optimisticTab === 'favorites' ? 'tab-button active' : 'tab-button'}
           onClick={() => handleTabClick('favorites')}
         >
           Favorites
         </span>
         <span
-          className={activeTab === 'playlists' ? 'tab-button active' : 'tab-button'}
+          className={optimisticTab === 'playlists' ? 'tab-button active' : 'tab-button'}
           onClick={() => handleTabClick('playlists')}
         >
           Playlists
         </span>
       </div>
 
-      {activeTab === 'posts' && (
-        <>
-          <TabContent
-            loading={postsQuery.loading}
-            error={postsQuery.error}
-            posts={postsQuery.posts}
-            emptyMessage="This user has no public posts yet."
-            currentUserId={currentUserId}
-            extraError={followError}
-          />
+      <div
+        style={{
+          transform: `translateX(${swipeState.translateX}px)`,
+          transition: swipeState.isDragging ? 'none' : 'transform 0.3s ease-out',
+        }}
+      >
+        {/* Show loading state when optimistic tab doesn't match actual tab */}
+        {optimisticTab !== activeTab && (
+          <p className="text-centered">Loading…</p>
+        )}
+
+        {/* Only show content when optimistic tab matches actual tab */}
+        {optimisticTab === activeTab && activeTab === 'posts' && (
+          <>
+            <TabContent
+              loading={postsQuery.loading}
+              error={postsQuery.error}
+              posts={postsQuery.posts}
+              emptyMessage="This user has no public posts yet."
+              currentUserId={currentUserId}
+              extraError={followError}
+            />
           <div ref={sentinelRef} style={{ height: 1 }} data-testid="scroll-sentinel" />
           {postsQuery.hasMore && !postsQuery.loading && postsQuery.posts.length > 0 && (
             <p className="text-centered">Loading more…</p>
@@ -628,33 +682,33 @@ export function UserProfileContent({
           {!postsQuery.hasMore && !postsQuery.loading && postsQuery.posts.length > 0 && (
             <p className="text-centered">You reached the end!</p>
           )}
-        </>
-      )}
+          </>
+        )}
 
-      {activeTab === 'favorites' && (
-        <TabContent
-          loading={favoritesQuery.loading}
-          error={favoritesQuery.error}
-          posts={favoritesQuery.posts}
-          emptyMessage="This user has no public favorites yet."
-          currentUserId={currentUserId}
-          loadingMessage="Loading favorites…"
-        />
-      )}
+        {optimisticTab === activeTab && activeTab === 'favorites' && (
+          <TabContent
+            loading={favoritesQuery.loading}
+            error={favoritesQuery.error}
+            posts={favoritesQuery.posts}
+            emptyMessage="This user has no public favorites yet."
+            currentUserId={currentUserId}
+            loadingMessage="Loading favorites…"
+          />
+        )}
 
-      {activeTab === 'drafts' && isOwnProfile && (
-        <TabContent
-          loading={draftsQuery.loading}
-          error={draftsQuery.error}
-          posts={draftsQuery.posts}
-          emptyMessage="You have no drafts yet."
-          currentUserId={currentUserId}
-          loadingMessage="Loading drafts…"
-        />
-      )}
+        {optimisticTab === activeTab && activeTab === 'drafts' && isOwnProfile && (
+          <TabContent
+            loading={draftsQuery.loading}
+            error={draftsQuery.error}
+            posts={draftsQuery.posts}
+            emptyMessage="You have no drafts yet."
+            currentUserId={currentUserId}
+            loadingMessage="Loading drafts…"
+          />
+        )}
 
-      {activeTab === 'playlists' && (
-        <div className="playlists-section">
+        {optimisticTab === activeTab && activeTab === 'playlists' && (
+          <div className="playlists-section">
           {playlistsQuery.loading && <p className="text-centered">Loading playlists…</p>}
           {playlistsQuery.error && <p className="error-message">{playlistsQuery.error}</p>}
           {!playlistsQuery.loading &&
@@ -681,8 +735,10 @@ export function UserProfileContent({
                 ))}
               </ul>
             )}
-        </div>
-      )}
+          </div>
+        )}
+      </div>
+      </div>
     </section>
   );
 }

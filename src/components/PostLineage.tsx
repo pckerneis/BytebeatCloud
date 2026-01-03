@@ -171,7 +171,7 @@ export function PostLineage({ postId }: PostLineageProps) {
   const hasDescendants = descendants.length > 0;
 
   if (!hasAncestors && !hasDescendants) {
-    return <p className="secondary-text">No lineage yet.</p>;
+    return <p className="secondary-text text-centered">No lineage yet.</p>;
   }
 
   // Build the tree: ancestors → current post → descendants
@@ -206,7 +206,7 @@ export function PostLineage({ postId }: PostLineageProps) {
   const tree = buildTree();
 
   if (!tree) {
-    return <p className="secondary-text">No lineage yet.</p>;
+    return <p className="secondary-text text-centered">No lineage yet.</p>;
   }
 
   return (

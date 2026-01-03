@@ -24,6 +24,7 @@ import { AutocompleteTextarea } from './AutocompleteTextarea';
 import { convertMentionsToIds } from '../utils/mentions';
 import { formatRelativeTime } from '../utils/time';
 import { PlaylistCard } from './PlaylistCard';
+import { useSwipeGesture } from '../hooks/useSwipeGesture';
 
 interface Comment {
   id: string;
@@ -98,6 +99,33 @@ export function PostDetailView({
   const [highlightedCommentId, setHighlightedCommentId] = useState<string | null>(null);
   useRef<HTMLDivElement | null>(null);
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
+
+  const tabs = ['comments', 'playlists', 'lineage'] as const;
+  type TabType = typeof tabs[number];
+
+  // Handle swipe gestures to switch tabs
+  const handleSwipeLeft = () => {
+    const currentIndex = tabs.indexOf(activeTab);
+    if (currentIndex < tabs.length - 1) {
+      const nextTab = tabs[currentIndex + 1];
+      setActiveTab(nextTab as typeof activeTab);
+    }
+  };
+
+  const handleSwipeRight = () => {
+    const currentIndex = tabs.indexOf(activeTab);
+    if (currentIndex > 0) {
+      const prevTab = tabs[currentIndex - 1];
+      setActiveTab(prevTab as typeof activeTab);
+    }
+  };
+
+  const swipeState = useSwipeGesture({
+    onSwipeLeft: handleSwipeLeft,
+    onSwipeRight: handleSwipeRight,
+    threshold: 100,
+    enabled: true,
+  });
   const [playlistsLoading, setPlaylistsLoading] = useState(false);
   const [addToPlaylistOpen, setAddToPlaylistOpen] = useState(false);
   const [addToPlaylistPending, setAddToPlaylistPending] = useState(false);
@@ -876,7 +904,8 @@ export function PostDetailView({
               />
             )}
 
-            <div className="tab-header mt-30 mb-30">
+            <div style={{ overflowX: 'hidden' }}>
+              <div className="tab-header mt-30 mb-30">
               <span
                 className={`tab-button ${activeTab === 'comments' ? 'active' : ''}`}
                 onClick={() => setActiveTab('comments')}
@@ -898,7 +927,13 @@ export function PostDetailView({
             </div>
 
             {activeTab === 'comments' && (
-              <div id="comments" className="comments-section">
+              <div
+                style={{
+                  transform: `translateX(${swipeState.translateX}px)`,
+                  transition: swipeState.isDragging ? 'none' : 'transform 0.3s ease-out',
+                }}
+              >
+                <div id="comments" className="comments-section">
                 {commentsLoading && <p className="text-centered">Loading comments…</p>}
                 {!commentsLoading && comments.length === 0 && (
                   <p className="secondary-text text-centered">
@@ -1029,11 +1064,18 @@ export function PostDetailView({
                     <Link href="/login">Log in</Link> to leave a comment.
                   </p>
                 )}
+                </div>
               </div>
             )}
 
             {activeTab === 'playlists' && (
-              <div id="playlists" className="playlists-section">
+              <div
+                style={{
+                  transform: `translateX(${swipeState.translateX}px)`,
+                  transition: swipeState.isDragging ? 'none' : 'transform 0.3s ease-out',
+                }}
+              >
+                <div className="playlists-section">
                 {postPlaylistsLoading && <p className="text-centered">Loading playlists…</p>}
                 {!postPlaylistsLoading && postPlaylists.length === 0 && (
                   <p className="secondary-text text-centered">
@@ -1053,10 +1095,21 @@ export function PostDetailView({
                     ))}
                   </ul>
                 )}
+                </div>
               </div>
             )}
 
-            {activeTab === 'lineage' && <PostLineage postId={posts[0].id} />}
+            {activeTab === 'lineage' && (
+              <div
+                style={{
+                  transform: `translateX(${swipeState.translateX}px)`,
+                  transition: swipeState.isDragging ? 'none' : 'transform 0.3s ease-out',
+                }}
+              >
+                <PostLineage postId={posts[0].id} />
+              </div>
+            )}
+            </div>
           </>
         )}
       </section>
