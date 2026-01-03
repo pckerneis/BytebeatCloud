@@ -37,6 +37,19 @@ export function PublishPanel({
     setIsClient(true);
   }, []);
 
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    window.addEventListener('keydown', handleEscape);
+    return () => window.removeEventListener('keydown', handleEscape);
+  }, [isOpen, onClose]);
+
   if (!isClient || !isOpen) return null;
 
   return createPortal(
@@ -75,7 +88,7 @@ export function PublishPanel({
                 type="text"
                 value={title}
                 onChange={(e) => onTitleChange(e.target.value)}
-                placeholder="Enter a title for your post"
+                placeholder="Name your bytebeat expression"
                 className="border-bottom-accent-focus"
               />
             </label>
@@ -88,7 +101,7 @@ export function PublishPanel({
               <textarea
                 value={description}
                 onChange={(e) => onDescriptionChange(e.target.value)}
-                placeholder="Describe your bytebeat creation"
+                placeholder="Add an optional description"
                 rows={4}
                 className="border-bottom-accent-focus"
               />

@@ -44,7 +44,7 @@ function FocusHeader({ isLoggedIn, username }: { isLoggedIn: boolean, username?:
             content="Return to the standard view."
             placement="bottom"
           >
-            <button className="button secondary small ghost" onClick={handleExitFocusMode}>
+            <button className="button secondary small ghost" onClick={handleExitFocusMode} title='Exit focus mode (Ctrl+Shift+F)'>
               ⛶ Exit focus mode
             </button>
           </TooltipHint>

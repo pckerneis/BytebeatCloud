@@ -19,6 +19,7 @@ import {
 import { validateExpression } from '../../utils/expression-validator';
 import { usePublishPost } from '../../hooks/usePublishPost';
 import { useCurrentUserProfile } from '../../hooks/useCurrentUserProfile';
+import { useFocusModeShortcut } from '../../hooks/useFocusModeShortcut';
 
 const CREATE_DRAFT_STORAGE_KEY = 'bytebeat-cloud-create-draft-v1';
 
@@ -81,6 +82,7 @@ const page: NextPageWithLayout = function FocusCreatePage() {
   }, [stop, currentPost]);
 
   useCtrlSpacePlayShortcut(handlePlayClick);
+  useFocusModeShortcut();
 
   // Restore state from localStorage on mount (client-side only)
   useEffect(() => {
