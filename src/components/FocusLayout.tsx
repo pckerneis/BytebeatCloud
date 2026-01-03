@@ -114,7 +114,8 @@ function FocusFooter({
 }) {
   const expressionLength = expression.length;
   const isExpressionTooLong = expressionLength > EXPRESSION_MAX;
-  const canSubmit = Boolean(expression.trim()) && !validateExpression(expression.trim()).issues;
+  const validationResult = validateExpression(expression.trim());
+  const canSubmit = Boolean(expression.trim()) && validationResult.valid;
   const [shareLinkCopied, setShareLinkCopied] = useState(false);
 
   useEffect(() => {
