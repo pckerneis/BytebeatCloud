@@ -19,6 +19,7 @@ import { PostMetadataModel, LicenseOption, DEFAULT_LICENSE } from '../model/post
 import { convertMentionsToIds } from '../utils/mentions';
 import Link from 'next/link';
 import { useCurrentWeeklyChallenge } from '../hooks/useCurrentWeeklyChallenge';
+import { TooltipHint } from '../components/TooltipHint';
 
 const CREATE_DRAFT_STORAGE_KEY = 'bytebeat-cloud-create-draft-v1';
 
@@ -403,13 +404,20 @@ export default function CreatePage() {
 
         <form className="create-form" onSubmit={handleSubmit}>
           <div className="flex-row justify-content-end mb-8">
-            <button
-              type="button"
-              className="button secondary ghost small ml-auto"
-              onClick={handleEnterFocusMode}
+            <TooltipHint
+              className="ml-auto"
+              storageKey="enter-focus-mode"
+              content="Distraction-free editor. Your work is preserved."
+              placement="bottom"
             >
-              ⛶ Enter Focus Mode
-            </button>
+              <button
+                type="button"
+                className="button secondary ghost small ml-auto"
+                onClick={handleEnterFocusMode}
+              >
+                ⛶ Enter Focus Mode
+              </button>
+            </TooltipHint>
           </div>
           <PostEditorFormFields
             meta={meta}

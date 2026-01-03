@@ -16,6 +16,7 @@ import {
 } from '../model/expression';
 import { EXPRESSION_MAX } from '../constants';
 import { validateExpression } from '../utils/expression-validator';
+import { TooltipHint } from './TooltipHint';
 
 function FocusHeader() {
   const router = useRouter();
@@ -27,9 +28,17 @@ function FocusHeader() {
   return (
     <div className='focus-header px-12 py-8 flex-row align-items-center'>
       <h1>Create</h1>
-      <button className="button secondary small ghost ml-auto" onClick={handleExitFocusMode}>
-        ⛶ Exit focus mode
-      </button>
+
+      <TooltipHint
+        className="ml-auto"
+        storageKey="exit-focus-mode"
+        content="Return to the standard view."
+        placement="bottom"
+      >
+        <button className="button secondary small ghost ml-auto" onClick={handleExitFocusMode}>
+          ⛶ Exit focus mode
+        </button>
+      </TooltipHint>
     </div>
   )
 }
