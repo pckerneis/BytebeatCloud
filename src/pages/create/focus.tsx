@@ -3,6 +3,12 @@ import { useRouter } from 'next/router';
 import { useBytebeatPlayer } from '../../hooks/useBytebeatPlayer';
 import { usePlayerStore } from '../../hooks/usePlayerStore';
 import Head from 'next/head';
+import { useExpressionPlayer } from '../../hooks/useExpressionPlayer';
+import { useCtrlSpacePlayShortcut } from '../../hooks/useCtrlSpacePlayShortcut';
+import { LicenseOption, DEFAULT_LICENSE } from '../../model/postEditor';
+import { FocusLayout } from '../../components/FocusLayout';
+import { NextPageWithLayout } from '../_app';
+import { FocusExpressionEditor } from '../../components/FocusExpressionEditor';
 import {
   ModeOption,
   MAX_SAMPLE_RATE,
@@ -10,14 +16,19 @@ import {
   DEFAULT_SAMPLE_RATE,
 } from '../../model/expression';
 import { validateExpression } from '../../utils/expression-validator';
-import { useExpressionPlayer } from '../../hooks/useExpressionPlayer';
-import { useCtrlSpacePlayShortcut } from '../../hooks/useCtrlSpacePlayShortcut';
-import { LicenseOption, DEFAULT_LICENSE } from '../../model/postEditor';
-import { FocusLayout } from '../../components/FocusLayout';
-import { NextPageWithLayout } from '../_app';
-import { FocusExpressionEditor } from '../../components/FocusExpressionEditor';
 
 const CREATE_DRAFT_STORAGE_KEY = 'bytebeat-cloud-create-draft-v1';
+
+interface CreateDraftState {
+  title?: string;
+  description?: string;
+  expression?: string;
+  isDraft?: boolean;
+  mode?: ModeOption;
+  sampleRate?: number;
+  license?: LicenseOption;
+  liveUpdateEnabled?: boolean;
+}
 
 const page: NextPageWithLayout = function FocusCreatePage() {
   const router = useRouter();
@@ -33,8 +44,8 @@ const page: NextPageWithLayout = function FocusCreatePage() {
     enableVisualizer: false,
   });
   const { currentPost, setCurrentPostById } = usePlayerStore();
-
   const [liveUpdateEnabled, setLiveUpdateEnabled] = useState(true);
+  const [isStateLoaded, setIsStateLoaded] = useState(false);
 
   const {
     handlePlayClick: handlePlayClickBase,
@@ -64,6 +75,48 @@ const page: NextPageWithLayout = function FocusCreatePage() {
   }, [stop, currentPost]);
 
   useCtrlSpacePlayShortcut(handlePlayClick);
+
+  // Restore state from localStorage on mount (client-side only)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    
+    try {
+      const raw = localStorage.getItem(CREATE_DRAFT_STORAGE_KEY);
+      if (raw) {
+        const parsed: CreateDraftState = JSON.parse(raw);
+        if (typeof parsed.expression === 'string') setExpression(parsed.expression);
+        if (parsed.mode) setMode(parsed.mode);
+        if (parsed.sampleRate) setSampleRate(parsed.sampleRate);
+        if (typeof parsed.liveUpdateEnabled === 'boolean') setLiveUpdateEnabled(parsed.liveUpdateEnabled);
+      }
+    } catch (e) {
+      console.error('Failed to restore focus mode state:', e);
+    } finally {
+      setIsStateLoaded(true);
+    }
+  }, []);
+
+  // Save state to localStorage when it changes (client-side only)
+  useEffect(() => {
+    if (typeof window === 'undefined' || !isStateLoaded) return;
+    
+    try {
+      const raw = localStorage.getItem(CREATE_DRAFT_STORAGE_KEY);
+      const existing: CreateDraftState = raw ? JSON.parse(raw) : {};
+      
+      const updated: CreateDraftState = {
+        ...existing,
+        expression,
+        mode,
+        sampleRate,
+        liveUpdateEnabled,
+      };
+      
+      localStorage.setItem(CREATE_DRAFT_STORAGE_KEY, JSON.stringify(updated));
+    } catch (e) {
+      console.error('Failed to save focus mode state:', e);
+    }
+  }, [expression, mode, sampleRate, liveUpdateEnabled, isStateLoaded]);
 
   useEffect(() => {
     // Only apply live updates when no post is playing (editor's expression is playing)
@@ -211,6 +264,23 @@ const page: NextPageWithLayout = function FocusCreatePage() {
         <meta property="og:image:height" content="630" />
         <meta name="twitter:card" content="summary_large_image" />
       </Head>
+      {!isStateLoaded && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.8)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999,
+          color: 'white'
+        }}>
+          Loading...
+        </div>
+      )}
       <FocusLayout
         expression={expression}
         mode={mode}

@@ -2,9 +2,10 @@ interface VolumeButtonProps {
   masterGain: number;
   onMasterGainChange: (gain: number) => void;
   className?: string;
+  rightAligned?: boolean;
 }
 
-export function VolumeButton({ masterGain, onMasterGainChange, className = '' }: VolumeButtonProps) {
+export function VolumeButton({ masterGain, onMasterGainChange, className = '', rightAligned = false }: VolumeButtonProps) {
   return (
     <div className={`footer-volume ${className}`}>
       <button type="button" className="volume-button" aria-label="Master volume">
@@ -77,7 +78,7 @@ export function VolumeButton({ masterGain, onMasterGainChange, className = '' }:
           </svg>
         )}
       </button>
-      <div className="volume-slider-backdrop">
+      <div className="volume-slider-backdrop" style={{ left: rightAligned ? '-175%' : '50%' }}>
         <div className="volume-slider-container">
           <input
             type="range"

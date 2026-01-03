@@ -22,6 +22,17 @@ import { useCurrentWeeklyChallenge } from '../hooks/useCurrentWeeklyChallenge';
 
 const CREATE_DRAFT_STORAGE_KEY = 'bytebeat-cloud-create-draft-v1';
 
+interface CreateDraftState {
+  title?: string;
+  description?: string;
+  expression?: string;
+  isDraft?: boolean;
+  mode?: ModeOption;
+  sampleRate?: number;
+  license?: LicenseOption;
+  liveUpdateEnabled?: boolean;
+}
+
 export default function CreatePage() {
   const router = useRouter();
   const [title, setTitle] = useState('');
@@ -161,15 +172,7 @@ export default function CreatePage() {
         const raw = window.localStorage.getItem(CREATE_DRAFT_STORAGE_KEY);
         if (!raw) return;
 
-        const parsed = JSON.parse(raw) as {
-          title?: string;
-          description?: string;
-          expression?: string;
-          isDraft?: boolean;
-          mode?: ModeOption;
-          sampleRate?: number;
-          license?: LicenseOption;
-        } | null;
+        const parsed = JSON.parse(raw) as CreateDraftState | null;
 
         if (!parsed) return;
 
@@ -181,6 +184,7 @@ export default function CreatePage() {
         if (parsed.mode) setMode(parsed.mode);
         if (parsed.sampleRate) setSampleRate(parsed.sampleRate);
         if (parsed.license) setLicense(parsed.license);
+        if (typeof parsed.liveUpdateEnabled === 'boolean') setLiveUpdateEnabled(parsed.liveUpdateEnabled);
       } catch (e) {
         console.error(e);
       }
@@ -226,12 +230,13 @@ export default function CreatePage() {
           mode,
           sampleRate,
           license,
+          liveUpdateEnabled,
         }),
       );
     } catch (e) {
       console.error(e);
     }
-  }, [title, description, expression, isDraft, mode, sampleRate, license, draftLoaded]);
+  }, [title, description, expression, isDraft, mode, sampleRate, license, liveUpdateEnabled, draftLoaded]);
 
   const savePost = async (asDraft: boolean) => {
     const trimmedTitle = title.trim();
@@ -299,6 +304,11 @@ export default function CreatePage() {
 
   const handlePublish = () => {
     void savePost(false);
+  };
+
+  const handleEnterFocusMode = () => {
+    // Navigate to focus mode - state is already in CREATE_DRAFT_STORAGE_KEY
+    void router.push('/create/focus');
   };
 
   const meta: PostMetadataModel = {
@@ -392,6 +402,15 @@ export default function CreatePage() {
         )}
 
         <form className="create-form" onSubmit={handleSubmit}>
+          <div className="flex-row justify-content-end mb-8">
+            <button
+              type="button"
+              className="button secondary ghost small ml-auto"
+              onClick={handleEnterFocusMode}
+            >
+              ⛶ Enter Focus Mode
+            </button>
+          </div>
           <PostEditorFormFields
             meta={meta}
             onMetaChange={handleMetaChange}
