@@ -1,17 +1,22 @@
 import { useEffect, useState } from 'react';
 import { DEFAULT_THEME_ID, type ThemeId, UI_THEMES } from '../theme/themes';
 
+function getInitialTheme(): ThemeId {
+  if (typeof window === 'undefined') {
+    return DEFAULT_THEME_ID;
+  }
+
+  const stored = localStorage.getItem('ui-theme') as ThemeId | null;
+
+  if (stored && UI_THEMES.some((t) => t.id === stored)) {
+    return stored;
+  }
+
+  return DEFAULT_THEME_ID;
+}
+
 export function useTheme() {
-  const [theme, setTheme] = useState<ThemeId>(DEFAULT_THEME_ID);
-
-  useEffect(() => {
-    const stored = localStorage.getItem('ui-theme') as ThemeId | null;
-
-    if (stored && UI_THEMES.some((t) => t.id === stored)) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setTheme(stored);
-    }
-  }, []);
+  const [theme, setTheme] = useState<ThemeId>(getInitialTheme);
 
   useEffect(() => {
     if (theme) {
