@@ -339,17 +339,11 @@ export default function ForkPostPage() {
     description !== originalDescription;
 
   const handleBack = () => {
-    if (typeof window !== 'undefined' && window.history.length > 1) {
-      router.back();
-      return;
-    }
-
     if (id && typeof id === 'string') {
       void router.push(`/post/${id}`);
-      return;
+    } else {
+      void router.push('/');
     }
-
-    void router.push('/');
   };
 
   if (loading) {

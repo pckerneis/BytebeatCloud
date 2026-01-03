@@ -292,10 +292,6 @@ export default function EditPostPage() {
     void savePost(true);
   };
 
-  const handlePublish = () => {
-    void savePost(false);
-  };
-
   const handleDiscardChanges = async () => {
     if (id && typeof id === 'string') {
       // Clear localStorage
@@ -359,17 +355,11 @@ export default function EditPostPage() {
   };
 
   const handleBack = () => {
-    if (typeof window !== 'undefined' && window.history.length > 1) {
-      router.back();
-      return;
-    }
-
     if (id && typeof id === 'string') {
       void router.push(`/post/${id}`);
-      return;
+    } else {
+      void router.push('/');
     }
-
-    void router.push('/');
   };
 
   if (authLoading || loading) {

@@ -49,6 +49,7 @@ export default function OverflowMenu({ children, disabled = false }: OverflowMen
         right = 4;
       }
 
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setPosition({ top, right });
     }
   }, [isOpen]);
