@@ -345,7 +345,25 @@ export default function CreatePage() {
         <meta name="twitter:card" content="summary_large_image" />
       </Head>
       <section>
-        <h2>Create</h2>
+        <div className="flex-row align-items-center">
+          <h2>Create</h2>
+          <div className="ml-auto">
+            <TooltipHint
+              storageKey="enter-focus-mode-fork"
+              content="Distraction-free editor. Your work is preserved."
+              placement="bottom"
+            >
+              <button
+                type="button"
+                className="button secondary ghost small"
+                onClick={() => void router.push(`/create/focus`)}
+                title="Enter focus mode (Ctrl+Shift+F)"
+              >
+                ⛶ Enter Focus Mode
+              </button>
+            </TooltipHint>
+          </div>
+        </div>
         {!user && (
           <div className="info-panel">
             <span>
@@ -384,23 +402,6 @@ export default function CreatePage() {
         )}
 
         <form className="create-form" onSubmit={handleSubmit}>
-          <div className="flex-row justify-content-end mb-8">
-            <TooltipHint
-              className="ml-auto"
-              storageKey="enter-focus-mode"
-              content="Distraction-free editor. Your work is preserved."
-              placement="bottom"
-            >
-              <button
-                type="button"
-                className="button secondary ghost small ml-auto"
-                onClick={handleEnterFocusMode}
-                title="Enter focus mode (Ctrl+Shift+F)"
-              >
-                ⛶ Enter Focus Mode
-              </button>
-            </TooltipHint>
-          </div>
           <PostEditorFormFields
             meta={meta}
             onMetaChange={handleMetaChange}

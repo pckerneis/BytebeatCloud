@@ -377,7 +377,25 @@ export default function ForkPostPage() {
         <button type="button" className="button ghost" onClick={handleBack}>
           ← Back
         </button>
-        <h2>Fork post</h2>
+        <div className="flex-row align-items-center">
+          <h2>Fork post</h2>
+          <div className="ml-auto">
+            <TooltipHint
+              storageKey="enter-focus-mode-fork"
+              content="Distraction-free editor. Your work is preserved."
+              placement="bottom"
+            >
+              <button
+                type="button"
+                className="button secondary ghost small"
+                onClick={() => void router.push(`/fork/${id}/focus`)}
+                title="Enter focus mode (Ctrl+Shift+F)"
+              >
+                ⛶ Enter Focus Mode
+              </button>
+            </TooltipHint>
+          </div>
+        </div>
         {!user && (
           <div className="info-panel">
             <span>
@@ -393,23 +411,6 @@ export default function ForkPostPage() {
         )}
         {!originalAuthor && <p>Fork from unknown post</p>}
         <form className="create-form" onSubmit={handleSubmit}>
-          <div className="flex-row justify-content-end mb-8">
-            <TooltipHint
-              className="ml-auto"
-              storageKey="enter-focus-mode-fork"
-              content="Distraction-free editor. Your work is preserved."
-              placement="bottom"
-            >
-              <button
-                type="button"
-                className="button secondary ghost small ml-auto"
-                onClick={() => void router.push(`/fork/${id}/focus`)}
-                title="Enter focus mode (Ctrl+Shift+F)"
-              >
-                ⛶ Enter Focus Mode
-              </button>
-            </TooltipHint>
-          </div>
           <PostEditorFormFields
             meta={meta}
             onMetaChange={handleMetaChange}
