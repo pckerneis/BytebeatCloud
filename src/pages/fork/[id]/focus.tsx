@@ -112,6 +112,7 @@ const page: NextPageWithLayout = function ForkPostFocusPage() {
         return;
       }
 
+      setTitle(data.title || '');
       setExpression(data.expression || '');
       setMode((data.mode as ModeOption) || ModeOption.Float);
       setSampleRate(data.sample_rate || DEFAULT_SAMPLE_RATE);
@@ -158,7 +159,7 @@ const page: NextPageWithLayout = function ForkPostFocusPage() {
     };
 
     void loadPost();
-  }, [id]);
+  }, [id, isShareAlike]);
 
   const savePost = async (asDraft: boolean) => {
     if (!id || typeof id !== 'string') return;
@@ -195,7 +196,8 @@ const page: NextPageWithLayout = function ForkPostFocusPage() {
           sample_rate: sampleRate,
           mode,
           license,
-          forked_from: id,
+          fork_of_post_id: id,
+          is_fork: true,
         })
         .select('id')
         .single();

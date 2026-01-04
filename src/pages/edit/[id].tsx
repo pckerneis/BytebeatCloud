@@ -470,7 +470,7 @@ export default function EditPostPage() {
                     {saveStatus === 'saving' && isDraft
                       ? 'Saving…'
                       : !isDraft
-                        ? 'Unpublish'
+                        ? 'Unpublish…'
                         : 'Save as draft'}
                   </button>
                   <button
@@ -479,7 +479,7 @@ export default function EditPostPage() {
                     onClick={() => setShowDiscardConfirm(true)}
                     disabled={saveStatus === 'saving' || !hasUnsavedChanges}
                   >
-                    Discard changes
+                    Discard changes…
                   </button>
                   <button
                     type="button"
@@ -487,7 +487,7 @@ export default function EditPostPage() {
                     onClick={() => setShowDeleteConfirm(true)}
                     disabled={saveStatus === 'saving'}
                   >
-                    Delete
+                    Delete…
                   </button>
                 </OverflowMenu>
 
