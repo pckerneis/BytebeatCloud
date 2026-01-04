@@ -16,7 +16,6 @@ import {
   MIN_SAMPLE_RATE,
   DEFAULT_SAMPLE_RATE,
 } from '../../model/expression';
-import { validateExpression } from '../../utils/expression-validator';
 import { usePublishPost } from '../../hooks/usePublishPost';
 import { useCurrentUserProfile } from '../../hooks/useCurrentUserProfile';
 import { useFocusModeShortcut } from '../../hooks/useFocusModeShortcut';
@@ -35,8 +34,6 @@ interface CreateDraftState {
 }
 
 const page: NextPageWithLayout = function FocusCreatePage() {
-  const router = useRouter();
-  const { username, user } = useCurrentUserProfile();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [expression, setExpression] = useState('');
@@ -47,14 +44,18 @@ const page: NextPageWithLayout = function FocusCreatePage() {
   const [draftLoaded, setDraftLoaded] = useState(false);
   const [isStateLoaded, setIsStateLoaded] = useState(false);
   const [isPublishPanelOpen, setIsPublishPanelOpen] = useState(false);
-  const { publishPost, saveStatus, saveError } = usePublishPost();
-  const { isPlaying, toggle, stop, updateExpression } = useBytebeatPlayer({
-    enableVisualizer: false,
-  });
-  const { currentPost, setCurrentPostById } = usePlayerStore();
   const [liveUpdateEnabled, setLiveUpdateEnabled] = useState(true);
 
-  const { handlePlayClick: handlePlayClickBase } = useExpressionPlayer({
+  const { username, user } = useCurrentUserProfile();
+  const router = useRouter();
+  const { currentPost, setCurrentPostById } = usePlayerStore();
+  useFocusModeShortcut();
+  const { publishPost, saveStatus, saveError } = usePublishPost();
+  const { isPlaying, toggle, stop, updateExpression, lastError } = useBytebeatPlayer({
+    enableVisualizer: false,
+  });
+
+  const { handlePlayClick: handlePlayClickBase, validationIssue, handleExpressionChange } = useExpressionPlayer({
     expression,
     setExpression,
     mode,
@@ -70,17 +71,16 @@ const page: NextPageWithLayout = function FocusCreatePage() {
 
   const handlePlayClick = () => handlePlayClickBase(currentPost);
 
+  useCtrlSpacePlayShortcut(handlePlayClick);
+
+  // Stop when leaving page
   useEffect(() => {
     return () => {
-      // Only stop if the editor's preview is playing (no post selected)
       if (!currentPost) {
         void stop();
       }
     };
   }, [stop, currentPost]);
-
-  useCtrlSpacePlayShortcut(handlePlayClick);
-  useFocusModeShortcut();
 
   // Restore state from localStorage on mount (client-side only)
   useEffect(() => {
@@ -130,19 +130,6 @@ const page: NextPageWithLayout = function FocusCreatePage() {
       console.error('Failed to save focus mode state:', e);
     }
   }, [title, description, expression, mode, sampleRate, license, liveUpdateEnabled, isStateLoaded]);
-
-  useEffect(() => {
-    // Only apply live updates when no post is playing (editor's expression is playing)
-    if (!liveUpdateEnabled || !isPlaying || currentPost) return;
-
-    const trimmed = expression.trim();
-    if (!trimmed) return;
-
-    const result = validateExpression(trimmed);
-    if (!result.valid) return;
-
-    void updateExpression(trimmed, mode, sampleRate);
-  }, [mode, sampleRate, liveUpdateEnabled, isPlaying, expression, updateExpression, currentPost]);
 
   // On first load, prefill from URL (if present) or from localStorage draft.
   useEffect(() => {
@@ -216,8 +203,7 @@ const page: NextPageWithLayout = function FocusCreatePage() {
     }
   }, [router.isReady, router.query]);
 
-  // Persist current editor state to localStorage so unauthenticated users
-  // don't lose their work.
+  // Persist current editor state to localStorage
   useEffect(() => {
     if (typeof window === 'undefined') return;
     if (!draftLoaded) return;
@@ -239,26 +225,6 @@ const page: NextPageWithLayout = function FocusCreatePage() {
       console.error(e);
     }
   }, [title, description, expression, isDraft, mode, sampleRate, license, draftLoaded]);
-
-  const onExpressionChange = (value: string) => {
-    setExpression(value);
-  };
-
-  const handleModeChange = (newMode: ModeOption) => {
-    setMode(newMode);
-  };
-
-  const handleSampleRateChange = (newRate: number) => {
-    setSampleRate(newRate);
-  };
-
-  const handleLiveUpdateChange = (enabled: boolean) => {
-    setLiveUpdateEnabled(enabled);
-  };
-
-  const handlePublish = () => {
-    setIsPublishPanelOpen(true);
-  };
 
   const handlePublishSubmit = async () => {
     const postId = await publishPost({
@@ -320,22 +286,23 @@ const page: NextPageWithLayout = function FocusCreatePage() {
       <FocusLayout
         expression={expression}
         mode={mode}
-        onModeChange={handleModeChange}
+        onModeChange={setMode}
         sampleRate={sampleRate}
-        onSampleRateChange={handleSampleRateChange}
+        onSampleRateChange={setSampleRate}
         isPlaying={isPlaying}
         onPlayClick={handlePlayClick}
         liveUpdateEnabled={liveUpdateEnabled}
-        onLiveUpdateChange={handleLiveUpdateChange}
-        onPublish={handlePublish}
+        onLiveUpdateChange={setLiveUpdateEnabled}
+        onPublish={() => setIsPublishPanelOpen(true)}
         isLoggedIn={!!user}
         username={username}
         title={title}
         onTitleChange={setTitle}
         onExitFocusMode={() => void router.push('/create')}
+        runtimeError={validationIssue?.message ?? lastError}
       >
         <section style={{ width: '100%', height: '100%', overflow: 'auto' }}>
-          <FocusExpressionEditor value={expression} onChange={onExpressionChange} />
+          <FocusExpressionEditor value={expression} onChange={handleExpressionChange} />
         </section>
       </FocusLayout>
 

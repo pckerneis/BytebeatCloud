@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { useBytebeatPlayer } from '../../../hooks/useBytebeatPlayer';
 import { usePlayerStore } from '../../../hooks/usePlayerStore';
@@ -19,10 +19,6 @@ import { useCurrentUserProfile } from '../../../hooks/useCurrentUserProfile';
 import { useFocusModeShortcut } from '../../../hooks/useFocusModeShortcut';
 
 const page: NextPageWithLayout = function EditPostFocusPage() {
-  const router = useRouter();
-  const { id } = router.query;
-  const { username, user } = useCurrentUserProfile();
-
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
   const [title, setTitle] = useState('');
@@ -33,23 +29,20 @@ const page: NextPageWithLayout = function EditPostFocusPage() {
   const [license, setLicense] = useState<LicenseOption>(DEFAULT_LICENSE);
   const [publishedAt, setPublishedAt] = useState<string | null>(null);
   const [isPublishPanelOpen, setIsPublishPanelOpen] = useState(false);
-
-  const { isPlaying, toggle, stop, updateExpression } = useBytebeatPlayer({
-    enableVisualizer: false,
-  });
-  const { currentPost, setCurrentPostById } = usePlayerStore();
-
-  const { loading: authLoading } = useSupabaseAuth();
-
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'success'>('idle');
   const [saveError, setSaveError] = useState('');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showUnpublishConfirm, setShowUnpublishConfirm] = useState(false);
   const [liveUpdateEnabled, setLiveUpdateEnabled] = useState(true);
 
-  const lastLoadedPostIdRef = useRef<string | null>(null);
-  const isDirtyRef = useRef(false);
-  const isApplyingServerStateRef = useRef(false);
+  const router = useRouter();
+  const { id } = router.query;
+  const { username, user } = useCurrentUserProfile();
+  const { isPlaying, toggle, stop, updateExpression, lastError } = useBytebeatPlayer({
+    enableVisualizer: false,
+  });
+  const { currentPost, setCurrentPostById } = usePlayerStore();
+  const { loading: authLoading } = useSupabaseAuth();
 
   const { handleExpressionChange, handlePlayClick: handlePlayClickBase } = useExpressionPlayer({
     expression,
@@ -67,18 +60,9 @@ const page: NextPageWithLayout = function EditPostFocusPage() {
 
   const handlePlayClick = () => handlePlayClickBase(currentPost);
 
-  const onExpressionChange = (value: string) => {
-    if (!isApplyingServerStateRef.current) {
-      isDirtyRef.current = true;
-    }
-    handleExpressionChange(value);
-  };
-
   // Save to localStorage whenever state changes
   useEffect(() => {
     if (!id || typeof id !== 'string') return;
-    if (isApplyingServerStateRef.current) return;
-    if (!isDirtyRef.current) return;
 
     const draftKey = `edit-draft-${id}`;
     const draft = {
@@ -124,8 +108,6 @@ const page: NextPageWithLayout = function EditPostFocusPage() {
       return;
     }
 
-    if (lastLoadedPostIdRef.current === id) return;
-
     const loadPost = async () => {
       setLoading(true);
       setLoadError('');
@@ -142,8 +124,6 @@ const page: NextPageWithLayout = function EditPostFocusPage() {
         setLoading(false);
         return;
       }
-
-      isApplyingServerStateRef.current = true;
 
       setTitle(data.title || '');
       setExpression(data.expression || '');
@@ -177,7 +157,6 @@ const page: NextPageWithLayout = function EditPostFocusPage() {
             setMode(draft.mode || ModeOption.Float);
             setSampleRate(draft.sampleRate || DEFAULT_SAMPLE_RATE);
             setLicense(draft.license || DEFAULT_LICENSE);
-            isDirtyRef.current = true;
           } else {
             // Clean up old draft
             localStorage.removeItem(draftKey);
@@ -187,11 +166,6 @@ const page: NextPageWithLayout = function EditPostFocusPage() {
         console.error('Failed to load draft from localStorage:', error);
       }
 
-      isApplyingServerStateRef.current = false;
-      if (!localStorage.getItem(draftKey)) {
-        isDirtyRef.current = false;
-      }
-      lastLoadedPostIdRef.current = id;
       setLoading(false);
     };
 
@@ -253,7 +227,6 @@ const page: NextPageWithLayout = function EditPostFocusPage() {
     }
 
     setSaveStatus('success');
-    isDirtyRef.current = false;
 
     // Clear localStorage draft on successful save
     if (id && typeof id === 'string') {
@@ -309,28 +282,6 @@ const page: NextPageWithLayout = function EditPostFocusPage() {
     await router.push('/profile');
   };
 
-  const handleModeChange = (newMode: ModeOption) => {
-    if (!isApplyingServerStateRef.current) {
-      isDirtyRef.current = true;
-    }
-    setMode(newMode);
-  };
-
-  const handleSampleRateChange = (newRate: number) => {
-    if (!isApplyingServerStateRef.current) {
-      isDirtyRef.current = true;
-    }
-    setSampleRate(newRate);
-  };
-
-  const handleLiveUpdateChange = (enabled: boolean) => {
-    setLiveUpdateEnabled(enabled);
-  };
-
-  const handlePublish = () => {
-    setIsPublishPanelOpen(true);
-  };
-
   const canPublish = expression.trim().length > 0 && saveStatus !== 'saving';
 
   if (authLoading || loading) {
@@ -381,22 +332,23 @@ const page: NextPageWithLayout = function EditPostFocusPage() {
       <FocusLayout
         expression={expression}
         mode={mode}
-        onModeChange={handleModeChange}
+        onModeChange={setMode}
         sampleRate={sampleRate}
-        onSampleRateChange={handleSampleRateChange}
+        onSampleRateChange={setSampleRate}
         isPlaying={isPlaying}
         onPlayClick={handlePlayClick}
         liveUpdateEnabled={liveUpdateEnabled}
-        onLiveUpdateChange={handleLiveUpdateChange}
-        onPublish={handlePublish}
+        onLiveUpdateChange={setLiveUpdateEnabled}
+        onPublish={() => setIsPublishPanelOpen(true)}
         isLoggedIn={!!user}
         username={username}
         title={title}
         onTitleChange={setTitle}
         onExitFocusMode={() => void router.push(`/edit/${id}`)}
+        runtimeError={lastError}
       >
         <section style={{ width: '100%', height: '100%', overflow: 'auto' }}>
-          <FocusExpressionEditor value={expression} onChange={onExpressionChange} />
+          <FocusExpressionEditor value={expression} onChange={handleExpressionChange} />
         </section>
       </FocusLayout>
 

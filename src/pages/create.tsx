@@ -36,7 +36,6 @@ interface CreateDraftState {
 }
 
 export default function CreatePage() {
-  const router = useRouter();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [expression, setExpression] = useState('');
@@ -45,17 +44,18 @@ export default function CreatePage() {
   const [sampleRate, setSampleRate] = useState<number>(DEFAULT_SAMPLE_RATE);
   const [license, setLicense] = useState<LicenseOption>(DEFAULT_LICENSE);
   const [draftLoaded, setDraftLoaded] = useState(false);
+  const [liveUpdateEnabled, setLiveUpdateEnabled] = useState(true);
+  const [hasWeeklySubmission, setHasWeeklySubmission] = useState(false);
+
+  const router = useRouter();
   const { isPlaying, toggle, lastError, stop, updateExpression } = useBytebeatPlayer({
     enableVisualizer: false,
   });
   const { currentPost, setCurrentPostById } = usePlayerStore();
-
   const { user } = useSupabaseAuth();
-
   const { publishPost, saveStatus, saveError } = usePublishPost();
-  const [liveUpdateEnabled, setLiveUpdateEnabled] = useState(true);
   const { weekNumber: currentWeekNumber, theme: currentTheme } = useCurrentWeeklyChallenge();
-  const [hasWeeklySubmission, setHasWeeklySubmission] = useState(false);
+  useFocusModeShortcut();
 
   const {
     validationIssue,
@@ -77,17 +77,16 @@ export default function CreatePage() {
 
   const handlePlayClick = () => handlePlayClickBase(currentPost);
 
+  useCtrlSpacePlayShortcut(handlePlayClick);
+
+  // Stop when leaving page
   useEffect(() => {
     return () => {
-      // Only stop if the editor's preview is playing (no post selected)
       if (!currentPost) {
         void stop();
       }
     };
   }, [stop, currentPost]);
-
-  useCtrlSpacePlayShortcut(handlePlayClick);
-  useFocusModeShortcut();
 
   // Check if user already has a submission for current week
   useEffect(() => {
@@ -115,19 +114,6 @@ export default function CreatePage() {
 
     void checkWeeklySubmission();
   }, [user, currentWeekNumber]);
-
-  useEffect(() => {
-    // Only apply live updates when no post is playing (editor's expression is playing)
-    if (!liveUpdateEnabled || !isPlaying || currentPost) return;
-
-    const trimmed = expression.trim();
-    if (!trimmed) return;
-
-    const result = validateExpression(trimmed);
-    if (!result.valid) return;
-
-    void updateExpression(trimmed, mode, sampleRate);
-  }, [mode, sampleRate, liveUpdateEnabled, isPlaying, expression, updateExpression, currentPost]);
 
   // On first load, prefill from URL (if present) or from localStorage draft.
   useEffect(() => {
@@ -195,6 +181,7 @@ export default function CreatePage() {
     }
   }, [router.isReady, router.query]);
 
+  // If URL has weekly param, prefill description
   useEffect(() => {
     if (!router.isReady) return;
     if (!draftLoaded) return;
@@ -215,8 +202,7 @@ export default function CreatePage() {
     }
   }, [router.isReady, router.query, draftLoaded, description, user, currentWeekNumber]);
 
-  // Persist current editor state to localStorage so unauthenticated users
-  // don't lose their work.
+  // Persist current editor state to localStorage
   useEffect(() => {
     if (typeof window === 'undefined') return;
     if (!draftLoaded) return;
