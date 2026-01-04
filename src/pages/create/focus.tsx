@@ -1,252 +1,19 @@
-import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
-import { useBytebeatPlayer } from '../../hooks/useBytebeatPlayer';
-import { usePlayerStore } from '../../hooks/usePlayerStore';
 import Head from 'next/head';
-import { useExpressionPlayer } from '../../hooks/useExpressionPlayer';
-import { useCtrlSpacePlayShortcut } from '../../hooks/useCtrlSpacePlayShortcut';
-import { LicenseOption, DEFAULT_LICENSE } from '../../model/postEditor';
 import { FocusLayout } from '../../components/FocusLayout';
 import { NextPageWithLayout } from '../_app';
 import { FocusExpressionEditor } from '../../components/FocusExpressionEditor';
 import { PublishPanel } from '../../components/PublishPanel';
-import {
-  ModeOption,
-  MAX_SAMPLE_RATE,
-  MIN_SAMPLE_RATE,
-  DEFAULT_SAMPLE_RATE,
-} from '../../model/expression';
-import { usePublishPost } from '../../hooks/usePublishPost';
-import { useCurrentUserProfile } from '../../hooks/useCurrentUserProfile';
-import { useFocusModeShortcut } from '../../hooks/useFocusModeShortcut';
-
-const CREATE_DRAFT_STORAGE_KEY = 'bytebeat-cloud-create-draft-v1';
-
-interface CreateDraftState {
-  title?: string;
-  description?: string;
-  expression?: string;
-  isDraft?: boolean;
-  mode?: ModeOption;
-  sampleRate?: number;
-  license?: LicenseOption;
-  liveUpdateEnabled?: boolean;
-}
+import { ModeOption } from '../../model/expression';
+import { usePostEditor } from '../../hooks/usePostEditor';
 
 const page: NextPageWithLayout = function FocusCreatePage() {
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [expression, setExpression] = useState('');
-  const [isDraft, setIsDraft] = useState(false);
-  const [mode, setMode] = useState<ModeOption>(ModeOption.Uint8);
-  const [sampleRate, setSampleRate] = useState<number>(DEFAULT_SAMPLE_RATE);
-  const [license, setLicense] = useState<LicenseOption>(DEFAULT_LICENSE);
-  const [draftLoaded, setDraftLoaded] = useState(false);
-  const [isStateLoaded, setIsStateLoaded] = useState(false);
-  const [isPublishPanelOpen, setIsPublishPanelOpen] = useState(false);
-  const [liveUpdateEnabled, setLiveUpdateEnabled] = useState(true);
-
-  const { username, user } = useCurrentUserProfile();
   const router = useRouter();
-  const { currentPost, setCurrentPostById } = usePlayerStore();
-  useFocusModeShortcut();
-  const { publishPost, saveStatus, saveError } = usePublishPost();
-  const { isPlaying, toggle, stop, updateExpression, lastError } = useBytebeatPlayer({
-    enableVisualizer: false,
-  });
-
-  const { handlePlayClick: handlePlayClickBase, validationIssue, handleExpressionChange } = useExpressionPlayer({
-    expression,
-    setExpression,
-    mode,
-    sampleRateValue: sampleRate,
-    toggle,
-    setCurrentPostById,
+  const editor = usePostEditor({
+    mode: 'create',
+    initialMode: ModeOption.Uint8,
     loopPreview: true,
-    isPlaying,
-    liveUpdateEnabled,
-    updateExpression,
-    currentPost,
   });
-
-  const handlePlayClick = () => handlePlayClickBase(currentPost);
-
-  useCtrlSpacePlayShortcut(handlePlayClick);
-
-  // Stop when leaving page
-  useEffect(() => {
-    return () => {
-      if (!currentPost) {
-        void stop();
-      }
-    };
-  }, [stop, currentPost]);
-
-  // Restore state from localStorage on mount (client-side only)
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-
-    try {
-      const raw = localStorage.getItem(CREATE_DRAFT_STORAGE_KEY);
-      if (raw) {
-        const parsed: CreateDraftState = JSON.parse(raw);
-        if (typeof parsed.title === 'string') setTitle(parsed.title);
-        if (typeof parsed.description === 'string') setDescription(parsed.description);
-        if (typeof parsed.expression === 'string') setExpression(parsed.expression);
-        if (parsed.mode) setMode(parsed.mode);
-        if (parsed.sampleRate) setSampleRate(parsed.sampleRate);
-        if (parsed.license) setLicense(parsed.license);
-        if (typeof parsed.liveUpdateEnabled === 'boolean')
-          setLiveUpdateEnabled(parsed.liveUpdateEnabled);
-      }
-    } catch (e) {
-      console.error('Failed to restore focus mode state:', e);
-    } finally {
-      setIsStateLoaded(true);
-    }
-  }, []);
-
-  // Save state to localStorage when it changes (client-side only)
-  useEffect(() => {
-    if (typeof window === 'undefined' || !isStateLoaded) return;
-
-    try {
-      const raw = localStorage.getItem(CREATE_DRAFT_STORAGE_KEY);
-      const existing: CreateDraftState = raw ? JSON.parse(raw) : {};
-
-      const updated: CreateDraftState = {
-        ...existing,
-        title,
-        description,
-        expression,
-        mode,
-        sampleRate,
-        license,
-        liveUpdateEnabled,
-      };
-
-      localStorage.setItem(CREATE_DRAFT_STORAGE_KEY, JSON.stringify(updated));
-    } catch (e) {
-      console.error('Failed to save focus mode state:', e);
-    }
-  }, [title, description, expression, mode, sampleRate, license, liveUpdateEnabled, isStateLoaded]);
-
-  // On first load, prefill from URL (if present) or from localStorage draft.
-  useEffect(() => {
-    if (!router.isReady) return;
-
-    if (typeof window === 'undefined') return;
-
-    try {
-      const { q } = router.query;
-      const qStr = typeof q === 'string' ? q : undefined;
-
-      if (qStr) {
-        try {
-          const decoded = atob(qStr);
-          const parsed = JSON.parse(decoded) as {
-            title?: string;
-            expr?: string;
-            mode?: ModeOption;
-            sr?: number;
-          } | null;
-
-          if (parsed && typeof parsed.expr === 'string') {
-            if (typeof parsed.title === 'string') {
-              setTitle(parsed.title);
-            }
-            setExpression(parsed.expr);
-
-            if (parsed.mode) {
-              setMode(parsed.mode);
-            }
-
-            if (parsed.sr && !Number.isNaN(parsed.sr)) {
-              setSampleRate(Math.min(Math.max(MIN_SAMPLE_RATE, parsed.sr), MAX_SAMPLE_RATE));
-            }
-            return;
-          }
-        } catch {
-          // ignore malformed q param
-        }
-      }
-
-      try {
-        const raw = window.localStorage.getItem(CREATE_DRAFT_STORAGE_KEY);
-        if (!raw) return;
-
-        const parsed = JSON.parse(raw) as {
-          title?: string;
-          description?: string;
-          expression?: string;
-          isDraft?: boolean;
-          mode?: ModeOption;
-          sampleRate?: number;
-          license?: LicenseOption;
-        } | null;
-
-        if (!parsed) return;
-
-        if (typeof parsed.title === 'string') setTitle(parsed.title);
-        if (typeof parsed.description === 'string') setDescription(parsed.description);
-        if (typeof parsed.expression === 'string') setExpression(parsed.expression);
-        if (typeof parsed.isDraft === 'boolean') setIsDraft(parsed.isDraft);
-
-        if (parsed.mode) setMode(parsed.mode);
-        if (parsed.sampleRate) setSampleRate(parsed.sampleRate);
-        if (parsed.license) setLicense(parsed.license);
-      } catch (e) {
-        console.error(e);
-      }
-    } finally {
-      setDraftLoaded(true);
-    }
-  }, [router.isReady, router.query]);
-
-  // Persist current editor state to localStorage
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    if (!draftLoaded) return;
-
-    try {
-      window.localStorage.setItem(
-        CREATE_DRAFT_STORAGE_KEY,
-        JSON.stringify({
-          title,
-          description,
-          expression,
-          isDraft,
-          mode,
-          sampleRate,
-          license,
-        }),
-      );
-    } catch (e) {
-      console.error(e);
-    }
-  }, [title, description, expression, isDraft, mode, sampleRate, license, draftLoaded]);
-
-  const handlePublishSubmit = async () => {
-    const postId = await publishPost({
-      title,
-      description,
-      expression,
-      mode,
-      sampleRate,
-      license,
-      isDraft: false,
-    });
-
-    if (postId) {
-      setIsPublishPanelOpen(false);
-      window.localStorage.removeItem(CREATE_DRAFT_STORAGE_KEY);
-
-      // Navigate to the created post
-      await router.push(`/post/${postId}`);
-    }
-  };
-
-  const canPublish = expression.trim().length > 0 && saveStatus !== 'saving';
 
   return (
     <>
@@ -258,13 +25,13 @@ const page: NextPageWithLayout = function FocusCreatePage() {
         <meta property="og:description" content="Create a new bytebeat on BytebeatCloud" />
         <meta
           property="og:image"
-          content={`${typeof window !== 'undefined' ? window.location.origin : ''}/api/og/create${expression ? `?expr=${encodeURIComponent(expression)}` : ''}`}
+          content={`${typeof window !== 'undefined' ? window.location.origin : ''}/api/og/create${editor.expression ? `?expr=${encodeURIComponent(editor.expression)}` : ''}`}
         />
         <meta property="og:image:width" content="1200" />
         <meta property="og:image:height" content="630" />
         <meta name="twitter:card" content="summary_large_image" />
       </Head>
-      {!isStateLoaded && (
+      {!editor.isStateLoaded && (
         <div
           style={{
             position: 'fixed',
@@ -284,41 +51,41 @@ const page: NextPageWithLayout = function FocusCreatePage() {
         </div>
       )}
       <FocusLayout
-        expression={expression}
-        mode={mode}
-        onModeChange={setMode}
-        sampleRate={sampleRate}
-        onSampleRateChange={setSampleRate}
-        isPlaying={isPlaying}
-        onPlayClick={handlePlayClick}
-        liveUpdateEnabled={liveUpdateEnabled}
-        onLiveUpdateChange={setLiveUpdateEnabled}
-        onPublish={() => setIsPublishPanelOpen(true)}
-        isLoggedIn={!!user}
-        username={username}
-        title={title}
-        onTitleChange={setTitle}
+        expression={editor.expression}
+        mode={editor.mode}
+        onModeChange={editor.setMode}
+        sampleRate={editor.sampleRate}
+        onSampleRateChange={editor.setSampleRate}
+        isPlaying={editor.isPlaying}
+        onPlayClick={editor.onPlayClick}
+        liveUpdateEnabled={editor.liveUpdateEnabled}
+        onLiveUpdateChange={editor.setLiveUpdateEnabled}
+        onPublish={() => editor.setIsPublishPanelOpen(true)}
+        isLoggedIn={!!editor.user}
+        username={editor.username}
+        title={editor.title}
+        onTitleChange={editor.setTitle}
         onExitFocusMode={() => void router.push('/create')}
-        runtimeError={validationIssue?.message ?? lastError}
+        runtimeError={editor.validationIssue?.message ?? editor.lastError}
       >
         <section style={{ width: '100%', height: '100%', overflow: 'auto' }}>
-          <FocusExpressionEditor value={expression} onChange={handleExpressionChange} />
+          <FocusExpressionEditor value={editor.expression} onChange={editor.handleExpressionChange} />
         </section>
       </FocusLayout>
 
       <PublishPanel
-        isOpen={isPublishPanelOpen}
-        onClose={() => setIsPublishPanelOpen(false)}
-        title={title}
-        onTitleChange={setTitle}
-        description={description}
-        onDescriptionChange={setDescription}
-        license={license}
-        onLicenseChange={setLicense}
-        onPublish={handlePublishSubmit}
-        isPublishing={saveStatus === 'saving'}
-        canPublish={canPublish}
-        saveError={saveError}
+        isOpen={editor.isPublishPanelOpen}
+        onClose={() => editor.setIsPublishPanelOpen(false)}
+        title={editor.title}
+        onTitleChange={editor.setTitle}
+        description={editor.description}
+        onDescriptionChange={editor.setDescription}
+        license={editor.license}
+        onLicenseChange={editor.setLicense}
+        onPublish={editor.handlePublish}
+        isPublishing={editor.saveStatus === 'saving'}
+        canPublish={editor.canPublish}
+        saveError={editor.saveError}
       />
     </>
   );
