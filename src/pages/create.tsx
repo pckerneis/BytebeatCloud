@@ -284,15 +284,6 @@ export default function CreatePage() {
     void savePost(true);
   };
 
-  const handlePublish = () => {
-    void savePost(false);
-  };
-
-  const handleEnterFocusMode = () => {
-    // Navigate to focus mode - state is already in CREATE_DRAFT_STORAGE_KEY
-    void router.push('/create/focus');
-  };
-
   const meta: PostMetadataModel = {
     title,
     description,
