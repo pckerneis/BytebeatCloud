@@ -16,11 +16,24 @@ import { validateExpression } from '../utils/expression-validator';
 import { useExpressionPlayer } from '../hooks/useExpressionPlayer';
 import { useCtrlSpacePlayShortcut } from '../hooks/useCtrlSpacePlayShortcut';
 import { PostMetadataModel, LicenseOption, DEFAULT_LICENSE } from '../model/postEditor';
-import { convertMentionsToIds } from '../utils/mentions';
 import Link from 'next/link';
 import { useCurrentWeeklyChallenge } from '../hooks/useCurrentWeeklyChallenge';
+import { TooltipHint } from '../components/TooltipHint';
+import { usePublishPost } from '../hooks/usePublishPost';
+import { useFocusModeShortcut } from '../hooks/useFocusModeShortcut';
 
 const CREATE_DRAFT_STORAGE_KEY = 'bytebeat-cloud-create-draft-v1';
+
+interface CreateDraftState {
+  title?: string;
+  description?: string;
+  expression?: string;
+  isDraft?: boolean;
+  mode?: ModeOption;
+  sampleRate?: number;
+  license?: LicenseOption;
+  liveUpdateEnabled?: boolean;
+}
 
 export default function CreatePage() {
   const router = useRouter();
@@ -39,8 +52,7 @@ export default function CreatePage() {
 
   const { user } = useSupabaseAuth();
 
-  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'success'>('idle');
-  const [saveError, setSaveError] = useState('');
+  const { publishPost, saveStatus, saveError } = usePublishPost();
   const [liveUpdateEnabled, setLiveUpdateEnabled] = useState(true);
   const { weekNumber: currentWeekNumber, theme: currentTheme } = useCurrentWeeklyChallenge();
   const [hasWeeklySubmission, setHasWeeklySubmission] = useState(false);
@@ -49,7 +61,6 @@ export default function CreatePage() {
     validationIssue,
     handleExpressionChange,
     handlePlayClick: handlePlayClickBase,
-    setValidationIssue,
   } = useExpressionPlayer({
     expression,
     setExpression,
@@ -76,6 +87,7 @@ export default function CreatePage() {
   }, [stop, currentPost]);
 
   useCtrlSpacePlayShortcut(handlePlayClick);
+  useFocusModeShortcut();
 
   // Check if user already has a submission for current week
   useEffect(() => {
@@ -161,15 +173,7 @@ export default function CreatePage() {
         const raw = window.localStorage.getItem(CREATE_DRAFT_STORAGE_KEY);
         if (!raw) return;
 
-        const parsed = JSON.parse(raw) as {
-          title?: string;
-          description?: string;
-          expression?: string;
-          isDraft?: boolean;
-          mode?: ModeOption;
-          sampleRate?: number;
-          license?: LicenseOption;
-        } | null;
+        const parsed = JSON.parse(raw) as CreateDraftState | null;
 
         if (!parsed) return;
 
@@ -181,6 +185,8 @@ export default function CreatePage() {
         if (parsed.mode) setMode(parsed.mode);
         if (parsed.sampleRate) setSampleRate(parsed.sampleRate);
         if (parsed.license) setLicense(parsed.license);
+        if (typeof parsed.liveUpdateEnabled === 'boolean')
+          setLiveUpdateEnabled(parsed.liveUpdateEnabled);
       } catch (e) {
         console.error(e);
       }
@@ -226,65 +232,46 @@ export default function CreatePage() {
           mode,
           sampleRate,
           license,
+          liveUpdateEnabled,
         }),
       );
     } catch (e) {
       console.error(e);
     }
-  }, [title, description, expression, isDraft, mode, sampleRate, license, draftLoaded]);
+  }, [
+    title,
+    description,
+    expression,
+    isDraft,
+    mode,
+    sampleRate,
+    license,
+    liveUpdateEnabled,
+    draftLoaded,
+  ]);
 
   const savePost = async (asDraft: boolean) => {
-    const trimmedTitle = title.trim();
-    const trimmedExpr = expression.trim();
-    const trimmedDescription = description.trim();
-
-    const result = validateExpression(trimmedExpr);
-    if (!result.valid) {
-      setValidationIssue(result.issues[0] ?? null);
-      return;
-    }
-
-    if (!user) {
-      setSaveError('You must be logged in to save a post.');
-      return;
-    }
-
     setIsDraft(asDraft);
-    setSaveStatus('saving');
-    setSaveError('');
 
-    // Convert @username mentions to @[userId] format for storage
-    const storedDescription = await convertMentionsToIds(trimmedDescription ?? '');
+    const postId = await publishPost({
+      title,
+      description,
+      expression,
+      mode,
+      sampleRate,
+      license,
+      isDraft: asDraft,
+    });
 
-    const { data, error } = await supabase
-      .from('posts')
-      .insert({
-        profile_id: (user as any).id,
-        title: trimmedTitle,
-        description: storedDescription,
-        expression: trimmedExpr,
-        is_draft: asDraft,
-        sample_rate: sampleRate,
-        mode,
-        license,
-      })
-      .select('id')
-      .single();
+    if (postId) {
+      window.localStorage.removeItem(CREATE_DRAFT_STORAGE_KEY);
 
-    if (error || !data) {
-      setSaveError(error ? error.message : 'Unknown error while saving post.');
-      setSaveStatus('idle');
-      return;
-    }
-
-    setSaveStatus('success');
-    window.localStorage.removeItem(CREATE_DRAFT_STORAGE_KEY);
-
-    if (asDraft) {
-      // Redirect to edit page for drafts
-      await router.push(`/edit/${data.id}`);
-    } else {
-      await router.push(`/post/${data.id}`);
+      if (asDraft) {
+        // Redirect to edit page for drafts
+        await router.push(`/edit/${postId}`);
+      } else {
+        await router.push(`/post/${postId}`);
+      }
     }
   };
 
@@ -299,6 +286,11 @@ export default function CreatePage() {
 
   const handlePublish = () => {
     void savePost(false);
+  };
+
+  const handleEnterFocusMode = () => {
+    // Navigate to focus mode - state is already in CREATE_DRAFT_STORAGE_KEY
+    void router.push('/create/focus');
   };
 
   const meta: PostMetadataModel = {
@@ -392,6 +384,23 @@ export default function CreatePage() {
         )}
 
         <form className="create-form" onSubmit={handleSubmit}>
+          <div className="flex-row justify-content-end mb-8">
+            <TooltipHint
+              className="ml-auto"
+              storageKey="enter-focus-mode"
+              content="Distraction-free editor. Your work is preserved."
+              placement="bottom"
+            >
+              <button
+                type="button"
+                className="button secondary ghost small ml-auto"
+                onClick={handleEnterFocusMode}
+                title="Enter focus mode (Ctrl+Shift+F)"
+              >
+                ⛶ Enter Focus Mode
+              </button>
+            </TooltipHint>
+          </div>
           <PostEditorFormFields
             meta={meta}
             onMetaChange={handleMetaChange}
@@ -407,9 +416,33 @@ export default function CreatePage() {
             isFork={false}
             liveUpdateEnabled={liveUpdateEnabled}
             onLiveUpdateChange={setLiveUpdateEnabled}
-            onSaveAsDraft={handleSaveAsDraft}
-            onPublish={handlePublish}
           />
+
+          {user && (
+            <div className="form-actions">
+              <div className="form-actions-buttons">
+                <button
+                  type="button"
+                  className="button secondary"
+                  onClick={handleSaveAsDraft}
+                  disabled={!expression.trim() || !!validationIssue || saveStatus === 'saving'}
+                >
+                  {saveStatus === 'saving' && isDraft ? 'Saving…' : 'Save as draft'}
+                </button>
+
+                <button
+                  type="submit"
+                  className="button primary"
+                  disabled={!expression.trim() || !!validationIssue || saveStatus === 'saving'}
+                >
+                  {saveStatus === 'saving' && !isDraft ? 'Publishing…' : 'Publish'}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {saveError && <p className="error-message">{saveError}</p>}
+          {saveStatus === 'success' && !saveError && <p className="counter">Post saved.</p>}
         </form>
       </section>
     </>

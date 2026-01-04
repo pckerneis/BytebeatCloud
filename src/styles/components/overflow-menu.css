@@ -1,0 +1,68 @@
+.overflow-menu {
+  position: relative;
+  display: inline-block;
+}
+
+.overflow-menu-trigger {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 6px 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-color);
+  transition: background-color 0.2s;
+}
+
+.overflow-menu-trigger:hover:not(:disabled) {
+  background: var(--button-secondary-bg-color);
+}
+
+.overflow-menu-trigger:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.overflow-menu-dropdown {
+  position: fixed;
+  background: var(--bg-color);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  min-width: 180px;
+  max-width: 250px;
+  z-index: 2000;
+  padding: 4px 0;
+}
+
+.overflow-menu-item {
+  display: block;
+  width: 100%;
+  padding: 8px 12px;
+  background: transparent;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  color: var(--text-color);
+  font-size: 13px;
+  transition: background-color 0.2s;
+}
+
+.overflow-menu-item:hover:not(:disabled) {
+  background: var(--button-secondary-bg-color);
+}
+
+.overflow-menu-item:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.overflow-menu-item.danger {
+  color: var(--danger-color);
+}
+
+.overflow-menu-item.danger:hover:not(:disabled) {
+  background: var(--danger-background-color);
+}

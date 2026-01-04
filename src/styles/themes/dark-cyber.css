@@ -25,7 +25,7 @@
   --error-bg-color: #4c1111;
 
   --shadow-soft-color: #000000aa;
-  --modal-overlay-color: rgba(0, 0, 0, 0.65);
+  --modal-overlay-color: rgba(0, 0, 0, 0.35);
 
   --tab-active-bg-color: #1b1b25;
   --panel-border-color: var(--border-color);
