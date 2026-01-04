@@ -110,34 +110,27 @@ export function usePostEditor(options: UsePostEditorOptions) {
       });
     }
     setIsStateLoaded(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mode]);
 
   useEffect(() => {
     if (mode === 'create' || !postLoader.data) return;
 
+    const draft = loadDraft();
+    
+    // Combine server data with draft overrides in a single state update
     editorState.setState({
-      title: postLoader.data.title,
-      description: postLoader.data.description,
-      expression: postLoader.data.expression,
-      mode: postLoader.data.mode,
-      sampleRate: postLoader.data.sampleRate,
-      license: postLoader.data.license,
+      title: draft?.title ?? postLoader.data.title,
+      description: draft?.description ?? postLoader.data.description,
+      expression: draft?.expression ?? postLoader.data.expression,
+      mode: (draft?.mode as any) ?? postLoader.data.mode,
+      sampleRate: draft?.sampleRate ?? postLoader.data.sampleRate,
+      license: (draft?.license as any) ?? postLoader.data.license,
       isDraft: postLoader.data.isDraft,
     });
 
-    const draft = loadDraft();
-    if (draft) {
-      editorState.setState({
-        title: draft.title ?? postLoader.data.title,
-        description: draft.description ?? postLoader.data.description,
-        expression: draft.expression ?? postLoader.data.expression,
-        mode: draft.mode as any ?? postLoader.data.mode,
-        sampleRate: draft.sampleRate ?? postLoader.data.sampleRate,
-        license: draft.license as any ?? postLoader.data.license,
-      });
-    }
-
     setIsStateLoaded(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [postLoader.data, mode]);
 
   const handlePublish = async () => {

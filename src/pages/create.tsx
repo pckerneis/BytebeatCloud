@@ -8,7 +8,6 @@ import {
   MAX_SAMPLE_RATE,
   MIN_SAMPLE_RATE,
 } from '../model/expression';
-import { PostMetadataModel } from '../model/postEditor';
 import Link from 'next/link';
 import { useCurrentWeeklyChallenge } from '../hooks/useCurrentWeeklyChallenge';
 import { TooltipHint } from '../components/TooltipHint';
@@ -82,7 +81,9 @@ export default function CreatePage() {
         // ignore malformed q param
       }
     }
-  }, [router.isReady, router.query, editor.isStateLoaded]);
+    // Only run once when state is loaded and router is ready
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [router.isReady, editor.isStateLoaded]);
 
   // If URL has weekly param, prefill description
   useEffect(() => {
@@ -102,7 +103,9 @@ export default function CreatePage() {
         `Submission for ${weekTag} challenge` + (editor.description.trim() ? `\n${editor.description}` : ''),
       );
     }
-  }, [router.isReady, router.query, editor.isStateLoaded, editor.description, editor.user, currentWeekNumber]);
+    // editor.setDescription is stable, editor.description is intentionally checked
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [router.isReady, router.query, editor.isStateLoaded, editor.user, currentWeekNumber]);
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
