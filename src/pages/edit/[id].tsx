@@ -42,8 +42,10 @@ export default function EditPostPage() {
     await savePost(false);
   };
 
-  const handleSaveAsDraft = () => {
-    void savePost(true);
+  const handleSaveAsDraft = async () => {
+    await savePost(true);
+    // Update isDraft state to show draft info panel
+    editor.setState({ isDraft: true });
   };
 
   const handleDiscardChanges = async () => {
