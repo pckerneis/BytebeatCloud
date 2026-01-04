@@ -177,6 +177,41 @@ export function usePostEditor(options: UsePostEditorOptions) {
 
   const canPublish = editorState.expression.trim().length > 0 && postSaver.saveStatus !== 'saving';
 
+  // Common handlers for create/fork pages
+  const handleSaveAndNavigate = async (asDraft: boolean, onSuccess?: (postId: string) => void) => {
+    const postId = await postSaver.savePost({
+      title: editorState.title,
+      description: editorState.description,
+      expression: editorState.expression,
+      mode: editorState.mode,
+      sampleRate: editorState.sampleRate,
+      license: editorState.license,
+      isDraft: asDraft,
+    });
+
+    if (postId) {
+      clearDraft();
+      if (onSuccess) {
+        onSuccess(postId);
+      }
+    }
+
+    return postId;
+  };
+
+  const meta = {
+    title: editorState.title,
+    description: editorState.description,
+    mode: editorState.mode,
+    sampleRate: editorState.sampleRate,
+    isDraft: editorState.isDraft,
+    license: editorState.license,
+  };
+
+  const handleMetaChange = (next: typeof meta) => {
+    editorState.setState(next);
+  };
+
   return {
     ...editorState,
     user,
@@ -190,8 +225,10 @@ export function usePostEditor(options: UsePostEditorOptions) {
     saveStatus: postSaver.saveStatus,
     saveError: postSaver.saveError,
     setSaveError: postSaver.setSaveError,
+    savePost: postSaver.savePost,
     handlePublish,
     handleSaveAsDraft,
+    handleSaveAndNavigate,
     canPublish,
     isPublishPanelOpen,
     setIsPublishPanelOpen,
@@ -201,5 +238,7 @@ export function usePostEditor(options: UsePostEditorOptions) {
     isShareAlike: postLoader.isShareAlike,
     originalData: postLoader.data,
     isStateLoaded,
+    meta,
+    handleMetaChange,
   };
 }
