@@ -6,7 +6,7 @@ import {
   supabaseAdmin,
 } from './utils/supabaseAdmin';
 import { clearSupabaseSession, signInAndInjectSession } from './utils/auth';
-import { clearAndTypeInExpressionEditor } from './utils/codemirror-helpers';
+import { clearAndTypeInExpressionEditor } from './utils/editor-helpers';
 
 const TEST_USER_EMAIL = 'e2e+fork@example.com';
 const TEST_USER_PASSWORD = 'password123';
