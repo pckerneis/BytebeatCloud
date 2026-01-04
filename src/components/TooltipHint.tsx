@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 
 interface TooltipHintProps {
@@ -28,6 +28,7 @@ export function TooltipHint({
 
     const dismissed = localStorage.getItem(`hint-dismissed-${storageKey}`);
     if (!dismissed) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setShouldShow(true);
       // Show tooltip after a short delay
       setTimeout(() => setIsVisible(true), 1000);
@@ -35,7 +36,7 @@ export function TooltipHint({
   }, [storageKey]);
 
   // Calculate tooltip position
-  const updatePosition = () => {
+  const updatePosition = useCallback(() => {
     if (!triggerRef.current || !tooltipRef.current) return;
 
     const triggerRect = triggerRef.current.getBoundingClientRect();
@@ -69,7 +70,7 @@ export function TooltipHint({
     left = Math.max(padding, Math.min(left, window.innerWidth - tooltipRect.width - padding));
 
     setPosition({ top, left });
-  };
+  }, [placement]);
 
   // Update position when tooltip becomes visible
   useEffect(() => {
@@ -83,7 +84,7 @@ export function TooltipHint({
         window.removeEventListener('resize', updatePosition);
       };
     }
-  }, [isVisible]);
+  }, [isVisible, updatePosition]);
 
   const handleDismiss = () => {
     setIsVisible(false);
@@ -92,7 +93,7 @@ export function TooltipHint({
     }
   };
 
-  const handleTriggerClick = (event: React.MouseEvent) => {
+  const handleTriggerClick = () => {
     // Dismiss the hint if it's visible
     if (isVisible) {
       handleDismiss();

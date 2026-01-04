@@ -98,12 +98,7 @@ const page: NextPageWithLayout = function ForkPostFocusPage() {
 
       const { data, error } = await supabase
         .from('posts')
-        .select(
-          `
-          *,
-          profile:profiles(username)
-        `,
-        )
+        .select('*,profile:profiles(username)')
         .eq('id', id)
         .single();
 
