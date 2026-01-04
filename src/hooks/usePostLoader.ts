@@ -40,6 +40,7 @@ export function usePostLoader(options: UsePostLoaderOptions): UsePostLoaderResul
 
   useEffect(() => {
     if (!enabled || !postId || typeof postId !== 'string') {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setLoading(false);
       return;
     }
