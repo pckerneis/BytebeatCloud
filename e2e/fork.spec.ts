@@ -463,9 +463,7 @@ test.describe('Fork page - back button and discard changes', () => {
     // Modal should appear
     const modal = page.locator('.modal');
     await expect(modal.getByRole('heading', { name: 'Discard changes' })).toBeVisible();
-    await expect(
-      modal.getByText(/Your local changes will be discarded/),
-    ).toBeVisible();
+    await expect(modal.getByText(/Your local changes will be discarded/)).toBeVisible();
   });
 
   test('discard changes button disabled when no changes', async ({ page }) => {
@@ -486,7 +484,7 @@ test.describe('Fork page - back button and discard changes', () => {
     await expect(page.getByText('Loading…')).toHaveCount(0, { timeout: 10000 });
 
     const titleField = page.getByPlaceholder('Name your bytebeat expression');
-    
+
     // Make a change
     await titleField.clear();
     await titleField.fill('Changed Fork Title');

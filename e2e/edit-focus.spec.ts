@@ -71,7 +71,7 @@ test.describe('Edit Focus Mode - navigation and UI', () => {
     // Verify focus mode UI elements are present
     await expect(page.getByRole('button', { name: /Exit Focus Mode/i })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Publish' })).toBeVisible();
-    
+
     // Verify minimal UI - no navigation or footer player
     await expect(page.locator('nav')).toHaveCount(0);
     await expect(page.locator('.footer-player')).toHaveCount(0);
@@ -97,7 +97,7 @@ test.describe('Edit Focus Mode - navigation and UI', () => {
 
     // Expression should be loaded
     await expect(page.locator('.cm-content')).toContainText('t >> 4');
-    
+
     // Verify mode and sample rate are correct
     await expect(page.locator('.chip').filter({ hasText: 'uint8' })).toBeVisible();
     await expect(page.locator('.chip').filter({ hasText: '8kHz' })).toBeVisible();
@@ -139,7 +139,7 @@ test.describe('Edit Focus Mode - local storage persistence', () => {
     // Click on title to edit it
     const titleDisplay = page.locator('.focus-title-display');
     await titleDisplay.click();
-    
+
     const titleInput = page.locator('.focus-title-input');
     await titleInput.clear();
     await titleInput.fill('Modified Title');
@@ -191,7 +191,7 @@ test.describe('Edit Focus Mode - local storage persistence', () => {
     // Click on title to edit it
     const titleDisplay = page.locator('.focus-title-display');
     await titleDisplay.click();
-    
+
     const titleInput = page.locator('.focus-title-input');
     await titleInput.clear();
     await titleInput.fill('Title Before Publish');
@@ -246,7 +246,7 @@ test.describe('Edit Focus Mode - saving and publishing', () => {
     // Click on title to edit it
     const titleDisplay = page.locator('.focus-title-display');
     await titleDisplay.click();
-    
+
     const titleInput = page.locator('.focus-title-input');
     await titleInput.clear();
     await titleInput.fill('Published from Focus');

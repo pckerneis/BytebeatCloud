@@ -81,7 +81,7 @@ function FocusHeader({
           </span>
         )}
 
-        <span className="secondary-text">
+        <span className="secondary-text sm-hidden">
           {!isLoggedIn ? (
             <>
               <a href={'/login'}>Sign in</a> to publish.
@@ -97,11 +97,18 @@ function FocusHeader({
           placement="bottom"
         >
           <button
-            className="button secondary small ghost"
+            className="button secondary small ghost sm-hidden"
             onClick={onExitFocusMode}
             title="Exit focus mode (Ctrl+Shift+F)"
           >
             ⛶ Exit focus mode
+          </button>
+          <button
+            className="button secondary small ghost sm-only"
+            onClick={onExitFocusMode}
+            title="Exit focus mode (Ctrl+Shift+F)"
+          >
+            ⛶ Back
           </button>
         </TooltipHint>
       </div>
@@ -218,14 +225,14 @@ function FocusFooter({
   return (
     <div className="focus-footer px-12 py-8 flex-row align-items-center justify-content-between">
       <div className="chips flex-row gap-10">
-        <label className="flex-row gap-10 smaller align-items-center" style={{ minWidth: '90px' }}>
-          Mode
+        <label className="flex-row gap-10 smaller align-items-center">
+          <span className="sm-hidden">Mode</span>
           <button type="button" className="chip" onClick={toggleMode}>
             {mode}
           </button>
         </label>
-        <label className="flex-row gap-10 smaller align-items-center" style={{ minWidth: '160px' }}>
-          Sample rate
+        <label className="flex-row gap-10 smaller align-items-center">
+          <span className="sm-hidden">Sample rate</span>
           <button type="button" className="chip" onClick={rotateSampleRate}>
             {formatSampleRate(sampleRate)}
           </button>
@@ -248,21 +255,23 @@ function FocusFooter({
             checked={liveUpdateEnabled}
             onChange={(e) => onLiveUpdateChange(e.target.checked)}
           />{' '}
-          Live update
+          <span className="sm-hidden">Live update</span>
+          <span className="sm-only">Live</span>
         </label>
       </div>
 
       <div className="flex-row gap-10 align-items-center">
         {isLoggedIn && (
           <span className={isExpressionTooLong ? 'counter error' : 'counter'}>
-            {expressionLength} / {EXPRESSION_MAX}
+            {expressionLength}
+            <span className="sm-hidden">&nbsp;/&nbsp;{EXPRESSION_MAX}</span>
           </span>
         )}
 
         {isLoggedIn ? (
           <button
             type="button"
-            className="button primary"
+            className="button primary sm-hidden"
             onClick={onPublish}
             disabled={!canSubmit}
           >

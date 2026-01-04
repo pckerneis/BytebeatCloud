@@ -84,7 +84,6 @@ export default function ForkPostPage() {
       timestamp: Date.now(),
     };
 
-
     try {
       localStorage.setItem(draftKey, JSON.stringify(draft));
     } catch (error) {
