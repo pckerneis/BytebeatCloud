@@ -7,10 +7,10 @@ export async function clearAndTypeInExpressionEditor(
   // In normal mode, it's .expression-input .cm-content
   const focusModeEditor = page.locator('.cm-content').first();
   const normalModeEditor = page.locator('.expression-input .cm-content');
-  
+
   // Try focus mode first (simpler selector), fallback to normal mode
   const editor = (await focusModeEditor.count()) > 0 ? focusModeEditor : normalModeEditor;
-  
+
   await editor.click();
   // Select all and delete
   await page.keyboard.press('ControlOrMeta+a');
