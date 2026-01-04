@@ -2,10 +2,7 @@ import { expect } from '@playwright/test';
 import { Page } from '@playwright/test';
 
 // Helper to clear and type in CodeMirror editor
-export async function clearAndTypeInExpressionEditor(
-  page: Page,
-  text: string,
-) {
+export async function clearAndTypeInExpressionEditor(page: Page, text: string) {
   // In focus mode, the editor is directly .cm-content
   // In normal mode, it's .expression-input .cm-content
   const focusModeEditor = page.locator('.cm-content').first();
@@ -50,7 +47,7 @@ export async function getTitleValue(page: Page): Promise<string> {
 
   if (isFocusMode) {
     // Focus mode: get text from display
-    return await focusTitleDisplay.textContent() || '';
+    return (await focusTitleDisplay.textContent()) || '';
   } else {
     // Normal mode: get value from input field
     const titleField = page.getByPlaceholder('Name your bytebeat expression');
@@ -58,12 +55,11 @@ export async function getTitleValue(page: Page): Promise<string> {
   }
 }
 
-export async function expectTitleEquals(
-  page: Page,
-  expected: string,
-  timeout = 10000,
-) {
+export async function expectTitleEquals(page: Page, expected: string, timeout = 10000) {
   await expect
-    .poll(async () => getTitleValue(page), { timeout, message: `Title did not become "${expected}"` })
+    .poll(async () => getTitleValue(page), {
+      timeout,
+      message: `Title did not become "${expected}"`,
+    })
     .toBe(expected);
 }
