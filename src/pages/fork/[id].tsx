@@ -84,6 +84,18 @@ export default function ForkPostPage() {
     );
   }
 
+  if (editor.loadError) {
+    return (
+      <section>
+        <button type="button" className="button ghost" onClick={handleBack}>
+          ← Back
+        </button>
+        <h2>Fork post</h2>
+        <p className="error-message">{editor.loadError}</p>
+      </section>
+    );
+  }
+
   return (
     <>
       <Head>
