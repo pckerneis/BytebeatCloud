@@ -18,10 +18,6 @@ import { useCurrentUserProfile } from '../../../hooks/useCurrentUserProfile';
 import { useFocusModeShortcut } from '../../../hooks/useFocusModeShortcut';
 
 const page: NextPageWithLayout = function ForkPostFocusPage() {
-  const router = useRouter();
-  const { id } = router.query;
-  const { username, user } = useCurrentUserProfile();
-
   const [loading, setLoading] = useState(true);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -30,18 +26,22 @@ const page: NextPageWithLayout = function ForkPostFocusPage() {
   const [sampleRate, setSampleRate] = useState<number>(DEFAULT_SAMPLE_RATE);
   const [license, setLicense] = useState<LicenseOption>(DEFAULT_LICENSE);
   const [isPublishPanelOpen, setIsPublishPanelOpen] = useState(false);
-
-  const { isPlaying, toggle, stop, updateExpression } = useBytebeatPlayer({
-    enableVisualizer: false,
-  });
-  const { currentPost, setCurrentPostById } = usePlayerStore();
-
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'success'>('idle');
   const [saveError, setSaveError] = useState('');
   const [isShareAlike, setIsShareAlike] = useState(false);
   const [liveUpdateEnabled, setLiveUpdateEnabled] = useState(true);
 
-  const { handlePlayClick: handlePlayClickBase } = useExpressionPlayer({
+  const router = useRouter();
+  const { id } = router.query;
+  const { username, user } = useCurrentUserProfile();
+  const { isPlaying, toggle, stop, updateExpression, lastError } = useBytebeatPlayer({
+    enableVisualizer: false,
+  });
+
+  useFocusModeShortcut();
+  const { currentPost, setCurrentPostById } = usePlayerStore();
+
+  const { handlePlayClick: handlePlayClickBase, validationIssue } = useExpressionPlayer({
     expression,
     setExpression,
     mode,
@@ -55,6 +55,7 @@ const page: NextPageWithLayout = function ForkPostFocusPage() {
   });
 
   const handlePlayClick = () => handlePlayClickBase(currentPost);
+  useCtrlSpacePlayShortcut(handlePlayClick);
 
   // Save to localStorage whenever state changes
   useEffect(() => {
@@ -86,9 +87,6 @@ const page: NextPageWithLayout = function ForkPostFocusPage() {
       }
     };
   }, [stop, currentPost]);
-
-  useCtrlSpacePlayShortcut(handlePlayClick);
-  useFocusModeShortcut();
 
   useEffect(() => {
     if (!id || typeof id !== 'string') return;
@@ -232,22 +230,6 @@ const page: NextPageWithLayout = function ForkPostFocusPage() {
     }
   };
 
-  const handleModeChange = (newMode: ModeOption) => {
-    setMode(newMode);
-  };
-
-  const handleSampleRateChange = (newRate: number) => {
-    setSampleRate(newRate);
-  };
-
-  const handleLiveUpdateChange = (enabled: boolean) => {
-    setLiveUpdateEnabled(enabled);
-  };
-
-  const handlePublish = () => {
-    setIsPublishPanelOpen(true);
-  };
-
   const canPublish = expression.trim().length > 0 && saveStatus !== 'saving';
 
   if (loading) {
@@ -284,19 +266,20 @@ const page: NextPageWithLayout = function ForkPostFocusPage() {
       <FocusLayout
         expression={expression}
         mode={mode}
-        onModeChange={handleModeChange}
+        onModeChange={setMode}
         sampleRate={sampleRate}
-        onSampleRateChange={handleSampleRateChange}
+        onSampleRateChange={setSampleRate}
         isPlaying={isPlaying}
         onPlayClick={handlePlayClick}
         liveUpdateEnabled={liveUpdateEnabled}
-        onLiveUpdateChange={handleLiveUpdateChange}
-        onPublish={handlePublish}
+        onLiveUpdateChange={setLiveUpdateEnabled}
+        onPublish={() => setIsPublishPanelOpen(true)}
         isLoggedIn={!!user}
         username={username}
         title={title}
         onTitleChange={setTitle}
         onExitFocusMode={() => void router.push(`/fork/${id}`)}
+        runtimeError={validationIssue?.message ?? lastError}
       >
         <section style={{ width: '100%', height: '100%', overflow: 'auto' }}>
           <FocusExpressionEditor value={expression} onChange={setExpression} />

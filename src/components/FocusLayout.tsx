@@ -144,6 +144,7 @@ interface FocusLayoutProps extends PropsWithChildren {
   title?: string;
   onTitleChange?: (title: string) => void;
   onExitFocusMode?: () => void;
+  runtimeError?: string | null;
 }
 
 function FocusFooter({
@@ -315,8 +316,10 @@ export function FocusLayout({
   title = '',
   onTitleChange = () => {},
   onExitFocusMode,
+  runtimeError = null,
 }: FocusLayoutProps) {
   const router = useRouter();
+  const [showErrorPanel, setShowErrorPanel] = useState(false);
 
   const handleExitFocusMode = () => {
     if (onExitFocusMode) {
@@ -361,6 +364,16 @@ export function FocusLayout({
           onTitleChange={onTitleChange}
         />
         <div className="top-content">{children}</div>
+        {runtimeError && showErrorPanel && (
+          <div className="focus-runtime-panel px-12 py-8 flex-row align-items-center" role="alert" aria-live="assertive">
+            <p className="focus-runtime-panel-message flex-grow">{runtimeError}</p>
+            <button className="button small ghost" onClick={() => setShowErrorPanel(false)}>✕</button>
+          </div>
+        )}
+
+        {runtimeError && !showErrorPanel && (
+          <button className="focus-error-bubble" onClick={() => setShowErrorPanel(true)}>!</button>
+        )}
         <FocusFooter
           expression={expression}
           mode={mode}
