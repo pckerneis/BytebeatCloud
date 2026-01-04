@@ -28,7 +28,6 @@ const page: NextPageWithLayout = function EditPostFocusPage() {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [expression, setExpression] = useState('');
-  const [isDraft, setIsDraft] = useState(false);
   const [mode, setMode] = useState<ModeOption>(ModeOption.Float);
   const [sampleRate, setSampleRate] = useState<number>(DEFAULT_SAMPLE_RATE);
   const [license, setLicense] = useState<LicenseOption>(DEFAULT_LICENSE);
@@ -150,7 +149,6 @@ const page: NextPageWithLayout = function EditPostFocusPage() {
       setExpression(data.expression || '');
       setMode((data.mode as ModeOption) || ModeOption.Float);
       setSampleRate(data.sample_rate || DEFAULT_SAMPLE_RATE);
-      setIsDraft(data.is_draft || false);
       setLicense((data.license as LicenseOption) || DEFAULT_LICENSE);
       setPublishedAt(data.published_at);
 
@@ -411,7 +409,7 @@ const page: NextPageWithLayout = function EditPostFocusPage() {
         onDescriptionChange={setDescription}
         license={license}
         onLicenseChange={setLicense}
-        onPublish={isDraft ? handlePublishSubmit : handleSaveAsDraft}
+        onPublish={handlePublishSubmit}
         isPublishing={saveStatus === 'saving'}
         canPublish={canPublish}
         saveError={saveError}

@@ -439,7 +439,7 @@ export default function ForkPostPage() {
                     onClick={() => setShowDiscardConfirm(true)}
                     disabled={saveStatus === 'saving' || !hasUnsavedChanges}
                   >
-                    Discard changes
+                    Discard changes…
                   </button>
                   <button
                     type="button"

@@ -62,8 +62,6 @@ export function PostEditorFormFields(props: Readonly<PostEditorFormFieldsProps>)
     onPlayClick,
     validationIssue,
     lastError,
-    saveStatus,
-    saveError,
     showActions,
     isFork,
     liveUpdateEnabled,
@@ -74,7 +72,7 @@ export function PostEditorFormFields(props: Readonly<PostEditorFormFieldsProps>)
   const expressionLength = expression.length;
   const isExpressionTooLong = expressionLength > EXPRESSION_MAX;
 
-  const { title, description, mode, sampleRate, isDraft, license } = meta;
+  const { title, description, mode, sampleRate, license } = meta;
   const [shareLinkCopied, setShareLinkCopied] = useState(false);
   const [sampleRateModalOpen, setSampleRateModalOpen] = useState(false);
   const [sampleRateInput, setSampleRateInput] = useState(sampleRate.toString());
@@ -322,10 +320,6 @@ export function PostEditorFormFields(props: Readonly<PostEditorFormFieldsProps>)
         </div>
       )}
 
-      {saveError && <p className="error-message">{saveError}</p>}
-      {saveStatus === 'success' && !saveError && (
-        <p className="counter">{isFork ? 'Fork saved.' : 'Post saved.'}</p>
-      )}
       {sampleRateModalOpen && (
         <div
           className="modal-backdrop"
