@@ -421,6 +421,7 @@ test.describe('Notification triggers - fork', () => {
     await expect(page.getByText('Loading…')).toHaveCount(0, { timeout: 10000 });
 
     // Save as draft
+    await page.getByRole('button', { name: 'More actions' }).click();
     await page.getByRole('button', { name: 'Save as draft' }).click();
 
     // Wait for redirection to edit page
