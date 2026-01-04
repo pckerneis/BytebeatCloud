@@ -133,7 +133,9 @@ export default function ForkPostPage() {
         {editor.originalData?.originalAuthor && (
           <p>
             Fork from <a href={`/post/${id}`}>{formatPostTitle(editor.originalData.title)}</a> by{' '}
-            <a href={`/u/${editor.originalData.originalAuthor}`}>@{editor.originalData.originalAuthor}</a>
+            <a href={`/u/${editor.originalData.originalAuthor}`}>
+              @{editor.originalData.originalAuthor}
+            </a>
           </p>
         )}
         {!editor.originalData?.originalAuthor && <p>Fork from unknown post</p>}
@@ -172,7 +174,11 @@ export default function ForkPostPage() {
                     type="button"
                     className="overflow-menu-item"
                     onClick={handleSaveAsDraft}
-                    disabled={!editor.expression.trim() || !!editor.validationIssue || editor.saveStatus === 'saving'}
+                    disabled={
+                      !editor.expression.trim() ||
+                      !!editor.validationIssue ||
+                      editor.saveStatus === 'saving'
+                    }
                   >
                     {editor.saveStatus === 'saving' && editor.isDraft ? 'Saving…' : 'Save as draft'}
                   </button>
@@ -182,7 +188,11 @@ export default function ForkPostPage() {
                   type="button"
                   className="button primary"
                   onClick={handlePublish}
-                  disabled={!editor.expression.trim() || !!editor.validationIssue || editor.saveStatus === 'saving'}
+                  disabled={
+                    !editor.expression.trim() ||
+                    !!editor.validationIssue ||
+                    editor.saveStatus === 'saving'
+                  }
                 >
                   {editor.saveStatus === 'saving' && !editor.isDraft ? 'Publishing…' : 'Publish'}
                 </button>
@@ -191,7 +201,9 @@ export default function ForkPostPage() {
           )}
 
           {editor.saveError && <p className="error-message">{editor.saveError}</p>}
-          {editor.saveStatus === 'success' && !editor.saveError && <p className="counter">Fork saved.</p>}
+          {editor.saveStatus === 'success' && !editor.saveError && (
+            <p className="counter">Fork saved.</p>
+          )}
         </form>
 
         {showDiscardConfirm && (

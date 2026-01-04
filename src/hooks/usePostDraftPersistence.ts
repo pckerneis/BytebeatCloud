@@ -24,7 +24,7 @@ export function usePostDraftPersistence(
   state: Partial<PostEditorState>,
   options: UsePostDraftPersistenceOptions,
 ) {
-  const { storageKey, enabled = true, onLoad } = options;
+  const { storageKey, enabled = true } = options;
 
   useEffect(() => {
     if (!enabled || typeof window === 'undefined') return;

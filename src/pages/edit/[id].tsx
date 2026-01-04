@@ -198,8 +198,14 @@ export default function EditPostPage() {
                   <button
                     type="button"
                     className="overflow-menu-item"
-                    onClick={!editor.isDraft ? () => setShowUnpublishConfirm(true) : handleSaveAsDraft}
-                    disabled={!editor.expression.trim() || !!editor.validationIssue || editor.saveStatus === 'saving'}
+                    onClick={
+                      !editor.isDraft ? () => setShowUnpublishConfirm(true) : handleSaveAsDraft
+                    }
+                    disabled={
+                      !editor.expression.trim() ||
+                      !!editor.validationIssue ||
+                      editor.saveStatus === 'saving'
+                    }
                   >
                     {editor.saveStatus === 'saving' && editor.isDraft
                       ? 'Saving…'
@@ -228,7 +234,11 @@ export default function EditPostPage() {
                 <button
                   type="submit"
                   className="button primary"
-                  disabled={!editor.expression.trim() || !!editor.validationIssue || editor.saveStatus === 'saving'}
+                  disabled={
+                    !editor.expression.trim() ||
+                    !!editor.validationIssue ||
+                    editor.saveStatus === 'saving'
+                  }
                 >
                   {editor.saveStatus === 'saving' && !editor.isDraft ? 'Publishing…' : 'Publish'}
                 </button>
@@ -237,7 +247,9 @@ export default function EditPostPage() {
           )}
 
           {editor.saveError && <p className="error-message">{editor.saveError}</p>}
-          {editor.saveStatus === 'success' && !editor.saveError && <p className="counter">Post saved.</p>}
+          {editor.saveStatus === 'success' && !editor.saveError && (
+            <p className="counter">Post saved.</p>
+          )}
         </form>
 
         {showDeleteConfirm && (

@@ -365,14 +365,22 @@ export function FocusLayout({
         />
         <div className="top-content">{children}</div>
         {runtimeError && showErrorPanel && (
-          <div className="focus-runtime-panel px-12 py-8 flex-row align-items-center" role="alert" aria-live="assertive">
+          <div
+            className="focus-runtime-panel px-12 py-8 flex-row align-items-center"
+            role="alert"
+            aria-live="assertive"
+          >
             <p className="focus-runtime-panel-message flex-grow">{runtimeError}</p>
-            <button className="button small ghost" onClick={() => setShowErrorPanel(false)}>✕</button>
+            <button className="button small ghost" onClick={() => setShowErrorPanel(false)}>
+              ✕
+            </button>
           </div>
         )}
 
         {runtimeError && !showErrorPanel && (
-          <button className="focus-error-bubble" onClick={() => setShowErrorPanel(true)}>!</button>
+          <button className="focus-error-bubble" onClick={() => setShowErrorPanel(true)}>
+            !
+          </button>
         )}
         <FocusFooter
           expression={expression}

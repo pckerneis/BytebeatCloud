@@ -20,7 +20,13 @@ export interface UsePostEditorOptions extends UsePostEditorStateOptions {
 }
 
 export function usePostEditor(options: UsePostEditorOptions) {
-  const { mode, postId, enableVisualizer = false, loopPreview = true, enableDraftPersistence = true } = options;
+  const {
+    mode,
+    postId,
+    enableVisualizer = false,
+    loopPreview = true,
+    enableDraftPersistence = true,
+  } = options;
   const router = useRouter();
   const { username, user } = useCurrentUserProfile();
   const userId = (user as any)?.id;
@@ -117,7 +123,7 @@ export function usePostEditor(options: UsePostEditorOptions) {
     if (mode === 'create' || !postLoader.data) return;
 
     const draft = loadDraft();
-    
+
     // Combine server data with draft overrides in a single state update
     editorState.setState({
       title: draft?.title ?? postLoader.data.title,

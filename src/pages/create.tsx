@@ -3,11 +3,7 @@ import { useRouter } from 'next/router';
 import { supabase } from '../lib/supabaseClient';
 import { PostEditorFormFields } from '../components/PostEditorFormFields';
 import Head from 'next/head';
-import {
-  ModeOption,
-  MAX_SAMPLE_RATE,
-  MIN_SAMPLE_RATE,
-} from '../model/expression';
+import { ModeOption, MAX_SAMPLE_RATE, MIN_SAMPLE_RATE } from '../model/expression';
 import Link from 'next/link';
 import { useCurrentWeeklyChallenge } from '../hooks/useCurrentWeeklyChallenge';
 import { TooltipHint } from '../components/TooltipHint';
@@ -17,7 +13,7 @@ export default function CreatePage() {
   const router = useRouter();
   const [hasWeeklySubmission, setHasWeeklySubmission] = useState(false);
   const { weekNumber: currentWeekNumber, theme: currentTheme } = useCurrentWeeklyChallenge();
-  
+
   const editor = usePostEditor({
     mode: 'create',
     initialMode: ModeOption.Uint8,
@@ -74,7 +70,9 @@ export default function CreatePage() {
             title: parsed.title,
             expression: parsed.expr,
             mode: parsed.mode,
-            sampleRate: parsed.sr ? Math.min(Math.max(MIN_SAMPLE_RATE, parsed.sr), MAX_SAMPLE_RATE) : undefined,
+            sampleRate: parsed.sr
+              ? Math.min(Math.max(MIN_SAMPLE_RATE, parsed.sr), MAX_SAMPLE_RATE)
+              : undefined,
           });
         }
       } catch {
@@ -100,7 +98,8 @@ export default function CreatePage() {
 
     if (!hasExactWeekTag) {
       editor.setDescription(
-        `Submission for ${weekTag} challenge` + (editor.description.trim() ? `\n${editor.description}` : ''),
+        `Submission for ${weekTag} challenge` +
+          (editor.description.trim() ? `\n${editor.description}` : ''),
       );
     }
     // editor.setDescription is stable, editor.description is intentionally checked
@@ -235,7 +234,11 @@ export default function CreatePage() {
                   type="button"
                   className="button secondary"
                   onClick={handleSaveAsDraft}
-                  disabled={!editor.expression.trim() || !!editor.validationIssue || editor.saveStatus === 'saving'}
+                  disabled={
+                    !editor.expression.trim() ||
+                    !!editor.validationIssue ||
+                    editor.saveStatus === 'saving'
+                  }
                 >
                   {editor.saveStatus === 'saving' && editor.isDraft ? 'Saving…' : 'Save as draft'}
                 </button>
@@ -243,7 +246,11 @@ export default function CreatePage() {
                 <button
                   type="submit"
                   className="button primary"
-                  disabled={!editor.expression.trim() || !!editor.validationIssue || editor.saveStatus === 'saving'}
+                  disabled={
+                    !editor.expression.trim() ||
+                    !!editor.validationIssue ||
+                    editor.saveStatus === 'saving'
+                  }
                 >
                   {editor.saveStatus === 'saving' && !editor.isDraft ? 'Publishing…' : 'Publish'}
                 </button>
@@ -252,7 +259,9 @@ export default function CreatePage() {
           )}
 
           {editor.saveError && <p className="error-message">{editor.saveError}</p>}
-          {editor.saveStatus === 'success' && !editor.saveError && <p className="counter">Post saved.</p>}
+          {editor.saveStatus === 'success' && !editor.saveError && (
+            <p className="counter">Post saved.</p>
+          )}
         </form>
       </section>
     </>

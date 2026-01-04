@@ -69,7 +69,10 @@ const page: NextPageWithLayout = function FocusCreatePage() {
         runtimeError={editor.validationIssue?.message ?? editor.lastError}
       >
         <section style={{ width: '100%', height: '100%', overflow: 'auto' }}>
-          <FocusExpressionEditor value={editor.expression} onChange={editor.handleExpressionChange} />
+          <FocusExpressionEditor
+            value={editor.expression}
+            onChange={editor.handleExpressionChange}
+          />
         </section>
       </FocusLayout>
 

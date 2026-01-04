@@ -99,9 +99,7 @@ export function usePostLoader(options: UsePostLoaderOptions): UsePostLoaderResul
       const shareAlike = originalLicense === 'cc-by-sa';
       setIsShareAlike(shareAlike);
 
-      const { text: displayDescription } = await convertMentionsToUsernames(
-        post.description ?? '',
-      );
+      const { text: displayDescription } = await convertMentionsToUsernames(post.description ?? '');
 
       const loadedData: LoadedPostData = {
         title: post.title ?? '',
