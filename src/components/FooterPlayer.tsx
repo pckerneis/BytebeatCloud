@@ -660,6 +660,7 @@ export default function FooterPlayer() {
                   step={0.01}
                   value={masterGain}
                   onChange={(e) => setMasterGain(Number(e.target.value))}
+                  onTouchStart={e => e.stopPropagation()}
                   className="volume-slider"
                 />
               </div>

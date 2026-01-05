@@ -335,7 +335,7 @@
   justify-content: center;
   border-radius: 4px;
   transition: all 120ms ease;
-  opacity: 0;
+  opacity: 0.8;
 }
 
 .play-queue-item:hover .play-queue-item-favorite {
@@ -376,7 +376,7 @@
   justify-content: center;
   border-radius: 4px;
   transition: all 120ms ease;
-  opacity: 0;
+  opacity: 0.8;
 }
 
 .play-queue-item:hover .play-queue-item-remove {
