@@ -91,9 +91,3 @@ jobs:
         env:
           CI: true
         run: npm run test:e2e -- ${{ matrix.spec }} --workers=1
-      - name: Stop Supabase
-        if: always()
-        env:
-          COMPOSE_PROJECT_NAME: supabase-${{ github.run_id }}-${{ matrix.group }}
-        run: |
-          npx supabase stop || true
