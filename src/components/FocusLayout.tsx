@@ -276,7 +276,7 @@ function FocusFooter({
             onClick={onPublish}
             disabled={!canSubmit}
           >
-            Publish
+            Publish…
           </button>
         ) : (
           <button
