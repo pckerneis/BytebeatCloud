@@ -197,7 +197,7 @@ test.describe('Edit Focus Mode - local storage persistence', () => {
     await titleInput.fill('Title Before Publish');
     await titleInput.press('Enter');
 
-    await page.getByRole('button', { name: 'Publish', exact: true }).click();
+    await page.getByRole('button', { name: 'Publish…', exact: true }).click();
 
     const publishPanel = page.locator('.publish-panel');
     await expect(publishPanel).toBeVisible();
@@ -252,7 +252,7 @@ test.describe('Edit Focus Mode - saving and publishing', () => {
     await titleInput.fill('Published from Focus');
     await titleInput.press('Enter');
 
-    await page.getByRole('button', { name: 'Publish', exact: true }).click();
+    await page.getByRole('button', { name: 'Publish…', exact: true }).click();
 
     const publishPanel = page.locator('.publish-panel');
     await expect(publishPanel).toBeVisible();
@@ -269,7 +269,7 @@ test.describe('Edit Focus Mode - saving and publishing', () => {
 
     await clearAndTypeInExpressionEditor(page, 't +');
 
-    const publishButton = page.getByRole('button', { name: 'Publish', exact: true });
+    const publishButton = page.getByRole('button', { name: 'Publish…', exact: true });
     await expect(publishButton).toBeDisabled();
   });
 });

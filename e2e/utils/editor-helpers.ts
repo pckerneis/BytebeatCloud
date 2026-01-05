@@ -5,7 +5,7 @@ import { Page } from '@playwright/test';
 export async function clearAndTypeInExpressionEditor(page: Page, text: string) {
   // In focus mode, the editor is directly .cm-content
   // In normal mode, it's .expression-input .cm-content
-  const focusModeEditor = page.locator('.cm-content').first();
+  const focusModeEditor = page.locator('.cm-content');
   const normalModeEditor = page.locator('.expression-input .cm-content');
 
   // Try focus mode first (simpler selector), fallback to normal mode
