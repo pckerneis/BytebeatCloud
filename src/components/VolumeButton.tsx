@@ -80,6 +80,7 @@ export function VolumeButton({
             step={0.01}
             value={masterGain}
             onChange={(e) => onMasterGainChange(Number(e.target.value))}
+            onTouchStart={e => e.stopPropagation()}
             className="volume-slider"
           />
         </div>
