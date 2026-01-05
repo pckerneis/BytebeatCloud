@@ -87,13 +87,11 @@ jobs:
         run: npm ci --include=optional
       - name: Install Playwright browser
         run: npx playwright install chromium
-      - name: Install Supabase globally
-        run: npm install -g supabase@2.67.1
       - name: Start Supabase (local)
         env:
           COMPOSE_PROJECT_NAME: supabase-${{ github.run_id }}-${{ matrix.group }}
         run: |
-          supabase start --config supabase/config.ci.toml
+          npx supabase start --config supabase/config.ci.toml
       - name: Wait for Supabase
         run: |
           for i in {1..20}; do
