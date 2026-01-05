@@ -179,10 +179,10 @@ export default function ForkPostPage() {
             saveStatus={editor.saveStatus}
             saveError={editor.saveError}
             showActions={!!editor.user}
-            isFork={true}
             liveUpdateEnabled={editor.liveUpdateEnabled}
             onLiveUpdateChange={editor.setLiveUpdateEnabled}
-            isShareAlike={editor.isShareAlike}
+            isShareAlikeFork={editor.isShareAlike}
+            isEdit={false}
           />
 
           <div className="form-actions">

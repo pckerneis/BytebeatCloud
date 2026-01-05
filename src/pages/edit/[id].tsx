@@ -204,7 +204,7 @@ export default function EditPostPage() {
             saveStatus={editor.saveStatus}
             saveError={editor.saveError}
             showActions={!!editor.user}
-            isFork={false}
+            isEdit={true}
             liveUpdateEnabled={editor.liveUpdateEnabled}
             onLiveUpdateChange={editor.setLiveUpdateEnabled}
           />

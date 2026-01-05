@@ -222,7 +222,7 @@ export default function CreatePage() {
             saveStatus={editor.saveStatus}
             saveError={editor.saveError}
             showActions={!!editor.user}
-            isFork={false}
+            isEdit={false}
             liveUpdateEnabled={editor.liveUpdateEnabled}
             onLiveUpdateChange={editor.setLiveUpdateEnabled}
           />

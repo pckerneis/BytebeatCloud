@@ -11,6 +11,8 @@ interface PublishPanelProps {
   onDescriptionChange: (description: string) => void;
   license: LicenseOption;
   onLicenseChange: (license: LicenseOption) => void;
+  isShareAlikeFork: boolean;
+  isEdit?: boolean;
   onPublish: () => void;
   isPublishing: boolean;
   canPublish: boolean;
@@ -30,6 +32,8 @@ export function PublishPanel({
   isPublishing,
   canPublish,
   saveError,
+  isEdit,
+  isShareAlikeFork,
 }: PublishPanelProps) {
   const [isClient, setIsClient] = useState(false);
 
@@ -114,28 +118,68 @@ export function PublishPanel({
             </label>
 
             {/* License field */}
-            <label className="field">
-              <span
-                style={{
-                  fontSize: '12px',
-                  color: 'var(--secondary-text-color)',
-                  marginBottom: '4px',
-                  display: 'block',
-                }}
-              >
-                License
-              </span>
-              <select
-                value={license}
-                onChange={(e) => onLicenseChange(e.target.value as LicenseOption)}
-              >
-                {LICENSE_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-            </label>
+            {isShareAlikeFork ? (
+              <>
+                <label className="field">
+                  <span
+                    style={{
+                      fontSize: '12px',
+                      color: 'var(--secondary-text-color)',
+                      marginBottom: '4px',
+                      display: 'block',
+                    }}
+                  >
+                    License
+                  </span>
+                  <span>{license}</span>
+                </label>
+                <span className="license-locked-hint">
+                  This post is derived from a Share-Alike work, so the license can’t be changed.
+                </span>
+              </>
+            ) : isEdit ? (
+              <>
+                <label className="field">
+                  <span
+                    style={{
+                      fontSize: '12px',
+                      color: 'var(--secondary-text-color)',
+                      marginBottom: '4px',
+                      display: 'block',
+                    }}
+                  >
+                    License
+                  </span>
+                  <span>{license}</span>
+                </label>
+                <span className="license-locked-hint">
+                  Reuse permissions are locked to protect people who may already be using this work.
+                </span>
+              </>
+            ) : (
+              <label className="field">
+                <span
+                  style={{
+                    fontSize: '12px',
+                    color: 'var(--secondary-text-color)',
+                    marginBottom: '4px',
+                    display: 'block',
+                  }}
+                >
+                  License
+                </span>
+                <select
+                  value={license}
+                  onChange={(e) => onLicenseChange(e.target.value as LicenseOption)}
+                >
+                  {LICENSE_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
           </div>
 
           {/* Actions */}

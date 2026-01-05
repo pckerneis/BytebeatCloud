@@ -118,6 +118,8 @@ const page: NextPageWithLayout = function EditPostFocusPage() {
         isPublishing={editor.saveStatus === 'saving'}
         canPublish={editor.canPublish}
         saveError={editor.saveError}
+        isShareAlikeFork={false}
+        isEdit={true}
       />
     </>
   );

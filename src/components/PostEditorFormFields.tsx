@@ -32,12 +32,12 @@ interface PostEditorFormFieldsProps {
   saveError: string;
 
   showActions: boolean;
-  isFork: boolean;
+  isEdit: boolean;
 
   liveUpdateEnabled: boolean;
   onLiveUpdateChange: (enabled: boolean) => void;
 
-  isShareAlike?: boolean;
+  isShareAlikeFork?: boolean;
 }
 
 function findNextPresetSampleRate(sampleRate: number): number {
@@ -65,8 +65,8 @@ export function PostEditorFormFields(props: Readonly<PostEditorFormFieldsProps>)
     showActions,
     liveUpdateEnabled,
     onLiveUpdateChange,
-    isShareAlike,
-    isFork,
+    isShareAlikeFork,
+    isEdit,
   } = props;
 
   const expressionLength = expression.length;
@@ -232,14 +232,21 @@ export function PostEditorFormFields(props: Readonly<PostEditorFormFieldsProps>)
       {showActions && (
         <>
           <div className="field license-field">
-            {isShareAlike ? (
+            {isShareAlikeFork ? (
               <div className="license-locked">
                 <span className="license-locked-label">License: {currentLicenseLabel}</span>
                 <span className="license-locked-hint">
                   This post is derived from a Share-Alike work, so the license can’t be changed.
                 </span>
               </div>
-            ) : isFork ? (
+            ) : isEdit ? (
+              <div className="license-locked">
+                <span className="license-locked-label">License: {currentLicenseLabel}</span>
+                <span className="license-locked-hint">
+                  Reuse permissions are locked to protect people who may already be using this work.
+                </span>
+              </div>
+            ) : (
               <details className="license-helper">
                 <summary>License: {currentLicenseLabel}</summary>
                 <div className="radio-group">
@@ -259,13 +266,6 @@ export function PostEditorFormFields(props: Readonly<PostEditorFormFieldsProps>)
                   ))}
                 </div>
               </details>
-            ) : (
-              <div className="license-locked">
-                <span className="license-locked-label">License: {currentLicenseLabel}</span>
-                <span className="license-locked-hint">
-                  Reuse permissions are locked to protect people who may already be using this work.
-                </span>
-              </div>
             )}
           </div>
 

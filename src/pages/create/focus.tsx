@@ -89,6 +89,8 @@ const page: NextPageWithLayout = function FocusCreatePage() {
         isPublishing={editor.saveStatus === 'saving'}
         canPublish={editor.canPublish}
         saveError={editor.saveError}
+        isEdit={false}
+        isShareAlikeFork={false}
       />
     </>
   );
