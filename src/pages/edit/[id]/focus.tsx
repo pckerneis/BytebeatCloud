@@ -40,7 +40,9 @@ const page: NextPageWithLayout = function EditPostFocusPage() {
         </Head>
         <section className="py-8 px-12">
           <h2>Edit post</h2>
-          <p>You need to <Link href="/login">log in</Link> in order to edit a post.</p>
+          <p>
+            You need to <Link href="/login">log in</Link> in order to edit a post.
+          </p>
         </section>
       </>
     );

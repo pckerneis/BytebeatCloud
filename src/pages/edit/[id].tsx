@@ -117,7 +117,9 @@ export default function EditPostPage() {
           ← Back
         </button>
         <h2>Edit post</h2>
-        <p>You need to <Link href="/login">log in</Link> in order to edit a post.</p>
+        <p>
+          You need to <Link href="/login">log in</Link> in order to edit a post.
+        </p>
       </section>
     );
   }
