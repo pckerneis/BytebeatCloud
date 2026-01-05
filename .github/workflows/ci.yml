@@ -25,7 +25,7 @@ jobs:
           node-version: 20
           cache: npm
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --include=optional
       - name: Type check
         run: npm run typecheck
       - name: Lint
@@ -43,7 +43,7 @@ jobs:
           node-version: 20
           cache: npm
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --include=optional
       - name: Run unit tests
         run: npm run test:unit -- --run
 
@@ -84,7 +84,7 @@ jobs:
           node-version: 20
           cache: npm
       - name: Install dependencies
-        run: npm ci --prefer-offline
+        run: npm ci --include=optional
       - name: Install Playwright browser
         run: npx playwright install chromium
       - name: Install Supabase globally
