@@ -91,7 +91,8 @@ jobs:
         env:
           COMPOSE_PROJECT_NAME: supabase-${{ github.run_id }}-${{ matrix.group }}
         run: |
-          npx supabase start --config supabase/config.ci.toml
+          npx supabase start \
+            --exclude studio,mailpit,logflare,vector,analytics
       - name: Wait for Supabase
         run: |
           for i in {1..20}; do
