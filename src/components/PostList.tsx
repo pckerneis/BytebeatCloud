@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useBytebeatPlayer } from '../hooks/useBytebeatPlayer';
 import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
 import { useCurrentWeeklyChallenge } from '../hooks/useCurrentWeeklyChallenge';
@@ -77,6 +78,12 @@ export function PostList({
   } = usePlayerStore();
   const [favoritePending, setFavoritePending] = useState<Record<string, boolean>>({});
   const [toTopVisible, setToTopVisible] = useState(false);
+  const [portalTarget, setPortalTarget] = useState<Element | null>(null);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    setPortalTarget(document.body);
+  }, []);
 
   useEffect(() => {
     if (currentPost && posts.some((p) => p.id === currentPost.id)) {
@@ -231,6 +238,15 @@ export function PostList({
       });
     }
   };
+
+  const backToTopButton = (
+    <button
+      className={`back-to-top-button button primary${toTopVisible ? ' visible' : ''}`}
+      onClick={handleToTopClick}
+    >
+      ↑ Back to top
+    </button>
+  );
 
   return (
     <>
@@ -421,12 +437,7 @@ export function PostList({
           );
         })}
       </ul>
-      <button
-        className={`back-to-top-button button primary${toTopVisible ? ' visible' : ''}`}
-        onClick={handleToTopClick}
-      >
-        ↑ Back to top
-      </button>
+      {portalTarget ? createPortal(backToTopButton, portalTarget) : backToTopButton}
     </>
   );
 }
