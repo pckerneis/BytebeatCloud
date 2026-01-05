@@ -37,7 +37,7 @@ interface PostEditorFormFieldsProps {
   liveUpdateEnabled: boolean;
   onLiveUpdateChange: (enabled: boolean) => void;
 
-  lockLicense?: boolean;
+  isShareAlike?: boolean;
 }
 
 function findNextPresetSampleRate(sampleRate: number): number {
@@ -63,10 +63,10 @@ export function PostEditorFormFields(props: Readonly<PostEditorFormFieldsProps>)
     validationIssue,
     lastError,
     showActions,
-    isFork,
     liveUpdateEnabled,
     onLiveUpdateChange,
-    lockLicense,
+    isShareAlike,
+    isFork,
   } = props;
 
   const expressionLength = expression.length;
@@ -232,14 +232,14 @@ export function PostEditorFormFields(props: Readonly<PostEditorFormFieldsProps>)
       {showActions && (
         <>
           <div className="field license-field">
-            {lockLicense ? (
+            {isShareAlike ? (
               <div className="license-locked">
                 <span className="license-locked-label">License: {currentLicenseLabel}</span>
                 <span className="license-locked-hint">
-                  Reuse permissions are locked to protect people who may already be using this work.
+                  This post is derived from a Share-Alike work, so the license can’t be changed.
                 </span>
               </div>
-            ) : (
+            ) : isFork ? (
               <details className="license-helper">
                 <summary>License: {currentLicenseLabel}</summary>
                 <div className="radio-group">
@@ -259,6 +259,13 @@ export function PostEditorFormFields(props: Readonly<PostEditorFormFieldsProps>)
                   ))}
                 </div>
               </details>
+            ) : (
+              <div className="license-locked">
+                <span className="license-locked-label">License: {currentLicenseLabel}</span>
+                <span className="license-locked-hint">
+                  Reuse permissions are locked to protect people who may already be using this work.
+                </span>
+              </div>
             )}
           </div>
 

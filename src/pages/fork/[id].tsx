@@ -182,7 +182,7 @@ export default function ForkPostPage() {
             isFork={true}
             liveUpdateEnabled={editor.liveUpdateEnabled}
             onLiveUpdateChange={editor.setLiveUpdateEnabled}
-            lockLicense={editor.isShareAlike}
+            isShareAlike={editor.isShareAlike}
           />
 
           <div className="form-actions">
