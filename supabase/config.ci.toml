@@ -1,0 +1,12 @@
+# supabase/config.ci.toml
+[studio]
+enabled = false
+
+[inbucket]
+enabled = false
+
+[analytics]
+enabled = false
+
+[edge_runtime]
+enabled = false

@@ -71,6 +71,11 @@ jobs:
           - group: core
             spec: e2e/explore.spec.ts e2e/favorites.spec.ts e2e/infinite-scroll.spec.ts e2e/post-detail.spec.ts e2e/profile.spec.ts e2e/smoke.spec.ts e2e/tags.spec.ts e2e/back-to-top.spec.ts e2e/tab-swipe.spec.ts
     steps:
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
       - name: Checkout
         uses: actions/checkout@v4
       - name: Setup Node
@@ -79,14 +84,23 @@ jobs:
           node-version: 20
           cache: npm
       - name: Install dependencies
-        run: npm ci
-      - name: Install Playwright Browsers
-        run: npx playwright install --with-deps
+        run: npm ci --prefer-offline
+      - name: Install Playwright browser
+        run: npx playwright install chromium
+      - name: Install Supabase globally
+        run: npm install -g supabase@2.67.1
       - name: Start Supabase (local)
         env:
           COMPOSE_PROJECT_NAME: supabase-${{ github.run_id }}-${{ matrix.group }}
         run: |
-          npx supabase start
+          supabase start --config supabase/config.ci.toml
+      - name: Wait for Supabase
+        run: |
+          for i in {1..20}; do
+            curl -sf http://localhost:54321/health && exit 0
+            sleep 1
+          done
+          echo "Supabase not ready" && exit 1
       - name: Run E2E tests
         env:
           CI: true

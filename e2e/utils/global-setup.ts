@@ -1,16 +1,8 @@
 import { execSync } from 'node:child_process';
 
-function supabaseStatus() {
-  try {
-    const out = execSync('supabase status -o json', { encoding: 'utf-8' });
-    return JSON.parse(out);
-  } catch {
-    return null;
-  }
-}
-
 export default async function globalSetup() {
-  const status = supabaseStatus();
+  const out = execSync('supabase status -o json', { encoding: 'utf-8' });
+  const status = JSON.parse(out);
 
   process.env.NEXT_PUBLIC_SUPABASE_URL = status.API_URL;
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = status.PUBLISHABLE_KEY;
