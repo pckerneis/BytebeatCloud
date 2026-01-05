@@ -6,11 +6,13 @@ import { formatPostTitle } from '../../utils/post-format';
 import { TooltipHint } from '../../components/TooltipHint';
 import OverflowMenu from '../../components/OverflowMenu';
 import { usePostEditor } from '../../hooks/usePostEditor';
+import { copyShareLinkToClipboard } from '../../utils/shareLink';
 
 export default function ForkPostPage() {
   const router = useRouter();
   const { id } = router.query;
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
+  const [shareLinkCopied, setShareLinkCopied] = useState(false);
 
   const editor = usePostEditor({
     mode: 'fork',
@@ -96,6 +98,19 @@ export default function ForkPostPage() {
     );
   }
 
+  const handleCopyShareLink = async () => {
+    const success = await copyShareLinkToClipboard({
+      title: editor.title,
+      expression: editor.expression,
+      mode: editor.mode,
+      sampleRate: editor.sampleRate,
+    });
+
+    if (success) {
+      setShareLinkCopied(true);
+    }
+  };
+
   return (
     <>
       <Head>
@@ -170,7 +185,6 @@ export default function ForkPostPage() {
             lockLicense={editor.isShareAlike}
           />
 
-          {editor.user && (
             <div className="form-actions">
               <div className="form-actions-buttons">
                 <OverflowMenu disabled={editor.saveStatus === 'saving'}>
@@ -182,20 +196,24 @@ export default function ForkPostPage() {
                   >
                     Discard changes…
                   </button>
-                  <button
-                    type="button"
-                    className="overflow-menu-item"
-                    onClick={handleSaveAsDraft}
-                    disabled={
-                      !editor.expression.trim() ||
-                      !!editor.validationIssue ||
-                      editor.saveStatus === 'saving'
-                    }
-                  >
-                    {editor.saveStatus === 'saving' && editor.isDraft ? 'Saving…' : 'Save as draft'}
-                  </button>
+                  {editor.user && (
+                    <button
+                      type="button"
+                      className="overflow-menu-item"
+                      onClick={handleSaveAsDraft}
+                      disabled={
+                        !editor.expression.trim() ||
+                        !!editor.validationIssue ||
+                        editor.saveStatus === 'saving'
+                      }
+                    >
+                      {editor.saveStatus === 'saving' && editor.isDraft ? 'Saving…' : 'Save as draft'}
+                    </button>
+                  )}
                 </OverflowMenu>
 
+
+                {editor.user ? (
                 <button
                   type="button"
                   className="button primary"
@@ -208,9 +226,18 @@ export default function ForkPostPage() {
                 >
                   {editor.saveStatus === 'saving' && !editor.isDraft ? 'Publishing…' : 'Publish'}
                 </button>
+                ) : (
+                    <button
+                      type="button"
+                      className="button secondary"
+                      disabled={!editor.expression.trim()}
+                      onClick={handleCopyShareLink}
+                    >
+                      {shareLinkCopied ? 'Link copied' : 'Copy share link'}
+                    </button>
+                )}
               </div>
             </div>
-          )}
 
           {editor.saveError && <p className="error-message">{editor.saveError}</p>}
           {editor.saveStatus === 'success' && !editor.saveError && (

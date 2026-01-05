@@ -73,7 +73,6 @@ export function PostEditorFormFields(props: Readonly<PostEditorFormFieldsProps>)
   const isExpressionTooLong = expressionLength > EXPRESSION_MAX;
 
   const { title, description, mode, sampleRate, license } = meta;
-  const [shareLinkCopied, setShareLinkCopied] = useState(false);
   const [sampleRateModalOpen, setSampleRateModalOpen] = useState(false);
   const [sampleRateInput, setSampleRateInput] = useState(sampleRate.toString());
   const longPressTimeoutRef = useRef<number | null>(null);
@@ -131,40 +130,6 @@ export function PostEditorFormFields(props: Readonly<PostEditorFormFieldsProps>)
 
   const rotateSampleRate = () => {
     onMetaChange({ ...meta, sampleRate: findNextPresetSampleRate(sampleRate) });
-  };
-
-  const handleCopyShareLink = async () => {
-    const trimmedExpr = expression.trim();
-    if (!trimmedExpr) return;
-
-    if (typeof window === 'undefined') return;
-
-    const trimmedTitle = title.trim();
-
-    const payload = {
-      title: trimmedTitle || undefined,
-      expr: trimmedExpr,
-      mode,
-      sr: sampleRate,
-    };
-
-    let encoded = '';
-    try {
-      encoded = btoa(JSON.stringify(payload));
-    } catch {
-      return;
-    }
-
-    const origin = window.location.origin;
-    const href = `${origin}/${isFork ? 'fork' : 'create'}?q=${encodeURIComponent(encoded)}`;
-
-    try {
-      await navigator.clipboard.writeText(href);
-      setShareLinkCopied(true);
-      window.setTimeout(() => setShareLinkCopied(false), 1500);
-    } catch {
-      // ignore clipboard errors
-    }
   };
 
   return (
@@ -305,19 +270,6 @@ export function PostEditorFormFields(props: Readonly<PostEditorFormFieldsProps>)
             .
           </p>
         </>
-      )}
-
-      {!showActions && (
-        <div className="form-actions-buttons" style={{ marginTop: '8px' }}>
-          <button
-            type="button"
-            className="button secondary"
-            disabled={!expression.trim()}
-            onClick={handleCopyShareLink}
-          >
-            {shareLinkCopied ? 'Link copied' : 'Copy share link'}
-          </button>
-        </div>
       )}
 
       {sampleRateModalOpen && (

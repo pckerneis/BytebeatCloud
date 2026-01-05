@@ -62,16 +62,12 @@ export default function OverflowMenu({ children, disabled = false }: OverflowMen
     <div className="overflow-menu" ref={menuRef}>
       <button
         type="button"
-        className="overflow-menu-trigger"
+        className="button secondary"
         onClick={handleToggle}
         disabled={disabled}
         aria-label="More actions"
       >
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-          <circle cx="8" cy="3" r="1.5" />
-          <circle cx="8" cy="8" r="1.5" />
-          <circle cx="8" cy="13" r="1.5" />
-        </svg>
+        ⁝
       </button>
       {isOpen && (
         <div
