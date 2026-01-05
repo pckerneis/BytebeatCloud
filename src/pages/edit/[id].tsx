@@ -6,6 +6,8 @@ import Head from 'next/head';
 import { TooltipHint } from '../../components/TooltipHint';
 import OverflowMenu from '../../components/OverflowMenu';
 import { usePostEditor } from '../../hooks/usePostEditor';
+import { useSupabaseAuth } from '../../hooks/useSupabaseAuth';
+import Link from 'next/link';
 
 export default function EditPostPage() {
   const router = useRouter();
@@ -104,6 +106,18 @@ export default function EditPostPage() {
         </button>
         <h2>Edit post</h2>
         <p>Loading…</p>
+      </section>
+    );
+  }
+
+  if (!editor.user) {
+    return (
+      <section>
+        <button type="button" className="button ghost" onClick={handleBack}>
+          ← Back
+        </button>
+        <h2>Edit post</h2>
+        <p>You need to <Link href="/login">log in</Link> in order to edit a post.</p>
       </section>
     );
   }

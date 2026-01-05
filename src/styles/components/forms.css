@@ -189,7 +189,6 @@ input[type='range']:focus::-moz-range-thumb {
 
 .error-message {
   margin-top: 4px;
-  font-size: 12px;
   color: var(--error-text-color);
 }
 

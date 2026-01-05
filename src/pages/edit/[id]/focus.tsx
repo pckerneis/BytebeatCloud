@@ -5,10 +5,13 @@ import { NextPageWithLayout } from '../../_app';
 import { FocusExpressionEditor } from '../../../components/FocusExpressionEditor';
 import { PublishPanel } from '../../../components/PublishPanel';
 import { usePostEditor } from '../../../hooks/usePostEditor';
+import { useSupabaseAuth } from '../../../hooks/useSupabaseAuth';
+import Link from 'next/link';
 
 const page: NextPageWithLayout = function EditPostFocusPage() {
   const router = useRouter();
   const { id } = router.query;
+  const { user } = useSupabaseAuth();
   const editor = usePostEditor({
     mode: 'edit',
     postId: id,
@@ -21,9 +24,23 @@ const page: NextPageWithLayout = function EditPostFocusPage() {
         <Head>
           <title>Edit post - BytebeatCloud</title>
         </Head>
-        <section>
+        <section className="py-8 px-12">
           <h2>Edit post</h2>
           <p>Loading…</p>
+        </section>
+      </>
+    );
+  }
+
+  if (!user) {
+    return (
+      <>
+        <Head>
+          <title>Edit post - BytebeatCloud</title>
+        </Head>
+        <section className="py-8 px-12">
+          <h2>Edit post</h2>
+          <p>You need to <Link href="/login">log in</Link> in order to edit a post.</p>
         </section>
       </>
     );
@@ -35,7 +52,7 @@ const page: NextPageWithLayout = function EditPostFocusPage() {
         <Head>
           <title>Edit post - BytebeatCloud</title>
         </Head>
-        <section>
+        <section className="py-8 px-12">
           <h2>Edit post</h2>
           <p className="error-message">{editor.loadError}</p>
         </section>
