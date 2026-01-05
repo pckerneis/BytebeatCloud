@@ -292,7 +292,11 @@ test.describe('Fork Focus Mode - saving and publishing', () => {
     await page.goto(`/fork/${originalPostId}/focus`);
     await expect(page.getByText('Loading…')).toHaveCount(0, { timeout: 10000 });
 
-    await page.getByRole('button', { name: 'Publish' }).click();
+    await page.getByRole('button', { name: 'Publish…', exact: true }).click();
+
+    const publishPanel = page.locator('.publish-panel');
+    await expect(publishPanel).toBeVisible();
+    await publishPanel.getByRole('button', { name: 'Publish' }).click();
     await page.waitForURL(/\/post\//);
 
     const forkLink = page.locator('.fork-link');
