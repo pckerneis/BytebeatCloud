@@ -6,7 +6,6 @@ import Head from 'next/head';
 import { TooltipHint } from '../../components/TooltipHint';
 import OverflowMenu from '../../components/OverflowMenu';
 import { usePostEditor } from '../../hooks/usePostEditor';
-import { useSupabaseAuth } from '../../hooks/useSupabaseAuth';
 import Link from 'next/link';
 
 export default function EditPostPage() {
