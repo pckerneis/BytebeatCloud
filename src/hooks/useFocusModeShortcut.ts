@@ -20,13 +20,13 @@ export function useFocusModeShortcut() {
           void router.push('/create');
         } else if (pathname === '/create') {
           void router.push('/create/focus');
-        } else if (pathname === '/edit/[id]/focus') {
+        } else if (pathname === '/edit/[id]/focus' && query.id) {
           void router.push(`/edit/${query.id}`);
-        } else if (pathname === '/edit/[id]') {
+        } else if (pathname === '/edit/[id]' && query.id) {
           void router.push(`/edit/${query.id}/focus`);
-        } else if (pathname === '/fork/[id]/focus') {
+        } else if (pathname === '/fork/[id]/focus' && query.id) {
           void router.push(`/fork/${query.id}`);
-        } else if (pathname === '/fork/[id]') {
+        } else if (pathname === '/fork/[id]' && query.id) {
           void router.push(`/fork/${query.id}/focus`);
         }
       }
