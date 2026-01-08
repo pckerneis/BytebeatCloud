@@ -59,7 +59,9 @@ jobs:
           - group: auth
             spec: e2e/auth-nav.spec.ts e2e/blocking.spec.ts
           - group: create_edit
-            spec: e2e/create.spec.ts e2e/edit.spec.ts e2e/fork.spec.ts e2e/license.spec.ts
+            spec: e2e/create.spec.ts e2e/edit.spec.ts e2e/fork.spec.ts e2e/license.spec.ts e2e/edit-focus.spec.ts e2e/fork-focus.spec.ts
+          - group: editor_state
+            spec: e2e/editor-state-isolation.spec.ts e2e/editor-focus-sync.spec.ts e2e/editor-draft-persistence.spec.ts
           - group: notifications and comments
             spec: e2e/notifications.spec.ts e2e/notification-triggers.spec.ts e2e/mentions.spec.ts e2e/comments.spec.ts e2e/comment-rate-limiting.spec.ts e2e/comment-replies.spec.ts
           - group: weekly
@@ -81,13 +83,11 @@ jobs:
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps
       - name: Start Supabase (local)
+        env:
+          COMPOSE_PROJECT_NAME: supabase-${{ github.run_id }}-${{ matrix.group }}
         run: |
           npx supabase start
       - name: Run E2E tests
         env:
           CI: true
         run: npm run test:e2e -- ${{ matrix.spec }} --workers=1
-      - name: Stop Supabase
-        if: always()
-        run: |
-          npx supabase stop || true

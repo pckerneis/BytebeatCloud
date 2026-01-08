@@ -1,0 +1,207 @@
+import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { LicenseOption, LICENSE_OPTIONS } from '../model/postEditor';
+
+interface PublishPanelProps {
+  isOpen: boolean;
+  onClose: () => void;
+  title: string;
+  onTitleChange: (title: string) => void;
+  description: string;
+  onDescriptionChange: (description: string) => void;
+  license: LicenseOption;
+  onLicenseChange: (license: LicenseOption) => void;
+  isShareAlikeFork: boolean;
+  isEdit?: boolean;
+  onPublish: () => void;
+  isPublishing: boolean;
+  canPublish: boolean;
+  saveError?: string;
+}
+
+export function PublishPanel({
+  isOpen,
+  onClose,
+  title,
+  onTitleChange,
+  description,
+  onDescriptionChange,
+  license,
+  onLicenseChange,
+  onPublish,
+  isPublishing,
+  canPublish,
+  saveError,
+  isEdit,
+  isShareAlikeFork,
+}: PublishPanelProps) {
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setIsClient(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    window.addEventListener('keydown', handleEscape);
+    return () => window.removeEventListener('keydown', handleEscape);
+  }, [isOpen, onClose]);
+
+  if (!isClient || !isOpen) return null;
+
+  return createPortal(
+    <>
+      {/* Backdrop */}
+      <div className="publish-panel-backdrop" onClick={onClose} />
+
+      {/* Slide-in panel */}
+      <div className="publish-panel">
+        <div className="publish-panel-content">
+          {/* Header */}
+          <div className="publish-panel-header">
+            <h2 className="publish-panel-title">Post details</h2>
+            <button onClick={onClose} className="publish-panel-close" aria-label="Close panel">
+              ×
+            </button>
+          </div>
+
+          {/* Form fields */}
+          <div className="publish-panel-form">
+            {/* Title field */}
+            <label className="field">
+              <span
+                style={{
+                  fontSize: '12px',
+                  color: 'var(--secondary-text-color)',
+                  marginBottom: '4px',
+                  display: 'block',
+                }}
+              >
+                Title
+              </span>
+              <input
+                type="text"
+                value={title}
+                onChange={(e) => onTitleChange(e.target.value)}
+                placeholder="Name your bytebeat expression"
+                className="border-bottom-accent-focus"
+              />
+            </label>
+
+            {/* Description field */}
+            <label className="field">
+              <span
+                style={{
+                  fontSize: '12px',
+                  color: 'var(--secondary-text-color)',
+                  marginBottom: '4px',
+                  display: 'block',
+                }}
+              >
+                Description
+              </span>
+              <textarea
+                value={description}
+                onChange={(e) => onDescriptionChange(e.target.value)}
+                placeholder="Add an optional description"
+                rows={4}
+                className="border-bottom-accent-focus"
+              />
+            </label>
+
+            {/* License field */}
+            {isShareAlikeFork ? (
+              <>
+                <label className="field">
+                  <span
+                    style={{
+                      fontSize: '12px',
+                      color: 'var(--secondary-text-color)',
+                      marginBottom: '4px',
+                      display: 'block',
+                    }}
+                  >
+                    License
+                  </span>
+                  <span>{license}</span>
+                </label>
+                <span className="license-locked-hint">
+                  This post is derived from a Share-Alike work, so the license can’t be changed.
+                </span>
+              </>
+            ) : isEdit ? (
+              <>
+                <label className="field">
+                  <span
+                    style={{
+                      fontSize: '12px',
+                      color: 'var(--secondary-text-color)',
+                      marginBottom: '4px',
+                      display: 'block',
+                    }}
+                  >
+                    License
+                  </span>
+                  <span>{license}</span>
+                </label>
+                <span className="license-locked-hint">
+                  Reuse permissions are locked to protect people who may already be using this work.
+                </span>
+              </>
+            ) : (
+              <label className="field">
+                <span
+                  style={{
+                    fontSize: '12px',
+                    color: 'var(--secondary-text-color)',
+                    marginBottom: '4px',
+                    display: 'block',
+                  }}
+                >
+                  License
+                </span>
+                <select
+                  value={license}
+                  onChange={(e) => onLicenseChange(e.target.value as LicenseOption)}
+                >
+                  {LICENSE_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
+          </div>
+
+          {/* Actions */}
+          <div className="publish-panel-actions">
+            <button onClick={onClose} className="button secondary" style={{ flex: 1 }}>
+              Cancel
+            </button>
+            <button
+              onClick={onPublish}
+              disabled={!canPublish || isPublishing}
+              className="button primary"
+              style={{ flex: 1 }}
+            >
+              {isPublishing ? 'Publishing…' : 'Publish'}
+            </button>
+          </div>
+
+          {/* Error message */}
+          {saveError && <div className="error-message">{saveError}</div>}
+        </div>
+      </div>
+    </>,
+    document.body,
+  );
+}

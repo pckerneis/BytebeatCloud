@@ -2,10 +2,19 @@ import type { AppProps } from 'next/app';
 import '../styles/globals.css';
 import { Layout } from '../components/Layout';
 import Head from 'next/head';
-import { useEffect } from 'react';
+import { ReactElement, ReactNode, useEffect } from 'react';
 import { WeeklyChallengeProvider } from '../hooks/useCurrentWeeklyChallenge';
+import { NextPage } from 'next';
 
-export default function App({ Component, pageProps }: AppProps) {
+export type NextPageWithLayout = NextPage & {
+  getLayout?: (page: ReactElement) => ReactNode;
+};
+
+type AppPropsWithLayout = AppProps & {
+  Component: NextPageWithLayout;
+};
+
+export default function App({ Component, pageProps }: AppPropsWithLayout) {
   useEffect(() => {
     // If the app no longer uses a service worker, proactively unregister any
     // previously installed registrations to prevent stale workers from
@@ -19,15 +28,21 @@ export default function App({ Component, pageProps }: AppProps) {
       .catch(() => void 0);
   }, []);
 
+  const getLayout = Component.getLayout;
+
   return (
     <>
       <Head>
         <title>BytebeatCloud</title>
       </Head>
       <WeeklyChallengeProvider>
-        <Layout>
-          <Component {...pageProps} />
-        </Layout>
+        {getLayout ? (
+          getLayout(<Component {...pageProps} />)
+        ) : (
+          <Layout {...pageProps}>
+            <Component />
+          </Layout>
+        )}
       </WeeklyChallengeProvider>
     </>
   );

@@ -6,7 +6,7 @@ import {
   supabaseAdmin,
 } from './utils/supabaseAdmin';
 import { clearSupabaseSession, signInAndInjectSession } from './utils/auth';
-import { clearAndTypeInExpressionEditor } from './utils/codemirror-helpers';
+import { clearAndTypeInExpressionEditor } from './utils/editor-helpers';
 
 const TEST_USER_EMAIL = 'e2e+fork@example.com';
 const TEST_USER_PASSWORD = 'password123';
@@ -210,7 +210,9 @@ test.describe('Fork page - saving fork', () => {
 
     await expect(page.getByText('Loading…')).toHaveCount(0, { timeout: 10000 });
 
-    // Click "Save as draft" button
+    // Open overflow menu and click "Save as draft" button
+    const overflowTrigger = page.getByRole('button', { name: 'More actions' });
+    await overflowTrigger.click();
     const draftButton = page.getByRole('button', { name: 'Save as draft' });
     await draftButton.click();
 
@@ -390,7 +392,11 @@ test.describe('Fork page - unauthenticated', () => {
 
     await expect(page.getByText('Log in to publish a post')).toBeVisible();
     await expect(page.getByRole('button', { name: 'Publish' })).toHaveCount(0);
-    await expect(page.getByRole('button', { name: 'Save as draft' })).toHaveCount(0);
+
+    const overflowMenuButton = page.getByRole('button', { name: 'More actions' });
+    await expect(overflowMenuButton).toHaveCount(1);
+    await overflowMenuButton.click();
+    await expect(page.locator('.overflow-menu-dropdown button')).toHaveCount(1);
   });
 
   test('can still view original post data', async ({ page }) => {
@@ -401,6 +407,104 @@ test.describe('Fork page - unauthenticated', () => {
     // Can see the pre-filled data
     const titleField = page.getByPlaceholder('Name your bytebeat expression');
     await expect(titleField).toHaveValue('Original Post Unauth');
+  });
+});
+
+test.describe('Fork page - back button and discard changes', () => {
+  let originalPostId: string;
+
+  test.beforeEach(async ({ page }) => {
+    await ensureTestUserProfile(OTHER_USER_EMAIL, OTHER_USERNAME);
+
+    const { data } = await supabaseAdmin
+      .from('posts')
+      .insert({
+        profile_id: otherUserId,
+        title: 'Original for Navigation',
+        expression: 't',
+        is_draft: false,
+        sample_rate: 8000,
+        mode: 'uint8',
+      })
+      .select('id')
+      .single();
+
+    originalPostId = data!.id;
+
+    await signInAndInjectSession(page, {
+      email: TEST_USER_EMAIL,
+      password: TEST_USER_PASSWORD,
+    });
+    await ensureTestUserProfile(TEST_USER_EMAIL, TEST_USERNAME);
+  });
+
+  test('back button redirects to original post detail page', async ({ page }) => {
+    await page.goto(`/fork/${originalPostId}`);
+    await expect(page.getByText('Loading…')).toHaveCount(0, { timeout: 10000 });
+
+    const backButton = page.getByRole('button', { name: '← Back' });
+    await backButton.click();
+
+    await page.waitForURL(`/post/${originalPostId}`);
+    await expect(page).toHaveURL(`/post/${originalPostId}`);
+  });
+
+  test('discard changes button shows confirmation modal', async ({ page }) => {
+    await page.goto(`/fork/${originalPostId}`);
+    await expect(page.getByText('Loading…')).toHaveCount(0, { timeout: 10000 });
+
+    // Make a change
+    const titleField = page.getByPlaceholder('Name your bytebeat expression');
+    await titleField.clear();
+    await titleField.fill('Modified Fork Title');
+
+    // Open overflow menu and click discard changes
+    const overflowTrigger = page.getByRole('button', { name: 'More actions' });
+    await overflowTrigger.click();
+    await page.getByRole('button', { name: 'Discard changes' }).click();
+
+    // Modal should appear
+    const modal = page.locator('.modal');
+    await expect(modal.getByRole('heading', { name: 'Discard changes' })).toBeVisible();
+    await expect(modal.getByText(/Your local changes will be discarded/)).toBeVisible();
+  });
+
+  test('discard changes button disabled when no changes', async ({ page }) => {
+    await page.goto(`/fork/${originalPostId}`);
+    await expect(page.getByText('Loading…')).toHaveCount(0, { timeout: 10000 });
+
+    // Open overflow menu
+    const overflowTrigger = page.getByRole('button', { name: 'More actions' });
+    await overflowTrigger.click();
+
+    // Discard changes button should be disabled
+    const discardButton = page.getByRole('button', { name: 'Discard changes' });
+    await expect(discardButton).toBeDisabled();
+  });
+
+  test('confirming discard reloads original post data', async ({ page }) => {
+    await page.goto(`/fork/${originalPostId}`);
+    await expect(page.getByText('Loading…')).toHaveCount(0, { timeout: 10000 });
+
+    const titleField = page.getByPlaceholder('Name your bytebeat expression');
+
+    // Make a change
+    await titleField.clear();
+    await titleField.fill('Changed Fork Title');
+    await expect(titleField).toHaveValue('Changed Fork Title');
+
+    // Open overflow menu and discard
+    const overflowTrigger = page.getByRole('button', { name: 'More actions' });
+    await overflowTrigger.click();
+    await page.getByRole('button', { name: 'Discard changes' }).click();
+
+    // Confirm in modal
+    const modal = page.locator('.modal');
+    await modal.getByRole('button', { name: 'Discard changes' }).click();
+
+    // Page should reload and show original title
+    await expect(page.getByText('Loading…')).toHaveCount(0, { timeout: 10000 });
+    await expect(titleField).toHaveValue('Original for Navigation');
   });
 });
 

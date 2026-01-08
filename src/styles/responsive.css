@@ -1,3 +1,13 @@
+.sm-only {
+  display: none !important;
+}
+.md-only {
+  display: none !important;
+}
+.lg-only {
+  display: none !important;
+}
+
 /* Mobile layout */
 
 @media (max-width: 640px) {
@@ -6,6 +16,14 @@
     overflow: hidden;
     width: 100%;
     height: 100%;
+  }
+
+  .sm-hidden {
+    display: none !important;
+  }
+
+  .sm-only {
+    display: inherit !important;
   }
 
   .top-content {
@@ -190,11 +208,21 @@
   }
 }
 
+@media (min-width: 641px) and (max-width: 1024px) {
+  .md-hidden {
+    display: none !important;
+  }
+}
+
 /* Desktop scaling: slightly larger UI on wide screens */
 @media (min-width: 1024px) {
   body {
     /* ~1.2x base font size */
     font-size: 17px;
+  }
+
+  .lg-hidden {
+    display: none !important;
   }
 
   main > section {
@@ -261,7 +289,7 @@
   }
 
   .error-message {
-    font-size: 13px;
+    font-size: 16px;
   }
 
   .checkbox {
