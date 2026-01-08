@@ -392,8 +392,11 @@ test.describe('Fork page - unauthenticated', () => {
 
     await expect(page.getByText('Log in to publish a post')).toBeVisible();
     await expect(page.getByRole('button', { name: 'Publish' })).toHaveCount(0);
-    // Overflow menu should not be visible when not logged in
-    await expect(page.getByRole('button', { name: 'More actions' })).toHaveCount(0);
+
+    const overflowMenuButton = page.getByRole('button', { name: 'More actions' });
+    await expect(overflowMenuButton).toHaveCount(1);
+    await overflowMenuButton.click();
+    await expect(page.locator('.overflow-menu-dropdown button')).toHaveCount(1);
   });
 
   test('can still view original post data', async ({ page }) => {
