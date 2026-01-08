@@ -249,7 +249,7 @@ test.describe('Draft clearing behavior', () => {
     await setTitle(page, 'Draft Save Test');
 
     // Save as draft (unpublish)
-    const overflowTrigger = page.locator('.overflow-menu-trigger');
+    const overflowTrigger = page.getByRole('button', { name: 'More actions' });
     await overflowTrigger.click();
     const unpublishButton = page.getByRole('button', { name: 'Unpublish…' });
     await unpublishButton.click();
