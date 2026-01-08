@@ -211,7 +211,7 @@ test.describe('Fork page - saving fork', () => {
     await expect(page.getByText('Loading…')).toHaveCount(0, { timeout: 10000 });
 
     // Open overflow menu and click "Save as draft" button
-    const overflowTrigger = page.locator('.overflow-menu-trigger');
+    const overflowTrigger = page.getByRole('button', { name: 'More actions' });
     await overflowTrigger.click();
     const draftButton = page.getByRole('button', { name: 'Save as draft' });
     await draftButton.click();
@@ -393,7 +393,7 @@ test.describe('Fork page - unauthenticated', () => {
     await expect(page.getByText('Log in to publish a post')).toBeVisible();
     await expect(page.getByRole('button', { name: 'Publish' })).toHaveCount(0);
     // Overflow menu should not be visible when not logged in
-    await expect(page.locator('.overflow-menu-trigger')).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'More actions' })).toHaveCount(0);
   });
 
   test('can still view original post data', async ({ page }) => {
@@ -456,7 +456,7 @@ test.describe('Fork page - back button and discard changes', () => {
     await titleField.fill('Modified Fork Title');
 
     // Open overflow menu and click discard changes
-    const overflowTrigger = page.locator('.overflow-menu-trigger');
+    const overflowTrigger = page.getByRole('button', { name: 'More actions' });
     await overflowTrigger.click();
     await page.getByRole('button', { name: 'Discard changes' }).click();
 
@@ -471,7 +471,7 @@ test.describe('Fork page - back button and discard changes', () => {
     await expect(page.getByText('Loading…')).toHaveCount(0, { timeout: 10000 });
 
     // Open overflow menu
-    const overflowTrigger = page.locator('.overflow-menu-trigger');
+    const overflowTrigger = page.getByRole('button', { name: 'More actions' });
     await overflowTrigger.click();
 
     // Discard changes button should be disabled
@@ -491,7 +491,7 @@ test.describe('Fork page - back button and discard changes', () => {
     await expect(titleField).toHaveValue('Changed Fork Title');
 
     // Open overflow menu and discard
-    const overflowTrigger = page.locator('.overflow-menu-trigger');
+    const overflowTrigger = page.getByRole('button', { name: 'More actions' });
     await overflowTrigger.click();
     await page.getByRole('button', { name: 'Discard changes' }).click();
 

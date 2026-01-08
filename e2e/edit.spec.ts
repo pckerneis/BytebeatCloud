@@ -101,7 +101,7 @@ test.describe('Edit page - loading existing post', () => {
     await expect(page.getByText('Loading…')).toHaveCount(0, { timeout: 10000 });
 
     // Click overflow menu trigger
-    const overflowTrigger = page.locator('.overflow-menu-trigger');
+    const overflowTrigger = page.getByRole('button', { name: 'More actions' });
     await expect(overflowTrigger).toBeVisible();
     await overflowTrigger.click();
 
@@ -223,7 +223,7 @@ test.describe('Edit page - saving changes', () => {
     await expect(page.getByText('Loading…')).toHaveCount(0, { timeout: 10000 });
 
     // Post starts as public (is_draft: false). "Save as draft" is now "Unpublish" in overflow menu.
-    const overflowTrigger = page.locator('.overflow-menu-trigger');
+    const overflowTrigger = page.getByRole('button', { name: 'More actions' });
     await overflowTrigger.click();
 
     const unpublishButton = page.getByRole('button', { name: 'Unpublish…', exact: true });
@@ -296,7 +296,7 @@ test.describe('Edit page - delete', () => {
     await expect(page.getByText('Loading…')).toHaveCount(0, { timeout: 10000 });
 
     // Open overflow menu and click delete button
-    const overflowTrigger = page.locator('.overflow-menu-trigger');
+    const overflowTrigger = page.getByRole('button', { name: 'More actions' });
     await overflowTrigger.click();
     await page.getByRole('button', { name: 'Delete' }).click();
 
@@ -317,7 +317,7 @@ test.describe('Edit page - delete', () => {
     await expect(page.getByText('Loading…')).toHaveCount(0, { timeout: 10000 });
 
     // Open overflow menu and open modal
-    const overflowTrigger = page.locator('.overflow-menu-trigger');
+    const overflowTrigger = page.getByRole('button', { name: 'More actions' });
     await overflowTrigger.click();
     await page.getByRole('button', { name: 'Delete' }).click();
     await expect(page.locator('.modal')).toBeVisible();
@@ -335,7 +335,7 @@ test.describe('Edit page - delete', () => {
     await expect(page.getByText('Loading…')).toHaveCount(0, { timeout: 10000 });
 
     // Open overflow menu, open modal and confirm delete
-    const overflowTrigger = page.locator('.overflow-menu-trigger');
+    const overflowTrigger = page.getByRole('button', { name: 'More actions' });
     await overflowTrigger.click();
     await page.getByRole('button', { name: 'Delete' }).click();
     await page.locator('.modal').getByRole('button', { name: 'Delete' }).click();
@@ -397,7 +397,7 @@ test.describe('Edit page - back button and discard changes', () => {
     await titleField.fill('Modified Title');
 
     // Open overflow menu and click discard changes
-    const overflowTrigger = page.locator('.overflow-menu-trigger');
+    const overflowTrigger = page.getByRole('button', { name: 'More actions' });
     await overflowTrigger.click();
     await page.getByRole('button', { name: 'Discard changes' }).click();
 
@@ -412,7 +412,7 @@ test.describe('Edit page - back button and discard changes', () => {
     await expect(page.getByText('Loading…')).toHaveCount(0, { timeout: 10000 });
 
     // Open overflow menu
-    const overflowTrigger = page.locator('.overflow-menu-trigger');
+    const overflowTrigger = page.getByRole('button', { name: 'More actions' });
     await overflowTrigger.click();
 
     // Discard changes button should be disabled
@@ -432,7 +432,7 @@ test.describe('Edit page - back button and discard changes', () => {
     await expect(titleField).toHaveValue('Changed Title');
 
     // Open overflow menu and discard
-    const overflowTrigger = page.locator('.overflow-menu-trigger');
+    const overflowTrigger = page.getByRole('button', { name: 'More actions' });
     await overflowTrigger.click();
     await page.getByRole('button', { name: 'Discard changes' }).click();
 
