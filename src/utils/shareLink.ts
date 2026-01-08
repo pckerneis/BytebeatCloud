@@ -6,10 +6,11 @@ interface ShareLinkParams {
   mode: ModeOption;
   sampleRate: number;
   isFork?: boolean;
+  isFocusMode?: boolean;
 }
 
 export function generateShareLink(params: ShareLinkParams): string | null {
-  const { title, expression, mode, sampleRate, isFork = false } = params;
+  const { title, expression, mode, sampleRate, isFork = false, isFocusMode } = params;
 
   if (typeof window === 'undefined') return null;
 
@@ -33,7 +34,7 @@ export function generateShareLink(params: ShareLinkParams): string | null {
   }
 
   const origin = window.location.origin;
-  return `${origin}/${isFork ? 'fork' : 'create'}?q=${encodeURIComponent(encoded)}`;
+  return `${origin}/${isFork ? 'fork' : 'create'}${isFocusMode ? '/focus' : ''}?q=${encodeURIComponent(encoded)}`;
 }
 
 export async function copyShareLinkToClipboard(params: ShareLinkParams): Promise<boolean> {
