@@ -29,7 +29,7 @@ body {
   --error-text-color: #b91c1c;
   --error-bg-color: #fee2e2;
   --shadow-soft-color: #00000033;
-  --modal-overlay-color: rgba(0, 0, 0, 0.35);
+  --modal-overlay-color: rgba(0, 0, 0, 0.15);
   --tab-active-bg-color: #efefef;
   --panel-border-color: var(--border-color);
   --chip-border-color: var(--border-color);
@@ -62,8 +62,16 @@ button {
   flex-direction: column;
 }
 
+.flex-grow {
+  flex-grow: 1;
+}
+
 .gap-2 {
   gap: 2px;
+}
+
+.gap-10 {
+  gap: 10px;
 }
 
 .space-between {
@@ -146,12 +154,30 @@ button {
   padding-left: 0 !important;
 }
 
+.px-12 {
+  padding-left: 12px;
+  padding-right: 12px;
+}
+
+.py-8 {
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
 .weight-600 {
   font-weight: 600;
 }
 
 .align-items-flex-end {
   align-items: flex-end;
+}
+
+.align-items-center {
+  align-items: center;
+}
+
+.justify-content-space-between {
+  justify-content: space-between;
 }
 
 .smaller {
@@ -164,6 +190,13 @@ button {
 
 .secondary-text {
   color: var(--secondary-text-color);
+}
+
+.inline-code {
+  border: 1px solid var(--accent-color);
+  background: var(--sidebar-bg-gradient-color);
+  padding: 0 4px;
+  border-radius: 3px;
 }
 
 .link,

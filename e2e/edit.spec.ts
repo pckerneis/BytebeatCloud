@@ -6,7 +6,7 @@ import {
   supabaseAdmin,
 } from './utils/supabaseAdmin';
 import { signInAndInjectSession } from './utils/auth';
-import { clearAndTypeInExpressionEditor } from './utils/codemirror-helpers';
+import { clearAndTypeInExpressionEditor } from './utils/editor-helpers';
 
 const TEST_USER_EMAIL = 'e2e+edit@example.com';
 const TEST_USER_PASSWORD = 'password123';
@@ -95,12 +95,19 @@ test.describe('Edit page - loading existing post', () => {
     await expect(page.getByRole('button', { name: '← Back' })).toBeVisible();
   });
 
-  test('shows delete button', async ({ page }) => {
+  test('shows overflow menu with actions', async ({ page }) => {
     await page.goto(`/edit/${testPostId}`);
 
     await expect(page.getByText('Loading…')).toHaveCount(0, { timeout: 10000 });
 
+    // Click overflow menu trigger
+    const overflowTrigger = page.getByRole('button', { name: 'More actions' });
+    await expect(overflowTrigger).toBeVisible();
+    await overflowTrigger.click();
+
+    // Verify menu items are visible
     await expect(page.getByRole('button', { name: 'Delete' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Discard changes' })).toBeVisible();
   });
 });
 
@@ -215,8 +222,11 @@ test.describe('Edit page - saving changes', () => {
 
     await expect(page.getByText('Loading…')).toHaveCount(0, { timeout: 10000 });
 
-    // Post starts as public (is_draft: false). "Save as draft" is now "Unpublish".
-    const unpublishButton = page.getByRole('button', { name: 'Unpublish', exact: true });
+    // Post starts as public (is_draft: false). "Save as draft" is now "Unpublish" in overflow menu.
+    const overflowTrigger = page.getByRole('button', { name: 'More actions' });
+    await overflowTrigger.click();
+
+    const unpublishButton = page.getByRole('button', { name: 'Unpublish…', exact: true });
     await unpublishButton.click();
 
     // Confirm modal
@@ -285,7 +295,9 @@ test.describe('Edit page - delete', () => {
 
     await expect(page.getByText('Loading…')).toHaveCount(0, { timeout: 10000 });
 
-    // Click delete button
+    // Open overflow menu and click delete button
+    const overflowTrigger = page.getByRole('button', { name: 'More actions' });
+    await overflowTrigger.click();
     await page.getByRole('button', { name: 'Delete' }).click();
 
     // Modal should appear
@@ -304,7 +316,9 @@ test.describe('Edit page - delete', () => {
 
     await expect(page.getByText('Loading…')).toHaveCount(0, { timeout: 10000 });
 
-    // Open modal
+    // Open overflow menu and open modal
+    const overflowTrigger = page.getByRole('button', { name: 'More actions' });
+    await overflowTrigger.click();
     await page.getByRole('button', { name: 'Delete' }).click();
     await expect(page.locator('.modal')).toBeVisible();
 
@@ -320,7 +334,9 @@ test.describe('Edit page - delete', () => {
 
     await expect(page.getByText('Loading…')).toHaveCount(0, { timeout: 10000 });
 
-    // Open modal and confirm delete
+    // Open overflow menu, open modal and confirm delete
+    const overflowTrigger = page.getByRole('button', { name: 'More actions' });
+    await overflowTrigger.click();
     await page.getByRole('button', { name: 'Delete' }).click();
     await page.locator('.modal').getByRole('button', { name: 'Delete' }).click();
 
@@ -330,6 +346,103 @@ test.describe('Edit page - delete', () => {
     // Post should no longer exist - navigate to it and see error
     await page.goto(`/post/${testPostId}`);
     await expect(page.getByText('Post not found.')).toBeVisible();
+  });
+});
+
+test.describe('Edit page - back button and discard changes', () => {
+  let testPostId: string;
+
+  test.beforeEach(async ({ page }) => {
+    await ensureTestUserProfile(TEST_USER_EMAIL, TEST_USERNAME);
+
+    const { data } = await supabaseAdmin
+      .from('posts')
+      .insert({
+        profile_id: testUserId,
+        title: 'Post for Navigation',
+        expression: 't',
+        is_draft: false,
+        sample_rate: 8000,
+        mode: 'uint8',
+      })
+      .select('id')
+      .single();
+
+    testPostId = data!.id;
+
+    await signInAndInjectSession(page, {
+      email: TEST_USER_EMAIL,
+      password: TEST_USER_PASSWORD,
+    });
+  });
+
+  test('back button redirects to post detail page', async ({ page }) => {
+    await page.goto(`/edit/${testPostId}`);
+    await expect(page.getByText('Loading…')).toHaveCount(0, { timeout: 10000 });
+
+    const backButton = page.getByRole('button', { name: '← Back' });
+    await backButton.click();
+
+    await page.waitForURL(`/post/${testPostId}`);
+    await expect(page).toHaveURL(`/post/${testPostId}`);
+  });
+
+  test('discard changes button shows confirmation modal', async ({ page }) => {
+    await page.goto(`/edit/${testPostId}`);
+    await expect(page.getByText('Loading…')).toHaveCount(0, { timeout: 10000 });
+
+    // Make a change
+    const titleField = page.getByPlaceholder('Name your bytebeat expression');
+    await titleField.clear();
+    await titleField.fill('Modified Title');
+
+    // Open overflow menu and click discard changes
+    const overflowTrigger = page.getByRole('button', { name: 'More actions' });
+    await overflowTrigger.click();
+    await page.getByRole('button', { name: 'Discard changes' }).click();
+
+    // Modal should appear
+    const modal = page.locator('.modal');
+    await expect(modal.getByRole('heading', { name: 'Discard changes' })).toBeVisible();
+    await expect(modal.getByText(/Your local changes will be discarded/)).toBeVisible();
+  });
+
+  test('discard changes button disabled when no changes', async ({ page }) => {
+    await page.goto(`/edit/${testPostId}`);
+    await expect(page.getByText('Loading…')).toHaveCount(0, { timeout: 10000 });
+
+    // Open overflow menu
+    const overflowTrigger = page.getByRole('button', { name: 'More actions' });
+    await overflowTrigger.click();
+
+    // Discard changes button should be disabled
+    const discardButton = page.getByRole('button', { name: 'Discard changes' });
+    await expect(discardButton).toBeDisabled();
+  });
+
+  test('confirming discard reloads original post data', async ({ page }) => {
+    await page.goto(`/edit/${testPostId}`);
+    await expect(page.getByText('Loading…')).toHaveCount(0, { timeout: 10000 });
+
+    const titleField = page.getByPlaceholder('Name your bytebeat expression');
+
+    // Make a change
+    await titleField.clear();
+    await titleField.fill('Changed Title');
+    await expect(titleField).toHaveValue('Changed Title');
+
+    // Open overflow menu and discard
+    const overflowTrigger = page.getByRole('button', { name: 'More actions' });
+    await overflowTrigger.click();
+    await page.getByRole('button', { name: 'Discard changes' }).click();
+
+    // Confirm in modal
+    const modal = page.locator('.modal');
+    await modal.getByRole('button', { name: 'Discard changes' }).click();
+
+    // Page should reload and show original title
+    await expect(page.getByText('Loading…')).toHaveCount(0, { timeout: 10000 });
+    await expect(titleField).toHaveValue('Post for Navigation');
   });
 });
 

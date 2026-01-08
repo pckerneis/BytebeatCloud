@@ -45,12 +45,14 @@ export function usePullToRefresh({
 
     const mainEl = document.querySelector('main');
     let touchStartY = 0;
+    let touchStartX = 0;
 
     const handleTouchStart = (e: TouchEvent) => {
       const currentScroll = mainEl ? mainEl.scrollTop : window.scrollY;
 
       if (currentScroll === 0 && !isRefreshingRef.current) {
         touchStartY = e.touches[0].clientY;
+        touchStartX = e.touches[0].clientX;
         isDraggingRef.current = true;
         setPullState((prev) => ({ ...prev, isPulling: true, pullDistance: 0 }));
       }
@@ -61,7 +63,21 @@ export function usePullToRefresh({
 
       const currentScroll = mainEl ? mainEl.scrollTop : window.scrollY;
       const touchY = e.touches[0].clientY;
+      const touchX = e.touches[0].clientX;
       const deltaY = touchY - touchStartY;
+      const deltaX = touchX - touchStartX;
+
+      // Cancel pull-to-refresh if horizontal movement is greater than vertical
+      if (Math.abs(deltaX) > Math.abs(deltaY)) {
+        isDraggingRef.current = false;
+        setPullState({
+          isPulling: false,
+          pullDistance: 0,
+          isRefreshing: false,
+          canRelease: false,
+        });
+        return;
+      }
 
       // If user has scrolled down past top, cancel pull
       if (currentScroll > 0) {

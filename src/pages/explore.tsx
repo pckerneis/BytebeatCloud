@@ -10,6 +10,7 @@ import { enrichWithTags } from '../utils/tags';
 import Link from 'next/link';
 import { validateExpression } from '../utils/expression-validator';
 import { useTabState } from '../hooks/useTabState';
+import { useSwipeGesture } from '../hooks/useSwipeGesture';
 import { PostDetailView } from '../components/PostDetailView';
 import { PlaylistCard } from '../components/PlaylistCard';
 import { PullToRefreshIndicator } from '../components/PullToRefreshIndicator';
@@ -254,12 +255,7 @@ export default function ExplorePage() {
             .filter((id: string | null): id is string => !!id);
 
           if (ids.length > 0) {
-            const result = await supabase
-              .from('posts_with_meta')
-              .select(
-                'id,title,expression,sample_rate,mode,created_at,profile_id,is_draft,fork_of_post_id,is_fork,author_username,origin_title,origin_username,favorites_count,favorited_by_current_user,is_weekly_winner,license,comments_count',
-              )
-              .in('id', ids);
+            const result = await supabase.from('posts_with_meta').select().in('id', ids);
 
             data = shuffle(result.data ?? []) as PostRow[];
             if (result.error) {
@@ -293,11 +289,9 @@ export default function ExplorePage() {
       } else if (activeTab === 'recent') {
         const result = await supabase
           .from('posts_with_meta')
-          .select(
-            'id,title,expression,sample_rate,mode,created_at,profile_id,is_draft,fork_of_post_id,is_fork,author_username,origin_title,origin_username,favorites_count,favorited_by_current_user,is_weekly_winner,license,comments_count',
-          )
+          .select()
           .eq('is_draft', false)
-          .order('created_at', { ascending: false })
+          .order('published_at', { ascending: false })
           .range(from, to);
 
         data = (result.data ?? []) as PostRow[];
@@ -420,6 +414,35 @@ export default function ExplorePage() {
     setActiveTab(tab);
   };
 
+  // Get available tabs based on whether there's an active challenge
+  const availableTabs = hasActiveChallenge ? tabs : tabs.filter((t) => t !== 'weekly');
+
+  // Handle swipe gestures to switch tabs
+  const handleSwipeLeft = () => {
+    if (contentType !== 'posts') return;
+    const currentIndex = (availableTabs as readonly TabName[]).indexOf(activeTab);
+    if (currentIndex < availableTabs.length - 1 && currentIndex !== -1) {
+      const nextTab = availableTabs[currentIndex + 1];
+      setActiveTab(nextTab as TabName);
+    }
+  };
+
+  const handleSwipeRight = () => {
+    if (contentType !== 'posts') return;
+    const currentIndex = (availableTabs as readonly TabName[]).indexOf(activeTab);
+    if (currentIndex > 0) {
+      const prevTab = availableTabs[currentIndex - 1];
+      setActiveTab(prevTab as TabName);
+    }
+  };
+
+  const swipeState = useSwipeGesture({
+    onSwipeLeft: handleSwipeLeft,
+    onSwipeRight: handleSwipeRight,
+    threshold: 100,
+    enabled: !isDetailOpen && contentType === 'posts',
+  });
+
   const handlePostClick = (post: PostRow) => {
     setScrollToComments(false);
     const nextQuery = { ...router.query, post: post.id };
@@ -490,7 +513,7 @@ export default function ExplorePage() {
           </select>
         </p>
         {contentType === 'posts' ? (
-          <>
+          <div style={{ overflowX: 'hidden' }}>
             <div className="tab-header">
               <span
                 className={`tab-button ${activeTab === 'feed' ? 'active' : ''}`}
@@ -539,12 +562,19 @@ export default function ExplorePage() {
               </p>
             )}
             {!loading && !error && posts.length > 0 && (
-              <PostList
-                posts={posts}
-                currentUserId={user ? (user as any).id : undefined}
-                onPostClick={handlePostClick}
-                onCommentClick={handleCommentClick}
-              />
+              <div
+                style={{
+                  transform: `translateX(${swipeState.translateX}px)`,
+                  transition: swipeState.isDragging ? 'none' : 'transform 0.3s ease-out',
+                }}
+              >
+                <PostList
+                  posts={posts}
+                  currentUserId={user ? (user as any).id : undefined}
+                  onPostClick={handlePostClick}
+                  onCommentClick={handleCommentClick}
+                />
+              </div>
             )}
             <div ref={sentinelRef} style={{ height: 1 }} data-testid="scroll-sentinel" />
             {hasMore && !loading && posts.length > 0 && (
@@ -553,7 +583,7 @@ export default function ExplorePage() {
             {!hasMore && !loading && posts.length > 0 && (
               <p className="text-centered">You reached the end!</p>
             )}
-          </>
+          </div>
         ) : (
           <>
             <div className="tab-header">

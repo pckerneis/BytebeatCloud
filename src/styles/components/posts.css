@@ -243,10 +243,10 @@
   right: 20px;
   z-index: 10;
   box-shadow: 0 0 20px #0000004f;
-  opacity: 0;
+  display: none;
   transition: opacity ease-in-out 100ms;
 }
 
 .back-to-top-button.visible {
-  opacity: 1;
+  display: block;
 }

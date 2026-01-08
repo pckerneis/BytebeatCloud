@@ -174,7 +174,7 @@ test.describe('License selection - Fork page', () => {
     await expect(page.getByText('Loading…')).toHaveCount(0, { timeout: 10000 });
 
     // License should be locked with explanation
-    await expect(page.getByText('Reuse permissions are locked')).toBeVisible();
+    await expect(page.getByText('This post is derived from a Share-Alike work')).toBeVisible();
     await expect(page.getByText('Share alike (CC BY-SA)')).toBeVisible();
 
     // Radio group should not be visible (license is locked)
@@ -196,7 +196,7 @@ test.describe('License selection - Fork page', () => {
     const postId = postUrl.split('/post/')[1];
     await page.goto(`/fork/${postId}`);
     await expect(page.getByText('Loading…')).toHaveCount(0, { timeout: 10000 });
-    await expect(page.getByText('Reuse permissions are locked')).toBeVisible();
+    await expect(page.getByText('This post is derived from a Share-Alike work')).toBeVisible();
   });
 });
 

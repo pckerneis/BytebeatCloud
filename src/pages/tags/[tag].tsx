@@ -8,6 +8,7 @@ import { useInfiniteScroll } from '../../hooks/useInfiniteScroll';
 import { enrichWithTags } from '../../utils/tags';
 import { validateExpression } from '../../utils/expression-validator';
 import { useTabState } from '../../hooks/useTabState';
+import { useSwipeGesture } from '../../hooks/useSwipeGesture';
 
 const tabs = ['recent', 'trending'] as const;
 type TabName = (typeof tabs)[number];
@@ -170,6 +171,30 @@ export default function TagPage() {
     setActiveTab(tab);
   };
 
+  // Handle swipe gestures to switch tabs
+  const handleSwipeLeft = () => {
+    const currentIndex = tabs.indexOf(activeTab);
+    if (currentIndex < tabs.length - 1) {
+      const nextTab = tabs[currentIndex + 1];
+      setActiveTab(nextTab as TabName);
+    }
+  };
+
+  const handleSwipeRight = () => {
+    const currentIndex = tabs.indexOf(activeTab);
+    if (currentIndex > 0) {
+      const prevTab = tabs[currentIndex - 1];
+      setActiveTab(prevTab as TabName);
+    }
+  };
+
+  const swipeState = useSwipeGesture({
+    onSwipeLeft: handleSwipeLeft,
+    onSwipeRight: handleSwipeRight,
+    threshold: 100,
+    enabled: true,
+  });
+
   const titleTag = displayTag ?? normalizedTag ?? '';
 
   return (
@@ -194,38 +219,52 @@ export default function TagPage() {
       <section>
         <h2>{titleTag ? `#${titleTag}` : 'Tag'}</h2>
 
-        <div className="tab-header">
-          <span
-            className={`tab-button ${activeTab === 'recent' ? 'active' : ''}`}
-            onClick={() => handleTabClick('recent')}
-          >
-            Recent
-          </span>
-          <span
-            className={`tab-button ${activeTab === 'trending' ? 'active' : ''}`}
-            onClick={() => handleTabClick('trending')}
-          >
-            Trending
-          </span>
+        <div style={{ overflowX: 'hidden' }}>
+          <div className="tab-header">
+            <span
+              className={`tab-button ${activeTab === 'recent' ? 'active' : ''}`}
+              onClick={() => handleTabClick('recent')}
+            >
+              Recent
+            </span>
+            <span
+              className={`tab-button ${activeTab === 'trending' ? 'active' : ''}`}
+              onClick={() => handleTabClick('trending')}
+            >
+              Trending
+            </span>
+          </div>
+
+          {loading && <p className="text-centered">Loading posts…</p>}
+          {error && !loading && <p className="error-message">{error}</p>}
+
+          {!loading && !error && posts.length === 0 && (
+            <p className="text-centered">No posts found for this tag.</p>
+          )}
+
+          {!loading && !error && posts.length > 0 && (
+            <div
+              style={{
+                transform: `translateX(${swipeState.translateX}px)`,
+                transition: swipeState.isDragging ? 'none' : 'transform 0.3s ease-out',
+              }}
+            >
+              <PostList
+                posts={posts}
+                currentUserId={user ? ((user as any).id as string) : undefined}
+              />
+            </div>
+          )}
+
+          <div ref={sentinelRef} style={{ height: 1 }} data-testid="scroll-sentinel" />
+          {hasMore && !loading && posts.length > 0 && (
+            <p className="text-centered">Loading more…</p>
+          )}
+
+          {!hasMore && !loading && posts.length > 0 && (
+            <p className="text-centered">You reached the end!</p>
+          )}
         </div>
-
-        {loading && <p className="text-centered">Loading posts…</p>}
-        {error && !loading && <p className="error-message">{error}</p>}
-
-        {!loading && !error && posts.length === 0 && (
-          <p className="text-centered">No posts found for this tag.</p>
-        )}
-
-        {!loading && !error && posts.length > 0 && (
-          <PostList posts={posts} currentUserId={user ? ((user as any).id as string) : undefined} />
-        )}
-
-        <div ref={sentinelRef} style={{ height: 1 }} data-testid="scroll-sentinel" />
-        {hasMore && !loading && posts.length > 0 && <p className="text-centered">Loading more…</p>}
-
-        {!hasMore && !loading && posts.length > 0 && (
-          <p className="text-centered">You reached the end!</p>
-        )}
       </section>
     </>
   );

@@ -31,20 +31,13 @@ interface PostEditorFormFieldsProps {
   saveStatus: 'idle' | 'saving' | 'success';
   saveError: string;
 
-  showDeleteButton?: boolean;
-  onDeleteClick?: () => void;
-
   showActions: boolean;
-  isFork: boolean;
+  isEdit: boolean;
 
   liveUpdateEnabled: boolean;
   onLiveUpdateChange: (enabled: boolean) => void;
 
-  onSaveAsDraft?: () => void;
-  onPublish?: () => void;
-  isEditMode?: boolean;
-  onUnpublish?: () => void;
-  lockLicense?: boolean;
+  isShareAlikeFork?: boolean;
 }
 
 function findNextPresetSampleRate(sampleRate: number): number {
@@ -69,26 +62,17 @@ export function PostEditorFormFields(props: Readonly<PostEditorFormFieldsProps>)
     onPlayClick,
     validationIssue,
     lastError,
-    saveStatus,
-    saveError,
-    showDeleteButton,
-    onDeleteClick,
     showActions,
-    isFork,
     liveUpdateEnabled,
     onLiveUpdateChange,
-    onSaveAsDraft,
-    onPublish,
-    isEditMode,
-    onUnpublish,
+    isShareAlikeFork,
+    isEdit,
   } = props;
 
   const expressionLength = expression.length;
   const isExpressionTooLong = expressionLength > EXPRESSION_MAX;
-  const canSubmit = Boolean(expression.trim()) && !validationIssue && saveStatus !== 'saving';
 
-  const { title, description, mode, sampleRate, isDraft, license } = meta;
-  const [shareLinkCopied, setShareLinkCopied] = useState(false);
+  const { title, description, mode, sampleRate, license } = meta;
   const [sampleRateModalOpen, setSampleRateModalOpen] = useState(false);
   const [sampleRateInput, setSampleRateInput] = useState(sampleRate.toString());
   const longPressTimeoutRef = useRef<number | null>(null);
@@ -148,40 +132,6 @@ export function PostEditorFormFields(props: Readonly<PostEditorFormFieldsProps>)
     onMetaChange({ ...meta, sampleRate: findNextPresetSampleRate(sampleRate) });
   };
 
-  const handleCopyShareLink = async () => {
-    const trimmedExpr = expression.trim();
-    if (!trimmedExpr) return;
-
-    if (typeof window === 'undefined') return;
-
-    const trimmedTitle = title.trim();
-
-    const payload = {
-      title: trimmedTitle || undefined,
-      expr: trimmedExpr,
-      mode,
-      sr: sampleRate,
-    };
-
-    let encoded = '';
-    try {
-      encoded = btoa(JSON.stringify(payload));
-    } catch {
-      return;
-    }
-
-    const origin = window.location.origin;
-    const href = `${origin}/${isFork ? 'fork' : 'create'}?q=${encodeURIComponent(encoded)}`;
-
-    try {
-      await navigator.clipboard.writeText(href);
-      setShareLinkCopied(true);
-      window.setTimeout(() => setShareLinkCopied(false), 1500);
-    } catch {
-      // ignore clipboard errors
-    }
-  };
-
   return (
     <>
       <label className="field">
@@ -230,7 +180,7 @@ export function PostEditorFormFields(props: Readonly<PostEditorFormFieldsProps>)
       <div className="field-footer">
         <button
           type="button"
-          className="button secondary"
+          className="button primary"
           disabled={!isPlaying && (!expression.trim() || !!validationIssue)}
           onClick={onPlayClick}
         >
@@ -282,7 +232,14 @@ export function PostEditorFormFields(props: Readonly<PostEditorFormFieldsProps>)
       {showActions && (
         <>
           <div className="field license-field">
-            {props.lockLicense ? (
+            {isShareAlikeFork ? (
+              <div className="license-locked">
+                <span className="license-locked-label">License: {currentLicenseLabel}</span>
+                <span className="license-locked-hint">
+                  This post is derived from a Share-Alike work, so the license can’t be changed.
+                </span>
+              </div>
+            ) : isEdit ? (
               <div className="license-locked">
                 <span className="license-locked-label">License: {currentLicenseLabel}</span>
                 <span className="license-locked-hint">
@@ -319,71 +276,9 @@ export function PostEditorFormFields(props: Readonly<PostEditorFormFieldsProps>)
             </Link>
             .
           </p>
-
-          <div className="form-actions">
-            <div className="form-actions-buttons">
-              {showDeleteButton && onDeleteClick && (
-                <button
-                  type="button"
-                  className="button danger"
-                  onClick={onDeleteClick}
-                  disabled={saveStatus === 'saving'}
-                >
-                  Delete
-                </button>
-              )}
-
-              {onSaveAsDraft && (
-                <button
-                  type="button"
-                  className="button secondary"
-                  onClick={isEditMode && !isDraft ? onUnpublish : onSaveAsDraft}
-                  disabled={!canSubmit}
-                >
-                  {saveStatus === 'saving' && isDraft
-                    ? 'Saving…'
-                    : isEditMode && !isDraft
-                      ? 'Unpublish'
-                      : 'Save as draft'}
-                </button>
-              )}
-
-              {onPublish ? (
-                <button
-                  type="button"
-                  className="button primary"
-                  onClick={onPublish}
-                  disabled={!canSubmit}
-                >
-                  {saveStatus === 'saving' && !isDraft ? 'Publishing…' : 'Publish'}
-                </button>
-              ) : (
-                <button type="submit" className="button primary" disabled={!canSubmit}>
-                  {saveStatus === 'saving' ? 'Saving…' : 'Publish'}
-                </button>
-              )}
-            </div>
-          </div>
         </>
       )}
 
-      {!showActions && (
-        <div className="form-actions-buttons" style={{ marginTop: '8px' }}>
-          <button
-            type="button"
-            className="button secondary"
-            disabled={!expression.trim()}
-            onClick={handleCopyShareLink}
-          >
-            {shareLinkCopied ? 'Link copied' : 'Copy share link'}
-          </button>
-        </div>
-      )}
-
-      {saveError && <p className="error-message">{saveError}</p>}
-      {saveStatus === 'success' && !saveError && (
-        <p className="counter">{isFork ? 'Fork saved.' : 'Post saved.'}</p>
-      )}
       {sampleRateModalOpen && (
         <div
           className="modal-backdrop"

@@ -1,0 +1,78 @@
+.focus-header {
+  background: var(--sidebar-bg-gradient-color);
+  border-bottom: 1px solid var(--panel-border-color);
+}
+
+.focus-footer {
+  background: var(--sidebar-bg-gradient-color);
+  border-top: 1px solid var(--panel-border-color);
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.focus-runtime-panel {
+  background: var(--error-bg-color);
+  border-top: 1px solid var(--panel-border-color);
+  border-bottom: 1px solid var(--panel-border-color);
+  color: var(--error-text-color);
+}
+
+.focus-runtime-panel-title {
+  font-weight: 600;
+  margin: 0 0 4px;
+}
+
+.focus-runtime-panel-message {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.focus-error-bubble {
+  background: var(--error-bg-color);
+  border: 1px solid var(--danger-color);
+  color: var(--danger-color);
+  font-weight: bold;
+  position: absolute;
+  bottom: 60px;
+  right: 10px;
+  font-size: 15px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  box-shadow: 0 0 30px 0 var(--shadow-soft-color);
+}
+
+.focus-title-display {
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  margin: 0;
+  min-width: 200px;
+  max-width: 400px;
+  flex: 0 1 auto;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.focus-title-input {
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: 600;
+  color: var(--text-color);
+  background: transparent;
+  border: none;
+  outline: none;
+  padding: 0;
+  margin: 0;
+  min-width: 200px;
+  max-width: 400px;
+  flex: 0 1 auto;
+}
+
+.focus-title-input::placeholder {
+  color: var(--secondary-text-color);
+  opacity: 0.6;
+}

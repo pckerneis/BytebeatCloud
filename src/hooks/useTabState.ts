@@ -46,14 +46,17 @@ export function useTabState<T extends string>(
 
   const setActiveTab = (tab: T) => {
     if (tab === activeTab) return;
-    setActiveTabState(tab);
-    onTabChange?.(tab);
-    // Update URL without navigation
+
+    // Update URL immediately (this is fast and non-blocking)
     void router.replace(
       { pathname: router.pathname, query: { ...router.query, [queryParam]: tab } },
       undefined,
       { shallow: true },
     );
+
+    // Then update state (this may trigger expensive re-renders)
+    setActiveTabState(tab);
+    onTabChange?.(tab);
   };
 
   return [activeTab, setActiveTab] as const;
