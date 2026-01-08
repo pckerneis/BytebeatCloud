@@ -4,8 +4,9 @@ import { FocusLayout } from '../../components/FocusLayout';
 import { NextPageWithLayout } from '../_app';
 import { FocusExpressionEditor } from '../../components/FocusExpressionEditor';
 import { PublishPanel } from '../../components/PublishPanel';
-import { ModeOption } from '../../model/expression';
+import { MAX_SAMPLE_RATE, MIN_SAMPLE_RATE, ModeOption } from '../../model/expression';
 import { usePostEditor } from '../../hooks/usePostEditor';
+import { useEffect } from 'react';
 
 const page: NextPageWithLayout = function FocusCreatePage() {
   const router = useRouter();
@@ -14,6 +15,42 @@ const page: NextPageWithLayout = function FocusCreatePage() {
     initialMode: ModeOption.Uint8,
     loopPreview: true,
   });
+
+  // On first load, prefill from URL query parameter
+  useEffect(() => {
+    if (!router.isReady || !editor.isStateLoaded) return;
+    if (typeof window === 'undefined') return;
+
+    const { q } = router.query;
+    const qStr = typeof q === 'string' ? q : undefined;
+
+    if (qStr) {
+      try {
+        const decoded = atob(qStr);
+        const parsed = JSON.parse(decoded) as {
+          title?: string;
+          expr?: string;
+          mode?: ModeOption;
+          sr?: number;
+        } | null;
+
+        if (parsed && typeof parsed.expr === 'string') {
+          editor.setState({
+            title: parsed.title,
+            expression: parsed.expr,
+            mode: parsed.mode,
+            sampleRate: parsed.sr
+              ? Math.min(Math.max(MIN_SAMPLE_RATE, parsed.sr), MAX_SAMPLE_RATE)
+              : undefined,
+          });
+        }
+      } catch {
+        // ignore malformed q param
+      }
+    }
+    // Only run once when state is loaded and router is ready
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [router.isReady, editor.isStateLoaded]);
 
   return (
     <>

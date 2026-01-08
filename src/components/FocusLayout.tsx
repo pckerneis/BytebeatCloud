@@ -197,6 +197,7 @@ function FocusFooter({
       expression,
       mode,
       sampleRate,
+      isFocusMode: true,
     });
 
     if (success) {

@@ -8,11 +8,13 @@ import Link from 'next/link';
 import { useCurrentWeeklyChallenge } from '../hooks/useCurrentWeeklyChallenge';
 import { TooltipHint } from '../components/TooltipHint';
 import { usePostEditor } from '../hooks/usePostEditor';
+import { copyShareLinkToClipboard } from '../utils/shareLink';
 
 export default function CreatePage() {
   const router = useRouter();
   const [hasWeeklySubmission, setHasWeeklySubmission] = useState(false);
   const { weekNumber: currentWeekNumber, theme: currentTheme } = useCurrentWeeklyChallenge();
+  const [shareLinkCopied, setShareLinkCopied] = useState(false);
 
   const editor = usePostEditor({
     mode: 'create',
@@ -136,6 +138,26 @@ export default function CreatePage() {
     );
   };
 
+  useEffect(() => {
+    if (shareLinkCopied) {
+      const timer = setTimeout(() => setShareLinkCopied(false), 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [shareLinkCopied]);
+
+  const handleCopyShareLink = async () => {
+    const success = await copyShareLinkToClipboard({
+      title: editor.title,
+      expression: editor.expression,
+      mode: editor.mode,
+      sampleRate: editor.sampleRate,
+    });
+
+    if (success) {
+      setShareLinkCopied(true);
+    }
+  };
+
   return (
     <>
       <Head>
@@ -253,6 +275,21 @@ export default function CreatePage() {
                   }
                 >
                   {editor.saveStatus === 'saving' && !editor.isDraft ? 'Publishing…' : 'Publish'}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {!editor.user && (
+            <div className="form-actions">
+              <div className="form-actions-buttons">
+                <button
+                  type="button"
+                  className="button secondary ghost"
+                  onClick={handleCopyShareLink}
+                  disabled={!editor.expression.trim()}
+                >
+                  {shareLinkCopied ? 'Link copied' : 'Copy share link'}
                 </button>
               </div>
             </div>
