@@ -27,6 +27,7 @@ interface VideoTheme {
   bgColor: string;
   textColor: string;
   codeBgColor: string;
+  codeTextColor: string;
 }
 
 function getThemeColors(): VideoTheme {
@@ -36,6 +37,7 @@ function getThemeColors(): VideoTheme {
       bgColor: '#0e1a2b',
       textColor: '#dde8f5',
       codeBgColor: '#0d1119',
+      codeTextColor: '#dde8f5',
     };
   }
   const styles = getComputedStyle(document.body);
@@ -43,7 +45,8 @@ function getThemeColors(): VideoTheme {
     accentColor: styles.getPropertyValue('--accent-color').trim() || '#7b34ff',
     bgColor: styles.getPropertyValue('--bg-color').trim() || '#0e1a2b',
     textColor: styles.getPropertyValue('--text-color').trim() || '#dde8f5',
-    codeBgColor: styles.getPropertyValue('--card-text-color').trim() || '#dde8f5',
+    codeBgColor: styles.getPropertyValue('--code-bg-color').trim() || '#dde8f5',
+    codeTextColor: styles.getPropertyValue('--code-text-color').trim() || '#dde8f5',
   };
 }
 
@@ -112,6 +115,8 @@ export default function ExportVideoPage() {
       accentColor: themeColors.accentColor,
       bgColor: themeColors.bgColor,
       textColor: themeColors.textColor,
+      codeTextColor: themeColors.codeTextColor,
+      codeBgColor: themeColors.codeBgColor,
     });
 
     // Clear previous preview and add new one
@@ -214,6 +219,8 @@ export default function ExportVideoPage() {
         accentColor: themeColors.accentColor,
         bgColor: themeColors.bgColor,
         textColor: themeColors.textColor,
+        codeTextColor: themeColors.codeTextColor,
+        codeBgColor: themeColors.codeBgColor,
         onProgress: (status, progress) => {
           setExportStatus(status);
           setExportProgress(progress);

@@ -17,10 +17,11 @@ export interface VideoExportOptions {
   fadeOut: boolean;
   title: string;
   authorUsername: string;
-  accentColor?: string;
-  bgColor?: string;
-  textColor?: string;
-  codeBgColor?: string;
+  accentColor: string;
+  bgColor: string;
+  textColor: string;
+  codeTextColor: string;
+  codeBgColor: string;
   onProgress?: (status: string, progress: number) => void;
 }
 
@@ -211,6 +212,8 @@ interface StaticFrameOptions {
   accentColor: string;
   bgColor: string;
   textColor: string;
+  codeBgColor: string;
+  codeTextColor: string;
 }
 
 // Pre-rendered static frame data
@@ -232,9 +235,7 @@ function renderStaticFrame(
   const ctx = canvas.getContext('2d')!;
 
   const padding = Math.floor(width * 0.04);
-  const accentColor = options.accentColor || '#7b34ff';
-  const bgColor = options.bgColor || '#0e1a2b';
-  const textColor = options.textColor || '#ffffff';
+  const { accentColor, bgColor, textColor, codeTextColor, codeBgColor } = options;
   const secondaryTextColor = textColor + 'a0'; // 60% opacity
 
   // Background
@@ -300,8 +301,8 @@ function renderStaticFrame(
       width - padding * 2,
       codeHeight,
       codeFontSize,
-      textColor,
-      textColor + '08', // Very subtle background
+      codeTextColor,
+      codeBgColor, // Very subtle background
     );
   }
 
@@ -455,6 +456,8 @@ async function exportVideoWithMediabunny(options: VideoExportOptions): Promise<B
     accentColor,
     bgColor,
     textColor,
+    codeBgColor,
+    codeTextColor,
     onProgress,
   } = options;
 
@@ -535,17 +538,16 @@ async function exportVideoWithMediabunny(options: VideoExportOptions): Promise<B
 
   // Pre-render static frame (header, title, code, etc.) once
   report('Rendering static elements...', 14);
-  const resolvedAccentColor = accentColor || '#7b34ff';
-  const resolvedBgColor = bgColor || '#0e1a2b';
-  const resolvedTextColor = textColor || '#ffffff';
 
   const staticFrame = renderStaticFrame(width, height, {
     title,
     authorUsername,
     expression,
-    accentColor: resolvedAccentColor,
-    bgColor: resolvedBgColor,
-    textColor: resolvedTextColor,
+    accentColor,
+    bgColor,
+    textColor,
+    codeBgColor,
+    codeTextColor,
   });
 
   // Encode video frames
@@ -563,8 +565,8 @@ async function exportVideoWithMediabunny(options: VideoExportOptions): Promise<B
       bytebeatLeft,
       currentTime,
       sampleRate,
-      resolvedAccentColor,
-      resolvedBgColor,
+      accentColor,
+      bgColor,
     );
 
     // Add frame to video source
@@ -616,6 +618,8 @@ async function exportVideoWithMediaRecorder(options: VideoExportOptions): Promis
     accentColor,
     bgColor,
     textColor,
+    codeTextColor,
+    codeBgColor,
     onProgress,
   } = options;
 
@@ -715,17 +719,16 @@ async function exportVideoWithMediaRecorder(options: VideoExportOptions): Promis
 
   // Pre-render static frame once
   report('Rendering static elements...', 22);
-  const resolvedAccentColor = accentColor || '#7b34ff';
-  const resolvedBgColor = bgColor || '#0e1a2b';
-  const resolvedTextColor = textColor || '#ffffff';
 
   const staticFrame = renderStaticFrame(width, height, {
     title,
     authorUsername,
     expression,
-    accentColor: resolvedAccentColor,
-    bgColor: resolvedBgColor,
-    textColor: resolvedTextColor,
+    accentColor,
+    bgColor,
+    textColor,
+    codeTextColor,
+    codeBgColor,
   });
 
   mediaRecorder.start(100); // Collect data every 100ms
@@ -755,8 +758,8 @@ async function exportVideoWithMediaRecorder(options: VideoExportOptions): Promis
           bytebeatLeft,
           currentTime,
           sampleRate,
-          resolvedAccentColor,
-          resolvedBgColor,
+          accentColor,
+          bgColor,
         );
 
         frameIndex++;
@@ -818,9 +821,11 @@ export interface PreviewFrameOptions {
   authorUsername: string;
   orientation: Orientation;
   resolution: Resolution;
-  accentColor?: string;
-  bgColor?: string;
-  textColor?: string;
+  accentColor: string;
+  bgColor: string;
+  textColor: string;
+  codeBgColor: string;
+  codeTextColor: string;
 }
 
 export function renderPreviewFrame(options: PreviewFrameOptions): HTMLCanvasElement {
@@ -829,9 +834,11 @@ export function renderPreviewFrame(options: PreviewFrameOptions): HTMLCanvasElem
     title: options.title,
     authorUsername: options.authorUsername,
     expression: options.expression,
-    accentColor: options.accentColor || '#7b34ff',
-    bgColor: options.bgColor || '#0e1a2b',
-    textColor: options.textColor || '#ffffff',
+    accentColor: options.accentColor,
+    bgColor: options.bgColor,
+    textColor: options.textColor,
+    codeTextColor: options.codeTextColor,
+    codeBgColor: options.codeBgColor,
   });
 
   // Draw a flat waveform line in the waveform area to show where it will be
