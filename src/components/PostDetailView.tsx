@@ -12,6 +12,7 @@ import Link from 'next/link';
 import { enrichWithTags } from '../utils/tags';
 import { validateExpression } from '../utils/expression-validator';
 import { useCurrentWeeklyChallenge } from '../hooks/useCurrentWeeklyChallenge';
+import { useHasHistory } from '../hooks/useHasHistory';
 import {
   renderDescriptionWithTagsAndMentions,
   extractMentionUserIds,
@@ -48,17 +49,16 @@ interface Playlist {
 interface PostDetailViewProps {
   postId: string;
   baseUrl?: string;
-  onBack?: () => void;
   scrollToComments?: boolean;
 }
 
 export function PostDetailView({
   postId,
   baseUrl,
-  onBack,
   scrollToComments,
 }: Readonly<PostDetailViewProps>) {
   const router = useRouter();
+  const hasHistory = useHasHistory();
 
   const [posts, setPosts] = useState<PostRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -775,19 +775,17 @@ export function PostDetailView({
     new RegExp(`(^|\\s)#week${currentWeekNumber}(?!\\w)`).test(posts[0]?.description ?? '');
 
   const handleBack = () => {
-    if (onBack) {
-      onBack();
-    } else {
-      router.back();
-    }
+    router.back();
   };
 
   return (
     <>
       <section>
-        <button type="button" className="button ghost" onClick={handleBack}>
-          ← Back
-        </button>
+        {hasHistory && (
+          <button type="button" className="button ghost" onClick={handleBack}>
+            ← Back
+          </button>
+        )}
         <h2>Post detail</h2>
 
         {loading && <p>Loading…</p>}

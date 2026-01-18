@@ -3,6 +3,7 @@ import Head from 'next/head';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { supabase } from '../../../lib/supabaseClient';
 import { useSupabaseAuth } from '../../../hooks/useSupabaseAuth';
+import { useHasHistory } from '../../../hooks/useHasHistory';
 import type { PostRow } from '../../../components/PostList';
 import { formatAuthorUsername, formatPostTitle } from '../../../utils/post-format';
 import Link from 'next/link';
@@ -25,6 +26,8 @@ export default function PlaylistEditPage() {
 
   const { user } = useSupabaseAuth();
   const currentUserId = useMemo(() => (user ? (user as any).id : null), [user]);
+
+  const hasHistory = useHasHistory();
 
   const [playlist, setPlaylist] = useState<PlaylistRow | null>(null);
   const [posts, setPosts] = useState<PostRow[]>([]);
@@ -325,9 +328,11 @@ export default function PlaylistEditPage() {
         <title>{pageTitle}</title>
       </Head>
       <section>
-        <button type="button" className="button ghost" onClick={() => router.back()}>
-          ← Back
-        </button>
+        {hasHistory && (
+          <button type="button" className="button ghost" onClick={() => router.back()}>
+            ← Back
+          </button>
+        )}
         {loading && <p>Loading…</p>}
         {!loading && error && <p className="error-message">{error}</p>}
         {unauthorized && (

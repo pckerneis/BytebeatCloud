@@ -1,11 +1,14 @@
 import { useRouter } from 'next/router';
-import Head from 'next/head';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { supabase } from '../../lib/supabaseClient';
-import { useSupabaseAuth } from '../../hooks/useSupabaseAuth';
 import { PostList, type PostRow } from '../../components/PostList';
-import { formatAuthorUsername } from '../../utils/post-format';
+import Head from 'next/head';
+import { enrichWithTags } from '../../utils/tags';
+import { validateExpression } from '../../utils/expression-validator';
 import Link from 'next/link';
+import { useHasHistory } from '../../hooks/useHasHistory';
+import { useSupabaseAuth } from '../../hooks/useSupabaseAuth';
+import { formatAuthorUsername } from '../../utils/post-format';
 
 interface PlaylistRow {
   id: string;
@@ -21,6 +24,7 @@ interface PlaylistRow {
 export default function PlaylistDetailPage() {
   const router = useRouter();
   const { id } = router.query;
+  const hasHistory = useHasHistory();
   const playlistId = typeof id === 'string' ? id : null;
 
   const { user } = useSupabaseAuth();
@@ -145,9 +149,11 @@ export default function PlaylistDetailPage() {
         <title>{pageTitle}</title>
       </Head>
       <section>
-        <button type="button" className="button ghost" onClick={() => router.back()}>
-          ← Back
-        </button>
+        {hasHistory && (
+          <button type="button" className="button ghost" onClick={() => router.back()}>
+            ← Back
+          </button>
+        )}
         <div className="profile-title-row">
           <h2>{playlist?.title ?? 'Playlist'}</h2>
           {!loading &&
