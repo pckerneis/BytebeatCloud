@@ -14,7 +14,7 @@ export function useHasHistory(): boolean {
     // Mark that we've navigated within the app
     // This persists across client-side navigations
     const hasNavigated = sessionStorage.getItem('app-has-navigated');
-    
+
     if (hasNavigated === 'true') {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setHasHistory(true);
@@ -22,7 +22,7 @@ export function useHasHistory(): boolean {
       // Check if we have a referrer from the same origin (for initial page load)
       const referrer = document.referrer;
       const currentOrigin = window.location.origin;
-      
+
       if (referrer && referrer.startsWith(currentOrigin)) {
         setHasHistory(true);
         sessionStorage.setItem('app-has-navigated', 'true');

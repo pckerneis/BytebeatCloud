@@ -609,10 +609,7 @@ export default function ExplorePage() {
         )}
       </section>
       {isDetailOpen && (
-        <PostDetailView
-          postId={selectedPostId!}
-          scrollToComments={scrollToComments}
-        />
+        <PostDetailView postId={selectedPostId!} scrollToComments={scrollToComments} />
       )}
     </>
   );
