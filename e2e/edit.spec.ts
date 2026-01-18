@@ -88,8 +88,11 @@ test.describe('Edit page - loading existing post', () => {
   });
 
   test('shows back button', async ({ page }) => {
+    // Navigate from post detail to edit page to establish history
+    await page.goto(`/post/${testPostId}`);
+    await expect(page.getByRole('heading', { name: 'Post detail' })).toBeVisible();
+    
     await page.goto(`/edit/${testPostId}`);
-
     await expect(page.getByText('Loading…')).toHaveCount(0, { timeout: 10000 });
 
     await expect(page.getByRole('button', { name: '← Back' })).toBeVisible();
@@ -377,6 +380,10 @@ test.describe('Edit page - back button and discard changes', () => {
   });
 
   test('back button redirects to post detail page', async ({ page }) => {
+    // Navigate from post detail to edit page to establish history
+    await page.goto(`/post/${testPostId}`);
+    await expect(page.getByRole('heading', { name: 'Post detail' })).toBeVisible();
+    
     await page.goto(`/edit/${testPostId}`);
     await expect(page.getByText('Loading…')).toHaveCount(0, { timeout: 10000 });
 
