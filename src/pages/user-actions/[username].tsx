@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import Head from 'next/head';
 import { supabase } from '../../lib/supabaseClient';
 import { useSupabaseAuth } from '../../hooks/useSupabaseAuth';
+import { BackButton } from '../../components/BackButton';
 
 export default function UserActionPage() {
   const router = useRouter();
@@ -215,9 +216,7 @@ export default function UserActionPage() {
         <title>BytebeatCloud - User actions</title>
       </Head>
       <section>
-        <button type="button" className="button ghost" onClick={() => router.back()}>
-          ← Back
-        </button>
+        <BackButton />
 
         <h2>@{username}</h2>
 

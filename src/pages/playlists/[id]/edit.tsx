@@ -3,6 +3,7 @@ import Head from 'next/head';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { supabase } from '../../../lib/supabaseClient';
 import { useSupabaseAuth } from '../../../hooks/useSupabaseAuth';
+import { BackButton } from '../../../components/BackButton';
 import type { PostRow } from '../../../components/PostList';
 import { formatAuthorUsername, formatPostTitle } from '../../../utils/post-format';
 import Link from 'next/link';
@@ -325,9 +326,7 @@ export default function PlaylistEditPage() {
         <title>{pageTitle}</title>
       </Head>
       <section>
-        <button type="button" className="button ghost" onClick={() => router.back()}>
-          ← Back
-        </button>
+        <BackButton />
         {loading && <p>Loading…</p>}
         {!loading && error && <p className="error-message">{error}</p>}
         {unauthorized && (

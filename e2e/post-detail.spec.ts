@@ -117,6 +117,9 @@ test.describe('Post detail page - viewing', () => {
     await page.getByRole('link', { name: 'Test Post Title' }).click();
     await expect(page.getByRole('heading', { name: 'Post detail' })).toHaveCount(1);
 
+    // Wait for page to fully load
+    await expect(page.getByText('Loading…')).toHaveCount(0, { timeout: 10000 });
+
     // Click back button
     await page.getByRole('button', { name: '← Back' }).click();
 

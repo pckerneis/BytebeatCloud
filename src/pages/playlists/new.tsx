@@ -1,9 +1,10 @@
 import { useRouter } from 'next/router';
-import Head from 'next/head';
-import { useEffect, useState } from 'react';
-import Link from 'next/link';
+import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 import { useSupabaseAuth } from '../../hooks/useSupabaseAuth';
+import Head from 'next/head';
+import { BackButton } from '../../components/BackButton';
+import Link from 'next/link';
 
 export default function NewPlaylistPage() {
   const router = useRouter();
@@ -94,9 +95,7 @@ export default function NewPlaylistPage() {
         <title>{pageTitle}</title>
       </Head>
       <section>
-        <button type="button" className="button ghost" onClick={() => router.back()}>
-          ← Back
-        </button>
+        <BackButton />
         <h2>Create a new playlist</h2>
 
         {!loading && !user && (

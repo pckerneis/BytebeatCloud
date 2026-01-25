@@ -7,6 +7,7 @@ import { TooltipHint } from '../../components/TooltipHint';
 import OverflowMenu from '../../components/OverflowMenu';
 import { usePostEditor } from '../../hooks/usePostEditor';
 import { copyShareLinkToClipboard } from '../../utils/shareLink';
+import { BackButton } from '../../components/BackButton';
 
 export default function ForkPostPage() {
   const router = useRouter();
@@ -66,20 +67,10 @@ export default function ForkPostPage() {
       editor.sampleRate !== editor.originalData.sampleRate ||
       editor.description !== editor.originalData.description);
 
-  const handleBack = () => {
-    if (id && typeof id === 'string') {
-      void router.push(`/post/${id}`);
-    } else {
-      void router.push('/');
-    }
-  };
-
   if (editor.loading) {
     return (
       <section>
-        <button type="button" className="button ghost" onClick={handleBack}>
-          ← Back
-        </button>
+        <BackButton />
         <h2>Fork post</h2>
         <p>Loading…</p>
       </section>
@@ -89,9 +80,7 @@ export default function ForkPostPage() {
   if (editor.loadError) {
     return (
       <section>
-        <button type="button" className="button ghost" onClick={handleBack}>
-          ← Back
-        </button>
+        <BackButton />
         <h2>Fork post</h2>
         <p className="error-message">{editor.loadError}</p>
       </section>
@@ -128,9 +117,7 @@ export default function ForkPostPage() {
         <meta name="twitter:card" content="summary_large_image" />
       </Head>
       <section>
-        <button type="button" className="button ghost" onClick={handleBack}>
-          ← Back
-        </button>
+        <BackButton />
         <div className="flex-row align-items-center">
           <h2>Fork post</h2>
           <div className="ml-auto">

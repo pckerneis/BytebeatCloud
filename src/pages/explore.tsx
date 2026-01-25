@@ -469,19 +469,6 @@ export default function ExplorePage() {
     );
   };
 
-  const handleCloseDetail = () => {
-    const nextQuery = { ...router.query };
-    delete nextQuery.post;
-    void router.push(
-      {
-        pathname: router.pathname,
-        query: nextQuery,
-      },
-      undefined,
-      { shallow: true },
-    );
-  };
-
   return (
     <>
       <Head>
@@ -622,11 +609,7 @@ export default function ExplorePage() {
         )}
       </section>
       {isDetailOpen && (
-        <PostDetailView
-          postId={selectedPostId!}
-          onBack={handleCloseDetail}
-          scrollToComments={scrollToComments}
-        />
+        <PostDetailView postId={selectedPostId!} scrollToComments={scrollToComments} />
       )}
     </>
   );

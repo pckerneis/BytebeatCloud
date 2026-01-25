@@ -25,6 +25,7 @@ import { convertMentionsToIds } from '../utils/mentions';
 import { formatRelativeTime } from '../utils/time';
 import { PlaylistCard } from './PlaylistCard';
 import { useSwipeGesture } from '../hooks/useSwipeGesture';
+import { BackButton } from './BackButton';
 
 interface Comment {
   id: string;
@@ -48,14 +49,12 @@ interface Playlist {
 interface PostDetailViewProps {
   postId: string;
   baseUrl?: string;
-  onBack?: () => void;
   scrollToComments?: boolean;
 }
 
 export function PostDetailView({
   postId,
   baseUrl,
-  onBack,
   scrollToComments,
 }: Readonly<PostDetailViewProps>) {
   const router = useRouter();
@@ -774,20 +773,10 @@ export function PostDetailView({
     !posts[0]?.is_draft &&
     new RegExp(`(^|\\s)#week${currentWeekNumber}(?!\\w)`).test(posts[0]?.description ?? '');
 
-  const handleBack = () => {
-    if (onBack) {
-      onBack();
-    } else {
-      router.back();
-    }
-  };
-
   return (
     <>
       <section>
-        <button type="button" className="button ghost" onClick={handleBack}>
-          ← Back
-        </button>
+        <BackButton />
         <h2>Post detail</h2>
 
         {loading && <p>Loading…</p>}

@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
-import { supabase } from '../lib/supabaseClient';
-import { validateUsername } from '../utils/username-validator';
 import Head from 'next/head';
+import { supabase } from '../lib/supabaseClient';
+import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
+import { BackButton } from '../components/BackButton';
 import { useCurrentUserProfile } from '../hooks/useCurrentUserProfile';
+import { validateUsername } from '../utils/username-validator';
 import {
   renderDescriptionWithTagsAndMentions,
   extractMentionUserIds,
@@ -14,8 +16,9 @@ import { formatPostTitle, formatAuthorUsername } from '../utils/post-format';
 
 export default function UpdateProfilePage() {
   const router = useRouter();
+  const { user, loading: authLoading } = useSupabaseAuth();
   const {
-    user,
+    user: profileUser,
     status,
     error: profileError,
     username: loadedUsername,
@@ -581,9 +584,7 @@ export default function UpdateProfilePage() {
         <title>Update profile - BytebeatCloud</title>
       </Head>
       <section>
-        <button type="button" className="button ghost" onClick={() => router.back()}>
-          ← Back
-        </button>
+        <BackButton />
         {status === 'loading' && <p className="text-centered">Loading your profile…</p>}
         {status === 'error' && <p className="error-message">{profileError}</p>}
 
