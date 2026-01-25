@@ -447,7 +447,7 @@ test.describe('Fork page - back button and discard changes', () => {
     await expect(page.getByRole('heading', { name: 'Post detail' })).toBeVisible();
 
     // Click the Fork link to establish proper browser history
-    await page.getByRole('link', { name: 'Fork' }).click();
+    await page.getByRole('link', { name: 'Fork', exact: true }).click();
     await expect(page.getByText('Loading…')).toHaveCount(0, { timeout: 10000 });
 
     const backButton = page.getByRole('button', { name: '← Back' });
