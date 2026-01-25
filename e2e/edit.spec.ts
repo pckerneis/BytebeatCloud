@@ -380,11 +380,12 @@ test.describe('Edit page - back button and discard changes', () => {
   });
 
   test('back button redirects to post detail page', async ({ page }) => {
-    // Navigate from post detail to edit page to establish history
+    // Navigate from post detail to edit page by clicking Edit link
     await page.goto(`/post/${testPostId}`);
     await expect(page.getByRole('heading', { name: 'Post detail' })).toBeVisible();
 
-    await page.goto(`/edit/${testPostId}`);
+    // Click the Edit link to establish proper browser history
+    await page.getByRole('link', { name: 'Edit' }).click();
     await expect(page.getByText('Loading…')).toHaveCount(0, { timeout: 10000 });
 
     const backButton = page.getByRole('button', { name: '← Back' });

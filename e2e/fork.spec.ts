@@ -442,11 +442,12 @@ test.describe('Fork page - back button and discard changes', () => {
   });
 
   test('back button redirects to original post detail page', async ({ page }) => {
-    // Navigate from post detail to fork page to establish history
+    // Navigate from post detail to fork page by clicking Fork link
     await page.goto(`/post/${originalPostId}`);
     await expect(page.getByRole('heading', { name: 'Post detail' })).toBeVisible();
 
-    await page.goto(`/fork/${originalPostId}`);
+    // Click the Fork link to establish proper browser history
+    await page.getByRole('link', { name: 'Fork' }).click();
     await expect(page.getByText('Loading…')).toHaveCount(0, { timeout: 10000 });
 
     const backButton = page.getByRole('button', { name: '← Back' });
