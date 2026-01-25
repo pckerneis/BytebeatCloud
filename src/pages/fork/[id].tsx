@@ -7,14 +7,13 @@ import { TooltipHint } from '../../components/TooltipHint';
 import OverflowMenu from '../../components/OverflowMenu';
 import { usePostEditor } from '../../hooks/usePostEditor';
 import { copyShareLinkToClipboard } from '../../utils/shareLink';
-import { useHasHistory } from '../../hooks/useHasHistory';
+import { BackButton } from '../../components/BackButton';
 
 export default function ForkPostPage() {
   const router = useRouter();
   const { id } = router.query;
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
   const [shareLinkCopied, setShareLinkCopied] = useState(false);
-  const hasHistory = useHasHistory();
 
   const editor = usePostEditor({
     mode: 'fork',
@@ -68,18 +67,10 @@ export default function ForkPostPage() {
       editor.sampleRate !== editor.originalData.sampleRate ||
       editor.description !== editor.originalData.description);
 
-  const handleBack = () => {
-    router.back();
-  };
-
   if (editor.loading) {
     return (
       <section>
-        {hasHistory && (
-          <button type="button" className="button ghost" onClick={handleBack}>
-            ← Back
-          </button>
-        )}
+        <BackButton />
         <h2>Fork post</h2>
         <p>Loading…</p>
       </section>
@@ -89,11 +80,7 @@ export default function ForkPostPage() {
   if (editor.loadError) {
     return (
       <section>
-        {hasHistory && (
-          <button type="button" className="button ghost" onClick={handleBack}>
-            ← Back
-          </button>
-        )}
+        <BackButton />
         <h2>Fork post</h2>
         <p className="error-message">{editor.loadError}</p>
       </section>
@@ -130,11 +117,7 @@ export default function ForkPostPage() {
         <meta name="twitter:card" content="summary_large_image" />
       </Head>
       <section>
-        {hasHistory && (
-          <button type="button" className="button ghost" onClick={handleBack}>
-            ← Back
-          </button>
-        )}
+        <BackButton />
         <div className="flex-row align-items-center">
           <h2>Fork post</h2>
           <div className="ml-auto">

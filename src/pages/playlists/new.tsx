@@ -3,13 +3,12 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 import { useSupabaseAuth } from '../../hooks/useSupabaseAuth';
 import Head from 'next/head';
-import { useHasHistory } from '../../hooks/useHasHistory';
+import { BackButton } from '../../components/BackButton';
 import Link from 'next/link';
 
 export default function NewPlaylistPage() {
   const router = useRouter();
   const { user, loading } = useSupabaseAuth();
-  const hasHistory = useHasHistory();
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -96,11 +95,7 @@ export default function NewPlaylistPage() {
         <title>{pageTitle}</title>
       </Head>
       <section>
-        {hasHistory && (
-          <button type="button" className="button ghost" onClick={() => router.back()}>
-            ← Back
-          </button>
-        )}
+        <BackButton />
         <h2>Create a new playlist</h2>
 
         {!loading && !user && (

@@ -6,7 +6,7 @@ import Head from 'next/head';
 import { enrichWithTags } from '../../utils/tags';
 import { validateExpression } from '../../utils/expression-validator';
 import Link from 'next/link';
-import { useHasHistory } from '../../hooks/useHasHistory';
+import { BackButton } from '../../components/BackButton';
 import { useSupabaseAuth } from '../../hooks/useSupabaseAuth';
 import { formatAuthorUsername } from '../../utils/post-format';
 
@@ -24,7 +24,6 @@ interface PlaylistRow {
 export default function PlaylistDetailPage() {
   const router = useRouter();
   const { id } = router.query;
-  const hasHistory = useHasHistory();
   const playlistId = typeof id === 'string' ? id : null;
 
   const { user } = useSupabaseAuth();
@@ -149,11 +148,7 @@ export default function PlaylistDetailPage() {
         <title>{pageTitle}</title>
       </Head>
       <section>
-        {hasHistory && (
-          <button type="button" className="button ghost" onClick={() => router.back()}>
-            ← Back
-          </button>
-        )}
+        <BackButton />
         <div className="profile-title-row">
           <h2>{playlist?.title ?? 'Playlist'}</h2>
           {!loading &&

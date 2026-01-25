@@ -2,14 +2,13 @@ import Head from 'next/head';
 import Link from 'next/link';
 import React, { useEffect, useState } from 'react';
 import { useCurrentUserProfile } from '../hooks/useCurrentUserProfile';
-import { useHasHistory } from '../hooks/useHasHistory';
+import { BackButton } from '../components/BackButton';
 import {
   getCreatorAnalytics,
   getCreatorStats,
   CreatorAnalyticsRow,
   CreatorStats,
 } from '../services/playEventsClient';
-import { useRouter } from 'next/router';
 import { formatPostTitle } from '../utils/post-format';
 
 function formatDuration(seconds: number): string {
@@ -25,9 +24,7 @@ function formatDuration(seconds: number): string {
 }
 
 export default function AnalyticsPage() {
-  const router = useRouter();
   const { status, user } = useCurrentUserProfile();
-  const hasHistory = useHasHistory();
   const [stats, setStats] = useState<CreatorStats | null>(null);
   const [analytics, setAnalytics] = useState<CreatorAnalyticsRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -100,11 +97,7 @@ export default function AnalyticsPage() {
         <title>Analytics - BytebeatCloud</title>
       </Head>
       <section className="analytics-page">
-        {hasHistory && (
-          <button type="button" className="button ghost" onClick={() => router.back()}>
-            ← Back
-          </button>
-        )}
+        <BackButton />
 
         <h2>Creator Analytics</h2>
 

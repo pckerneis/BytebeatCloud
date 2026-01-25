@@ -2,7 +2,7 @@ import { useRouter } from 'next/router';
 import { useEffect, useState, useRef, useCallback } from 'react';
 import Head from 'next/head';
 import { supabase } from '../../lib/supabaseClient';
-import { useHasHistory } from '../../hooks/useHasHistory';
+import { BackButton } from '../../components/BackButton';
 import { enrichWithTags } from '../../utils/tags';
 import type { PostRow } from '../../components/PostList';
 import {
@@ -75,7 +75,6 @@ const MAX_LENGTH = 300;
 export default function ExportVideoPage() {
   const router = useRouter();
   const { postId } = router.query;
-  const hasHistory = useHasHistory();
 
   const [post, setPost] = useState<PostRow | null>(null);
   const [loading, setLoading] = useState(true);
@@ -251,11 +250,7 @@ export default function ExportVideoPage() {
         <meta name="description" content="Export your bytebeat as a video" />
       </Head>
       <section>
-        {hasHistory && (
-          <button type="button" className="button ghost" onClick={() => router.back()}>
-            ← Back
-          </button>
-        )}
+        <BackButton />
         <h2>Export Video</h2>
 
         {loading && <p>Loading…</p>}

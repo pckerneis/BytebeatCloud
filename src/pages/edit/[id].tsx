@@ -7,7 +7,7 @@ import { TooltipHint } from '../../components/TooltipHint';
 import OverflowMenu from '../../components/OverflowMenu';
 import { usePostEditor } from '../../hooks/usePostEditor';
 import Link from 'next/link';
-import { useHasHistory } from '../../hooks/useHasHistory';
+import { BackButton } from '../../components/BackButton';
 
 export default function EditPostPage() {
   const router = useRouter();
@@ -15,7 +15,6 @@ export default function EditPostPage() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showUnpublishConfirm, setShowUnpublishConfirm] = useState(false);
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
-  const hasHistory = useHasHistory();
 
   const editor = usePostEditor({
     mode: 'edit',
@@ -91,18 +90,10 @@ export default function EditPostPage() {
     editor.setState(next);
   };
 
-  const handleBack = () => {
-    router.back();
-  };
-
   if (editor.loading) {
     return (
       <section>
-        {hasHistory && (
-          <button type="button" className="button ghost" onClick={handleBack}>
-            ← Back
-          </button>
-        )}
+        <BackButton />
         <h2>Edit post</h2>
         <p>Loading…</p>
       </section>
@@ -112,11 +103,7 @@ export default function EditPostPage() {
   if (!editor.user) {
     return (
       <section>
-        {hasHistory && (
-          <button type="button" className="button ghost" onClick={handleBack}>
-            ← Back
-          </button>
-        )}
+        <BackButton />
         <h2>Edit post</h2>
         <p>
           You need to <Link href="/login">log in</Link> in order to edit a post.
@@ -128,11 +115,7 @@ export default function EditPostPage() {
   if (editor.loadError) {
     return (
       <section>
-        {hasHistory && (
-          <button type="button" className="button ghost" onClick={handleBack}>
-            ← Back
-          </button>
-        )}
+        <BackButton />
         <h2>Edit post</h2>
         <p className="error-message">{editor.loadError}</p>
       </section>
@@ -164,11 +147,7 @@ export default function EditPostPage() {
         <meta name="twitter:card" content="summary_large_image" />
       </Head>
       <section>
-        {hasHistory && (
-          <button type="button" className="button ghost" onClick={handleBack}>
-            ← Back
-          </button>
-        )}
+        <BackButton />
         <div className="flex-row align-items-center">
           <h2>Edit post</h2>
           <div className="ml-auto">

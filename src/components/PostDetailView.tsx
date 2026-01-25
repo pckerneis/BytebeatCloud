@@ -12,7 +12,6 @@ import Link from 'next/link';
 import { enrichWithTags } from '../utils/tags';
 import { validateExpression } from '../utils/expression-validator';
 import { useCurrentWeeklyChallenge } from '../hooks/useCurrentWeeklyChallenge';
-import { useHasHistory } from '../hooks/useHasHistory';
 import {
   renderDescriptionWithTagsAndMentions,
   extractMentionUserIds,
@@ -26,6 +25,7 @@ import { convertMentionsToIds } from '../utils/mentions';
 import { formatRelativeTime } from '../utils/time';
 import { PlaylistCard } from './PlaylistCard';
 import { useSwipeGesture } from '../hooks/useSwipeGesture';
+import { BackButton } from './BackButton';
 
 interface Comment {
   id: string;
@@ -58,7 +58,6 @@ export function PostDetailView({
   scrollToComments,
 }: Readonly<PostDetailViewProps>) {
   const router = useRouter();
-  const hasHistory = useHasHistory();
 
   const [posts, setPosts] = useState<PostRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -774,18 +773,10 @@ export function PostDetailView({
     !posts[0]?.is_draft &&
     new RegExp(`(^|\\s)#week${currentWeekNumber}(?!\\w)`).test(posts[0]?.description ?? '');
 
-  const handleBack = () => {
-    router.back();
-  };
-
   return (
     <>
       <section>
-        {hasHistory && (
-          <button type="button" className="button ghost" onClick={handleBack}>
-            ← Back
-          </button>
-        )}
+        <BackButton />
         <h2>Post detail</h2>
 
         {loading && <p>Loading…</p>}

@@ -3,12 +3,11 @@ import { useRouter } from 'next/router';
 import Head from 'next/head';
 import { supabase } from '../../lib/supabaseClient';
 import { useSupabaseAuth } from '../../hooks/useSupabaseAuth';
-import { useHasHistory } from '../../hooks/useHasHistory';
+import { BackButton } from '../../components/BackButton';
 
 export default function UserActionPage() {
   const router = useRouter();
   const { username } = router.query;
-  const hasHistory = useHasHistory();
   const { user } = useSupabaseAuth();
   const [status, setStatus] = useState<'loading' | 'idle' | 'error'>('loading');
   const [error, setError] = useState('');
@@ -217,11 +216,7 @@ export default function UserActionPage() {
         <title>BytebeatCloud - User actions</title>
       </Head>
       <section>
-        {hasHistory && (
-          <button type="button" className="button ghost" onClick={() => router.back()}>
-            ← Back
-          </button>
-        )}
+        <BackButton />
 
         <h2>@{username}</h2>
 
