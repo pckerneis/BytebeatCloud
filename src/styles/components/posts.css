@@ -250,3 +250,18 @@
 .back-to-top-button.visible {
   display: block;
 }
+
+.favorites-tooltip {
+  background: var(--bg-color);
+  border: 1px solid var(--panel-border-color);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 12px;
+  color: var(--text-color);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+  max-width: 300px;
+  pointer-events: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
