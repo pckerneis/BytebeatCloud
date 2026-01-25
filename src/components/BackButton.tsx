@@ -8,9 +8,7 @@ export function BackButton({ fallbackPath = '/explore' }: Readonly<BackButtonPro
   const router = useRouter();
 
   const handleBack = () => {
-    if (window.history.length > 1
-      && document.referrer.indexOf(window.location.host) !== -1
-    ) {
+    if (window.history.length > 1 && document.referrer.indexOf(window.location.host) !== -1) {
       router.back();
     } else {
       void router.push(fallbackPath);

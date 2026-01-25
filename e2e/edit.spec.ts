@@ -91,7 +91,7 @@ test.describe('Edit page - loading existing post', () => {
     // Navigate from post detail to edit page to establish history
     await page.goto(`/post/${testPostId}`);
     await expect(page.getByRole('heading', { name: 'Post detail' })).toBeVisible();
-    
+
     await page.goto(`/edit/${testPostId}`);
     await expect(page.getByText('Loading…')).toHaveCount(0, { timeout: 10000 });
 
@@ -383,7 +383,7 @@ test.describe('Edit page - back button and discard changes', () => {
     // Navigate from post detail to edit page to establish history
     await page.goto(`/post/${testPostId}`);
     await expect(page.getByRole('heading', { name: 'Post detail' })).toBeVisible();
-    
+
     await page.goto(`/edit/${testPostId}`);
     await expect(page.getByText('Loading…')).toHaveCount(0, { timeout: 10000 });
 

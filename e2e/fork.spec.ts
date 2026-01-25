@@ -106,7 +106,7 @@ test.describe('Fork page - loading original post', () => {
     // Navigate from post detail to fork page to establish history
     await page.goto(`/post/${originalPostId}`);
     await expect(page.getByRole('heading', { name: 'Post detail' })).toBeVisible();
-    
+
     await page.goto(`/fork/${originalPostId}`);
     await expect(page.getByText('Loading…')).toHaveCount(0, { timeout: 10000 });
 
@@ -445,7 +445,7 @@ test.describe('Fork page - back button and discard changes', () => {
     // Navigate from post detail to fork page to establish history
     await page.goto(`/post/${originalPostId}`);
     await expect(page.getByRole('heading', { name: 'Post detail' })).toBeVisible();
-    
+
     await page.goto(`/fork/${originalPostId}`);
     await expect(page.getByText('Loading…')).toHaveCount(0, { timeout: 10000 });
 
