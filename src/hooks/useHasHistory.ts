@@ -9,9 +9,29 @@ import { useRouter } from 'next/router';
 export function useHasHistory(): boolean {
   const router = useRouter();
   const [hasHistory, setHasHistory] = useState(() => {
-    // Initialize from sessionStorage if available
+    // Initialize based on multiple signals
     if (typeof window !== 'undefined') {
-      return sessionStorage.getItem('app-has-navigated') === 'true';
+      // Check sessionStorage first
+      const hasNavigated = sessionStorage.getItem('app-has-navigated') === 'true';
+      if (hasNavigated) {
+        return true;
+      }
+
+      // Check if browser history has more than one entry
+      // history.length > 1 means there's something to go back to
+      if (window.history.length > 1) {
+        sessionStorage.setItem('app-has-navigated', 'true');
+        return true;
+      }
+
+      // Check if we have a referrer from the same origin (for initial page load)
+      const referrer = document.referrer;
+      const currentOrigin = window.location.origin;
+
+      if (referrer && referrer.startsWith(currentOrigin)) {
+        sessionStorage.setItem('app-has-navigated', 'true');
+        return true;
+      }
     }
     return false;
   });
@@ -31,21 +51,7 @@ export function useHasHistory(): boolean {
     router.events.on('routeChangeStart', handleRouteChangeStart);
     router.events.on('routeChangeComplete', handleRouteChangeComplete);
 
-    // Check current state on mount
-    const hasNavigated = sessionStorage.getItem('app-has-navigated');
-    if (hasNavigated === 'true') {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setHasHistory(true);
-    } else {
-      // Check if we have a referrer from the same origin (for initial page load)
-      const referrer = document.referrer;
-      const currentOrigin = window.location.origin;
-
-      if (referrer && referrer.startsWith(currentOrigin)) {
-        setHasHistory(true);
-        sessionStorage.setItem('app-has-navigated', 'true');
-      }
-    }
+    // No need to check on mount since state is initialized from sessionStorage above
 
     return () => {
       router.events.off('routeChangeStart', handleRouteChangeStart);
