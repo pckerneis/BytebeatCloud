@@ -1,11 +1,11 @@
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useBytebeatPlayer } from '../hooks/useBytebeatPlayer';
 import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
 import { useCurrentWeeklyChallenge } from '../hooks/useCurrentWeeklyChallenge';
-import { favoritePost, unfavoritePost } from '../services/favoritesClient';
+import { favoritePost, unfavoritePost, getFavoritedByUsers } from '../services/favoritesClient';
 import { PostExpressionPlayer } from './PostExpressionPlayer';
 import { usePlayerStore } from '../hooks/usePlayerStore';
 import { formatSampleRate, ModeOption } from '../model/expression';
@@ -79,6 +79,14 @@ export function PostList({
   const [favoritePending, setFavoritePending] = useState<Record<string, boolean>>({});
   const [toTopVisible, setToTopVisible] = useState(false);
   const [portalTarget, setPortalTarget] = useState<Element | null>(null);
+  const [favoritesTooltip, setFavoritesTooltip] = useState<{
+    postId: string;
+    usernames: string[];
+    x: number;
+    y: number;
+  } | null>(null);
+  const [favoritesCache, setFavoritesCache] = useState<Record<string, string[]>>({});
+  const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -213,6 +221,77 @@ export function PostList({
     } finally {
       setFavoritePending((prev) => ({ ...prev, [post.id]: false }));
     }
+  };
+
+  const handleFavoriteMouseEnter = async (
+    post: PostRow,
+    event: React.MouseEvent<HTMLButtonElement>,
+  ) => {
+    const count = favoriteState[post.id]?.count ?? post.favorites_count ?? 0;
+    if (count === 0) return;
+
+    const rect = event.currentTarget.getBoundingClientRect();
+
+    if (favoritesCache[post.id]) {
+      setFavoritesTooltip({
+        postId: post.id,
+        usernames: favoritesCache[post.id],
+        x: rect.left + rect.width / 2,
+        y: rect.top,
+      });
+      return;
+    }
+
+    const users = await getFavoritedByUsers(post.id);
+    const usernames = users.map((u) => u.username);
+    setFavoritesCache((prev) => ({ ...prev, [post.id]: usernames }));
+    setFavoritesTooltip({
+      postId: post.id,
+      usernames,
+      x: rect.left + rect.width / 2,
+      y: rect.top,
+    });
+  };
+
+  const handleFavoriteMouseLeave = () => {
+    setFavoritesTooltip(null);
+  };
+
+  const handleFavoriteTouchStart = (post: PostRow, event: React.TouchEvent<HTMLButtonElement>) => {
+    const count = favoriteState[post.id]?.count ?? post.favorites_count ?? 0;
+    if (count === 0) return;
+
+    const rect = event.currentTarget.getBoundingClientRect();
+
+    longPressTimerRef.current = setTimeout(async () => {
+      if (favoritesCache[post.id]) {
+        setFavoritesTooltip({
+          postId: post.id,
+          usernames: favoritesCache[post.id],
+          x: rect.left + rect.width / 2,
+          y: rect.top,
+        });
+        return;
+      }
+
+      const users = await getFavoritedByUsers(post.id);
+      const usernames = users.map((u) => u.username);
+      setFavoritesCache((prev) => ({ ...prev, [post.id]: usernames }));
+      setFavoritesTooltip({
+        postId: post.id,
+        usernames,
+        x: rect.left + rect.width / 2,
+        y: rect.top,
+      });
+    }, 500);
+  };
+
+  const handleFavoriteTouchEnd = () => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+    setFavoritesTooltip(null);
   };
 
   useEffect(() => {
@@ -355,6 +434,10 @@ export function PostList({
                     isFavoritePending ? ' pending' : ''
                   }`}
                   onClick={() => void handleFavoriteClick(post)}
+                  onMouseEnter={(e) => void handleFavoriteMouseEnter(post, e)}
+                  onMouseLeave={handleFavoriteMouseLeave}
+                  onTouchStart={(e) => handleFavoriteTouchStart(post, e)}
+                  onTouchEnd={handleFavoriteTouchEnd}
                   disabled={isFavoritePending}
                   aria-label="Favorite"
                 >
@@ -438,6 +521,37 @@ export function PostList({
         })}
       </ul>
       {portalTarget ? createPortal(backToTopButton, portalTarget) : backToTopButton}
+      {favoritesTooltip &&
+        portalTarget &&
+        (() => {
+          const tooltipWidth = 300;
+          const tooltipHeight = 32;
+          const padding = 8;
+          const showBelow = favoritesTooltip.y < tooltipHeight + padding * 2;
+          let left = favoritesTooltip.x - tooltipWidth / 2;
+          left = Math.max(padding, Math.min(left, window.innerWidth - tooltipWidth - padding));
+          const top = showBelow ? favoritesTooltip.y + 32 + padding : favoritesTooltip.y - padding;
+
+          return createPortal(
+            <div
+              className="favorites-tooltip"
+              style={{
+                position: 'fixed',
+                left,
+                top,
+                transform: showBelow ? 'none' : 'translateY(-100%)',
+                maxWidth: tooltipWidth,
+              }}
+            >
+              {favoritesTooltip.usernames.length > 0
+                ? favoritesTooltip.usernames.length > 5
+                  ? `${favoritesTooltip.usernames.slice(0, 5).join(', ')} and ${favoritesTooltip.usernames.length - 5} others`
+                  : favoritesTooltip.usernames.join(', ')
+                : 'Loading...'}
+            </div>,
+            portalTarget,
+          );
+        })()}
     </>
   );
 }
