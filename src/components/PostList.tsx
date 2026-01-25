@@ -528,9 +528,17 @@ export function PostList({
           const tooltipHeight = 32;
           const padding = 8;
           const showBelow = favoritesTooltip.y < tooltipHeight + padding * 2;
-          let left = favoritesTooltip.x - tooltipWidth / 2;
-          left = Math.max(padding, Math.min(left, window.innerWidth - tooltipWidth - padding));
+          const centeredLeft = favoritesTooltip.x - tooltipWidth / 2;
+          const wouldOverflowLeft = centeredLeft < padding;
+          const wouldOverflowRight = centeredLeft + tooltipWidth > window.innerWidth - padding;
+          const needsClamp = wouldOverflowLeft || wouldOverflowRight;
+          const left = needsClamp
+            ? Math.max(padding, Math.min(centeredLeft, window.innerWidth - tooltipWidth - padding))
+            : favoritesTooltip.x;
           const top = showBelow ? favoritesTooltip.y + 32 + padding : favoritesTooltip.y - padding;
+          const transformX = needsClamp ? 'none' : 'translateX(-50%)';
+          const transformY = showBelow ? 'none' : 'translateY(-100%)';
+          const transform = `${transformX === 'none' ? '' : transformX} ${transformY === 'none' ? '' : transformY}`.trim() || 'none';
 
           return createPortal(
             <div
@@ -539,7 +547,7 @@ export function PostList({
                 position: 'fixed',
                 left,
                 top,
-                transform: showBelow ? 'none' : 'translateY(-100%)',
+                transform,
                 maxWidth: tooltipWidth,
               }}
             >
