@@ -43,4 +43,5 @@ export interface PostMetadataModel {
   sampleRate: number;
   isDraft: boolean;
   license: LicenseOption;
+  autoSkipDuration: number | null;
 }

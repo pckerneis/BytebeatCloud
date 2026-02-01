@@ -35,6 +35,7 @@ export interface PostRow {
   tags?: string[];
   is_weekly_winner?: boolean;
   license?: LicenseOption;
+  auto_skip_duration?: number | null;
 }
 
 interface PostListProps {

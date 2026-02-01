@@ -14,6 +14,7 @@ export interface PostSaveData {
   sampleRate: number;
   license: LicenseOption;
   isDraft: boolean;
+  autoSkipDuration: number | null;
 }
 
 export interface UsePostSaverOptions {
@@ -71,6 +72,7 @@ export function usePostSaver(options: UsePostSaverOptions): UsePostSaverResult {
             sample_rate: data.sampleRate,
             mode: data.mode,
             license: data.license,
+            auto_skip_duration: data.autoSkipDuration,
           })
           .select('id')
           .single();
@@ -100,6 +102,7 @@ export function usePostSaver(options: UsePostSaverOptions): UsePostSaverResult {
             sample_rate: data.sampleRate,
             mode: data.mode,
             license: data.license,
+            auto_skip_duration: data.autoSkipDuration,
           })
           .eq('id', postId)
           .eq('profile_id', userId);
@@ -130,6 +133,7 @@ export function usePostSaver(options: UsePostSaverOptions): UsePostSaverResult {
             sample_rate: data.sampleRate,
             mode: data.mode,
             license: data.license,
+            auto_skip_duration: data.autoSkipDuration,
             fork_of_post_id: postId,
             is_fork: true,
           })

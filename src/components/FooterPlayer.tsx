@@ -231,7 +231,8 @@ export default function FooterPlayer() {
     // Only schedule when playing, auto enabled, have at least 2 tracks, and a current post
     if (isPlaying && autoSkipEnabled && currentPost && (playlist?.length ?? 0) >= 2) {
       const FADE_BEFORE_MS = 3000;
-      const TOTAL_DELAY_MS = AUTOPLAY_DEFAULT_DURATION * 1000;
+      const duration = currentPost.auto_skip_duration ?? AUTOPLAY_DEFAULT_DURATION;
+      const TOTAL_DELAY_MS = duration * 1000;
       const MIN_REMAINING_MS = 5000; // Minimum 5 seconds before transition
 
       // Reset timestamp when the post changes (new post started playing)
@@ -333,7 +334,7 @@ export default function FooterPlayer() {
     // Recreate timers when these change
     // Note: fadeGain is intentionally excluded to prevent timer reset during fade animation
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPost?.id, isPlaying, autoSkipEnabled, playlist?.length]);
+  }, [currentPost?.id, currentPost?.auto_skip_duration, isPlaying, autoSkipEnabled, playlist?.length]);
 
   const handleFooterPlayPause = async () => {
     if (isPlaying) {

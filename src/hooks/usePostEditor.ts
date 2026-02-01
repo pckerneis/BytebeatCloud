@@ -113,6 +113,7 @@ export function usePostEditor(options: UsePostEditorOptions) {
         sampleRate: draft.sampleRate,
         license: draft.license as any,
         liveUpdateEnabled: draft.liveUpdateEnabled,
+        autoSkipDuration: draft.autoSkipDuration ?? null,
       });
     }
     setIsStateLoaded(true);
@@ -133,6 +134,7 @@ export function usePostEditor(options: UsePostEditorOptions) {
       sampleRate: draft?.sampleRate ?? postLoader.data.sampleRate,
       license: (draft?.license as any) ?? postLoader.data.license,
       isDraft: postLoader.data.isDraft,
+      autoSkipDuration: draft?.autoSkipDuration ?? postLoader.data.autoSkipDuration,
     });
 
     setIsStateLoaded(true);
@@ -148,6 +150,7 @@ export function usePostEditor(options: UsePostEditorOptions) {
       sampleRate: editorState.sampleRate,
       license: editorState.license,
       isDraft: false,
+      autoSkipDuration: editorState.autoSkipDuration,
     });
 
     if (savedPostId) {
@@ -166,6 +169,7 @@ export function usePostEditor(options: UsePostEditorOptions) {
       sampleRate: editorState.sampleRate,
       license: editorState.license,
       isDraft: true,
+      autoSkipDuration: editorState.autoSkipDuration,
     });
 
     if (savedPostId) {
@@ -186,6 +190,7 @@ export function usePostEditor(options: UsePostEditorOptions) {
       sampleRate: editorState.sampleRate,
       license: editorState.license,
       isDraft: asDraft,
+      autoSkipDuration: editorState.autoSkipDuration,
     });
 
     if (postId) {
@@ -205,6 +210,7 @@ export function usePostEditor(options: UsePostEditorOptions) {
     sampleRate: editorState.sampleRate,
     isDraft: editorState.isDraft,
     license: editorState.license,
+    autoSkipDuration: editorState.autoSkipDuration,
   };
 
   const handleMetaChange = (next: typeof meta) => {
