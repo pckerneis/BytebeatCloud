@@ -31,6 +31,7 @@ export default function EditPostPage() {
       sampleRate: editor.sampleRate,
       license: editor.license,
       isDraft: asDraft,
+      autoSkipDuration: editor.autoSkipDuration,
     });
 
     if (postId && !asDraft) {
@@ -84,6 +85,7 @@ export default function EditPostPage() {
     sampleRate: editor.sampleRate,
     isDraft: editor.isDraft,
     license: editor.license,
+    autoSkipDuration: editor.autoSkipDuration,
   };
 
   const handleMetaChange = (next: typeof meta) => {

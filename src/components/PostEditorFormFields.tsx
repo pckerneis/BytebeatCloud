@@ -12,7 +12,15 @@ import {
 import { ValidationIssue } from '../utils/expression-validator';
 import type { PostMetadataModel } from '../model/postEditor';
 import { LICENSE_OPTIONS } from '../model/postEditor';
-import { EXPRESSION_MAX, POST_DESCRIPTION_MAX, POST_TITLE_MAX } from '../constants';
+import {
+  EXPRESSION_MAX,
+  POST_DESCRIPTION_MAX,
+  POST_TITLE_MAX,
+  AUTO_SKIP_DURATION_PRESETS,
+  MIN_AUTO_SKIP_DURATION,
+  MAX_AUTO_SKIP_DURATION,
+  AUTOPLAY_DEFAULT_DURATION,
+} from '../constants';
 import Link from 'next/link';
 
 interface PostEditorFormFieldsProps {
@@ -52,6 +60,27 @@ function findNextPresetSampleRate(sampleRate: number): number {
   return MAX_SAMPLE_RATE;
 }
 
+function findNextDurationPreset(duration: number | null): number | null {
+  if (duration === null) {
+    return AUTO_SKIP_DURATION_PRESETS[0];
+  }
+
+  for (let d of AUTO_SKIP_DURATION_PRESETS) {
+    if (d > duration) {
+      return d;
+    }
+  }
+
+  return null; // Back to "Auto"
+}
+
+function formatDuration(duration: number | null): string {
+  if (duration === null) {
+    return `Auto`;
+  }
+  return `${duration}s`;
+}
+
 export function PostEditorFormFields(props: Readonly<PostEditorFormFieldsProps>) {
   const {
     meta,
@@ -72,11 +101,17 @@ export function PostEditorFormFields(props: Readonly<PostEditorFormFieldsProps>)
   const expressionLength = expression.length;
   const isExpressionTooLong = expressionLength > EXPRESSION_MAX;
 
-  const { title, description, mode, sampleRate, license } = meta;
+  const { title, description, mode, sampleRate, license, autoSkipDuration } = meta;
   const [sampleRateModalOpen, setSampleRateModalOpen] = useState(false);
   const [sampleRateInput, setSampleRateInput] = useState(sampleRate.toString());
+  const [durationModalOpen, setDurationModalOpen] = useState(false);
+  const [durationInput, setDurationInput] = useState(
+    (autoSkipDuration ?? AUTOPLAY_DEFAULT_DURATION).toString(),
+  );
   const longPressTimeoutRef = useRef<number | null>(null);
   const longPressTriggeredRef = useRef(false);
+  const durationLongPressTimeoutRef = useRef<number | null>(null);
+  const durationLongPressTriggeredRef = useRef(false);
   const currentLicenseLabel = LICENSE_OPTIONS.find((opt) => opt.value === license)?.label;
 
   const openSampleRateModal = () => {
@@ -132,6 +167,46 @@ export function PostEditorFormFields(props: Readonly<PostEditorFormFieldsProps>)
     onMetaChange({ ...meta, sampleRate: findNextPresetSampleRate(sampleRate) });
   };
 
+  const openDurationModal = () => {
+    setDurationInput((autoSkipDuration ?? AUTOPLAY_DEFAULT_DURATION).toString());
+    setDurationModalOpen(true);
+  };
+
+  const closeDurationModal = () => {
+    setDurationModalOpen(false);
+  };
+
+  const commitDurationFromInput = () => {
+    const parsed = parseInt(durationInput, 10);
+    if (Number.isNaN(parsed)) return;
+
+    const clamped = Math.min(MAX_AUTO_SKIP_DURATION, Math.max(MIN_AUTO_SKIP_DURATION, parsed));
+    onMetaChange({ ...meta, autoSkipDuration: clamped });
+    setDurationModalOpen(false);
+  };
+
+  const startDurationLongPress = () => {
+    if (durationLongPressTimeoutRef.current !== null) {
+      window.clearTimeout(durationLongPressTimeoutRef.current);
+    }
+    durationLongPressTriggeredRef.current = false;
+    durationLongPressTimeoutRef.current = window.setTimeout(() => {
+      durationLongPressTriggeredRef.current = true;
+      openDurationModal();
+    }, 500);
+  };
+
+  const cancelDurationLongPress = () => {
+    if (durationLongPressTimeoutRef.current !== null) {
+      window.clearTimeout(durationLongPressTimeoutRef.current);
+      durationLongPressTimeoutRef.current = null;
+    }
+  };
+
+  const rotateDuration = () => {
+    onMetaChange({ ...meta, autoSkipDuration: findNextDurationPreset(autoSkipDuration) });
+  };
+
   return (
     <>
       <label className="field">
@@ -171,6 +246,25 @@ export function PostEditorFormFields(props: Readonly<PostEditorFormFieldsProps>)
           onTouchCancel={cancelSampleRateLongPress}
         >
           {formatSampleRate(sampleRate)}
+        </button>
+        <button
+          type="button"
+          className="chip"
+          onClick={() => {
+            if (durationLongPressTriggeredRef.current) {
+              durationLongPressTriggeredRef.current = false;
+              return;
+            }
+            rotateDuration();
+          }}
+          onMouseDown={startDurationLongPress}
+          onMouseUp={cancelDurationLongPress}
+          onMouseLeave={cancelDurationLongPress}
+          onTouchStart={startDurationLongPress}
+          onTouchEnd={cancelDurationLongPress}
+          onTouchCancel={cancelDurationLongPress}
+        >
+          {formatDuration(autoSkipDuration)}
         </button>
       </div>
 
@@ -315,6 +409,49 @@ export function PostEditorFormFields(props: Readonly<PostEditorFormFieldsProps>)
                 className="button primary"
                 onClick={commitSampleRateFromInput}
                 disabled={Number.isNaN(parseInt(sampleRateInput, 10))}
+              >
+                Apply
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {durationModalOpen && (
+        <div
+          className="modal-backdrop"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.4)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+          }}
+        >
+          <div className="modal">
+            <h2 style={{ marginTop: 0, marginBottom: '8px', fontSize: '16px' }}>Auto-skip duration</h2>
+            <p style={{ marginTop: 0, marginBottom: '8px', fontSize: '12px', opacity: 0.8 }}>
+              Enter a value in seconds ({MIN_AUTO_SKIP_DURATION} - {MAX_AUTO_SKIP_DURATION}).
+            </p>
+            <input
+              type="number"
+              min={MIN_AUTO_SKIP_DURATION}
+              max={MAX_AUTO_SKIP_DURATION}
+              value={durationInput}
+              onChange={(e) => setDurationInput(e.target.value.replace(/[^0-9]/g, ''))}
+              style={{ width: '100%', padding: '6px 8px', marginBottom: '12px' }}
+            />
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+              <button type="button" className="button secondary" onClick={closeDurationModal}>
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="button primary"
+                onClick={commitDurationFromInput}
+                disabled={Number.isNaN(parseInt(durationInput, 10))}
               >
                 Apply
               </button>

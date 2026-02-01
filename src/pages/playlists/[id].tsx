@@ -3,8 +3,6 @@ import { useEffect, useState, useMemo } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 import { PostList, type PostRow } from '../../components/PostList';
 import Head from 'next/head';
-import { enrichWithTags } from '../../utils/tags';
-import { validateExpression } from '../../utils/expression-validator';
 import Link from 'next/link';
 import { BackButton } from '../../components/BackButton';
 import { useSupabaseAuth } from '../../hooks/useSupabaseAuth';
@@ -104,9 +102,7 @@ export default function PlaylistDetailPage() {
       // Load posts metadata
       const { data: postRows, error: postErr } = await supabase
         .from('posts_with_meta')
-        .select(
-          'id,title,description,expression,is_draft,sample_rate,mode,created_at,profile_id,fork_of_post_id,is_fork,author_username,origin_title,origin_username,favorites_count,favorited_by_current_user,is_weekly_winner,license,comments_count',
-        )
+        .select()
         .in('id', postIds);
 
       if (cancelled) return;

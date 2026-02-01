@@ -11,6 +11,7 @@ export interface PostEditorState {
   license: LicenseOption;
   isDraft: boolean;
   liveUpdateEnabled: boolean;
+  autoSkipDuration: number | null;
 }
 
 export interface PostEditorStateActions {
@@ -22,6 +23,7 @@ export interface PostEditorStateActions {
   setLicense: (license: LicenseOption) => void;
   setIsDraft: (isDraft: boolean) => void;
   setLiveUpdateEnabled: (enabled: boolean) => void;
+  setAutoSkipDuration: (duration: number | null) => void;
   setState: (state: Partial<PostEditorState>) => void;
 }
 
@@ -45,6 +47,7 @@ export function usePostEditorState(
   const [license, setLicense] = useState<LicenseOption>(options.initialLicense ?? DEFAULT_LICENSE);
   const [isDraft, setIsDraft] = useState(false);
   const [liveUpdateEnabled, setLiveUpdateEnabled] = useState(options.initialLiveUpdate ?? true);
+  const [autoSkipDuration, setAutoSkipDuration] = useState<number | null>(null);
 
   const setState = (state: Partial<PostEditorState>) => {
     if (state.title !== undefined) setTitle(state.title);
@@ -55,6 +58,7 @@ export function usePostEditorState(
     if (state.license !== undefined) setLicense(state.license);
     if (state.isDraft !== undefined) setIsDraft(state.isDraft);
     if (state.liveUpdateEnabled !== undefined) setLiveUpdateEnabled(state.liveUpdateEnabled);
+    if (state.autoSkipDuration !== undefined) setAutoSkipDuration(state.autoSkipDuration);
   };
 
   return {
@@ -66,6 +70,7 @@ export function usePostEditorState(
     license,
     isDraft,
     liveUpdateEnabled,
+    autoSkipDuration,
     setTitle,
     setDescription,
     setExpression,
@@ -74,6 +79,7 @@ export function usePostEditorState(
     setLicense,
     setIsDraft,
     setLiveUpdateEnabled,
+    setAutoSkipDuration,
     setState,
   };
 }

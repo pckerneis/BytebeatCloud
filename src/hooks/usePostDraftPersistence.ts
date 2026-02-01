@@ -11,6 +11,7 @@ export interface DraftData {
   sampleRate?: number;
   license?: string;
   liveUpdateEnabled?: boolean;
+  autoSkipDuration?: number | null;
   timestamp?: number;
 }
 
@@ -37,6 +38,7 @@ export function usePostDraftPersistence(
       sampleRate: state.sampleRate,
       license: state.license,
       liveUpdateEnabled: state.liveUpdateEnabled,
+      autoSkipDuration: state.autoSkipDuration,
       timestamp: Date.now(),
     };
 
@@ -55,6 +57,7 @@ export function usePostDraftPersistence(
     state.sampleRate,
     state.license,
     state.liveUpdateEnabled,
+    state.autoSkipDuration,
   ]);
 
   const loadDraft = (): DraftData | null => {

@@ -15,6 +15,7 @@ export interface LoadedPostData {
   profileId?: string;
   publishedAt?: string | null;
   originalAuthor?: string | null;
+  autoSkipDuration: number | null;
 }
 
 export interface UsePostLoaderOptions {
@@ -51,8 +52,8 @@ export function usePostLoader(options: UsePostLoaderOptions): UsePostLoaderResul
 
       const selectFields =
         mode === 'edit'
-          ? 'title,description,expression,is_draft,sample_rate,mode,profile_id,license,published_at'
-          : 'title,description,expression,is_draft,sample_rate,mode,license,profiles(username)';
+          ? 'title,description,expression,is_draft,sample_rate,mode,profile_id,license,published_at,auto_skip_duration'
+          : 'title,description,expression,is_draft,sample_rate,mode,license,auto_skip_duration,profiles(username)';
 
       const { data: postData, error: fetchError } = await supabase
         .from('posts')
@@ -110,6 +111,7 @@ export function usePostLoader(options: UsePostLoaderOptions): UsePostLoaderResul
         profileId: post.profile_id,
         publishedAt: post.published_at,
         originalAuthor: post.profiles?.username ?? null,
+        autoSkipDuration: post.auto_skip_duration ?? null,
       };
 
       setData(loadedData);
