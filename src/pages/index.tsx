@@ -233,8 +233,7 @@ export default function Home() {
         </p>
 
         <p>
-          This app is still in development. Expect bugs and incomplete features. Contributions
-          welcome on{' '}
+          BytebeatCloud is open-source and community-driven. Ideas and contributions welcome on{' '}
           <Link href="https://github.com/pckerneis/BytebeatCloud" target="_blank">
             GitHub
           </Link>
