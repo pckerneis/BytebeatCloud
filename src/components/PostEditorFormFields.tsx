@@ -98,7 +98,7 @@ export function PostEditorFormFields(props: Readonly<PostEditorFormFieldsProps>)
     isEdit,
   } = props;
 
-  const expressionLength = expression.length;
+  const expressionLength = new TextEncoder().encode(expression).length;
   const isExpressionTooLong = expressionLength > EXPRESSION_MAX;
 
   const { title, description, mode, sampleRate, license, autoSkipDuration } = meta;
@@ -386,7 +386,7 @@ export function PostEditorFormFields(props: Readonly<PostEditorFormFieldsProps>)
             zIndex: 1000,
           }}
         >
-          <div className="modal">
+          <div className="modal" onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); commitSampleRateFromInput(); } else if (e.key === 'Escape') { closeSampleRateModal(); } }}>
             <h2 style={{ marginTop: 0, marginBottom: '8px', fontSize: '16px' }}>Sample rate</h2>
             <p style={{ marginTop: 0, marginBottom: '8px', fontSize: '12px', opacity: 0.8 }}>
               Enter a value between {MIN_SAMPLE_RATE} and {MAX_SAMPLE_RATE}.
@@ -430,7 +430,7 @@ export function PostEditorFormFields(props: Readonly<PostEditorFormFieldsProps>)
             zIndex: 1000,
           }}
         >
-          <div className="modal">
+          <div className="modal" onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); commitDurationFromInput(); } else if (e.key === 'Escape') { closeDurationModal(); } }}>
             <h2 style={{ marginTop: 0, marginBottom: '8px', fontSize: '16px' }}>
               Auto-skip duration
             </h2>
