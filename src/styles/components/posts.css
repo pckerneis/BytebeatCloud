@@ -1,5 +1,49 @@
 /* Post list and post items */
 
+.search-description-snippet {
+  font-size: 0.85em;
+  color: var(--text-secondary-color, var(--text-color));
+  opacity: 0.8;
+  margin: 2px 0 4px;
+  line-height: 1.4;
+}
+
+.search-description-snippet mark {
+  background: var(--accent-color);
+  color: var(--button-primary-text-color, #fff);
+  border-radius: 2px;
+  padding: 0 2px;
+}
+
+h3 mark {
+  background: var(--accent-color);
+  color: var(--button-primary-text-color, #fff);
+  border-radius: 2px;
+  padding: 0 2px;
+}
+
+.search-form {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 1.25rem;
+}
+
+.search-input {
+  flex: 1;
+  padding: 6px 10px;
+  border: 1px solid var(--chip-border-color);
+  border-radius: 4px;
+  font-size: 1rem;
+  font-family: inherit;
+  min-width: 0;
+}
+
+.search-result-count {
+  font-size: 0.875em;
+  opacity: 0.7;
+  margin-bottom: 0.5rem;
+}
+
 .post-actions {
   display: flex;
   gap: 8px;
