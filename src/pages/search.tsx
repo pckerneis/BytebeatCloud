@@ -7,6 +7,7 @@ import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
 import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
 import { enrichWithTags } from '../utils/tags';
 import { validateExpression } from '../utils/expression-validator';
+import { highlightTerms } from '../utils/highlight';
 
 export default function SearchPage() {
   const router = useRouter();
@@ -98,22 +99,24 @@ export default function SearchPage() {
         if (actualPage === 0) setPosts([]);
         setHasMore(false);
       } else {
-        const rawRows = (data ?? []) as Array<
-          PostRow & { title_headline?: string; description_headline?: string; rank?: number }
-        >;
+        const rawRows = (data ?? []) as Array<PostRow & { rank?: number }>;
 
-        // Build highlight map
+        // Tokenize the query for client-side highlighting (all terms, always complete)
+        const termTokens = terms
+          .trim()
+          .split(/\s+/)
+          .filter((t) => t.length > 0);
+
+        // Build highlight map using client-side computation so all terms are always marked
         const newHighlights: Record<string, PostHighlight> = {};
         for (const row of rawRows) {
-          if (row.title_headline || row.description_headline) {
-            newHighlights[row.id] = {
-              title: row.title_headline || undefined,
-              description: row.description_headline || undefined,
-            };
-          }
+          newHighlights[row.id] = {
+            title: row.title ? highlightTerms(row.title, termTokens) : undefined,
+            description: row.description ? highlightTerms(row.description, termTokens) : undefined,
+          };
         }
 
-        let rows: PostRow[] = rawRows.map(({ title_headline, description_headline, rank, ...rest }) => rest as PostRow);
+        let rows: PostRow[] = rawRows.map(({ rank, ...rest }) => rest as PostRow);
 
         if (cancelled || fetchId !== currentFetchRef.current) return;
 

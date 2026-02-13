@@ -12,6 +12,9 @@ CREATE INDEX IF NOT EXISTS idx_posts_fts
   );
 
 -- Search function: tokenized AND search with title/description weighting
+-- Drop ts_headline columns from search_posts; highlighting is now done client-side.
+-- This simplifies the function and avoids the overhead of ts_headline computation.
+
 CREATE OR REPLACE FUNCTION public.search_posts(
   query text,
   page integer DEFAULT 0,
@@ -39,8 +42,6 @@ CREATE OR REPLACE FUNCTION public.search_posts(
   license text,
   auto_skip_duration integer,
   favorited_by_current_user boolean,
-  title_headline text,
-  description_headline text,
   rank float8
 ) LANGUAGE sql STABLE AS $$
   WITH tsq AS (
@@ -69,18 +70,6 @@ CREATE OR REPLACE FUNCTION public.search_posts(
     pwm.license::text,
     pwm.auto_skip_duration,
     pwm.favorited_by_current_user,
-    ts_headline(
-      'english',
-      coalesce(pwm.title, ''),
-      tsq.q,
-      'StartSel=<mark>, StopSel=</mark>, HighlightAll=true'
-    ) AS title_headline,
-    ts_headline(
-      'english',
-      coalesce(pwm.description, ''),
-      tsq.q,
-      'StartSel=<mark>, StopSel=</mark>, MaxWords=30, MinWords=10, MaxFragments=2'
-    ) AS description_headline,
     ts_rank_cd(
       setweight(to_tsvector('english', coalesce(pwm.title, '')), 'A') ||
       setweight(to_tsvector('english', coalesce(pwm.description, '')), 'B'),
