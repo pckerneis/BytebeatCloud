@@ -1,7 +1,5 @@
 /**
- * Renders text containing <mark>...</mark> markers (as produced by PostgreSQL's ts_headline)
- * into React elements with actual <mark> highlights. All text parts are rendered safely
- * as text nodes — no dangerouslySetInnerHTML needed.
+ * Renders text containing <mark>...</mark> markers into React elements with actual <mark> highlights.
  */
 export function HighlightedText({ text }: { text: string }) {
   const parts = text.split(/(<mark>.*?<\/mark>)/);
