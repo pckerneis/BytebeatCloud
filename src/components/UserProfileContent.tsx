@@ -293,6 +293,7 @@ export function useUserFavorites(
   // Only start loading once the tab has been activated at least once
   useEffect(() => {
     if (enabled) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsInitialized(true);
     }
   }, [enabled]);
