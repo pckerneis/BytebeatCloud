@@ -178,7 +178,7 @@ function FocusFooter({
   isLoggedIn: boolean;
   title: string;
 }) {
-  const expressionLength = expression.length;
+  const expressionLength = new TextEncoder().encode(expression).length;
   const isExpressionTooLong = expressionLength > EXPRESSION_MAX;
   const validationResult = validateExpression(expression.trim());
   const canSubmit = Boolean(expression.trim()) && validationResult.valid;

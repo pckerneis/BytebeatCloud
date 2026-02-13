@@ -54,8 +54,10 @@ interface PostListProps {
 }
 
 function getLengthCategoryChip(expression: string): string | null {
-  const len = expression.length;
+  const len = new TextEncoder().encode(expression).length;
+  if (len < 128) return '<128B';
   if (len < 256) return '<256B';
+  if (len < 512) return '<512B';
   if (len < 1024) return '<1KiB';
   return null;
 }

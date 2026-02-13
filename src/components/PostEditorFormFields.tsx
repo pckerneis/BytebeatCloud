@@ -98,7 +98,7 @@ export function PostEditorFormFields(props: Readonly<PostEditorFormFieldsProps>)
     isEdit,
   } = props;
 
-  const expressionLength = expression.length;
+  const expressionLength = new TextEncoder().encode(expression).length;
   const isExpressionTooLong = expressionLength > EXPRESSION_MAX;
 
   const { title, description, mode, sampleRate, license, autoSkipDuration } = meta;
