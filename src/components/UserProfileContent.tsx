@@ -803,7 +803,9 @@ export function UserProfileContent({
                 favoritesQuery.posts.length > 0 && <p className="text-centered">Loading more…</p>}
               {!favoritesQuery.hasMore &&
                 !favoritesQuery.loading &&
-                favoritesQuery.posts.length > 0 && <p className="text-centered">You reached the end!</p>}
+                favoritesQuery.posts.length > 0 && (
+                  <p className="text-centered">You reached the end!</p>
+                )}
             </>
           )}
 

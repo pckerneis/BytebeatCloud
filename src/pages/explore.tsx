@@ -512,17 +512,17 @@ export default function ExplorePage() {
 
         {contentType === 'posts' && (
           <form onSubmit={handleSearch} className="search-form">
-                  <input
-                    type="search"
-                    className="search-input"
-                    placeholder="Search posts…"
-                    value={searchInput}
-                    onChange={(e) => setSearchInput(e.target.value)}
-                  />
-                  <button type="submit" className="button primary">
-                    Search
-                  </button>
-                </form>
+            <input
+              type="search"
+              className="search-input"
+              placeholder="Search posts…"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+            />
+            <button type="submit" className="button primary">
+              Search
+            </button>
+          </form>
         )}
 
         {contentType === 'posts' ? (

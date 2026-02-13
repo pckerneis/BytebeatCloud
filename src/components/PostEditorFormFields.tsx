@@ -431,7 +431,9 @@ export function PostEditorFormFields(props: Readonly<PostEditorFormFieldsProps>)
           }}
         >
           <div className="modal">
-            <h2 style={{ marginTop: 0, marginBottom: '8px', fontSize: '16px' }}>Auto-skip duration</h2>
+            <h2 style={{ marginTop: 0, marginBottom: '8px', fontSize: '16px' }}>
+              Auto-skip duration
+            </h2>
             <p style={{ marginTop: 0, marginBottom: '8px', fontSize: '12px', opacity: 0.8 }}>
               Enter a value in seconds ({MIN_AUTO_SKIP_DURATION} - {MAX_AUTO_SKIP_DURATION}).
             </p>

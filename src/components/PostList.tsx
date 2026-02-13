@@ -561,7 +561,9 @@ export function PostList({
           const top = showBelow ? favoritesTooltip.y + 32 + padding : favoritesTooltip.y - padding;
           const transformX = needsClamp ? 'none' : 'translateX(-50%)';
           const transformY = showBelow ? 'none' : 'translateY(-100%)';
-          const transform = `${transformX === 'none' ? '' : transformX} ${transformY === 'none' ? '' : transformY}`.trim() || 'none';
+          const transform =
+            `${transformX === 'none' ? '' : transformX} ${transformY === 'none' ? '' : transformY}`.trim() ||
+            'none';
 
           return createPortal(
             <div
