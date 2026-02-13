@@ -107,7 +107,7 @@ CREATE FUNCTION public.search_posts(
       pwm.license::text,
       pwm.auto_skip_duration,
       pwm.favorited_by_current_user,
-      ts_rank_cd(p.search_vector, tsq.q, 4) AS rank
+      10 + ts_rank_cd(p.search_vector, tsq.q, 4) AS rank
     FROM posts_with_meta pwm
     JOIN posts p ON p.id = pwm.id, tsq
     WHERE pwm.is_draft = false
@@ -139,7 +139,7 @@ CREATE FUNCTION public.search_posts(
       pwm.license::text,
       pwm.auto_skip_duration,
       pwm.favorited_by_current_user,
-      (word_similarity(query, pwm.title) * 0.3)::float8 AS rank
+      (1 + word_similarity(query, pwm.title))::float8 AS rank
     FROM posts_with_meta pwm
     WHERE pwm.is_draft = false
       AND pwm.title IS NOT NULL
