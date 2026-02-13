@@ -130,10 +130,12 @@ export default function SearchPage() {
         rows = rows.filter((r) => validateExpression(r.expression).valid);
 
         if (actualPage === 0) {
-          void supabase.from('search_audit').insert({
-            terms,
-            profile_id: user ? (user as any).id : null,
-          });
+          supabase
+            .from('search_audit')
+            .insert({ terms, profile_id: user ? (user as any).id : null })
+            .then(({ error }) => {
+              if (error) console.warn('[search_audit]', error.message);
+            });
         }
 
         const newPosts = actualPage === 0 ? rows : [...posts, ...rows];

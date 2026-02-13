@@ -70,6 +70,8 @@ CREATE POLICY "search_audit_insert" ON public.search_audit
     profile_id IS NULL OR profile_id = auth.uid()
   );
 
+GRANT INSERT ON public.search_audit TO anon, authenticated;
+
 -- Drop previous version of search_posts if it exists (return type may differ)
 DROP FUNCTION IF EXISTS public.search_posts(text, integer, integer);
 
