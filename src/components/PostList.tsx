@@ -13,6 +13,7 @@ import type { LicenseOption } from '../model/postEditor';
 import { formatRelativeTime } from '../utils/time';
 import { validateExpression } from '../utils/expression-validator';
 import { formatPostTitle, formatPostByAuthor } from '../utils/post-format';
+import { HighlightedText } from './HighlightedText';
 
 export interface PostRow {
   id: string;
@@ -38,12 +39,18 @@ export interface PostRow {
   auto_skip_duration?: number | null;
 }
 
+export interface PostHighlight {
+  title?: string;
+  description?: string;
+}
+
 interface PostListProps {
   posts: PostRow[];
   currentUserId?: string;
   skipMinification?: boolean;
   onPostClick?: (post: PostRow) => void;
   onCommentClick?: (post: PostRow) => void;
+  highlights?: Record<string, PostHighlight>;
 }
 
 function getLengthCategoryChip(expression: string): string | null {
@@ -59,6 +66,7 @@ export function PostList({
   skipMinification,
   onPostClick,
   onCommentClick,
+  highlights,
 }: Readonly<PostListProps>) {
   const { toggle, stop, isPlaying } = useBytebeatPlayer();
   const [activePostId, setActivePostId] = useState<string | null>(null);
@@ -349,6 +357,7 @@ export function PostList({
           const commentsCount = post.comments_count ?? 0;
           const lengthCategory = getLengthCategoryChip(post.expression);
           const sortedTags = post.tags?.sort((a, b) => a.localeCompare(b));
+          const highlight = highlights?.[post.id];
 
           return (
             <li key={post.id} className={`post-item ${isActive ? 'playing' : ''}`}>
@@ -372,14 +381,27 @@ export function PostList({
                         onPostClick(post);
                       }}
                     >
-                      {formatPostTitle(post.title)}
+                      {highlight?.title ? (
+                        <HighlightedText text={highlight.title} />
+                      ) : (
+                        formatPostTitle(post.title)
+                      )}
                     </a>
                   ) : (
                     <Link className="post-title" href={`/post/${post.id}`}>
-                      {formatPostTitle(post.title)}
+                      {highlight?.title ? (
+                        <HighlightedText text={highlight.title} />
+                      ) : (
+                        formatPostTitle(post.title)
+                      )}
                     </Link>
                   )}
                 </h3>
+                {highlight?.description && (
+                  <p className="search-description-snippet">
+                    <HighlightedText text={highlight.description} />
+                  </p>
+                )}
                 {(post.fork_of_post_id || post.is_fork) && (
                   <div className="forked-from">
                     {post.origin_title || post.origin_username ? (
@@ -539,7 +561,9 @@ export function PostList({
           const top = showBelow ? favoritesTooltip.y + 32 + padding : favoritesTooltip.y - padding;
           const transformX = needsClamp ? 'none' : 'translateX(-50%)';
           const transformY = showBelow ? 'none' : 'translateY(-100%)';
-          const transform = `${transformX === 'none' ? '' : transformX} ${transformY === 'none' ? '' : transformY}`.trim() || 'none';
+          const transform =
+            `${transformX === 'none' ? '' : transformX} ${transformY === 'none' ? '' : transformY}`.trim() ||
+            'none';
 
           return createPortal(
             <div

@@ -334,7 +334,13 @@ export default function FooterPlayer() {
     // Recreate timers when these change
     // Note: fadeGain is intentionally excluded to prevent timer reset during fade animation
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPost?.id, currentPost?.auto_skip_duration, isPlaying, autoSkipEnabled, playlist?.length]);
+  }, [
+    currentPost?.id,
+    currentPost?.auto_skip_duration,
+    isPlaying,
+    autoSkipEnabled,
+    playlist?.length,
+  ]);
 
   const handleFooterPlayPause = async () => {
     if (isPlaying) {

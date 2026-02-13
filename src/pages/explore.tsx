@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { FormEvent, useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
 import { supabase } from '../lib/supabaseClient';
 import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
@@ -436,6 +436,16 @@ export default function ExplorePage() {
     }
   };
 
+  const [searchInput, setSearchInput] = useState('');
+
+  const handleSearch = (e: FormEvent) => {
+    e.preventDefault();
+    const q = searchInput.trim();
+    if (q) {
+      void router.push({ pathname: '/search', query: { terms: q } });
+    }
+  };
+
   const swipeState = useSwipeGesture({
     onSwipeLeft: handleSwipeLeft,
     onSwipeRight: handleSwipeRight,
@@ -499,6 +509,22 @@ export default function ExplorePage() {
             <option value="playlists">playlists</option>
           </select>
         </p>
+
+        {contentType === 'posts' && (
+          <form onSubmit={handleSearch} className="search-form">
+            <input
+              type="search"
+              className="search-input"
+              placeholder="Search posts…"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+            />
+            <button type="submit" className="button primary">
+              Search
+            </button>
+          </form>
+        )}
+
         {contentType === 'posts' ? (
           <div style={{ overflowX: 'hidden' }}>
             <div className="tab-header">

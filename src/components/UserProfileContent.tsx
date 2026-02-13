@@ -270,26 +270,122 @@ export function useUserFavorites(
   currentUserId: string | null,
   enabled: boolean,
 ) {
-  const fetcher = useCallback(async (pid: string) => {
-    const { data: favRows, error: favError } = await supabase
-      .from('favorites')
-      .select('post_id')
-      .eq('profile_id', pid);
+  const [posts, setPosts] = useState<PostRow[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [page, setPage] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+  const [isInitialized, setIsInitialized] = useState(false);
+  const loadingMoreRef = useRef(false);
 
-    if (favError) return { data: null, error: favError };
+  // Reset when profile changes
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setPosts([]);
+    setPage(0);
+    setHasMore(true);
+    setError('');
+    setLoading(false);
+    loadingMoreRef.current = false;
+    setIsInitialized(enabled && !!profileId);
+  }, [profileId, enabled]);
 
-    const postIds = (favRows ?? []).map((f: any) => f.post_id as string);
-    if (postIds.length === 0) return { data: [], error: null };
+  // Only start loading once the tab has been activated at least once
+  useEffect(() => {
+    if (enabled) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setIsInitialized(true);
+    }
+  }, [enabled]);
 
-    return supabase
-      .from('posts_with_meta')
-      .select()
-      .in('id', postIds)
-      .eq('is_draft', false)
-      .order('created_at', { ascending: false });
-  }, []);
+  useEffect(() => {
+    if (!profileId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setLoading(false);
+      return;
+    }
+    if (!isInitialized) return;
 
-  return useLazyPostList(profileId, currentUserId, enabled, fetcher, 'Unable to load favorites.');
+    let cancelled = false;
+    const pageSize = 20;
+    const from = page * pageSize;
+    const to = from + pageSize - 1;
+
+    const loadFavoritesPage = async () => {
+      loadingMoreRef.current = true;
+      if (page === 0) setLoading(true);
+      setError('');
+
+      const { data: favoriteRows, error: favoritesError } = await supabase
+        .from('favorites')
+        .select('post_id, created_at')
+        .eq('profile_id', profileId)
+        .order('created_at', { ascending: false })
+        .range(from, to);
+
+      if (cancelled) return;
+
+      if (favoritesError) {
+        setError('Unable to load favorites.');
+        if (page === 0) setPosts([]);
+        setHasMore(false);
+        loadingMoreRef.current = false;
+        setLoading(false);
+        return;
+      }
+
+      const favoriteBatch = favoriteRows ?? [];
+
+      if (favoriteBatch.length === 0) {
+        if (page === 0) setPosts([]);
+        setHasMore(false);
+        loadingMoreRef.current = false;
+        setLoading(false);
+        return;
+      }
+
+      const postIds = favoriteBatch.map((row) => row.post_id as string);
+
+      const { data: postsData, error: postsError } = await supabase
+        .from('posts_with_meta')
+        .select()
+        .in('id', postIds)
+        .eq('is_draft', false);
+
+      if (cancelled) return;
+
+      if (postsError) {
+        setError('Unable to load favorites.');
+        if (page === 0) setPosts([]);
+        setHasMore(false);
+      } else {
+        const postsById = new Map((postsData ?? []).map((row) => [row.id, row]));
+        const orderedRows = postIds
+          .map((id) => postsById.get(id))
+          .filter((row): row is PostRow => Boolean(row));
+        const enrichedRows = await enrichPosts(orderedRows);
+
+        if (cancelled) return;
+
+        setPosts((prev) => (page === 0 ? enrichedRows : [...prev, ...enrichedRows]));
+
+        if (favoriteBatch.length < pageSize) {
+          setHasMore(false);
+        }
+      }
+
+      loadingMoreRef.current = false;
+      setLoading(false);
+    };
+
+    void loadFavoritesPage();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [profileId, currentUserId, page, isInitialized]);
+
+  return { posts, loading, error, hasMore, loadingMoreRef, setPage };
 }
 
 export function useUserDrafts(
@@ -456,7 +552,8 @@ export function UserProfileContent({
 }: UserProfileContentProps) {
   const router = useRouter();
   const { user } = useSupabaseAuth();
-  const sentinelRef = useRef<HTMLDivElement | null>(null);
+  const postsSentinelRef = useRef<HTMLDivElement | null>(null);
+  const favoritesSentinelRef = useRef<HTMLDivElement | null>(null);
 
   const currentUserId = user ? (user as any).id : undefined;
   const isOwnProfile = Boolean(currentUserId && currentUserId === profileId);
@@ -498,8 +595,16 @@ export function UserProfileContent({
   useInfiniteScroll({
     hasMore: postsQuery.hasMore,
     loadingMoreRef: postsQuery.loadingMoreRef,
-    sentinelRef,
+    sentinelRef: postsSentinelRef,
     setPage: postsQuery.setPage,
+  });
+
+  // Infinite scroll for favorites tab
+  useInfiniteScroll({
+    hasMore: activeTab === 'favorites' && favoritesQuery.hasMore,
+    loadingMoreRef: favoritesQuery.loadingMoreRef,
+    sentinelRef: favoritesSentinelRef,
+    setPage: favoritesQuery.setPage,
   });
 
   const handleTabClick = (tab: TabName) => {
@@ -669,7 +774,7 @@ export function UserProfileContent({
                 currentUserId={currentUserId}
                 extraError={followError}
               />
-              <div ref={sentinelRef} style={{ height: 1 }} data-testid="scroll-sentinel" />
+              <div ref={postsSentinelRef} style={{ height: 1 }} data-testid="scroll-sentinel" />
               {postsQuery.hasMore && !postsQuery.loading && postsQuery.posts.length > 0 && (
                 <p className="text-centered">Loading more…</p>
               )}
@@ -680,14 +785,29 @@ export function UserProfileContent({
           )}
 
           {optimisticTab === activeTab && activeTab === 'favorites' && (
-            <TabContent
-              loading={favoritesQuery.loading}
-              error={favoritesQuery.error}
-              posts={favoritesQuery.posts}
-              emptyMessage="This user has no public favorites yet."
-              currentUserId={currentUserId}
-              loadingMessage="Loading favorites…"
-            />
+            <>
+              <TabContent
+                loading={favoritesQuery.loading}
+                error={favoritesQuery.error}
+                posts={favoritesQuery.posts}
+                emptyMessage="This user has no public favorites yet."
+                currentUserId={currentUserId}
+                loadingMessage="Loading favorites…"
+              />
+              <div
+                ref={favoritesSentinelRef}
+                style={{ height: 1 }}
+                data-testid="favorites-scroll-sentinel"
+              />
+              {favoritesQuery.hasMore &&
+                !favoritesQuery.loading &&
+                favoritesQuery.posts.length > 0 && <p className="text-centered">Loading more…</p>}
+              {!favoritesQuery.hasMore &&
+                !favoritesQuery.loading &&
+                favoritesQuery.posts.length > 0 && (
+                  <p className="text-centered">You reached the end!</p>
+                )}
+            </>
           )}
 
           {optimisticTab === activeTab && activeTab === 'drafts' && isOwnProfile && (
