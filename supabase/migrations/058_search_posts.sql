@@ -1,0 +1,148 @@
+-- Full-text search for posts: tokenized AND search, title weighted higher than description.
+-- Relevance scored with ts_rank_cd. Trigram fuzzy title matching for queries >= 4 chars.
+
+-- Trigram extension for fuzzy matching
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+
+-- Stored generated column: pre-computed weighted tsvector (fast GIN lookup, auto-maintained)
+ALTER TABLE posts
+  ADD COLUMN IF NOT EXISTS search_vector tsvector
+    GENERATED ALWAYS AS (
+      setweight(to_tsvector('english', coalesce(title, '')), 'A') ||
+      setweight(to_tsvector('english', coalesce(description, '')), 'B')
+    ) STORED;
+
+-- GIN index on the stored vector for fast full-text search
+CREATE INDEX IF NOT EXISTS idx_posts_search_vector
+  ON public.posts
+  USING GIN (search_vector);
+
+-- GIN trigram index on title for fast fuzzy matching
+CREATE INDEX IF NOT EXISTS idx_posts_title_trgm
+  ON public.posts
+  USING GIN (title gin_trgm_ops);
+
+-- Drop previous version of search_posts if it exists (return type may differ)
+DROP FUNCTION IF EXISTS public.search_posts(text, integer, integer);
+
+-- Search function:
+--   1. FTS path:   uses search_vector GIN index; ranks by ts_rank_cd (title weighted 4x over description)
+--   2. Trigram path (query >= 4 chars): fuzzy title match via word_similarity;
+--      de-duplicates against FTS results; ranked lower than FTS hits (×0.3 multiplier)
+CREATE FUNCTION public.search_posts(
+  query text,
+  page integer DEFAULT 0,
+  page_size integer DEFAULT 20
+) RETURNS TABLE(
+  id uuid,
+  profile_id uuid,
+  title text,
+  description text,
+  expression text,
+  sample_rate integer,
+  mode text,
+  is_draft boolean,
+  is_fork boolean,
+  created_at timestamptz,
+  updated_at timestamptz,
+  published_at timestamptz,
+  fork_of_post_id uuid,
+  author_username text,
+  origin_title text,
+  origin_username text,
+  favorites_count integer,
+  comments_count integer,
+  is_weekly_winner boolean,
+  license text,
+  auto_skip_duration integer,
+  favorited_by_current_user boolean,
+  rank float8
+) LANGUAGE sql STABLE AS $$
+  WITH tsq AS (
+    SELECT websearch_to_tsquery('english', query) AS q
+  ),
+
+  -- FTS results: exact + stemmed matches using the stored search_vector GIN index
+  fts AS (
+    SELECT
+      pwm.id,
+      pwm.profile_id,
+      pwm.title,
+      pwm.description,
+      pwm.expression,
+      pwm.sample_rate,
+      pwm.mode::text,
+      pwm.is_draft,
+      pwm.is_fork,
+      pwm.created_at,
+      pwm.updated_at,
+      pwm.published_at,
+      pwm.fork_of_post_id,
+      pwm.author_username,
+      pwm.origin_title,
+      pwm.origin_username,
+      pwm.favorites_count,
+      pwm.comments_count,
+      pwm.is_weekly_winner,
+      pwm.license::text,
+      pwm.auto_skip_duration,
+      pwm.favorited_by_current_user,
+      ts_rank_cd(p.search_vector, tsq.q, 4) AS rank
+    FROM posts_with_meta pwm
+    JOIN posts p ON p.id = pwm.id, tsq
+    WHERE pwm.is_draft = false
+      AND p.search_vector @@ tsq.q
+  ),
+
+  -- Trigram results: fuzzy title match for queries >= 4 chars, FTS hits excluded
+  trgm AS (
+    SELECT
+      pwm.id,
+      pwm.profile_id,
+      pwm.title,
+      pwm.description,
+      pwm.expression,
+      pwm.sample_rate,
+      pwm.mode::text,
+      pwm.is_draft,
+      pwm.is_fork,
+      pwm.created_at,
+      pwm.updated_at,
+      pwm.published_at,
+      pwm.fork_of_post_id,
+      pwm.author_username,
+      pwm.origin_title,
+      pwm.origin_username,
+      pwm.favorites_count,
+      pwm.comments_count,
+      pwm.is_weekly_winner,
+      pwm.license::text,
+      pwm.auto_skip_duration,
+      pwm.favorited_by_current_user,
+      (word_similarity(query, pwm.title) * 0.3)::float8 AS rank
+    FROM posts_with_meta pwm
+    WHERE pwm.is_draft = false
+      AND pwm.title IS NOT NULL
+      AND length(trim(query)) >= 4
+      AND query <% pwm.title                         -- uses GIN trigram index
+      AND word_similarity(query, pwm.title) >= 0.4   -- precision filter
+      AND NOT EXISTS (SELECT 1 FROM fts WHERE fts.id = pwm.id)
+  )
+
+  SELECT
+    c.id, c.profile_id, c.title, c.description, c.expression,
+    c.sample_rate, c.mode, c.is_draft, c.is_fork,
+    c.created_at, c.updated_at, c.published_at,
+    c.fork_of_post_id, c.author_username, c.origin_title, c.origin_username,
+    c.favorites_count, c.comments_count,
+    c.is_weekly_winner, c.license, c.auto_skip_duration,
+    c.favorited_by_current_user,
+    c.rank
+  FROM (
+    SELECT * FROM fts
+    UNION ALL
+    SELECT * FROM trgm
+  ) c
+  ORDER BY c.rank DESC
+  LIMIT page_size OFFSET page * page_size;
+$$;
