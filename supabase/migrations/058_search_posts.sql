@@ -22,6 +22,26 @@ CREATE INDEX IF NOT EXISTS idx_posts_title_trgm
   ON public.posts
   USING GIN (title gin_trgm_ops);
 
+-- Search audit log: records every search query with timestamp and optional user
+CREATE TABLE IF NOT EXISTS public.search_audit (
+  id         uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+  terms      text        NOT NULL CHECK (char_length(terms) BETWEEN 1 AND 500),
+  profile_id uuid        REFERENCES public.profiles(id) ON DELETE SET NULL,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_search_audit_created_at
+  ON public.search_audit (created_at DESC);
+
+ALTER TABLE public.search_audit ENABLE ROW LEVEL SECURITY;
+
+-- Anyone (authenticated or anonymous) may insert;
+-- authenticated users must set profile_id to their own uid or leave it null.
+CREATE POLICY "search_audit_insert" ON public.search_audit
+  FOR INSERT WITH CHECK (
+    profile_id IS NULL OR profile_id = auth.uid()
+  );
+
 -- Drop previous version of search_posts if it exists (return type may differ)
 DROP FUNCTION IF EXISTS public.search_posts(text, integer, integer);
 

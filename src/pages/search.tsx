@@ -129,6 +129,13 @@ export default function SearchPage() {
         // Security: drop posts with invalid expressions
         rows = rows.filter((r) => validateExpression(r.expression).valid);
 
+        if (actualPage === 0) {
+          void supabase.from('search_audit').insert({
+            terms,
+            profile_id: user ? (user as any).id : null,
+          });
+        }
+
         const newPosts = actualPage === 0 ? rows : [...posts, ...rows];
         setPosts(newPosts);
         setHighlights((prev) => (actualPage === 0 ? newHighlights : { ...prev, ...newHighlights }));
