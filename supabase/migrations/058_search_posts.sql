@@ -4,13 +4,41 @@
 -- Trigram extension for fuzzy matching
 CREATE EXTENSION IF NOT EXISTS pg_trgm;
 
--- Stored generated column: pre-computed weighted tsvector (fast GIN lookup, auto-maintained)
+-- Unaccent extension
+CREATE EXTENSION IF NOT EXISTS unaccent;
+
+-- Stored generated column: pre-computed weighted tsvector (fast GIN lookup, maintained with trigger)
 ALTER TABLE posts
-  ADD COLUMN IF NOT EXISTS search_vector tsvector
-    GENERATED ALWAYS AS (
-      setweight(to_tsvector('english', coalesce(title, '')), 'A') ||
-      setweight(to_tsvector('english', coalesce(description, '')), 'B')
-    ) STORED;
+    ADD COLUMN search_vector tsvector;
+
+-- Function to update search_vector
+CREATE OR REPLACE FUNCTION posts_search_vector_update()
+    RETURNS trigger AS $$
+BEGIN
+    NEW.search_vector :=
+            setweight(
+                    to_tsvector('simple', unaccent(coalesce(NEW.title, ''))),
+                    'A'
+            )
+                ||
+            setweight(
+                    to_tsvector('simple', unaccent(coalesce(NEW.description, ''))),
+                    'B'
+            );
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Trigger update of search_vector
+CREATE TRIGGER posts_search_vector_trigger
+    BEFORE INSERT OR UPDATE OF title, description
+    ON posts
+    FOR EACH ROW
+EXECUTE FUNCTION posts_search_vector_update();
+
+-- Backfill existing rows
+UPDATE posts SET title = title;
 
 -- GIN index on the stored vector for fast full-text search
 CREATE INDEX IF NOT EXISTS idx_posts_search_vector
@@ -79,7 +107,7 @@ CREATE FUNCTION public.search_posts(
   rank float8
 ) LANGUAGE sql STABLE AS $$
   WITH tsq AS (
-    SELECT websearch_to_tsquery('english', query) AS q
+    SELECT websearch_to_tsquery('simple', unaccent(query)) AS q
   ),
 
   -- FTS results: exact + stemmed matches using the stored search_vector GIN index
@@ -139,13 +167,13 @@ CREATE FUNCTION public.search_posts(
       pwm.license::text,
       pwm.auto_skip_duration,
       pwm.favorited_by_current_user,
-      (1 + word_similarity(query, pwm.title))::float8 AS rank
+      (1 + word_similarity(unaccent(query), unaccent(pwm.title)))::float8 AS rank
     FROM posts_with_meta pwm
     WHERE pwm.is_draft = false
       AND pwm.title IS NOT NULL
       AND length(trim(query)) >= 4
-      AND query <% pwm.title                         -- uses GIN trigram index
-      AND word_similarity(query, pwm.title) >= 0.4   -- precision filter
+      AND unaccent(query) <% unaccent(pwm.title)                         -- uses GIN trigram index
+      AND word_similarity(unaccent(query), unaccent(pwm.title)) >= 0.4   -- precision filter
       AND NOT EXISTS (SELECT 1 FROM fts WHERE fts.id = pwm.id)
   )
 
