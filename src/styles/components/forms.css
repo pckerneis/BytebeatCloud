@@ -5,7 +5,7 @@ input {
   background: transparent;
 }
 
-input[type='number'], input[type='search'] {
+input[type='number'], input[type='search'], input[type='text'] {
   border: 1px solid var(--chip-border-color);
   padding: 2px 8px;
 }

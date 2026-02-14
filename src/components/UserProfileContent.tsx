@@ -11,6 +11,8 @@ import { useTabState } from '../hooks/useTabState';
 import { useSwipeGesture } from '../hooks/useSwipeGesture';
 import { ActivityHeatmap } from './ActivityHeatmap';
 import { PlaylistCard } from './PlaylistCard';
+import type { SnippetRow } from '../model/snippet';
+import { getUserSnippets, createSnippet, deleteSnippet } from '../services/snippetsClient';
 
 // Shared enrichment pipeline
 async function enrichPosts(rows: PostRow[]): Promise<PostRow[]> {
@@ -414,6 +416,57 @@ export function useUserDrafts(
   );
 }
 
+function useUserSnippets(
+  profileId: string | null,
+  enabled: boolean,
+) {
+  const [snippets, setSnippets] = useState<SnippetRow[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [hasLoaded, setHasLoaded] = useState(false);
+
+  useEffect(() => {
+    setHasLoaded(false);
+    setSnippets([]);
+  }, [profileId]);
+
+  useEffect(() => {
+    if (!profileId || !enabled || hasLoaded) return;
+
+    let cancelled = false;
+
+    const load = async () => {
+      setLoading(true);
+      setError('');
+
+      const { data, error: fetchError } = await getUserSnippets(profileId);
+
+      if (cancelled) return;
+
+      if (fetchError) {
+        setError('Unable to load snippets.');
+        setSnippets([]);
+      } else {
+        setSnippets(data);
+        setHasLoaded(true);
+      }
+
+      setLoading(false);
+    };
+
+    void load();
+    return () => {
+      cancelled = true;
+    };
+  }, [profileId, enabled, hasLoaded]);
+
+  const reload = () => {
+    setHasLoaded(false);
+  };
+
+  return { snippets, loading, error, reload };
+}
+
 export function useProfileDetails(profileId: string | null) {
   const [bio, setBio] = useState<string | null>(null);
   const [socialLinks, setSocialLinks] = useState<string[]>([]);
@@ -541,7 +594,7 @@ interface UserProfileContentProps {
   hideFollowButton?: boolean;
 }
 
-const tabs = ['posts', 'drafts', 'favorites', 'playlists'] as const;
+const tabs = ['posts', 'drafts', 'snippets', 'favorites', 'playlists'] as const;
 type TabName = (typeof tabs)[number];
 
 export function UserProfileContent({
@@ -579,6 +632,65 @@ export function UserProfileContent({
     activeTab === 'playlists',
     isOwnProfile,
   );
+
+  const snippetsQuery = useUserSnippets(
+    profileId,
+    activeTab === 'snippets',
+  );
+
+  const [createSnippetModalOpen, setCreateSnippetModalOpen] = useState(false);
+  const [newSnippetName, setNewSnippetName] = useState('');
+  const [newSnippetCode, setNewSnippetCode] = useState('');
+  const [newSnippetDescription, setNewSnippetDescription] = useState('');
+  const [newSnippetPublic, setNewSnippetPublic] = useState(false);
+  const [snippetSaving, setSnippetSaving] = useState(false);
+  const [snippetError, setSnippetError] = useState('');
+
+  const openCreateSnippetModal = () => {
+    setNewSnippetName('');
+    setNewSnippetCode('');
+    setNewSnippetDescription('');
+    setNewSnippetPublic(false);
+    setSnippetError('');
+    setCreateSnippetModalOpen(true);
+  };
+
+  const closeCreateSnippetModal = () => {
+    setCreateSnippetModalOpen(false);
+  };
+
+  const handleCreateSnippet = async () => {
+    if (!currentUserId || !newSnippetName.trim() || !newSnippetCode.trim()) return;
+
+    setSnippetSaving(true);
+    setSnippetError('');
+
+    const { error } = await createSnippet(
+      {
+        name: newSnippetName.trim(),
+        snippet: newSnippetCode.trim(),
+        description: newSnippetDescription.trim(),
+        is_public: newSnippetPublic,
+      },
+      currentUserId,
+    );
+
+    setSnippetSaving(false);
+
+    if (error) {
+      setSnippetError(error);
+    } else {
+      setCreateSnippetModalOpen(false);
+      snippetsQuery.reload();
+    }
+  };
+
+  const handleDeleteSnippet = async (snippetId: string) => {
+    const { error } = await deleteSnippet(snippetId);
+    if (!error) {
+      snippetsQuery.reload();
+    }
+  };
 
   // Profile details (bio, social links)
   const { bio, socialLinks } = useProfileDetails(profileId);
@@ -618,7 +730,7 @@ export function UserProfileContent({
   };
 
   // Get available tabs based on whether this is own profile
-  const availableTabs = isOwnProfile ? tabs : tabs.filter((t) => t !== 'drafts');
+  const availableTabs = isOwnProfile ? tabs : tabs.filter((t) => t !== 'drafts' && t !== 'snippets');
 
   // Handle swipe gestures to switch tabs
   const handleSwipeLeft = () => {
@@ -740,6 +852,14 @@ export function UserProfileContent({
               Drafts
             </span>
           )}
+          {isOwnProfile && (
+            <span
+              className={optimisticTab === 'snippets' ? 'tab-button active' : 'tab-button'}
+              onClick={() => handleTabClick('snippets')}
+            >
+              Snippets
+            </span>
+          )}
           <span
             className={optimisticTab === 'favorites' ? 'tab-button active' : 'tab-button'}
             onClick={() => handleTabClick('favorites')}
@@ -821,6 +941,54 @@ export function UserProfileContent({
             />
           )}
 
+          {optimisticTab === activeTab && activeTab === 'snippets' && isOwnProfile && (
+            <div>
+              <button
+                type="button"
+                className="button primary mb-10"
+                onClick={openCreateSnippetModal}
+              >
+                + New snippet
+              </button>
+              {snippetsQuery.loading && <p className="text-centered">Loading snippets…</p>}
+              {snippetsQuery.error && <p className="error-message">{snippetsQuery.error}</p>}
+              {!snippetsQuery.loading &&
+                !snippetsQuery.error &&
+                snippetsQuery.snippets.length === 0 && (
+                  <p className="text-centered">You have no snippets yet.</p>
+                )}
+              {!snippetsQuery.loading &&
+                !snippetsQuery.error &&
+                snippetsQuery.snippets.length > 0 && (
+                  <div className="post-list">
+                    {snippetsQuery.snippets.map((s) => (
+                      <div key={s.id} className="post-item">
+                        <div className="flex-row align-items-center">
+                          <strong>{s.name}</strong>
+                          <span className="chips">
+                            <span className="chip secondary-text smaller" style={{ marginLeft: '8px' }}>
+                            {s.is_public ? 'public' : 'private'}
+                          </span>
+                          </span>
+                          <button
+                            type="button"
+                            className="button secondary ghost small ml-auto"
+                            onClick={() => void handleDeleteSnippet(s.id)}
+                          >
+                            Delete
+                          </button>
+                        </div>
+                        <code className="secondary-text">{s.snippet}</code>
+                        {s.description && (
+                          <div className="secondary-text smaller">{s.description}</div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+            </div>
+          )}
+
           {optimisticTab === activeTab && activeTab === 'playlists' && (
             <div className="playlists-section">
               {playlistsQuery.loading && <p className="text-centered">Loading playlists…</p>}
@@ -853,6 +1021,66 @@ export function UserProfileContent({
           )}
         </div>
       </div>
+
+      {createSnippetModalOpen && (
+        <div className="modal-backdrop">
+          <div className="modal" onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); e.stopPropagation(); void handleCreateSnippet(); } else if (e.key === 'Escape') { closeCreateSnippetModal(); } }}>
+            <h2>New snippet</h2>
+            <label className="field">
+              <input
+                type="text"
+                placeholder="Name (e.g. square)"
+                maxLength={64}
+                value={newSnippetName}
+                onChange={(e) => setNewSnippetName(e.target.value)}
+                style={{ width: '100%', padding: '6px 8px', marginBottom: '8px' }}
+              />
+            </label>
+            <label className="field">
+              <input
+                type="text"
+                placeholder="Code (e.g. sq=(S)=>S&128)"
+                maxLength={1024}
+                value={newSnippetCode}
+                onChange={(e) => setNewSnippetCode(e.target.value)}
+                style={{ width: '100%', padding: '6px 8px', marginBottom: '8px', fontFamily: 'monospace' }}
+              />
+            </label>
+            <label className="field">
+              <textarea
+                placeholder="Description (optional)"
+                maxLength={1024}
+                value={newSnippetDescription}
+                onChange={(e) => setNewSnippetDescription(e.target.value)}
+                rows={2}
+                style={{ width: '100%', padding: '6px 8px', marginBottom: '8px' }}
+              />
+            </label>
+            <label className="checkbox" style={{ marginBottom: '12px' }}>
+              <input
+                type="checkbox"
+                checked={newSnippetPublic}
+                onChange={(e) => setNewSnippetPublic(e.target.checked)}
+              />{' '}
+              Make public
+            </label>
+            {snippetError && <p className="error-message">{snippetError}</p>}
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+              <button type="button" className="button secondary" onClick={closeCreateSnippetModal}>
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="button primary"
+                onClick={() => void handleCreateSnippet()}
+                disabled={snippetSaving || !newSnippetName.trim() || !newSnippetCode.trim()}
+              >
+                {snippetSaving ? 'Saving…' : 'Create'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 }

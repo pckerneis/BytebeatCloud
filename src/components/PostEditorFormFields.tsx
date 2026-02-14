@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { ExpressionEditor, ExpressionErrorSnippet } from './ExpressionEditor';
 import { AutocompleteTextarea } from './AutocompleteTextarea';
 import { AutocompleteInput } from './AutocompleteInput';
@@ -22,6 +22,8 @@ import {
   AUTOPLAY_DEFAULT_DURATION,
 } from '../constants';
 import Link from 'next/link';
+import type { SnippetRow } from '../model/snippet';
+import { searchSnippets } from '../services/snippetsClient';
 
 interface PostEditorFormFieldsProps {
   meta: PostMetadataModel;
@@ -81,25 +83,6 @@ function formatDuration(duration: number | null): string {
   return `${duration}s`;
 }
 
-const availableSnippets = [
-  {
-    id: 0,
-    name: 'square',
-    author: 'pck404',
-    snippet: 'sq=(S)=>S&128',
-    description: 'Square',
-    owned: true,
-  },
-  {
-    id: 1,
-    name: 'mtof',
-    author: 'pck404',
-    snippet: 'mtof=(N)=>N',
-    description: 'Convert from MIDI note number to frequency',
-    owned: false,
-  },
-]
-
 export function PostEditorFormFields(props: Readonly<PostEditorFormFieldsProps>) {
   const {
     meta,
@@ -133,7 +116,10 @@ export function PostEditorFormFields(props: Readonly<PostEditorFormFieldsProps>)
   const durationLongPressTriggeredRef = useRef(false);
   const currentLicenseLabel = LICENSE_OPTIONS.find((opt) => opt.value === license)?.label;
   const [snippetsModalOpen, setSnippetsModalOpen] = useState(false);
-  const [filteredSnippets, setFilteredSnippets] = useState(availableSnippets);
+  const [snippetSearch, setSnippetSearch] = useState('');
+  const [snippetResults, setSnippetResults] = useState<SnippetRow[]>([]);
+  const [snippetSearchLoading, setSnippetSearchLoading] = useState(false);
+  const snippetSearchTimerRef = useRef<number | null>(null);
 
   const openSampleRateModal = () => {
     setSampleRateInput(sampleRate.toString());
@@ -197,11 +183,44 @@ export function PostEditorFormFields(props: Readonly<PostEditorFormFieldsProps>)
     setDurationModalOpen(false);
   };
 
+  const loadSnippets = useCallback(async (query: string) => {
+    setSnippetSearchLoading(true);
+    const { data } = await searchSnippets(query);
+    setSnippetResults(data);
+    setSnippetSearchLoading(false);
+  }, []);
+
   const openSnippetsModal = () => {
+    setSnippetSearch('');
+    setSnippetResults([]);
     setSnippetsModalOpen(true);
+    void loadSnippets('');
   };
 
   const closeSnippetsModal = () => {
+    setSnippetsModalOpen(false);
+    if (snippetSearchTimerRef.current !== null) {
+      window.clearTimeout(snippetSearchTimerRef.current);
+    }
+  };
+
+  const handleSnippetSearchChange = (value: string) => {
+    setSnippetSearch(value);
+    if (snippetSearchTimerRef.current !== null) {
+      window.clearTimeout(snippetSearchTimerRef.current);
+    }
+    snippetSearchTimerRef.current = window.setTimeout(() => {
+      void loadSnippets(value);
+    }, 300);
+  };
+
+  const insertSnippet = (snippetCode: string) => {
+    const trimmed = expression.trim();
+    if (trimmed) {
+      onExpressionChange(trimmed + ',' + snippetCode);
+    } else {
+      onExpressionChange(snippetCode);
+    }
     setSnippetsModalOpen(false);
   };
 
@@ -477,28 +496,36 @@ export function PostEditorFormFields(props: Readonly<PostEditorFormFieldsProps>)
 
       {snippetsModalOpen && (
         <div className="modal-backdrop">
-          <div className="modal" onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); commitSampleRateFromInput(); } else if (e.key === 'Escape') { closeSampleRateModal(); } }}>
+          <div className="modal" onKeyDown={e => { if (e.key === 'Escape') { closeSnippetsModal(); } }}>
             <h2>Insert snippet</h2>
             <input
               type="search"
               placeholder="Search for a snippet..."
+              value={snippetSearch}
+              onChange={(e) => handleSnippetSearchChange(e.target.value)}
               style={{ width: '100%', padding: '6px 8px', marginBottom: '12px' }}
             />
 
-            <div
-              style={{ marginBottom: '12px' }}
-            >
-              {filteredSnippets.map((snippet) => (
+            <div style={{ marginBottom: '12px', maxHeight: '300px', overflowY: 'auto' }}>
+              {snippetSearchLoading && <p className="secondary-text">Searching…</p>}
+              {!snippetSearchLoading && snippetResults.length === 0 && (
+                <p className="secondary-text">No snippets found.</p>
+              )}
+              {snippetResults.map((s) => (
                 <div
-                  key={snippet.id}
-                  style={{ padding: '4px' }}
+                  key={s.id}
+                  className="snippet-result"
+                  style={{ padding: '6px 4px', cursor: 'pointer', borderBottom: '1px solid var(--border-color, #eee)' }}
+                  onClick={() => insertSnippet(s.snippet)}
                 >
                   <div>
-                    {snippet.name} by @{snippet.author}
+                    <strong>{s.name}</strong>
+                    {s.username && <span className="secondary-text"> by @{s.username}</span>}
                   </div>
-                  <div className="secondary-text">
-                    {snippet.description}
-                  </div>
+                  <code className="secondary-text">{s.snippet}</code>
+                  {s.description && (
+                    <div className="secondary-text smaller">{s.description}</div>
+                  )}
                 </div>
               ))}
             </div>
