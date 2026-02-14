@@ -67,7 +67,7 @@ export default function UserPage() {
             You have blocked this user. Unblock them from the user actions page to view their
             profile and posts.
           </p>
-          <div className="text-centered" style={{ marginTop: '12px' }}>
+          <div className="text-centered mt-10">
             <Link href={`/user-actions/${uname}`} className="button secondary">
               Go to user actions
             </Link>

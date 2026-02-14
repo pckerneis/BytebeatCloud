@@ -217,7 +217,11 @@ export function PostEditorFormFields(props: Readonly<PostEditorFormFieldsProps>)
   const insertSnippet = (snippetCode: string) => {
     const trimmed = expression.trim();
     if (trimmed) {
-      onExpressionChange(trimmed + ',' + snippetCode);
+      if (trimmed.endsWith(',')) {
+        onExpressionChange(expression + snippetCode);
+      } else {
+        onExpressionChange(expression + ',' + snippetCode);
+      }
     } else {
       onExpressionChange(snippetCode);
     }
@@ -501,12 +505,13 @@ export function PostEditorFormFields(props: Readonly<PostEditorFormFieldsProps>)
             <input
               type="search"
               placeholder="Search for a snippet..."
+              className="border-bottom-accent-focus"
               value={snippetSearch}
               onChange={(e) => handleSnippetSearchChange(e.target.value)}
               style={{ width: '100%', padding: '6px 8px', marginBottom: '12px' }}
             />
 
-            <div style={{ marginBottom: '12px', maxHeight: '300px', overflowY: 'auto' }}>
+            <div className="snippet-results-list">
               {snippetSearchLoading && <p className="secondary-text">Searching…</p>}
               {!snippetSearchLoading && snippetResults.length === 0 && (
                 <p className="secondary-text">No snippets found.</p>
@@ -514,8 +519,7 @@ export function PostEditorFormFields(props: Readonly<PostEditorFormFieldsProps>)
               {snippetResults.map((s) => (
                 <div
                   key={s.id}
-                  className="snippet-result"
-                  style={{ padding: '6px 4px', cursor: 'pointer', borderBottom: '1px solid var(--border-color, #eee)' }}
+                  className="snippet-result-item"
                   onClick={() => insertSnippet(s.snippet)}
                 >
                   <div>

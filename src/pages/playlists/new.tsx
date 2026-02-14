@@ -109,16 +109,13 @@ export default function NewPlaylistPage() {
           <form onSubmit={handleSubmit}>
             <div className="create-form">
               <div className="field">
-                <label htmlFor="title" style={{ fontWeight: 600 }}>
-                  Name
-                </label>
                 <input
                   id="title"
                   type="text"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   maxLength={PLAYLIST_TITLE_MAX}
-                  placeholder="My playlist"
+                  placeholder="Name your playlist"
                   className="border-bottom-accent-focus"
                   disabled={pending}
                   required
