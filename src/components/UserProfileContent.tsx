@@ -11,6 +11,7 @@ import { useTabState } from '../hooks/useTabState';
 import { useSwipeGesture } from '../hooks/useSwipeGesture';
 import { ActivityHeatmap } from './ActivityHeatmap';
 import { PlaylistCard } from './PlaylistCard';
+import { SnippetCodeEditor } from './ExpressionEditor';
 import type { SnippetRow } from '../model/snippet';
 import { getUserSnippets, createSnippet, deleteSnippet } from '../services/snippetsClient';
 
@@ -1024,7 +1025,7 @@ export function UserProfileContent({
 
       {createSnippetModalOpen && (
         <div className="modal-backdrop">
-          <div className="modal" onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); e.stopPropagation(); void handleCreateSnippet(); } else if (e.key === 'Escape') { closeCreateSnippetModal(); } }}>
+          <div className="modal" onKeyDown={e => { if (e.key === 'Escape') { closeCreateSnippetModal(); } }}>
             <h2>New snippet</h2>
             <label className="field">
               <input
@@ -1036,16 +1037,12 @@ export function UserProfileContent({
                 style={{ width: '100%', padding: '6px 8px', marginBottom: '8px' }}
               />
             </label>
-            <label className="field">
-              <input
-                type="text"
-                placeholder="Code (e.g. sq=(S)=>S&128)"
-                maxLength={1024}
+            <div className="field" style={{ marginBottom: '8px' }}>
+              <SnippetCodeEditor
                 value={newSnippetCode}
-                onChange={(e) => setNewSnippetCode(e.target.value)}
-                style={{ width: '100%', padding: '6px 8px', marginBottom: '8px', fontFamily: 'monospace' }}
+                onChange={setNewSnippetCode}
               />
-            </label>
+            </div>
             <label className="field">
               <textarea
                 placeholder="Description (optional)"
