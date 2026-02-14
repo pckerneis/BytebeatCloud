@@ -81,6 +81,25 @@ function formatDuration(duration: number | null): string {
   return `${duration}s`;
 }
 
+const availableSnippets = [
+  {
+    id: 0,
+    name: 'square',
+    author: 'pck404',
+    snippet: 'sq=(S)=>S&128',
+    description: 'Square',
+    owned: true,
+  },
+  {
+    id: 1,
+    name: 'mtof',
+    author: 'pck404',
+    snippet: 'mtof=(N)=>N',
+    description: 'Convert from MIDI note number to frequency',
+    owned: false,
+  },
+]
+
 export function PostEditorFormFields(props: Readonly<PostEditorFormFieldsProps>) {
   const {
     meta,
@@ -113,6 +132,8 @@ export function PostEditorFormFields(props: Readonly<PostEditorFormFieldsProps>)
   const durationLongPressTimeoutRef = useRef<number | null>(null);
   const durationLongPressTriggeredRef = useRef(false);
   const currentLicenseLabel = LICENSE_OPTIONS.find((opt) => opt.value === license)?.label;
+  const [snippetsModalOpen, setSnippetsModalOpen] = useState(false);
+  const [filteredSnippets, setFilteredSnippets] = useState(availableSnippets);
 
   const openSampleRateModal = () => {
     setSampleRateInput(sampleRate.toString());
@@ -174,6 +195,14 @@ export function PostEditorFormFields(props: Readonly<PostEditorFormFieldsProps>)
 
   const closeDurationModal = () => {
     setDurationModalOpen(false);
+  };
+
+  const openSnippetsModal = () => {
+    setSnippetsModalOpen(true);
+  };
+
+  const closeSnippetsModal = () => {
+    setSnippetsModalOpen(false);
   };
 
   const commitDurationFromInput = () => {
@@ -265,6 +294,14 @@ export function PostEditorFormFields(props: Readonly<PostEditorFormFieldsProps>)
           onTouchCancel={cancelDurationLongPress}
         >
           {formatDuration(autoSkipDuration)}
+        </button>
+
+        <button
+          type="button"
+          className="chip ml-auto"
+          onClick={openSnippetsModal}
+        >
+          + Insert snippet
         </button>
       </div>
 
@@ -374,21 +411,10 @@ export function PostEditorFormFields(props: Readonly<PostEditorFormFieldsProps>)
       )}
 
       {sampleRateModalOpen && (
-        <div
-          className="modal-backdrop"
-          style={{
-            position: 'fixed',
-            inset: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.4)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000,
-          }}
-        >
+        <div className="modal-backdrop">
           <div className="modal" onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); commitSampleRateFromInput(); } else if (e.key === 'Escape') { closeSampleRateModal(); } }}>
-            <h2 style={{ marginTop: 0, marginBottom: '8px', fontSize: '16px' }}>Sample rate</h2>
-            <p style={{ marginTop: 0, marginBottom: '8px', fontSize: '12px', opacity: 0.8 }}>
+            <h2>Sample rate</h2>
+            <p>
               Enter a value between {MIN_SAMPLE_RATE} and {MAX_SAMPLE_RATE}.
             </p>
             <input
@@ -418,23 +444,10 @@ export function PostEditorFormFields(props: Readonly<PostEditorFormFieldsProps>)
       )}
 
       {durationModalOpen && (
-        <div
-          className="modal-backdrop"
-          style={{
-            position: 'fixed',
-            inset: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.4)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000,
-          }}
-        >
+        <div className="modal-backdrop">
           <div className="modal" onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); commitDurationFromInput(); } else if (e.key === 'Escape') { closeDurationModal(); } }}>
-            <h2 style={{ marginTop: 0, marginBottom: '8px', fontSize: '16px' }}>
-              Auto-skip duration
-            </h2>
-            <p style={{ marginTop: 0, marginBottom: '8px', fontSize: '12px', opacity: 0.8 }}>
+            <h2>Auto-skip duration</h2>
+            <p>
               Enter a value in seconds ({MIN_AUTO_SKIP_DURATION} - {MAX_AUTO_SKIP_DURATION}).
             </p>
             <input
@@ -456,6 +469,43 @@ export function PostEditorFormFields(props: Readonly<PostEditorFormFieldsProps>)
                 disabled={Number.isNaN(parseInt(durationInput, 10))}
               >
                 Apply
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {snippetsModalOpen && (
+        <div className="modal-backdrop">
+          <div className="modal" onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); commitSampleRateFromInput(); } else if (e.key === 'Escape') { closeSampleRateModal(); } }}>
+            <h2>Insert snippet</h2>
+            <input
+              type="search"
+              placeholder="Search for a snippet..."
+              style={{ width: '100%', padding: '6px 8px', marginBottom: '12px' }}
+            />
+
+            <div
+              style={{ marginBottom: '12px' }}
+            >
+              {filteredSnippets.map((snippet) => (
+                <div
+                  key={snippet.id}
+                  style={{ padding: '4px' }}
+                >
+                  <div>
+                    {snippet.name} by @{snippet.author}
+                  </div>
+                  <div className="secondary-text">
+                    {snippet.description}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+              <button type="button" className="button secondary" onClick={closeSnippetsModal}>
+                Close
               </button>
             </div>
           </div>
