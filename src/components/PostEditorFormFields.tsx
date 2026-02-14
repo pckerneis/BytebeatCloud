@@ -319,11 +319,7 @@ export function PostEditorFormFields(props: Readonly<PostEditorFormFieldsProps>)
           {formatDuration(autoSkipDuration)}
         </button>
 
-        <button
-          type="button"
-          className="chip ml-auto"
-          onClick={openSnippetsModal}
-        >
+        <button type="button" className="chip ml-auto" onClick={openSnippetsModal}>
           + Insert snippet
         </button>
       </div>
@@ -435,7 +431,18 @@ export function PostEditorFormFields(props: Readonly<PostEditorFormFieldsProps>)
 
       {sampleRateModalOpen && (
         <div className="modal-backdrop">
-          <div className="modal" onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); commitSampleRateFromInput(); } else if (e.key === 'Escape') { closeSampleRateModal(); } }}>
+          <div
+            className="modal"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                e.stopPropagation();
+                commitSampleRateFromInput();
+              } else if (e.key === 'Escape') {
+                closeSampleRateModal();
+              }
+            }}
+          >
             <h2>Sample rate</h2>
             <p>
               Enter a value between {MIN_SAMPLE_RATE} and {MAX_SAMPLE_RATE}.
@@ -468,7 +475,18 @@ export function PostEditorFormFields(props: Readonly<PostEditorFormFieldsProps>)
 
       {durationModalOpen && (
         <div className="modal-backdrop">
-          <div className="modal" onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); commitDurationFromInput(); } else if (e.key === 'Escape') { closeDurationModal(); } }}>
+          <div
+            className="modal"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                e.stopPropagation();
+                commitDurationFromInput();
+              } else if (e.key === 'Escape') {
+                closeDurationModal();
+              }
+            }}
+          >
             <h2>Auto-skip duration</h2>
             <p>
               Enter a value in seconds ({MIN_AUTO_SKIP_DURATION} - {MAX_AUTO_SKIP_DURATION}).
@@ -500,7 +518,14 @@ export function PostEditorFormFields(props: Readonly<PostEditorFormFieldsProps>)
 
       {snippetsModalOpen && (
         <div className="modal-backdrop">
-          <div className="modal" onKeyDown={e => { if (e.key === 'Escape') { closeSnippetsModal(); } }}>
+          <div
+            className="modal"
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') {
+                closeSnippetsModal();
+              }
+            }}
+          >
             <h2>Insert snippet</h2>
             <input
               type="search"
@@ -527,9 +552,7 @@ export function PostEditorFormFields(props: Readonly<PostEditorFormFieldsProps>)
                     {s.username && <span className="secondary-text"> by @{s.username}</span>}
                   </div>
                   <code className="secondary-text">{s.snippet}</code>
-                  {s.description && (
-                    <div className="secondary-text smaller">{s.description}</div>
-                  )}
+                  {s.description && <div className="secondary-text smaller">{s.description}</div>}
                 </div>
               ))}
             </div>

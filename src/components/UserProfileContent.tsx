@@ -418,10 +418,7 @@ export function useUserDrafts(
   );
 }
 
-function useUserSnippets(
-  profileId: string | null,
-  enabled: boolean,
-) {
+function useUserSnippets(profileId: string | null, enabled: boolean) {
   const [snippets, setSnippets] = useState<SnippetRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -636,10 +633,7 @@ export function UserProfileContent({
     isOwnProfile,
   );
 
-  const snippetsQuery = useUserSnippets(
-    profileId,
-    activeTab === 'snippets',
-  );
+  const snippetsQuery = useUserSnippets(profileId, activeTab === 'snippets');
 
   const [createSnippetModalOpen, setCreateSnippetModalOpen] = useState(false);
   const [newSnippetName, setNewSnippetName] = useState('');
@@ -733,7 +727,9 @@ export function UserProfileContent({
   };
 
   // Get available tabs based on whether this is own profile
-  const availableTabs = isOwnProfile ? tabs : tabs.filter((t) => t !== 'drafts' && t !== 'snippets');
+  const availableTabs = isOwnProfile
+    ? tabs
+    : tabs.filter((t) => t !== 'drafts' && t !== 'snippets');
 
   // Handle swipe gestures to switch tabs
   const handleSwipeLeft = () => {
@@ -973,9 +969,12 @@ export function UserProfileContent({
                         <div className="flex-row align-items-center">
                           <strong>{s.name}</strong>
                           <span className="chips">
-                            <span className="chip secondary-text smaller" style={{ marginLeft: '8px' }}>
-                            {s.is_public ? 'public' : 'private'}
-                          </span>
+                            <span
+                              className="chip secondary-text smaller"
+                              style={{ marginLeft: '8px' }}
+                            >
+                              {s.is_public ? 'public' : 'private'}
+                            </span>
                           </span>
                           <button
                             type="button"
@@ -1040,7 +1039,14 @@ export function UserProfileContent({
 
       {createSnippetModalOpen && (
         <div className="modal-backdrop">
-          <div className="modal" onKeyDown={e => { if (e.key === 'Escape') { closeCreateSnippetModal(); } }}>
+          <div
+            className="modal"
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') {
+                closeCreateSnippetModal();
+              }
+            }}
+          >
             <h2>New snippet</h2>
             <label className="field mb-10">
               <input
@@ -1057,10 +1063,7 @@ export function UserProfileContent({
               </div>
             </label>
             <div className="field" style={{ marginBottom: '8px' }}>
-              <SnippetCodeEditor
-                value={newSnippetCode}
-                onChange={setNewSnippetCode}
-              />
+              <SnippetCodeEditor value={newSnippetCode} onChange={setNewSnippetCode} />
             </div>
             <label className="field mb-10">
               <textarea
