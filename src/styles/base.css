@@ -70,8 +70,16 @@ button {
   gap: 2px;
 }
 
+.gap-8 {
+  gap: 8px;
+}
+
 .gap-10 {
   gap: 10px;
+}
+
+.w-full {
+  width: 100%;
 }
 
 .space-between {
@@ -100,6 +108,18 @@ button {
 
 .mb-5 {
   margin-bottom: 5px;
+}
+
+.mt-8 {
+  margin-top: 8px;
+}
+
+.mb-8 {
+  margin-bottom: 8px;
+}
+
+.mb-12 {
+  margin-bottom: 12px;
 }
 
 .ml-10 {

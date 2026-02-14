@@ -66,8 +66,8 @@ jobs:
             spec: e2e/notifications.spec.ts e2e/notification-triggers.spec.ts e2e/mentions.spec.ts e2e/comments.spec.ts e2e/comment-rate-limiting.spec.ts e2e/comment-replies.spec.ts
           - group: weekly
             spec: e2e/weekly-challenges.spec.ts e2e/weekly-hall-of-fame.spec.ts e2e/home-weekly.spec.ts e2e/reporting.spec.ts
-          - group: playlists
-            spec: e2e/playlists.spec.ts e2e/play-queue.spec.ts e2e/analytics.spec.ts
+          - group: playlists and snippets
+            spec: e2e/playlists.spec.ts e2e/play-queue.spec.ts e2e/analytics.spec.ts e2e/snippets.spec.ts
           - group: core
             spec: e2e/explore.spec.ts e2e/favorites.spec.ts e2e/infinite-scroll.spec.ts e2e/post-detail.spec.ts e2e/profile.spec.ts e2e/smoke.spec.ts e2e/tags.spec.ts e2e/back-to-top.spec.ts e2e/tab-swipe.spec.ts
     steps:

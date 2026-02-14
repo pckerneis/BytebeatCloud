@@ -11,6 +11,10 @@ import { useTabState } from '../hooks/useTabState';
 import { useSwipeGesture } from '../hooks/useSwipeGesture';
 import { ActivityHeatmap } from './ActivityHeatmap';
 import { PlaylistCard } from './PlaylistCard';
+import { SnippetCodeEditor } from './ExpressionEditor';
+import type { SnippetRow } from '../model/snippet';
+import { getUserSnippets, createSnippet, deleteSnippet } from '../services/snippetsClient';
+import { SNIPPET_DESCRIPTION_MAX, SNIPPET_NAME_MAX } from '../constants';
 
 // Shared enrichment pipeline
 async function enrichPosts(rows: PostRow[]): Promise<PostRow[]> {
@@ -414,6 +418,55 @@ export function useUserDrafts(
   );
 }
 
+function useUserSnippets(profileId: string | null, enabled: boolean) {
+  const [snippets, setSnippets] = useState<SnippetRow[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [hasLoaded, setHasLoaded] = useState(false);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setHasLoaded(false);
+    setSnippets([]);
+  }, [profileId]);
+
+  useEffect(() => {
+    if (!profileId || !enabled || hasLoaded) return;
+
+    let cancelled = false;
+
+    const load = async () => {
+      setLoading(true);
+      setError('');
+
+      const { data, error: fetchError } = await getUserSnippets(profileId);
+
+      if (cancelled) return;
+
+      if (fetchError) {
+        setError('Unable to load snippets.');
+        setSnippets([]);
+      } else {
+        setSnippets(data);
+        setHasLoaded(true);
+      }
+
+      setLoading(false);
+    };
+
+    void load();
+    return () => {
+      cancelled = true;
+    };
+  }, [profileId, enabled, hasLoaded]);
+
+  const reload = () => {
+    setHasLoaded(false);
+  };
+
+  return { snippets, loading, error, reload };
+}
+
 export function useProfileDetails(profileId: string | null) {
   const [bio, setBio] = useState<string | null>(null);
   const [socialLinks, setSocialLinks] = useState<string[]>([]);
@@ -541,7 +594,7 @@ interface UserProfileContentProps {
   hideFollowButton?: boolean;
 }
 
-const tabs = ['posts', 'drafts', 'favorites', 'playlists'] as const;
+const tabs = ['posts', 'drafts', 'snippets', 'favorites', 'playlists'] as const;
 type TabName = (typeof tabs)[number];
 
 export function UserProfileContent({
@@ -579,6 +632,62 @@ export function UserProfileContent({
     activeTab === 'playlists',
     isOwnProfile,
   );
+
+  const snippetsQuery = useUserSnippets(profileId, activeTab === 'snippets');
+
+  const [createSnippetModalOpen, setCreateSnippetModalOpen] = useState(false);
+  const [newSnippetName, setNewSnippetName] = useState('');
+  const [newSnippetCode, setNewSnippetCode] = useState('');
+  const [newSnippetDescription, setNewSnippetDescription] = useState('');
+  const [newSnippetPublic, setNewSnippetPublic] = useState(false);
+  const [snippetSaving, setSnippetSaving] = useState(false);
+  const [snippetError, setSnippetError] = useState('');
+
+  const openCreateSnippetModal = () => {
+    setNewSnippetName('');
+    setNewSnippetCode('');
+    setNewSnippetDescription('');
+    setNewSnippetPublic(false);
+    setSnippetError('');
+    setCreateSnippetModalOpen(true);
+  };
+
+  const closeCreateSnippetModal = () => {
+    setCreateSnippetModalOpen(false);
+  };
+
+  const handleCreateSnippet = async () => {
+    if (!currentUserId || !newSnippetName.trim() || !newSnippetCode.trim()) return;
+
+    setSnippetSaving(true);
+    setSnippetError('');
+
+    const { error } = await createSnippet(
+      {
+        name: newSnippetName.trim(),
+        snippet: newSnippetCode.trim(),
+        description: newSnippetDescription.trim(),
+        is_public: newSnippetPublic,
+      },
+      currentUserId,
+    );
+
+    setSnippetSaving(false);
+
+    if (error) {
+      setSnippetError(error);
+    } else {
+      setCreateSnippetModalOpen(false);
+      snippetsQuery.reload();
+    }
+  };
+
+  const handleDeleteSnippet = async (snippetId: string) => {
+    const { error } = await deleteSnippet(snippetId);
+    if (!error) {
+      snippetsQuery.reload();
+    }
+  };
 
   // Profile details (bio, social links)
   const { bio, socialLinks } = useProfileDetails(profileId);
@@ -618,7 +727,9 @@ export function UserProfileContent({
   };
 
   // Get available tabs based on whether this is own profile
-  const availableTabs = isOwnProfile ? tabs : tabs.filter((t) => t !== 'drafts');
+  const availableTabs = isOwnProfile
+    ? tabs
+    : tabs.filter((t) => t !== 'drafts' && t !== 'snippets');
 
   // Handle swipe gestures to switch tabs
   const handleSwipeLeft = () => {
@@ -666,6 +777,10 @@ export function UserProfileContent({
 
   const navigateToUserActions = async () => {
     void router.push(`/user-actions/${username}`);
+  };
+
+  const navigateToPlaylistCreation = async () => {
+    void router.push(`/playlists/new`);
   };
 
   return (
@@ -738,6 +853,14 @@ export function UserProfileContent({
               onClick={() => handleTabClick('drafts')}
             >
               Drafts
+            </span>
+          )}
+          {isOwnProfile && (
+            <span
+              className={optimisticTab === 'snippets' ? 'tab-button active' : 'tab-button'}
+              onClick={() => handleTabClick('snippets')}
+            >
+              Snippets
             </span>
           )}
           <span
@@ -821,8 +944,68 @@ export function UserProfileContent({
             />
           )}
 
+          {optimisticTab === activeTab && activeTab === 'snippets' && isOwnProfile && (
+            <div>
+              <button
+                type="button"
+                className="button primary mb-10 mt-10"
+                onClick={openCreateSnippetModal}
+              >
+                + New snippet
+              </button>
+              {snippetsQuery.loading && <p className="text-centered">Loading snippets…</p>}
+              {snippetsQuery.error && <p className="error-message">{snippetsQuery.error}</p>}
+              {!snippetsQuery.loading &&
+                !snippetsQuery.error &&
+                snippetsQuery.snippets.length === 0 && (
+                  <p className="text-centered">You have no snippets yet.</p>
+                )}
+              {!snippetsQuery.loading &&
+                !snippetsQuery.error &&
+                snippetsQuery.snippets.length > 0 && (
+                  <div className="post-list">
+                    {snippetsQuery.snippets.map((s) => (
+                      <div key={s.id} className="post-item">
+                        <div className="flex-row align-items-center">
+                          <strong>{s.name}</strong>
+                          <span className="chips">
+                            <span
+                              className="chip secondary-text smaller"
+                              style={{ marginLeft: '8px' }}
+                            >
+                              {s.is_public ? 'public' : 'private'}
+                            </span>
+                          </span>
+                          <button
+                            type="button"
+                            className="button secondary ghost small ml-auto"
+                            onClick={() => void handleDeleteSnippet(s.id)}
+                          >
+                            Delete
+                          </button>
+                        </div>
+                        <code className="secondary-text">{s.snippet}</code>
+                        {s.description && (
+                          <div className="secondary-text smaller">{s.description}</div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+            </div>
+          )}
+
           {optimisticTab === activeTab && activeTab === 'playlists' && (
             <div className="playlists-section">
+              {isOwnProfile && (
+                <button
+                  type="button"
+                  className="button primary mb-10 mt-10"
+                  onClick={navigateToPlaylistCreation}
+                >
+                  + New playlist
+                </button>
+              )}
               {playlistsQuery.loading && <p className="text-centered">Loading playlists…</p>}
               {playlistsQuery.error && <p className="error-message">{playlistsQuery.error}</p>}
               {!playlistsQuery.loading &&
@@ -853,6 +1036,74 @@ export function UserProfileContent({
           )}
         </div>
       </div>
+
+      {createSnippetModalOpen && (
+        <div className="modal-backdrop">
+          <div
+            className="modal"
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') {
+                closeCreateSnippetModal();
+              }
+            }}
+          >
+            <h2>New snippet</h2>
+            <label className="field mb-10">
+              <input
+                type="text"
+                className="border-bottom-accent-focus"
+                placeholder="Snippet name"
+                maxLength={SNIPPET_NAME_MAX}
+                value={newSnippetName}
+                onChange={(e) => setNewSnippetName(e.target.value)}
+                style={{ width: '100%', maxWidth: '100%', padding: '6px 8px' }}
+              />
+              <div className="secondary-text ml-auto" style={{ fontSize: 12, marginTop: 4 }}>
+                {newSnippetName.length}/{SNIPPET_NAME_MAX}
+              </div>
+            </label>
+            <div className="field" style={{ marginBottom: '8px' }}>
+              <SnippetCodeEditor value={newSnippetCode} onChange={setNewSnippetCode} />
+            </div>
+            <label className="field mb-10">
+              <textarea
+                placeholder="Description (optional)"
+                maxLength={SNIPPET_DESCRIPTION_MAX}
+                className="border-bottom-accent-focus"
+                value={newSnippetDescription}
+                onChange={(e) => setNewSnippetDescription(e.target.value)}
+                rows={2}
+                style={{ width: '100%', padding: '6px 8px', resize: 'vertical' }}
+              />
+              <div className="secondary-text ml-auto" style={{ fontSize: 12, marginTop: 4 }}>
+                {newSnippetDescription.length}/{SNIPPET_DESCRIPTION_MAX}
+              </div>
+            </label>
+            <label className="checkbox" style={{ marginBottom: '12px' }}>
+              <input
+                type="checkbox"
+                checked={newSnippetPublic}
+                onChange={(e) => setNewSnippetPublic(e.target.checked)}
+              />{' '}
+              Make public
+            </label>
+            {snippetError && <p className="error-message">{snippetError}</p>}
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+              <button type="button" className="button secondary" onClick={closeCreateSnippetModal}>
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="button primary"
+                onClick={() => void handleCreateSnippet()}
+                disabled={snippetSaving || !newSnippetName.trim() || !newSnippetCode.trim()}
+              >
+                {snippetSaving ? 'Saving…' : 'Create'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 }

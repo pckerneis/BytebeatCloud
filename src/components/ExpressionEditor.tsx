@@ -82,6 +82,39 @@ export function ExpressionEditor({ value, onChange }: ExpressionEditorProps) {
   );
 }
 
+const snippetEditorExtensions = [javascript(), EditorView.lineWrapping];
+
+const snippetEditorBasicSetup = {
+  lineNumbers: false,
+  foldGutter: false,
+  highlightActiveLine: false,
+  autocompletion: false,
+  indentOnInput: false,
+} as const;
+
+interface SnippetCodeEditorProps {
+  value: string;
+  onChange: (value: string) => void;
+}
+
+export function SnippetCodeEditor({ value, onChange }: SnippetCodeEditorProps) {
+  const uiThemeId = useThemeId();
+  const codeMirrorTheme = getUiTheme(uiThemeId).codeMirrorTheme;
+
+  return (
+    <div className="snippet-code-editor">
+      <CodeMirror
+        value={value}
+        height="80px"
+        extensions={snippetEditorExtensions}
+        basicSetup={snippetEditorBasicSetup}
+        theme={codeMirrorTheme}
+        onChange={(nextValue: string) => onChange(nextValue)}
+      />
+    </div>
+  );
+}
+
 interface ReadonlyExpressionProps {
   expression: string;
   disableCopy?: boolean;

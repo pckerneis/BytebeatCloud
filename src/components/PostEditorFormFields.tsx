@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { ExpressionEditor, ExpressionErrorSnippet } from './ExpressionEditor';
 import { AutocompleteTextarea } from './AutocompleteTextarea';
 import { AutocompleteInput } from './AutocompleteInput';
@@ -22,6 +22,8 @@ import {
   AUTOPLAY_DEFAULT_DURATION,
 } from '../constants';
 import Link from 'next/link';
+import type { SnippetRow } from '../model/snippet';
+import { searchSnippets } from '../services/snippetsClient';
 
 interface PostEditorFormFieldsProps {
   meta: PostMetadataModel;
@@ -113,6 +115,11 @@ export function PostEditorFormFields(props: Readonly<PostEditorFormFieldsProps>)
   const durationLongPressTimeoutRef = useRef<number | null>(null);
   const durationLongPressTriggeredRef = useRef(false);
   const currentLicenseLabel = LICENSE_OPTIONS.find((opt) => opt.value === license)?.label;
+  const [snippetsModalOpen, setSnippetsModalOpen] = useState(false);
+  const [snippetSearch, setSnippetSearch] = useState('');
+  const [snippetResults, setSnippetResults] = useState<SnippetRow[]>([]);
+  const [snippetSearchLoading, setSnippetSearchLoading] = useState(false);
+  const snippetSearchTimerRef = useRef<number | null>(null);
 
   const openSampleRateModal = () => {
     setSampleRateInput(sampleRate.toString());
@@ -174,6 +181,51 @@ export function PostEditorFormFields(props: Readonly<PostEditorFormFieldsProps>)
 
   const closeDurationModal = () => {
     setDurationModalOpen(false);
+  };
+
+  const loadSnippets = useCallback(async (query: string) => {
+    setSnippetSearchLoading(true);
+    const { data } = await searchSnippets(query);
+    setSnippetResults(data);
+    setSnippetSearchLoading(false);
+  }, []);
+
+  const openSnippetsModal = () => {
+    setSnippetSearch('');
+    setSnippetResults([]);
+    setSnippetsModalOpen(true);
+    void loadSnippets('');
+  };
+
+  const closeSnippetsModal = () => {
+    setSnippetsModalOpen(false);
+    if (snippetSearchTimerRef.current !== null) {
+      window.clearTimeout(snippetSearchTimerRef.current);
+    }
+  };
+
+  const handleSnippetSearchChange = (value: string) => {
+    setSnippetSearch(value);
+    if (snippetSearchTimerRef.current !== null) {
+      window.clearTimeout(snippetSearchTimerRef.current);
+    }
+    snippetSearchTimerRef.current = window.setTimeout(() => {
+      void loadSnippets(value);
+    }, 300);
+  };
+
+  const insertSnippet = (snippetCode: string) => {
+    const trimmed = expression.trim();
+    if (trimmed) {
+      if (trimmed.endsWith(',')) {
+        onExpressionChange(expression + snippetCode);
+      } else {
+        onExpressionChange(expression + ',' + snippetCode);
+      }
+    } else {
+      onExpressionChange(snippetCode);
+    }
+    setSnippetsModalOpen(false);
   };
 
   const commitDurationFromInput = () => {
@@ -265,6 +317,10 @@ export function PostEditorFormFields(props: Readonly<PostEditorFormFieldsProps>)
           onTouchCancel={cancelDurationLongPress}
         >
           {formatDuration(autoSkipDuration)}
+        </button>
+
+        <button type="button" className="chip ml-auto" onClick={openSnippetsModal}>
+          + Insert snippet
         </button>
       </div>
 
@@ -374,21 +430,21 @@ export function PostEditorFormFields(props: Readonly<PostEditorFormFieldsProps>)
       )}
 
       {sampleRateModalOpen && (
-        <div
-          className="modal-backdrop"
-          style={{
-            position: 'fixed',
-            inset: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.4)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000,
-          }}
-        >
-          <div className="modal" onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); commitSampleRateFromInput(); } else if (e.key === 'Escape') { closeSampleRateModal(); } }}>
-            <h2 style={{ marginTop: 0, marginBottom: '8px', fontSize: '16px' }}>Sample rate</h2>
-            <p style={{ marginTop: 0, marginBottom: '8px', fontSize: '12px', opacity: 0.8 }}>
+        <div className="modal-backdrop">
+          <div
+            className="modal"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                e.stopPropagation();
+                commitSampleRateFromInput();
+              } else if (e.key === 'Escape') {
+                closeSampleRateModal();
+              }
+            }}
+          >
+            <h2>Sample rate</h2>
+            <p>
               Enter a value between {MIN_SAMPLE_RATE} and {MAX_SAMPLE_RATE}.
             </p>
             <input
@@ -418,23 +474,21 @@ export function PostEditorFormFields(props: Readonly<PostEditorFormFieldsProps>)
       )}
 
       {durationModalOpen && (
-        <div
-          className="modal-backdrop"
-          style={{
-            position: 'fixed',
-            inset: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.4)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000,
-          }}
-        >
-          <div className="modal" onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); commitDurationFromInput(); } else if (e.key === 'Escape') { closeDurationModal(); } }}>
-            <h2 style={{ marginTop: 0, marginBottom: '8px', fontSize: '16px' }}>
-              Auto-skip duration
-            </h2>
-            <p style={{ marginTop: 0, marginBottom: '8px', fontSize: '12px', opacity: 0.8 }}>
+        <div className="modal-backdrop">
+          <div
+            className="modal"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                e.stopPropagation();
+                commitDurationFromInput();
+              } else if (e.key === 'Escape') {
+                closeDurationModal();
+              }
+            }}
+          >
+            <h2>Auto-skip duration</h2>
+            <p>
               Enter a value in seconds ({MIN_AUTO_SKIP_DURATION} - {MAX_AUTO_SKIP_DURATION}).
             </p>
             <input
@@ -456,6 +510,56 @@ export function PostEditorFormFields(props: Readonly<PostEditorFormFieldsProps>)
                 disabled={Number.isNaN(parseInt(durationInput, 10))}
               >
                 Apply
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {snippetsModalOpen && (
+        <div className="modal-backdrop">
+          <div
+            className="modal"
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') {
+                closeSnippetsModal();
+              }
+            }}
+          >
+            <h2>Insert snippet</h2>
+            <input
+              type="search"
+              placeholder="Search for a snippet..."
+              className="border-bottom-accent-focus"
+              value={snippetSearch}
+              onChange={(e) => handleSnippetSearchChange(e.target.value)}
+              style={{ width: '100%', padding: '6px 8px', marginBottom: '12px' }}
+            />
+
+            <div className="snippet-results-list">
+              {snippetSearchLoading && <p className="secondary-text">Searching…</p>}
+              {!snippetSearchLoading && snippetResults.length === 0 && (
+                <p className="secondary-text">No snippets found.</p>
+              )}
+              {snippetResults.map((s) => (
+                <div
+                  key={s.id}
+                  className="snippet-result-item"
+                  onClick={() => insertSnippet(s.snippet)}
+                >
+                  <div>
+                    <strong>{s.name}</strong>
+                    {s.username && <span className="secondary-text"> by @{s.username}</span>}
+                  </div>
+                  <code className="secondary-text">{s.snippet}</code>
+                  {s.description && <div className="secondary-text smaller">{s.description}</div>}
+                </div>
+              ))}
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+              <button type="button" className="button secondary" onClick={closeSnippetsModal}>
+                Close
               </button>
             </div>
           </div>
