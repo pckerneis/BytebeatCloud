@@ -59,7 +59,7 @@ test.describe('Snippets - profile page', () => {
     await expect(page.getByRole('heading', { name: 'New snippet' })).toBeVisible();
 
     // Fill in name
-    await page.getByPlaceholder('Name (e.g. square)').fill('testsq');
+    await page.getByPlaceholder('Snippet name').fill('testsq');
 
     // Type into CodeMirror snippet editor
     const snippetEditor = page.locator('.snippet-code-editor .cm-content');
@@ -91,7 +91,7 @@ test.describe('Snippets - profile page', () => {
     await expect(createButton).toBeDisabled();
 
     // Fill only name — still disabled
-    await page.getByPlaceholder('Name (e.g. square)').fill('test');
+    await page.getByPlaceholder('Snippet name').fill('test');
     await expect(createButton).toBeDisabled();
   });
 

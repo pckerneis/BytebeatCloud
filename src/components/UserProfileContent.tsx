@@ -14,6 +14,7 @@ import { PlaylistCard } from './PlaylistCard';
 import { SnippetCodeEditor } from './ExpressionEditor';
 import type { SnippetRow } from '../model/snippet';
 import { getUserSnippets, createSnippet, deleteSnippet } from '../services/snippetsClient';
+import { SNIPPET_DESCRIPTION_MAX, SNIPPET_NAME_MAX } from '../constants';
 
 // Shared enrichment pipeline
 async function enrichPosts(rows: PostRow[]): Promise<PostRow[]> {
@@ -427,6 +428,7 @@ function useUserSnippets(
   const [hasLoaded, setHasLoaded] = useState(false);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setHasLoaded(false);
     setSnippets([]);
   }, [profileId]);
@@ -781,6 +783,10 @@ export function UserProfileContent({
     void router.push(`/user-actions/${username}`);
   };
 
+  const navigateToPlaylistCreation = async () => {
+    void router.push(`/playlists/new`);
+  };
+
   return (
     <section>
       <div className="profile-title-row">
@@ -946,7 +952,7 @@ export function UserProfileContent({
             <div>
               <button
                 type="button"
-                className="button primary mb-10"
+                className="button primary mb-10 mt-10"
                 onClick={openCreateSnippetModal}
               >
                 + New snippet
@@ -992,6 +998,15 @@ export function UserProfileContent({
 
           {optimisticTab === activeTab && activeTab === 'playlists' && (
             <div className="playlists-section">
+              {isOwnProfile && (
+                <button
+                  type="button"
+                  className="button primary mb-10 mt-10"
+                  onClick={navigateToPlaylistCreation}
+                >
+                  + New playlist
+                </button>
+              )}
               {playlistsQuery.loading && <p className="text-centered">Loading playlists…</p>}
               {playlistsQuery.error && <p className="error-message">{playlistsQuery.error}</p>}
               {!playlistsQuery.loading &&
@@ -1027,15 +1042,19 @@ export function UserProfileContent({
         <div className="modal-backdrop">
           <div className="modal" onKeyDown={e => { if (e.key === 'Escape') { closeCreateSnippetModal(); } }}>
             <h2>New snippet</h2>
-            <label className="field">
+            <label className="field mb-10">
               <input
                 type="text"
-                placeholder="Name (e.g. square)"
-                maxLength={64}
+                className="border-bottom-accent-focus"
+                placeholder="Snippet name"
+                maxLength={SNIPPET_NAME_MAX}
                 value={newSnippetName}
                 onChange={(e) => setNewSnippetName(e.target.value)}
-                style={{ width: '100%', padding: '6px 8px', marginBottom: '8px' }}
+                style={{ width: '100%', maxWidth: '100%', padding: '6px 8px' }}
               />
+              <div className="secondary-text ml-auto" style={{ fontSize: 12, marginTop: 4 }}>
+                {newSnippetName.length}/{SNIPPET_NAME_MAX}
+              </div>
             </label>
             <div className="field" style={{ marginBottom: '8px' }}>
               <SnippetCodeEditor
@@ -1043,15 +1062,19 @@ export function UserProfileContent({
                 onChange={setNewSnippetCode}
               />
             </div>
-            <label className="field">
+            <label className="field mb-10">
               <textarea
                 placeholder="Description (optional)"
-                maxLength={1024}
+                maxLength={SNIPPET_DESCRIPTION_MAX}
+                className="border-bottom-accent-focus"
                 value={newSnippetDescription}
                 onChange={(e) => setNewSnippetDescription(e.target.value)}
                 rows={2}
-                style={{ width: '100%', padding: '6px 8px', marginBottom: '8px' }}
+                style={{ width: '100%', padding: '6px 8px', resize: 'vertical' }}
               />
+              <div className="secondary-text ml-auto" style={{ fontSize: 12, marginTop: 4 }}>
+                {newSnippetDescription.length}/{SNIPPET_DESCRIPTION_MAX}
+              </div>
             </label>
             <label className="checkbox" style={{ marginBottom: '12px' }}>
               <input
