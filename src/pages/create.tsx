@@ -266,19 +266,6 @@ export default function CreatePage() {
                 </button>
 
                 <button
-                  type="button"
-                  className="button secondary"
-                  onClick={handleSaveAsDraft}
-                  disabled={
-                    !editor.expression.trim() ||
-                    !!editor.validationIssue ||
-                    editor.saveStatus === 'saving'
-                  }
-                >
-                  {editor.saveStatus === 'saving' && editor.isDraft ? 'Saving…' : 'Save as module'}
-                </button>
-
-                <button
                   type="submit"
                   className="button primary"
                   disabled={
