@@ -5,9 +5,13 @@ input {
   background: transparent;
 }
 
-input[type='number'], input[type='search'], input[type='text'] {
+input[type='number'], input[type='search'] {
   border: 1px solid var(--chip-border-color);
   padding: 2px 8px;
+}
+
+input[type='text'] {
+  border: none;
 }
 
 input[type='checkbox'] {

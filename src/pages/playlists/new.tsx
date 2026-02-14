@@ -5,6 +5,7 @@ import { useSupabaseAuth } from '../../hooks/useSupabaseAuth';
 import Head from 'next/head';
 import { BackButton } from '../../components/BackButton';
 import Link from 'next/link';
+import { PLAYLIST_DESCRIPTION_MAX, PLAYLIST_TITLE_MAX } from '../../constants';
 
 export default function NewPlaylistPage() {
   const router = useRouter();
@@ -116,14 +117,14 @@ export default function NewPlaylistPage() {
                   type="text"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  maxLength={64}
+                  maxLength={PLAYLIST_TITLE_MAX}
                   placeholder="My playlist"
                   className="border-bottom-accent-focus"
                   disabled={pending}
                   required
                 />
-                <div className="secondary-text" style={{ fontSize: 12, marginTop: 4 }}>
-                  {title.length}/64
+                <div className="secondary-text ml-auto" style={{ fontSize: 12, marginTop: 4 }}>
+                  {title.length}/{PLAYLIST_TITLE_MAX}
                 </div>
               </div>
 
@@ -139,7 +140,11 @@ export default function NewPlaylistPage() {
                   placeholder="Optional description"
                   className="border-bottom-accent-focus"
                   disabled={pending}
+                  maxLength={PLAYLIST_DESCRIPTION_MAX}
                 />
+                <div className="secondary-text ml-auto" style={{ fontSize: 12, marginTop: 4 }}>
+                  {description.length}/{PLAYLIST_DESCRIPTION_MAX}
+                </div>
               </div>
 
               <div className="field">
