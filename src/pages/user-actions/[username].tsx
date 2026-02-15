@@ -248,9 +248,7 @@ export default function UserActionPage() {
       {confirmOpen && (
         <div className="modal-backdrop">
           <div className="modal modal-wide">
-            <h2>
-              {confirmMode === 'block' ? 'Block this user?' : 'Unblock this user?'}
-            </h2>
+            <h2>{confirmMode === 'block' ? 'Block this user?' : 'Unblock this user?'}</h2>
             <p>
               {confirmMode === 'block'
                 ? 'Blocking is mutual: you and this user will no longer see each other\u2019s profile or posts, and you will not receive notifications from each other. You can still see their username here to unblock later.'
@@ -280,9 +278,7 @@ export default function UserActionPage() {
       {reportOpen && (
         <div className="modal-backdrop">
           <div className="modal modal-wide">
-            <h2>
-              Report @{username}
-            </h2>
+            <h2>Report @{username}</h2>
             <p>
               Reports are confidential. The reported user will not know who reported them. Reports
               are reviewed by moderators.

@@ -161,11 +161,7 @@ export default function NewPlaylistPage() {
               </div>
             </div>
 
-            {error && (
-              <p className="error-message mt-8">
-                {error}
-              </p>
-            )}
+            {error && <p className="error-message mt-8">{error}</p>}
 
             <div className="mt-30 flex-row gap-8">
               <button type="submit" className="button primary" disabled={pending || !user}>

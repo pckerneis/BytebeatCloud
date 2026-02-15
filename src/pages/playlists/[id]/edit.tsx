@@ -358,11 +358,7 @@ export default function PlaylistEditPage() {
               </div>
             </div>
 
-            {saveError && (
-              <p className="error-message mt-8">
-                {saveError}
-              </p>
-            )}
+            {saveError && <p className="error-message mt-8">{saveError}</p>}
 
             <div className="mt-10">
               {posts.length === 0 ? (
@@ -488,11 +484,7 @@ export default function PlaylistEditPage() {
               >
                 Delete Playlist
               </button>
-              {deleteError && (
-                <p className="error-message mt-8">
-                  {deleteError}
-                </p>
-              )}
+              {deleteError && <p className="error-message mt-8">{deleteError}</p>}
             </div>
 
             {showDeleteModal && (
@@ -500,10 +492,7 @@ export default function PlaylistEditPage() {
                 className="modal-backdrop"
                 onClick={() => !deletePending && setShowDeleteModal(false)}
               >
-                <div
-                  className="modal modal-wide"
-                  onClick={(e) => e.stopPropagation()}
-                >
+                <div className="modal modal-wide" onClick={(e) => e.stopPropagation()}>
                   <h3>Delete Playlist</h3>
                   <p>
                     Are you sure you want to delete <strong>{playlist.title}</strong>? This action

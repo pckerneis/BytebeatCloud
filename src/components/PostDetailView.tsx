@@ -1162,9 +1162,7 @@ export function PostDetailView({
         <div className="modal-backdrop">
           <div className="modal modal-wide">
             <h2>Add to playlist</h2>
-            <p className="secondary-text">
-              Choose one of your playlists or create a new one.
-            </p>
+            <p className="secondary-text">Choose one of your playlists or create a new one.</p>
             {playlistsLoading ? (
               <p className="text-centered">Loading…</p>
             ) : playlists.length > 0 ? (
@@ -1180,16 +1178,11 @@ export function PostDetailView({
                 {playlists.map((pl) => {
                   const alreadyHas = postPlaylistIdSet.has(pl.id);
                   return (
-                    <li
-                      key={pl.id}
-                      className="flex-row align-items-center py-8"
-                    >
+                    <li key={pl.id} className="flex-row align-items-center py-8">
                       <div className="flex-grow">
                         <div className="weight-600">{pl.name}</div>
                         {pl.description && (
-                          <div className="secondary-text smaller mt-5">
-                            {pl.description}
-                          </div>
+                          <div className="secondary-text smaller mt-5">{pl.description}</div>
                         )}
                       </div>
                       <button
@@ -1211,11 +1204,7 @@ export function PostDetailView({
             ) : (
               <p className="secondary-text">You have no playlists yet.</p>
             )}
-            {addToPlaylistError && (
-              <p className="error-message mt-8">
-                {addToPlaylistError}
-              </p>
-            )}
+            {addToPlaylistError && <p className="error-message mt-8">{addToPlaylistError}</p>}
             <div className="form-actions mt-10">
               <button
                 type="button"

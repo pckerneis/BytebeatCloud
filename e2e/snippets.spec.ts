@@ -21,7 +21,10 @@ let otherUserId: string;
 test.beforeAll(async () => {
   const user = await ensureTestUser({ email: TEST_USER_EMAIL, password: TEST_USER_PASSWORD });
   testUserId = user.id;
-  const otherUser = await ensureTestUser({ email: OTHER_USER_EMAIL, password: OTHER_USER_PASSWORD });
+  const otherUser = await ensureTestUser({
+    email: OTHER_USER_EMAIL,
+    password: OTHER_USER_PASSWORD,
+  });
   otherUserId = otherUser.id;
 });
 

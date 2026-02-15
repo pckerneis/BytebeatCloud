@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { ExpressionEditor, ExpressionErrorSnippet } from './ExpressionEditor';
 import { AutocompleteTextarea } from './AutocompleteTextarea';
 import { AutocompleteInput } from './AutocompleteInput';
@@ -199,37 +199,37 @@ export function PostEditorFormFields(props: Readonly<PostEditorFormFieldsProps>)
     setDurationModalOpen(false);
   };
 
-  const loadSnippetsPage = useCallback(async (query: string, page: number) => {
-    if (page === 0) setSnippetSearchLoading(true);
-    else setSnippetLoadingMore(true);
-    const { data, hasMore } = await searchSnippetsRanked(query, userId, page);
-    if (query !== snippetSearchRef.current) return; // stale response
-    if (page === 0) {
-      setSnippetResults(data);
-    } else {
-      setSnippetResults((prev) => [...prev, ...data]);
-    }
-    setSnippetHasMore(hasMore);
-    setSnippetSearchLoading(false);
-    setSnippetLoadingMore(false);
-    snippetLoadingMoreRef.current = false;
-  }, [userId]);
+  const loadSnippetsPage = useCallback(
+    async (query: string, page: number) => {
+      if (page === 0) setSnippetSearchLoading(true);
+      else setSnippetLoadingMore(true);
+      const { data, hasMore } = await searchSnippetsRanked(query, userId, page);
+      if (query !== snippetSearchRef.current) return; // stale response
+      if (page === 0) {
+        setSnippetResults(data);
+      } else {
+        setSnippetResults((prev) => [...prev, ...data]);
+      }
+      setSnippetHasMore(hasMore);
+      setSnippetSearchLoading(false);
+      setSnippetLoadingMore(false);
+      snippetLoadingMoreRef.current = false;
+    },
+    [userId],
+  );
 
   // Load next page when snippetPage changes (driven by useInfiniteScroll)
-  const snippetPageRef = useRef(0);
-  if (snippetPage !== snippetPageRef.current) {
-    snippetPageRef.current = snippetPage;
+  useEffect(() => {
     if (snippetPage > 0) {
       void loadSnippetsPage(snippetSearchRef.current, snippetPage);
     }
-  }
+  }, [snippetPage, loadSnippetsPage]);
 
   const openSnippetsModal = () => {
     setSnippetSearch('');
     snippetSearchRef.current = '';
     setSnippetResults([]);
     setSnippetPage(0);
-    snippetPageRef.current = 0;
     setSnippetHasMore(false);
     setSnippetLoadingMore(false);
     snippetLoadingMoreRef.current = false;
@@ -252,7 +252,6 @@ export function PostEditorFormFields(props: Readonly<PostEditorFormFieldsProps>)
     }
     snippetSearchTimerRef.current = window.setTimeout(() => {
       setSnippetPage(0);
-      snippetPageRef.current = 0;
       setSnippetHasMore(false);
       setSnippetLoadingMore(false);
       snippetLoadingMoreRef.current = false;
@@ -606,7 +605,11 @@ export function PostEditorFormFields(props: Readonly<PostEditorFormFieldsProps>)
                 </div>
               ))}
               {snippetHasMore && (
-                <div ref={snippetSentinelRef} style={{ height: 1 }} data-testid="snippet-scroll-sentinel" />
+                <div
+                  ref={snippetSentinelRef}
+                  style={{ height: 1 }}
+                  data-testid="snippet-scroll-sentinel"
+                />
               )}
               {snippetLoadingMore && <p className="secondary-text">Loading more…</p>}
             </div>
