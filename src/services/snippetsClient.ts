@@ -74,3 +74,48 @@ export async function deleteSnippet(snippetId: string): Promise<{ error: string 
   const { error } = await supabase.from('snippets').delete().eq('id', snippetId);
   return { error: error?.message ?? null };
 }
+
+const SNIPPET_PAGE_SIZE = 20;
+
+export async function searchSnippetsRanked(
+  query: string,
+  userId: string | undefined,
+  page: number,
+  pageSize: number = SNIPPET_PAGE_SIZE,
+): Promise<{ data: SnippetRow[]; hasMore: boolean; error: string | null }> {
+  const { data, error } = await supabase.rpc('search_snippets_ranked', {
+    search_query: query.trim(),
+    current_user_id: userId ?? null,
+    page_size: pageSize,
+    page_offset: page * pageSize,
+  });
+
+  if (error) {
+    return { data: [], hasMore: false, error: error.message };
+  }
+
+  const rows: SnippetRow[] = (data ?? []).map((row: any) => ({
+    id: row.id,
+    name: row.name,
+    profile_id: row.profile_id,
+    created_at: row.created_at,
+    description: row.description,
+    snippet: row.snippet,
+    is_public: row.is_public,
+    username: row.username ?? undefined,
+    usage_count: Number(row.usage_count) || 0,
+  }));
+
+  return { data: rows, hasMore: rows.length >= pageSize, error: null };
+}
+
+export async function recordSnippetUsage(
+  snippetId: string,
+  userId: string,
+): Promise<{ error: string | null }> {
+  const { error } = await supabase.from('snippet_usages').insert({
+    snippet_id: snippetId,
+    profile_id: userId,
+  });
+  return { error: error?.message ?? null };
+}

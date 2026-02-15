@@ -246,28 +246,15 @@ export default function UserActionPage() {
         )}
       </section>
       {confirmOpen && (
-        <div
-          className="modal-backdrop"
-          style={{
-            position: 'fixed',
-            inset: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.4)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000,
-          }}
-        >
-          <div className="modal" style={{ maxWidth: 520 }}>
-            <h2 style={{ marginTop: 0, marginBottom: '8px', fontSize: '16px' }}>
-              {confirmMode === 'block' ? 'Block this user?' : 'Unblock this user?'}
-            </h2>
-            <p style={{ marginTop: 0, marginBottom: '12px', fontSize: '13px', opacity: 0.9 }}>
+        <div className="modal-backdrop">
+          <div className="modal modal-wide">
+            <h2>{confirmMode === 'block' ? 'Block this user?' : 'Unblock this user?'}</h2>
+            <p>
               {confirmMode === 'block'
-                ? 'Blocking is mutual: you and this user will no longer see each other’s profile or posts, and you will not receive notifications from each other. You can still see their username here to unblock later.'
+                ? 'Blocking is mutual: you and this user will no longer see each other\u2019s profile or posts, and you will not receive notifications from each other. You can still see their username here to unblock later.'
                 : 'Unblocking will restore mutual visibility: profiles and posts will be visible again, and notifications can resume.'}
             </p>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+            <div className="modal-actions">
               <button
                 type="button"
                 className="button secondary"
@@ -289,30 +276,17 @@ export default function UserActionPage() {
         </div>
       )}
       {reportOpen && (
-        <div
-          className="modal-backdrop"
-          style={{
-            position: 'fixed',
-            inset: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.4)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000,
-          }}
-        >
-          <div className="modal" style={{ maxWidth: 520 }}>
-            <h2 style={{ marginTop: 0, marginBottom: '8px', fontSize: '16px' }}>
-              Report @{username}
-            </h2>
-            <p style={{ marginTop: 0, marginBottom: '12px', fontSize: '13px', opacity: 0.9 }}>
+        <div className="modal-backdrop">
+          <div className="modal modal-wide">
+            <h2>Report @{username}</h2>
+            <p>
               Reports are confidential. The reported user will not know who reported them. Reports
               are reviewed by moderators.
             </p>
             <select
               value={reportCategory}
               onChange={(e) => setReportCategory(e.target.value)}
-              style={{ width: '100%', marginBottom: '12px' }}
+              className="w-full mb-12"
               disabled={pending}
             >
               <option value="" disabled>
@@ -329,17 +303,14 @@ export default function UserActionPage() {
             </select>
             <textarea
               value={reportReason}
-              className="border-bottom-accent-focus"
+              className="border-bottom-accent-focus w-full mb-12"
               onChange={(e) => setReportReason(e.target.value)}
               placeholder="Additional details..."
               rows={4}
-              style={{ width: '100%', marginBottom: '12px', resize: 'vertical' }}
               disabled={pending}
             />
             {!isBlocked && (
-              <label
-                style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}
-              >
+              <label className="checkbox mb-12">
                 <input
                   type="checkbox"
                   checked={reportAlsoBlock}
@@ -349,7 +320,7 @@ export default function UserActionPage() {
                 Also block this user
               </label>
             )}
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+            <div className="modal-actions">
               <button
                 type="button"
                 className="button secondary"

@@ -1103,39 +1103,26 @@ export function PostDetailView({
         )}
       </section>
       {deleteConfirmOpen && (
-        <div
-          className="modal-backdrop"
-          style={{
-            position: 'fixed',
-            inset: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.4)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000,
-          }}
-        >
-          <div className="modal" style={{ maxWidth: 520 }}>
-            <h2 style={{ marginTop: 0, marginBottom: '8px', fontSize: '16px' }}>Delete comment?</h2>
-            <p style={{ marginTop: 0, marginBottom: '12px', fontSize: '13px', opacity: 0.9 }}>
-              This action cannot be undone.
-            </p>
+        <div className="modal-backdrop">
+          <div className="modal modal-wide">
+            <h2>Delete comment?</h2>
+            <p>This action cannot be undone.</p>
             {user && deleteConfirmAuthorId && deleteConfirmAuthorId !== (user as any).id && (
-              <div style={{ marginBottom: '12px' }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+              <div className="mb-12">
+                <label className="checkbox">
                   <input
                     type="checkbox"
                     checked={deleteAlsoReport}
                     onChange={(e) => setDeleteAlsoReport(e.target.checked)}
                     disabled={deletePending}
                   />
-                  <span style={{ fontSize: '13px' }}>Also report this comment</span>
+                  Also report this comment
                 </label>
                 {deleteAlsoReport && (
                   <select
                     value={deleteReportCategory}
                     onChange={(e) => setDeleteReportCategory(e.target.value)}
-                    style={{ width: '100%', marginTop: '8px' }}
+                    className="w-full mt-8"
                     disabled={deletePending}
                   >
                     <option value="" disabled>
@@ -1150,7 +1137,7 @@ export function PostDetailView({
                 )}
               </div>
             )}
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+            <div className="modal-actions">
               <button
                 type="button"
                 className="button secondary"
@@ -1172,23 +1159,10 @@ export function PostDetailView({
         </div>
       )}
       {addToPlaylistOpen && (
-        <div
-          className="modal-backdrop"
-          style={{
-            position: 'fixed',
-            inset: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.4)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000,
-          }}
-        >
-          <div className="modal" style={{ maxWidth: 520 }}>
-            <h2 style={{ marginTop: 0, marginBottom: '8px', fontSize: '16px' }}>Add to playlist</h2>
-            <p className="secondary-text" style={{ marginTop: 0, marginBottom: '12px' }}>
-              Choose one of your playlists or create a new one.
-            </p>
+        <div className="modal-backdrop">
+          <div className="modal modal-wide">
+            <h2>Add to playlist</h2>
+            <p className="secondary-text">Choose one of your playlists or create a new one.</p>
             {playlistsLoading ? (
               <p className="text-centered">Loading…</p>
             ) : playlists.length > 0 ? (
@@ -1204,16 +1178,11 @@ export function PostDetailView({
                 {playlists.map((pl) => {
                   const alreadyHas = postPlaylistIdSet.has(pl.id);
                   return (
-                    <li
-                      key={pl.id}
-                      style={{ display: 'flex', alignItems: 'center', padding: '8px 0' }}
-                    >
-                      <div style={{ flex: 1 }}>
-                        <div style={{ fontWeight: 600 }}>{pl.name}</div>
+                    <li key={pl.id} className="flex-row align-items-center py-8">
+                      <div className="flex-grow">
+                        <div className="weight-600">{pl.name}</div>
                         {pl.description && (
-                          <div className="secondary-text" style={{ fontSize: 12, marginTop: 2 }}>
-                            {pl.description}
-                          </div>
+                          <div className="secondary-text smaller mt-5">{pl.description}</div>
                         )}
                       </div>
                       <button
@@ -1235,14 +1204,8 @@ export function PostDetailView({
             ) : (
               <p className="secondary-text">You have no playlists yet.</p>
             )}
-            {addToPlaylistError && (
-              <p className="error-message" style={{ marginTop: '8px' }}>
-                {addToPlaylistError}
-              </p>
-            )}
-            <div
-              style={{ display: 'flex', justifyContent: 'space-between', gap: 8, marginTop: 12 }}
-            >
+            {addToPlaylistError && <p className="error-message mt-8">{addToPlaylistError}</p>}
+            <div className="form-actions mt-10">
               <button
                 type="button"
                 className="button secondary"
@@ -1264,28 +1227,17 @@ export function PostDetailView({
         </div>
       )}
       {commentReportOpen && (
-        <div
-          className="modal-backdrop"
-          style={{
-            position: 'fixed',
-            inset: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.4)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000,
-          }}
-        >
-          <div className="modal" style={{ maxWidth: 520 }}>
-            <h2 style={{ marginTop: 0, marginBottom: '8px', fontSize: '16px' }}>Report comment</h2>
-            <p style={{ marginTop: 0, marginBottom: '12px', fontSize: '13px', opacity: 0.9 }}>
+        <div className="modal-backdrop">
+          <div className="modal modal-wide">
+            <h2>Report comment</h2>
+            <p>
               Reports are confidential. The comment author will not know who reported them. Reports
               are reviewed by moderators.
             </p>
             <select
               value={commentReportCategory}
               onChange={(e) => setCommentReportCategory(e.target.value)}
-              style={{ width: '100%', marginBottom: '12px' }}
+              className="w-full mb-12"
               disabled={commentReportPending}
             >
               <option value="" disabled>
@@ -1303,12 +1255,11 @@ export function PostDetailView({
                 onChange={(e) => setCommentReportDetails(e.target.value)}
                 placeholder="Please provide details..."
                 rows={3}
-                className="border-bottom-accent-focus"
-                style={{ width: '100%', marginBottom: '12px', resize: 'vertical' }}
+                className="border-bottom-accent-focus w-full mb-12"
                 disabled={commentReportPending}
               />
             )}
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+            <div className="modal-actions">
               <button
                 type="button"
                 className="button secondary"
@@ -1334,28 +1285,17 @@ export function PostDetailView({
         </div>
       )}
       {reportOpen && (
-        <div
-          className="modal-backdrop"
-          style={{
-            position: 'fixed',
-            inset: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.4)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000,
-          }}
-        >
-          <div className="modal" style={{ maxWidth: 520 }}>
-            <h2 style={{ marginTop: 0, marginBottom: '8px', fontSize: '16px' }}>Report post</h2>
-            <p style={{ marginTop: 0, marginBottom: '12px', fontSize: '13px', opacity: 0.9 }}>
+        <div className="modal-backdrop">
+          <div className="modal modal-wide">
+            <h2>Report post</h2>
+            <p>
               Reports are confidential. The post author will not know who reported them. Reports are
               reviewed by moderators.
             </p>
             <select
               value={reportCategory}
               onChange={(e) => setReportCategory(e.target.value)}
-              style={{ width: '100%', marginBottom: '12px' }}
+              className="w-full mb-12"
               disabled={reportPending}
             >
               <option value="" disabled>
@@ -1374,12 +1314,11 @@ export function PostDetailView({
               onChange={(e) => setReportDetails(e.target.value)}
               placeholder="Additional details..."
               rows={4}
-              className="border-bottom-accent-focus"
-              style={{ width: '100%', marginBottom: '12px', resize: 'vertical' }}
+              className="border-bottom-accent-focus w-full mb-12"
               disabled={reportPending}
             />
             {reportError && <p className="error-message">{reportError}</p>}
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+            <div className="modal-actions">
               <button
                 type="button"
                 className="button secondary"

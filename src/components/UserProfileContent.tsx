@@ -799,9 +799,8 @@ export function UserProfileContent({
                 {isFollowed ? 'Followed' : 'Follow'}
               </button>
               <button
-                style={{ marginLeft: '10px' }}
                 type="button"
-                className={'button secondary'}
+                className="button secondary ml-10"
                 disabled={loadingFollow}
                 onClick={() => void navigateToUserActions()}
               >
@@ -1051,35 +1050,33 @@ export function UserProfileContent({
             <label className="field mb-10">
               <input
                 type="text"
-                className="border-bottom-accent-focus"
+                className="border-bottom-accent-focus w-full"
                 placeholder="Snippet name"
                 maxLength={SNIPPET_NAME_MAX}
                 value={newSnippetName}
                 onChange={(e) => setNewSnippetName(e.target.value)}
-                style={{ width: '100%', maxWidth: '100%', padding: '6px 8px' }}
               />
-              <div className="secondary-text ml-auto" style={{ fontSize: 12, marginTop: 4 }}>
+              <div className="counter mt-5">
                 {newSnippetName.length}/{SNIPPET_NAME_MAX}
               </div>
             </label>
-            <div className="field" style={{ marginBottom: '8px' }}>
+            <div className="field mb-8">
               <SnippetCodeEditor value={newSnippetCode} onChange={setNewSnippetCode} />
             </div>
             <label className="field mb-10">
               <textarea
                 placeholder="Description (optional)"
                 maxLength={SNIPPET_DESCRIPTION_MAX}
-                className="border-bottom-accent-focus"
+                className="border-bottom-accent-focus w-full"
                 value={newSnippetDescription}
                 onChange={(e) => setNewSnippetDescription(e.target.value)}
                 rows={2}
-                style={{ width: '100%', padding: '6px 8px', resize: 'vertical' }}
               />
-              <div className="secondary-text ml-auto" style={{ fontSize: 12, marginTop: 4 }}>
+              <div className="counter mt-5">
                 {newSnippetDescription.length}/{SNIPPET_DESCRIPTION_MAX}
               </div>
             </label>
-            <label className="checkbox" style={{ marginBottom: '12px' }}>
+            <label className="checkbox mb-12">
               <input
                 type="checkbox"
                 checked={newSnippetPublic}
@@ -1088,7 +1085,7 @@ export function UserProfileContent({
               Make public
             </label>
             {snippetError && <p className="error-message">{snippetError}</p>}
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+            <div className="modal-actions">
               <button type="button" className="button secondary" onClick={closeCreateSnippetModal}>
                 Cancel
               </button>

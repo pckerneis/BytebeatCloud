@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { ExpressionEditor, ExpressionErrorSnippet } from './ExpressionEditor';
 import { AutocompleteTextarea } from './AutocompleteTextarea';
 import { AutocompleteInput } from './AutocompleteInput';
@@ -23,7 +23,8 @@ import {
 } from '../constants';
 import Link from 'next/link';
 import type { SnippetRow } from '../model/snippet';
-import { searchSnippets } from '../services/snippetsClient';
+import { searchSnippetsRanked, recordSnippetUsage } from '../services/snippetsClient';
+import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
 
 interface PostEditorFormFieldsProps {
   meta: PostMetadataModel;
@@ -48,6 +49,7 @@ interface PostEditorFormFieldsProps {
   onLiveUpdateChange: (enabled: boolean) => void;
 
   isShareAlikeFork?: boolean;
+  userId?: string;
 }
 
 function findNextPresetSampleRate(sampleRate: number): number {
@@ -98,6 +100,7 @@ export function PostEditorFormFields(props: Readonly<PostEditorFormFieldsProps>)
     onLiveUpdateChange,
     isShareAlikeFork,
     isEdit,
+    userId,
   } = props;
 
   const expressionLength = new TextEncoder().encode(expression).length;
@@ -120,6 +123,19 @@ export function PostEditorFormFields(props: Readonly<PostEditorFormFieldsProps>)
   const [snippetResults, setSnippetResults] = useState<SnippetRow[]>([]);
   const [snippetSearchLoading, setSnippetSearchLoading] = useState(false);
   const snippetSearchTimerRef = useRef<number | null>(null);
+  const [snippetPage, setSnippetPage] = useState(0);
+  const [snippetHasMore, setSnippetHasMore] = useState(false);
+  const [snippetLoadingMore, setSnippetLoadingMore] = useState(false);
+  const snippetLoadingMoreRef = useRef(false);
+  const snippetSentinelRef = useRef<HTMLDivElement | null>(null);
+  const snippetSearchRef = useRef('');
+
+  useInfiniteScroll({
+    hasMore: snippetHasMore,
+    loadingMoreRef: snippetLoadingMoreRef,
+    sentinelRef: snippetSentinelRef,
+    setPage: setSnippetPage,
+  });
 
   const openSampleRateModal = () => {
     setSampleRateInput(sampleRate.toString());
@@ -183,18 +199,42 @@ export function PostEditorFormFields(props: Readonly<PostEditorFormFieldsProps>)
     setDurationModalOpen(false);
   };
 
-  const loadSnippets = useCallback(async (query: string) => {
-    setSnippetSearchLoading(true);
-    const { data } = await searchSnippets(query);
-    setSnippetResults(data);
-    setSnippetSearchLoading(false);
-  }, []);
+  const loadSnippetsPage = useCallback(
+    async (query: string, page: number) => {
+      if (page === 0) setSnippetSearchLoading(true);
+      else setSnippetLoadingMore(true);
+      const { data, hasMore } = await searchSnippetsRanked(query, userId, page);
+      if (query !== snippetSearchRef.current) return; // stale response
+      if (page === 0) {
+        setSnippetResults(data);
+      } else {
+        setSnippetResults((prev) => [...prev, ...data]);
+      }
+      setSnippetHasMore(hasMore);
+      setSnippetSearchLoading(false);
+      setSnippetLoadingMore(false);
+      snippetLoadingMoreRef.current = false;
+    },
+    [userId],
+  );
+
+  // Load next page when snippetPage changes (driven by useInfiniteScroll)
+  useEffect(() => {
+    if (snippetPage > 0) {
+      void loadSnippetsPage(snippetSearchRef.current, snippetPage);
+    }
+  }, [snippetPage, loadSnippetsPage]);
 
   const openSnippetsModal = () => {
     setSnippetSearch('');
+    snippetSearchRef.current = '';
     setSnippetResults([]);
+    setSnippetPage(0);
+    setSnippetHasMore(false);
+    setSnippetLoadingMore(false);
+    snippetLoadingMoreRef.current = false;
     setSnippetsModalOpen(true);
-    void loadSnippets('');
+    void loadSnippetsPage('', 0);
   };
 
   const closeSnippetsModal = () => {
@@ -206,15 +246,23 @@ export function PostEditorFormFields(props: Readonly<PostEditorFormFieldsProps>)
 
   const handleSnippetSearchChange = (value: string) => {
     setSnippetSearch(value);
+    snippetSearchRef.current = value;
     if (snippetSearchTimerRef.current !== null) {
       window.clearTimeout(snippetSearchTimerRef.current);
     }
     snippetSearchTimerRef.current = window.setTimeout(() => {
-      void loadSnippets(value);
+      setSnippetPage(0);
+      setSnippetHasMore(false);
+      setSnippetLoadingMore(false);
+      snippetLoadingMoreRef.current = false;
+      void loadSnippetsPage(value, 0);
     }, 300);
   };
 
-  const insertSnippet = (snippetCode: string) => {
+  const insertSnippet = (snippetId: string, snippetCode: string) => {
+    if (userId) {
+      void recordSnippetUsage(snippetId, userId);
+    }
     const trimmed = expression.trim();
     if (trimmed) {
       if (trimmed.endsWith(',')) {
@@ -454,9 +502,9 @@ export function PostEditorFormFields(props: Readonly<PostEditorFormFieldsProps>)
               value={sampleRateInput}
               step={10}
               onChange={(e) => setSampleRateInput(e.target.value.replace(/[^0-9]/g, ''))}
-              style={{ width: '100%', padding: '6px 8px', marginBottom: '12px' }}
+              className="w-full mb-12"
             />
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+            <div className="modal-actions">
               <button type="button" className="button secondary" onClick={closeSampleRateModal}>
                 Cancel
               </button>
@@ -497,9 +545,9 @@ export function PostEditorFormFields(props: Readonly<PostEditorFormFieldsProps>)
               max={MAX_AUTO_SKIP_DURATION}
               value={durationInput}
               onChange={(e) => setDurationInput(e.target.value.replace(/[^0-9]/g, ''))}
-              style={{ width: '100%', padding: '6px 8px', marginBottom: '12px' }}
+              className="w-full mb-12"
             />
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+            <div className="modal-actions">
               <button type="button" className="button secondary" onClick={closeDurationModal}>
                 Cancel
               </button>
@@ -530,14 +578,15 @@ export function PostEditorFormFields(props: Readonly<PostEditorFormFieldsProps>)
             <input
               type="search"
               placeholder="Search for a snippet..."
-              className="border-bottom-accent-focus"
+              className="border-bottom-accent-focus w-full mb-12"
               value={snippetSearch}
               onChange={(e) => handleSnippetSearchChange(e.target.value)}
-              style={{ width: '100%', padding: '6px 8px', marginBottom: '12px' }}
             />
 
             <div className="snippet-results-list">
-              {snippetSearchLoading && <p className="secondary-text">Searching…</p>}
+              {snippetSearchLoading && snippetResults.length === 0 && (
+                <p className="secondary-text">Searching…</p>
+              )}
               {!snippetSearchLoading && snippetResults.length === 0 && (
                 <p className="secondary-text">No snippets found.</p>
               )}
@@ -545,7 +594,7 @@ export function PostEditorFormFields(props: Readonly<PostEditorFormFieldsProps>)
                 <div
                   key={s.id}
                   className="snippet-result-item"
-                  onClick={() => insertSnippet(s.snippet)}
+                  onClick={() => insertSnippet(s.id, s.snippet)}
                 >
                   <div>
                     <strong>{s.name}</strong>
@@ -555,9 +604,17 @@ export function PostEditorFormFields(props: Readonly<PostEditorFormFieldsProps>)
                   {s.description && <div className="secondary-text smaller">{s.description}</div>}
                 </div>
               ))}
+              {snippetHasMore && (
+                <div
+                  ref={snippetSentinelRef}
+                  style={{ height: 1 }}
+                  data-testid="snippet-scroll-sentinel"
+                />
+              )}
+              {snippetLoadingMore && <p className="secondary-text">Loading more…</p>}
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+            <div className="modal-actions">
               <button type="button" className="button secondary" onClick={closeSnippetsModal}>
                 Close
               </button>

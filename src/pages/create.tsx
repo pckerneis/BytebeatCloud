@@ -245,6 +245,7 @@ export default function CreatePage() {
             saveError={editor.saveError}
             showActions={!!editor.user}
             isEdit={false}
+            userId={(editor.user as any)?.id}
             liveUpdateEnabled={editor.liveUpdateEnabled}
             onLiveUpdateChange={editor.setLiveUpdateEnabled}
           />
