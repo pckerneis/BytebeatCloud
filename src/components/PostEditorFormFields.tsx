@@ -125,6 +125,7 @@ export function PostEditorFormFields(props: Readonly<PostEditorFormFieldsProps>)
   const snippetSearchTimerRef = useRef<number | null>(null);
   const [snippetPage, setSnippetPage] = useState(0);
   const [snippetHasMore, setSnippetHasMore] = useState(false);
+  const [snippetLoadingMore, setSnippetLoadingMore] = useState(false);
   const snippetLoadingMoreRef = useRef(false);
   const snippetSentinelRef = useRef<HTMLDivElement | null>(null);
   const snippetSearchRef = useRef('');
@@ -200,6 +201,7 @@ export function PostEditorFormFields(props: Readonly<PostEditorFormFieldsProps>)
 
   const loadSnippetsPage = useCallback(async (query: string, page: number) => {
     if (page === 0) setSnippetSearchLoading(true);
+    else setSnippetLoadingMore(true);
     const { data, hasMore } = await searchSnippetsRanked(query, userId, page);
     if (query !== snippetSearchRef.current) return; // stale response
     if (page === 0) {
@@ -209,6 +211,7 @@ export function PostEditorFormFields(props: Readonly<PostEditorFormFieldsProps>)
     }
     setSnippetHasMore(hasMore);
     setSnippetSearchLoading(false);
+    setSnippetLoadingMore(false);
     snippetLoadingMoreRef.current = false;
   }, [userId]);
 
@@ -228,6 +231,7 @@ export function PostEditorFormFields(props: Readonly<PostEditorFormFieldsProps>)
     setSnippetPage(0);
     snippetPageRef.current = 0;
     setSnippetHasMore(false);
+    setSnippetLoadingMore(false);
     snippetLoadingMoreRef.current = false;
     setSnippetsModalOpen(true);
     void loadSnippetsPage('', 0);
@@ -250,6 +254,7 @@ export function PostEditorFormFields(props: Readonly<PostEditorFormFieldsProps>)
       setSnippetPage(0);
       snippetPageRef.current = 0;
       setSnippetHasMore(false);
+      setSnippetLoadingMore(false);
       snippetLoadingMoreRef.current = false;
       void loadSnippetsPage(value, 0);
     }, 300);
@@ -603,7 +608,7 @@ export function PostEditorFormFields(props: Readonly<PostEditorFormFieldsProps>)
               {snippetHasMore && (
                 <div ref={snippetSentinelRef} style={{ height: 1 }} data-testid="snippet-scroll-sentinel" />
               )}
-              {snippetLoadingMoreRef.current && <p className="secondary-text">Loading more…</p>}
+              {snippetLoadingMore && <p className="secondary-text">Loading more…</p>}
             </div>
 
             <div className="modal-actions">
