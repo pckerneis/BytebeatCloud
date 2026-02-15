@@ -120,15 +120,12 @@ export default function NewPlaylistPage() {
                   disabled={pending}
                   required
                 />
-                <div className="secondary-text ml-auto" style={{ fontSize: 12, marginTop: 4 }}>
+                <div className="counter mt-5">
                   {title.length}/{PLAYLIST_TITLE_MAX}
                 </div>
               </div>
 
               <div className="field">
-                <label htmlFor="description" style={{ fontWeight: 600 }}>
-                  Description
-                </label>
                 <textarea
                   id="description"
                   value={description}
@@ -139,13 +136,13 @@ export default function NewPlaylistPage() {
                   disabled={pending}
                   maxLength={PLAYLIST_DESCRIPTION_MAX}
                 />
-                <div className="secondary-text ml-auto" style={{ fontSize: 12, marginTop: 4 }}>
+                <div className="counter mt-5">
                   {description.length}/{PLAYLIST_DESCRIPTION_MAX}
                 </div>
               </div>
 
               <div className="field">
-                <label htmlFor="visibility" style={{ fontWeight: 600 }}>
+                <label htmlFor="visibility" className="weight-600">
                   Visibility
                 </label>
                 <select
@@ -165,12 +162,12 @@ export default function NewPlaylistPage() {
             </div>
 
             {error && (
-              <p className="error-message" style={{ marginTop: 8 }}>
+              <p className="error-message mt-8">
                 {error}
               </p>
             )}
 
-            <div className="mt-30" style={{ display: 'flex', gap: 8 }}>
+            <div className="mt-30 flex-row gap-8">
               <button type="submit" className="button primary" disabled={pending || !user}>
                 {pending ? 'Creating…' : 'Create playlist'}
               </button>

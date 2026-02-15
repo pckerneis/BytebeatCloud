@@ -454,9 +454,9 @@ export function PostEditorFormFields(props: Readonly<PostEditorFormFieldsProps>)
               value={sampleRateInput}
               step={10}
               onChange={(e) => setSampleRateInput(e.target.value.replace(/[^0-9]/g, ''))}
-              style={{ width: '100%', padding: '6px 8px', marginBottom: '12px' }}
+              className="w-full mb-12"
             />
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+            <div className="modal-actions">
               <button type="button" className="button secondary" onClick={closeSampleRateModal}>
                 Cancel
               </button>
@@ -497,9 +497,9 @@ export function PostEditorFormFields(props: Readonly<PostEditorFormFieldsProps>)
               max={MAX_AUTO_SKIP_DURATION}
               value={durationInput}
               onChange={(e) => setDurationInput(e.target.value.replace(/[^0-9]/g, ''))}
-              style={{ width: '100%', padding: '6px 8px', marginBottom: '12px' }}
+              className="w-full mb-12"
             />
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+            <div className="modal-actions">
               <button type="button" className="button secondary" onClick={closeDurationModal}>
                 Cancel
               </button>
@@ -530,10 +530,9 @@ export function PostEditorFormFields(props: Readonly<PostEditorFormFieldsProps>)
             <input
               type="search"
               placeholder="Search for a snippet..."
-              className="border-bottom-accent-focus"
+              className="border-bottom-accent-focus w-full mb-12"
               value={snippetSearch}
               onChange={(e) => handleSnippetSearchChange(e.target.value)}
-              style={{ width: '100%', padding: '6px 8px', marginBottom: '12px' }}
             />
 
             <div className="snippet-results-list">
@@ -557,7 +556,7 @@ export function PostEditorFormFields(props: Readonly<PostEditorFormFieldsProps>)
               ))}
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+            <div className="modal-actions">
               <button type="button" className="button secondary" onClick={closeSnippetsModal}>
                 Close
               </button>

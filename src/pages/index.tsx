@@ -306,7 +306,7 @@ export default function Home() {
           </p>
         </fieldset>
 
-        <section style={{ marginTop: '24px' }}>
+        <section className="mt-30">
           <h3>Trending posts</h3>
           {trendingLoading && <p className="text-centered">Loading trending posts…</p>}
           {!trendingLoading && trendingError && <p className="error-message">{trendingError}</p>}

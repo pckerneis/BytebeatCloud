@@ -337,7 +337,6 @@ export default function PlaylistEditPage() {
             <h2>Edit Playlist</h2>
             <div className="create-form">
               <div className="field">
-                <label style={{ fontWeight: 600 }}>Title</label>
                 <input
                   type="text"
                   value={editTitle}
@@ -348,7 +347,6 @@ export default function PlaylistEditPage() {
                 />
               </div>
               <div className="field">
-                <label style={{ fontWeight: 600 }}>Description</label>
                 <textarea
                   value={editDescription}
                   onChange={(e) => setEditDescription(e.target.value)}
@@ -361,12 +359,12 @@ export default function PlaylistEditPage() {
             </div>
 
             {saveError && (
-              <p className="error-message" style={{ marginTop: 8 }}>
+              <p className="error-message mt-8">
                 {saveError}
               </p>
             )}
 
-            <div style={{ marginTop: 16 }}>
+            <div className="mt-10">
               {posts.length === 0 ? (
                 <p className="secondary-text">No entries yet.</p>
               ) : (
@@ -455,7 +453,7 @@ export default function PlaylistEditPage() {
               )}
             </div>
 
-            <div className="mt-30" style={{ display: 'flex', gap: 8 }}>
+            <div className="mt-30 flex-row gap-8">
               <button
                 type="button"
                 className="button"
@@ -478,8 +476,8 @@ export default function PlaylistEditPage() {
               className="mt-30"
               style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: 24 }}
             >
-              <h3 style={{ marginBottom: 8 }}>Danger Zone</h3>
-              <p className="secondary-text" style={{ marginBottom: 16 }}>
+              <h3 className="mb-8">Danger Zone</h3>
+              <p className="secondary-text mb-12">
                 Deleting this playlist is permanent and cannot be undone.
               </p>
               <button
@@ -491,7 +489,7 @@ export default function PlaylistEditPage() {
                 Delete Playlist
               </button>
               {deleteError && (
-                <p className="error-message" style={{ marginTop: 8 }}>
+                <p className="error-message mt-8">
                   {deleteError}
                 </p>
               )}
@@ -503,18 +501,15 @@ export default function PlaylistEditPage() {
                 onClick={() => !deletePending && setShowDeleteModal(false)}
               >
                 <div
-                  className="modal"
+                  className="modal modal-wide"
                   onClick={(e) => e.stopPropagation()}
-                  style={{ maxWidth: 500 }}
                 >
                   <h3>Delete Playlist</h3>
-                  <p style={{ marginTop: 16 }}>
+                  <p>
                     Are you sure you want to delete <strong>{playlist.title}</strong>? This action
                     cannot be undone.
                   </p>
-                  <div
-                    style={{ display: 'flex', gap: 8, marginTop: 24, justifyContent: 'flex-end' }}
-                  >
+                  <div className="modal-actions mt-10">
                     <button
                       type="button"
                       className="button secondary"
