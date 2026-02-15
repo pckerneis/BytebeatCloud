@@ -191,6 +191,7 @@ export default function EditPostPage() {
             saveError={editor.saveError}
             showActions={!!editor.user}
             isEdit={true}
+            userId={(editor.user as any)?.id}
             liveUpdateEnabled={editor.liveUpdateEnabled}
             onLiveUpdateChange={editor.setLiveUpdateEnabled}
           />

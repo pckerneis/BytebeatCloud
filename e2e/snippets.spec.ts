@@ -11,15 +11,23 @@ const TEST_USER_EMAIL = 'e2e+snippets@example.com';
 const TEST_USER_PASSWORD = 'password123';
 const TEST_USERNAME = 'e2e_snippets_user';
 
+const OTHER_USER_EMAIL = 'e2e+snippets_other@example.com';
+const OTHER_USER_PASSWORD = 'password123';
+const OTHER_USERNAME = 'e2e_snippets_other';
+
 let testUserId: string;
+let otherUserId: string;
 
 test.beforeAll(async () => {
   const user = await ensureTestUser({ email: TEST_USER_EMAIL, password: TEST_USER_PASSWORD });
   testUserId = user.id;
+  const otherUser = await ensureTestUser({ email: OTHER_USER_EMAIL, password: OTHER_USER_PASSWORD });
+  otherUserId = otherUser.id;
 });
 
 test.beforeEach(async () => {
   await clearProfilesTable();
+  await supabaseAdmin.from('snippet_usages').delete().not('id', 'is', null);
   await supabaseAdmin.from('snippets').delete().not('id', 'is', null);
 });
 
@@ -264,5 +272,166 @@ test.describe('Snippets - insert in editor', () => {
 
     // Expression should contain the snippet without leading comma
     await expect(page.locator('.expression-input')).toContainText('solo=(x)=>x');
+  });
+});
+
+test.describe('Snippets - usage tracking and ranking', () => {
+  test.beforeEach(async ({ page }) => {
+    await signInAndInjectSession(page, {
+      email: TEST_USER_EMAIL,
+      password: TEST_USER_PASSWORD,
+    });
+    await ensureTestUserProfile(TEST_USER_EMAIL, TEST_USERNAME);
+  });
+
+  test('inserting a snippet records usage in the database', async ({ page }) => {
+    const { data: snippetData } = await supabaseAdmin
+      .from('snippets')
+      .insert({
+        name: 'e2e_tracked',
+        snippet: 'trk=(x)=>x*2',
+        description: 'Tracked snippet',
+        is_public: true,
+        profile_id: testUserId,
+      })
+      .select('id')
+      .single();
+
+    await page.goto('/create');
+
+    // Open snippet modal and insert
+    await page.getByRole('button', { name: '+ Insert snippet' }).click();
+    await expect(page.getByText('e2e_tracked')).toBeVisible();
+    await page.getByText('e2e_tracked').click();
+
+    // Wait for the async usage recording to complete
+    await page.waitForTimeout(1000);
+
+    // Verify usage was recorded in DB
+    const { data: usages } = await supabaseAdmin
+      .from('snippet_usages')
+      .select('id')
+      .eq('snippet_id', snippetData!.id);
+    expect(usages).toHaveLength(1);
+  });
+
+  test('snippets are ranked by popularity', async ({ page }) => {
+    // Seed two public snippets
+    const { data: snippetA } = await supabaseAdmin
+      .from('snippets')
+      .insert({
+        name: 'e2e_unpopular',
+        snippet: 'unpop=(x)=>x',
+        description: '',
+        is_public: true,
+        profile_id: testUserId,
+      })
+      .select('id')
+      .single();
+
+    const { data: snippetB } = await supabaseAdmin
+      .from('snippets')
+      .insert({
+        name: 'e2e_popular',
+        snippet: 'pop=(x)=>x*3',
+        description: '',
+        is_public: true,
+        profile_id: testUserId,
+      })
+      .select('id')
+      .single();
+
+    // Seed 5 usages for snippet B (popular) and 0 for A
+    const usageRows = Array.from({ length: 5 }, () => ({
+      snippet_id: snippetB!.id,
+      profile_id: testUserId,
+    }));
+    await supabaseAdmin.from('snippet_usages').insert(usageRows);
+
+    await page.goto('/create');
+
+    await page.getByRole('button', { name: '+ Insert snippet' }).click();
+    await expect(page.getByText('e2e_popular')).toBeVisible();
+    await expect(page.getByText('e2e_unpopular')).toBeVisible();
+
+    // Popular snippet should appear before unpopular one
+    const items = page.locator('.snippet-result-item');
+    const firstItemText = await items.first().textContent();
+    expect(firstItemText).toContain('e2e_popular');
+  });
+
+  test('own snippets appear before popular ones from other users', async ({ page }) => {
+    await ensureTestUserProfile(OTHER_USER_EMAIL, OTHER_USERNAME);
+
+    // Seed a popular public snippet from the OTHER user
+    const { data: otherSnippet } = await supabaseAdmin
+      .from('snippets')
+      .insert({
+        name: 'e2e_other_popular',
+        snippet: 'otherpop=(x)=>x',
+        description: '',
+        is_public: true,
+        profile_id: otherUserId,
+      })
+      .select('id')
+      .single();
+
+    // Give it many usages
+    const usageRows = Array.from({ length: 10 }, () => ({
+      snippet_id: otherSnippet!.id,
+      profile_id: otherUserId,
+    }));
+    await supabaseAdmin.from('snippet_usages').insert(usageRows);
+
+    // Seed own snippet with 0 usages
+    await supabaseAdmin.from('snippets').insert({
+      name: 'e2e_my_snippet',
+      snippet: 'mine=(x)=>x',
+      description: '',
+      is_public: true,
+      profile_id: testUserId,
+    });
+
+    await page.goto('/create');
+
+    await page.getByRole('button', { name: '+ Insert snippet' }).click();
+    await expect(page.getByText('e2e_my_snippet')).toBeVisible();
+    await expect(page.getByText('e2e_other_popular')).toBeVisible();
+
+    // Own snippet should appear first despite having 0 usages
+    const items = page.locator('.snippet-result-item');
+    const firstItemText = await items.first().textContent();
+    expect(firstItemText).toContain('e2e_my_snippet');
+  });
+
+  test('infinite scroll loads more snippets', async ({ page }) => {
+    // Seed 25 public snippets
+    const snippets = Array.from({ length: 25 }, (_, i) => ({
+      name: `e2e_scroll_${String(i).padStart(2, '0')}`,
+      snippet: `s${i}=(x)=>x+${i}`,
+      description: '',
+      is_public: true,
+      profile_id: testUserId,
+    }));
+    await supabaseAdmin.from('snippets').insert(snippets);
+
+    await page.goto('/create');
+
+    await page.getByRole('button', { name: '+ Insert snippet' }).click();
+
+    // Initial batch should load (up to 20 items)
+    await expect(page.locator('.snippet-result-item').first()).toBeVisible();
+    const initialCount = await page.locator('.snippet-result-item').count();
+    expect(initialCount).toBe(20);
+
+    // Scroll sentinel should be visible (more items available)
+    const sentinel = page.getByTestId('snippet-scroll-sentinel');
+    await expect(sentinel).toBeAttached();
+
+    // Scroll the sentinel into view to trigger loading more
+    await sentinel.scrollIntoViewIfNeeded();
+
+    // Wait for additional items to load
+    await expect(page.locator('.snippet-result-item')).toHaveCount(25, { timeout: 5000 });
   });
 });

@@ -7,4 +7,5 @@ export interface SnippetRow {
   snippet: string;
   is_public: boolean;
   username?: string;
+  usage_count?: number;
 }

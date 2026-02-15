@@ -170,6 +170,7 @@ export default function ForkPostPage() {
             onLiveUpdateChange={editor.setLiveUpdateEnabled}
             isShareAlikeFork={editor.isShareAlike}
             isEdit={false}
+            userId={(editor.user as any)?.id}
           />
 
           <div className="form-actions">
