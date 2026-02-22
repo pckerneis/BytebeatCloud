@@ -253,11 +253,11 @@ h3 mark {
   opacity: 0.8;
 }
 
-.edit-link {
+.edit-link,
+.edit-link a {
   color: var(--secondary-text-color);
   text-decoration: none;
   font-size: 12px;
-  margin-left: auto;
 }
 
 .edit-link.disabled {

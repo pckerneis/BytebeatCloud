@@ -334,7 +334,7 @@ test.describe('Post detail page - fork button', () => {
     await expect(page.getByRole('heading', { name: 'Fork' })).toBeVisible();
   });
 
-  test('shows edit button for own post', async ({ page }) => {
+  test('shows edit and fork buttons for own post', async ({ page }) => {
     // Create post by test user
     await ensureTestUserProfile(TEST_USER_EMAIL, TEST_USERNAME);
 
@@ -360,9 +360,9 @@ test.describe('Post detail page - fork button', () => {
 
     await expect(page.getByText('Loading…')).toHaveCount(0, { timeout: 10000 });
 
-    // Should show Edit link, not Fork
+    // Should show Edit and Fork links
     await expect(page.getByRole('link', { name: 'Edit' })).toBeVisible();
-    await expect(page.getByRole('link', { name: 'Fork' })).toHaveCount(0);
+    await expect(page.getByRole('link', { name: 'Fork' })).toBeVisible();
   });
 });
 
