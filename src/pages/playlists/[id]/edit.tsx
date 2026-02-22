@@ -6,7 +6,6 @@ import { useSupabaseAuth } from '../../../hooks/useSupabaseAuth';
 import { BackButton } from '../../../components/BackButton';
 import type { PostRow } from '../../../components/PostList';
 import { formatAuthorUsername, formatPostTitle } from '../../../utils/post-format';
-import Link from 'next/link';
 
 interface PlaylistRow {
   id: string;
