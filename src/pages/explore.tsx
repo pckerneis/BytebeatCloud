@@ -15,7 +15,7 @@ import { PostDetailView } from '../components/PostDetailView';
 import { PlaylistCard } from '../components/PlaylistCard';
 import { PullToRefreshIndicator } from '../components/PullToRefreshIndicator';
 
-const tabs = ['feed', 'recent', 'weekly'] as const;
+const tabs = ['feed', 'recent', 'random', 'weekly'] as const;
 type TabName = (typeof tabs)[number];
 const contentTypes = ['posts', 'playlists'] as const;
 type ContentType = (typeof contentTypes)[number];
@@ -296,6 +296,11 @@ export default function ExplorePage() {
 
         data = (result.data ?? []) as PostRow[];
         error = result.error;
+      } else if (activeTab === 'random') {
+        const rpcResult = await supabase.rpc('get_random_posts', { count: 20 });
+        data = (rpcResult.data ?? []) as PostRow[];
+        error = rpcResult.error;
+        setHasMore(false);
       }
 
       if (cancelled || fetchId !== currentFetchRef.current) return;
@@ -540,6 +545,12 @@ export default function ExplorePage() {
               >
                 Recent
               </span>
+              <span
+                className={`tab-button ${activeTab === 'random' ? 'active' : ''}`}
+                onClick={() => handleTabClick('random')}
+              >
+                Random
+              </span>
               {hasActiveChallenge && (
                 <span
                   className={`tab-button ${activeTab === 'weekly' ? 'active' : ''}`}
@@ -549,6 +560,14 @@ export default function ExplorePage() {
                 </span>
               )}
             </div>
+            {activeTab === 'random' && (
+              <div className="flex-row align-items-center gap-8 mt-10 mb-10">
+                <span className="secondary-text smaller">20 random posts</span>
+                <button className="button small secondary" onClick={resetPagination}>
+                  Shuffle
+                </button>
+              </div>
+            )}
             {activeTab === 'weekly' && (
               <div className="info-panel">
                 <div>
@@ -593,7 +612,7 @@ export default function ExplorePage() {
             {hasMore && !loading && posts.length > 0 && (
               <p className="text-centered">Loading more…</p>
             )}
-            {!hasMore && !loading && posts.length > 0 && (
+            {!hasMore && !loading && posts.length > 0 && activeTab !== 'random' && (
               <p className="text-centered">You reached the end!</p>
             )}
           </div>
