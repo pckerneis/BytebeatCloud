@@ -23,7 +23,7 @@ export async function convertMentionsToIds(text: string): Promise<string> {
   const matches = [...text.matchAll(MENTION_USERNAME_REGEX)];
   if (matches.length === 0) return text;
 
-  const usernames = [...new Set(matches.map((m) => m[1].toLowerCase()))];
+  const usernames = [...new Set(matches.map((m) => m[1]))];
 
   // Fetch user IDs for all usernames
   const { data: profiles } = await supabase
@@ -33,15 +33,15 @@ export async function convertMentionsToIds(text: string): Promise<string> {
 
   if (!profiles || profiles.length === 0) return text;
 
-  // Build a map of lowercase username -> id
+  // Build a map of username -> id
   const usernameToId = new Map<string, string>();
   for (const p of profiles) {
-    usernameToId.set(p.username.toLowerCase(), p.id);
+    usernameToId.set(p.username, p.id);
   }
 
   // Replace @username with @[userId]
   return text.replace(MENTION_USERNAME_REGEX, (match, username: string) => {
-    const id = usernameToId.get(username.toLowerCase());
+    const id = usernameToId.get(username);
     return id ? `@[${id}]` : match; // Keep original if user not found
   });
 }
