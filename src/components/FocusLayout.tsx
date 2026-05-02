@@ -9,7 +9,6 @@ import { VolumeButton } from './VolumeButton';
 import {
   ModeOption,
   SAMPLE_RATE_PRESETS,
-  MAX_SAMPLE_RATE,
   MIN_SAMPLE_RATE,
   formatSampleRate,
   DEFAULT_SAMPLE_RATE,
@@ -117,7 +116,9 @@ function FocusHeader({
 }
 
 function findNextPresetSampleRate(sampleRate: number): number {
-  if (sampleRate >= MAX_SAMPLE_RATE) return MIN_SAMPLE_RATE;
+  const highest = SAMPLE_RATE_PRESETS[SAMPLE_RATE_PRESETS.length - 1]
+
+  if (sampleRate >= highest) return MIN_SAMPLE_RATE;
 
   for (let sr of SAMPLE_RATE_PRESETS) {
     if (sr > sampleRate) {
@@ -125,7 +126,7 @@ function findNextPresetSampleRate(sampleRate: number): number {
     }
   }
 
-  return MAX_SAMPLE_RATE;
+  return highest;
 }
 
 interface FocusLayoutProps extends PropsWithChildren {

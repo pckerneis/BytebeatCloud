@@ -53,7 +53,9 @@ interface PostEditorFormFieldsProps {
 }
 
 function findNextPresetSampleRate(sampleRate: number): number {
-  if (sampleRate >= MAX_SAMPLE_RATE) return MIN_SAMPLE_RATE;
+  const highest = SAMPLE_RATE_PRESETS[SAMPLE_RATE_PRESETS.length - 1];
+
+  if (sampleRate >= highest) return MIN_SAMPLE_RATE;
 
   for (let sr of SAMPLE_RATE_PRESETS) {
     if (sr > sampleRate) {
@@ -61,7 +63,7 @@ function findNextPresetSampleRate(sampleRate: number): number {
     }
   }
 
-  return MAX_SAMPLE_RATE;
+  return highest;
 }
 
 function findNextDurationPreset(duration: number | null): number | null {
@@ -500,7 +502,7 @@ export function PostEditorFormFields(props: Readonly<PostEditorFormFieldsProps>)
               min={MIN_SAMPLE_RATE}
               max={MAX_SAMPLE_RATE}
               value={sampleRateInput}
-              step={10}
+              step={1}
               onChange={(e) => setSampleRateInput(e.target.value.replace(/[^0-9]/g, ''))}
               className="w-full mb-12"
             />
