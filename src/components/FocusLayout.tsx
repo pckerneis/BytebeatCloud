@@ -116,7 +116,7 @@ function FocusHeader({
 }
 
 function findNextPresetSampleRate(sampleRate: number): number {
-  const highest = SAMPLE_RATE_PRESETS[SAMPLE_RATE_PRESETS.length - 1]
+  const highest = SAMPLE_RATE_PRESETS[SAMPLE_RATE_PRESETS.length - 1];
 
   if (sampleRate >= highest) return MIN_SAMPLE_RATE;
 
