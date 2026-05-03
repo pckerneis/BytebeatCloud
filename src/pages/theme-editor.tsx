@@ -343,6 +343,15 @@ export default function ThemeEditorPage() {
         <title>Theme editor — BytebeatCloud</title>
       </Head>
       <div className="te-page">
+
+        <div className="info-panel">
+          <b>⚠️ Experimental Feature</b>
+          <span>
+            This feature is currently experimental and may be modified or removed at any time.
+            Custom themes are stored locally in your browser and may be lost if you clear your cache.
+          </span>
+        </div>
+
         <div className="te-page-header">
           <h2 className="te-page-title">Theme editor</h2>
           <button type="button" className="button primary small" onClick={startNewTheme}>
