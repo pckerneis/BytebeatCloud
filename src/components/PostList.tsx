@@ -532,15 +532,16 @@ export function PostList({
                 )}
                 {canEdit ? (
                   <div className="edit-link ml-auto">
-                    <Link href={`/fork/${post.id}`}>
-                      Fork
-                    </Link>
+                    <Link href={`/fork/${post.id}`}>Fork</Link>
                     <Link href={`/edit/${post.id}`} className="ml-10">
                       Edit
                     </Link>
                   </div>
                 ) : post.license === 'all-rights-reserved' ? (
-                  <span className="edit-link disabled ml-auto" title="This post is all rights reserved">
+                  <span
+                    className="edit-link disabled ml-auto"
+                    title="This post is all rights reserved"
+                  >
                     Fork
                   </span>
                 ) : (

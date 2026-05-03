@@ -11,7 +11,10 @@ function getInitialTheme(): string {
 
   if (stored) {
     if (UI_THEMES.some((t) => t.id === stored)) return stored;
-    if (stored.startsWith('custom-') && loadCustomThemesFromStorage().some((t) => t.id === stored)) {
+    if (
+      stored.startsWith('custom-') &&
+      loadCustomThemesFromStorage().some((t) => t.id === stored)
+    ) {
       return stored;
     }
   }
