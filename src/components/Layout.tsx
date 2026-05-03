@@ -4,11 +4,12 @@ import { PropsWithChildren, useEffect, useState } from 'react';
 import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
 import { warmUpBytebeatEngine } from '../hooks/useBytebeatPlayer';
 import { supabase } from '../lib/supabaseClient';
-import { DEFAULT_THEME_ID, getUiTheme, type ThemeId, UI_THEMES } from '../theme/themes';
+import { DEFAULT_THEME_ID, getUiTheme, UI_THEMES } from '../theme/themes';
 import { ThemeContext } from '../theme/ThemeContext';
 import { useUserGate } from '../hooks/useUserGate';
 import FooterPlayer from './FooterPlayer';
 import { useTheme } from '../hooks/useTheme';
+import { useCustomThemes } from '../hooks/useCustomThemes';
 import useAudioWarmup from '../hooks/useAudioWarmup';
 
 function NavLink({ href, children }: PropsWithChildren<{ href: string }>) {
@@ -28,6 +29,7 @@ export function Layout({ children }: Readonly<PropsWithChildren>) {
   const { user } = useSupabaseAuth();
   const router = useRouter();
   const { theme, setTheme } = useTheme();
+  const { customThemes } = useCustomThemes(theme);
   useAudioWarmup();
 
   const [notificationsCount, setNotificationsCount] = useState<number | null>(null);
@@ -104,15 +106,23 @@ export function Layout({ children }: Readonly<PropsWithChildren>) {
     };
   }, [userId]);
 
-  const handleCycleTheme = () => {
-    if (!theme) {
-      setTheme(DEFAULT_THEME_ID);
-      return;
-    }
+  const allThemes = [
+    ...UI_THEMES.map((t) => ({ id: t.id, label: t.label })),
+    ...customThemes.map((t) => ({ id: t.id, label: t.label })),
+  ];
 
-    const idx = UI_THEMES.findIndex((t) => t.id === theme);
-    const next = UI_THEMES[(idx + 1 + UI_THEMES.length) % UI_THEMES.length];
-    setTheme(next.id);
+  const currentThemeLabel = (() => {
+    const builtin = UI_THEMES.find((t) => t.id === theme);
+    if (builtin) return builtin.label;
+    const custom = customThemes.find((t) => t.id === theme);
+    if (custom) return custom.label;
+    return getUiTheme(theme).label;
+  })();
+
+  const handleCycleTheme = () => {
+    const idx = allThemes.findIndex((t) => t.id === theme);
+    const next = allThemes[(idx + 1) % allThemes.length];
+    setTheme(next?.id ?? DEFAULT_THEME_ID);
   };
 
   if (userId && gate.checked) {
@@ -196,8 +206,11 @@ export function Layout({ children }: Readonly<PropsWithChildren>) {
                 onClick={handleCycleTheme}
                 suppressHydrationWarning
               >
-                {getUiTheme(theme).label}
+                {currentThemeLabel}
               </button>
+              <Link href="/theme-editor" className="theme-editor-link" suppressHydrationWarning>
+                customize
+              </Link>
             </div>
           </nav>
           <main>{children}</main>

@@ -187,6 +187,10 @@
     margin: 0;
   }
 
+  .theme-editor-link {
+    display: none;
+  }
+
   .theme-toggle-button {
     width: 24px;
     height: 24px;

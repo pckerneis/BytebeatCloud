@@ -1,0 +1,222 @@
+/* Theme editor page */
+
+.te-page {
+  padding: 24px;
+  max-width: 700px;
+}
+
+.te-page-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.te-page-title {
+  margin: 0;
+  font-size: 18px;
+}
+
+.te-empty {
+  margin-top: 12px;
+}
+
+/* Theme list */
+
+.te-theme-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.te-theme-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--card-bg-color);
+}
+
+.te-theme-swatches {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.te-theme-swatch {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1px solid var(--border-color);
+  display: inline-block;
+}
+
+.te-theme-name {
+  flex: 1;
+  font-size: 13px;
+}
+
+.te-theme-actions {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+/* Editor */
+
+.te-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.te-editor-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.te-name-input {
+  font-size: 16px;
+  font-weight: 600;
+  background: transparent;
+  min-width: 200px;
+}
+
+.te-editor-actions {
+  display: flex;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.te-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.te-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.te-group-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--secondary-text-color);
+  margin: 0 0 4px;
+}
+
+/* Variable rows */
+
+.te-variable-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+}
+
+.te-variable-label {
+  flex: 1;
+  font-size: 13px;
+  color: var(--secondary-text-color);
+  min-width: 160px;
+}
+
+.te-variable-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.te-color-swatch {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  border: 1px solid var(--border-color);
+  flex-shrink: 0;
+  display: inline-block;
+}
+
+.te-color-swatch-button {
+  cursor: pointer;
+  background: none;
+  padding: 0;
+  transition: transform 0.1s;
+}
+
+.te-color-swatch-button:hover {
+  transform: scale(1.1);
+}
+
+.te-color-picker-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.te-hex-input {
+  width: 80px;
+  font-family: inherit;
+  font-size: 12px;
+  padding: 4px 6px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background: var(--bg-color);
+  color: var(--text-color);
+}
+
+.te-hex-input:focus {
+  outline: none;
+  border-color: var(--accent-color);
+}
+
+.te-text-input {
+  width: 200px;
+  font-family: inherit;
+  font-size: 12px;
+  padding: 4px 6px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background: var(--bg-color);
+  color: var(--text-color);
+}
+
+.te-text-input:focus {
+  outline: none;
+  border-color: var(--accent-color);
+}
+
+.te-editor-footer {
+  display: flex;
+  gap: 6px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border-color);
+}
+
+/* Navbar customize link */
+
+.theme-editor-link {
+  display: block;
+  text-align: center;
+  font-size: 11px;
+  color: var(--secondary-text-color);
+  text-decoration: none;
+  margin-top: 6px;
+  opacity: 0.7;
+}
+
+.theme-editor-link:hover {
+  color: var(--accent-color);
+  opacity: 1;
+}
