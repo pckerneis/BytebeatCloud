@@ -132,6 +132,7 @@
 }
 
 .te-variable-controls {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 6px;
@@ -179,6 +180,54 @@
 .te-hex-input:focus {
   outline: none;
   border-color: var(--accent-color);
+}
+
+.te-color-swatch-alpha {
+  background: var(--swatch-color);
+}
+
+.te-alpha-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100px;
+  height: 12px;
+  border-radius: 6px;
+  background:
+    linear-gradient(to right, transparent, var(--alpha-slider-color)),
+    repeating-conic-gradient(#ccc 0% 25%, #fff 0% 50%) 0 0 / 8px 8px;
+  outline: none;
+  cursor: pointer;
+  border: 1px solid var(--border-color);
+}
+
+.te-alpha-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--bg-color);
+  border: 2px solid var(--border-color);
+  cursor: pointer;
+  box-shadow: 0 1px 3px var(--shadow-soft-color);
+}
+
+.te-alpha-slider::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--bg-color);
+  border: 2px solid var(--border-color);
+  cursor: pointer;
+  box-shadow: 0 1px 3px var(--shadow-soft-color);
+}
+
+.te-alpha-value {
+  font-size: 12px;
+  color: var(--secondary-text-color);
+  width: 34px;
+  text-align: right;
+  flex-shrink: 0;
 }
 
 .te-text-input {

@@ -208,9 +208,9 @@ export function Layout({ children }: Readonly<PropsWithChildren>) {
               >
                 {currentThemeLabel}
               </button>
-              <Link href="/theme-editor" className="theme-editor-link" suppressHydrationWarning>
+              {/* <Link href="/theme-editor" className="theme-editor-link" suppressHydrationWarning>
                 customize
-              </Link>
+              </Link> */}
             </div>
           </nav>
           <main>{children}</main>

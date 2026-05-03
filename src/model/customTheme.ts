@@ -24,7 +24,47 @@ export function saveCustomThemesToStorage(themes: CustomTheme[]): void {
 export interface VariableDefinition {
   varName: string;
   label: string;
-  type: 'color' | 'accent' | 'text';
+  type: 'color' | 'accent' | 'text' | 'rgba';
+}
+
+export interface RgbaColor {
+  r: number;
+  g: number;
+  b: number;
+  a: number;
+}
+
+export function parseRgbaColor(cssValue: string): RgbaColor {
+  const v = cssValue.trim();
+  const rgbaMatch = v.match(/^rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*(?:,\s*([\d.]+))?\s*\)$/);
+  if (rgbaMatch) {
+    return {
+      r: parseInt(rgbaMatch[1]),
+      g: parseInt(rgbaMatch[2]),
+      b: parseInt(rgbaMatch[3]),
+      a: rgbaMatch[4] !== undefined ? parseFloat(rgbaMatch[4]) : 1,
+    };
+  }
+  const hexMatch = v.match(/^#([0-9a-fA-F]{6})([0-9a-fA-F]{2})?$/);
+  if (hexMatch) {
+    return {
+      r: parseInt(hexMatch[1].slice(0, 2), 16),
+      g: parseInt(hexMatch[1].slice(2, 4), 16),
+      b: parseInt(hexMatch[1].slice(4, 6), 16),
+      a: hexMatch[2] ? parseInt(hexMatch[2], 16) / 255 : 1,
+    };
+  }
+  return { r: 0, g: 0, b: 0, a: 1 };
+}
+
+export function rgbaColorToString({ r, g, b, a }: RgbaColor): string {
+  const alpha = Math.round(a * 100) / 100;
+  if (alpha >= 1) return `rgb(${r}, ${g}, ${b})`;
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+export function rgbaColorToHex({ r, g, b }: RgbaColor): string {
+  return '#' + [r, g, b].map((n) => Math.round(n).toString(16).padStart(2, '0')).join('');
 }
 
 export interface VariableGroup {
@@ -78,7 +118,7 @@ export const VARIABLE_GROUPS: VariableGroup[] = [
     ],
   },
   {
-    label: 'Code editor',
+    label: 'Code editor (video)',
     items: [
       { varName: '--code-bg-color', label: 'Code background', type: 'color' },
       { varName: '--code-text-color', label: 'Code text', type: 'color' },
@@ -111,15 +151,15 @@ export const VARIABLE_GROUPS: VariableGroup[] = [
       {
         varName: '--post-expression-overlay-color',
         label: 'Expression overlay',
-        type: 'text',
+        type: 'rgba',
       },
     ],
   },
   {
     label: 'Overlays & shadows',
     items: [
-      { varName: '--shadow-soft-color', label: 'Shadow', type: 'text' },
-      { varName: '--modal-overlay-color', label: 'Modal overlay', type: 'text' },
+      { varName: '--shadow-soft-color', label: 'Shadow', type: 'rgba' },
+      { varName: '--modal-overlay-color', label: 'Modal overlay', type: 'rgba' },
     ],
   },
 ];

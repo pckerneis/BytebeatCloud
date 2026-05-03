@@ -13,6 +13,9 @@ import {
   accentToHex,
   hexToAccentRgb,
   cssColorToHex,
+  parseRgbaColor,
+  rgbaColorToString,
+  rgbaColorToHex,
 } from '../model/customTheme';
 
 interface EditingState {
@@ -51,6 +54,58 @@ function VariableRow({ definition, value, onChange }: Readonly<VariableRowProps>
             onChange={(e) => onChange(definition.varName, e.target.value)}
             placeholder="e.g. rgba(0, 0, 0, 0.15)"
           />
+        </div>
+      </div>
+    );
+  }
+
+  if (definition.type === 'rgba') {
+    const parsed = parseRgbaColor(value);
+    const hexValue = rgbaColorToHex(parsed);
+
+    const handleColorChange = (newHex: string) => {
+      const r = parseInt(newHex.slice(1, 3), 16);
+      const g = parseInt(newHex.slice(3, 5), 16);
+      const b = parseInt(newHex.slice(5, 7), 16);
+      onChange(definition.varName, rgbaColorToString({ r, g, b, a: parsed.a }));
+    };
+
+    const handleAlphaChange = (newAlpha: number) => {
+      onChange(definition.varName, rgbaColorToString({ ...parsed, a: newAlpha }));
+    };
+
+    return (
+      <div className="te-variable-row">
+        <span className="te-variable-label">{definition.label}</span>
+        <div className="te-variable-controls">
+          <button
+            type="button"
+            className="te-color-swatch te-color-swatch-button te-color-swatch-alpha"
+            style={{ '--swatch-color': value } as React.CSSProperties}
+            onClick={() => colorInputRef.current?.click()}
+            aria-label={`Choose ${definition.label} color`}
+          />
+          <input
+            ref={colorInputRef}
+            type="color"
+            value={hexValue}
+            onChange={(e) => handleColorChange(e.target.value)}
+            className="te-color-picker-hidden"
+            aria-hidden="true"
+            tabIndex={-1}
+          />
+          <input
+            type="range"
+            min="0"
+            max="1"
+            step="0.01"
+            value={parsed.a}
+            onChange={(e) => handleAlphaChange(parseFloat(e.target.value))}
+            className="te-alpha-slider"
+            style={{ '--alpha-slider-color': hexValue } as React.CSSProperties}
+            aria-label={`${definition.label} opacity`}
+          />
+          <span className="te-alpha-value">{Math.round(parsed.a * 100)}%</span>
         </div>
       </div>
     );
