@@ -2,6 +2,7 @@ export interface CustomTheme {
   id: string;
   label: string;
   variables: Record<string, string>;
+  codeMirrorThemeId?: string;
 }
 
 export const CUSTOM_THEMES_STORAGE_KEY = 'custom-themes';
@@ -105,7 +106,11 @@ export const VARIABLE_GROUPS: VariableGroup[] = [
     label: 'Buttons',
     items: [
       { varName: '--button-bg-color', label: 'Button background', type: 'color' },
-      { varName: '--button-secondary-bg-color', label: 'Secondary button background', type: 'color' },
+      {
+        varName: '--button-secondary-bg-color',
+        label: 'Secondary button background',
+        type: 'color',
+      },
       { varName: '--button-border-color', label: 'Button border', type: 'color' },
       { varName: '--button-primary-text-color', label: 'Primary button text', type: 'color' },
     ],
@@ -216,15 +221,21 @@ export function cssColorToHex(cssValue: string): string {
   if (/^#[0-9a-fA-F]{8}$/.test(v)) return v.slice(0, 7);
   const rgbMatch = v.match(/^rgb\(\s*(\d+),\s*(\d+),\s*(\d+)\s*\)$/);
   if (rgbMatch) {
-    return '#' + [rgbMatch[1], rgbMatch[2], rgbMatch[3]]
-      .map((n) => parseInt(n).toString(16).padStart(2, '0'))
-      .join('');
+    return (
+      '#' +
+      [rgbMatch[1], rgbMatch[2], rgbMatch[3]]
+        .map((n) => parseInt(n).toString(16).padStart(2, '0'))
+        .join('')
+    );
   }
   const rgbaMatch = v.match(/^rgba\(\s*(\d+),\s*(\d+),\s*(\d+)/);
   if (rgbaMatch) {
-    return '#' + [rgbaMatch[1], rgbaMatch[2], rgbaMatch[3]]
-      .map((n) => parseInt(n).toString(16).padStart(2, '0'))
-      .join('');
+    return (
+      '#' +
+      [rgbaMatch[1], rgbaMatch[2], rgbaMatch[3]]
+        .map((n) => parseInt(n).toString(16).padStart(2, '0'))
+        .join('')
+    );
   }
   return '#000000';
 }

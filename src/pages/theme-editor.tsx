@@ -17,11 +17,13 @@ import {
   rgbaColorToString,
   rgbaColorToHex,
 } from '../model/customTheme';
+import { CODEMIRROR_THEMES } from '../theme/themes';
 
 interface EditingState {
   id: string | null;
   label: string;
   variables: Record<string, string>;
+  codeMirrorThemeId: string;
 }
 
 function applyPreviewStyles(variables: Record<string, string>) {
@@ -111,8 +113,7 @@ function VariableRow({ definition, value, onChange }: Readonly<VariableRowProps>
     );
   }
 
-  const hexValue =
-    definition.type === 'accent' ? accentToHex(value) : cssColorToHex(value);
+  const hexValue = definition.type === 'accent' ? accentToHex(value) : cssColorToHex(value);
 
   const handleColorChange = (newHex: string) => {
     onChange(definition.varName, definition.type === 'accent' ? hexToAccentRgb(newHex) : newHex);
@@ -158,6 +159,7 @@ function VariableRow({ definition, value, onChange }: Readonly<VariableRowProps>
 interface ThemeEditorFormProps {
   editing: EditingState;
   onLabelChange: (label: string) => void;
+  onCodeMirrorThemeChange: (id: string) => void;
   onVariableChange: (varName: string, cssValue: string) => void;
   onSave: () => void;
   onExport: () => void;
@@ -167,6 +169,7 @@ interface ThemeEditorFormProps {
 function ThemeEditorForm({
   editing,
   onLabelChange,
+  onCodeMirrorThemeChange,
   onVariableChange,
   onSave,
   onExport,
@@ -184,6 +187,19 @@ function ThemeEditorForm({
             placeholder="Theme name"
             maxLength={40}
           />
+        </div>
+        <div className="field">
+          <select
+            value={editing.codeMirrorThemeId}
+            onChange={(e) => onCodeMirrorThemeChange(e.target.value)}
+            aria-label="CodeMirror theme"
+          >
+            {CODEMIRROR_THEMES.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.label}
+              </option>
+            ))}
+          </select>
         </div>
         <div className="te-editor-actions">
           <button type="button" className="button primary small" onClick={onSave}>
@@ -241,17 +257,32 @@ export default function ThemeEditorPage() {
   function startNewTheme() {
     const variables = readCurrentThemeVariables();
     applyPreviewStyles(variables);
-    setEditing({ id: null, label: 'My theme', variables });
+    setEditing({
+      id: null,
+      label: 'My theme',
+      variables,
+      codeMirrorThemeId: CODEMIRROR_THEMES[0].id,
+    });
   }
 
   function startEditTheme(t: CustomTheme) {
     applyPreviewStyles(t.variables);
-    setEditing({ id: t.id, label: t.label, variables: { ...t.variables } });
+    setEditing({
+      id: t.id,
+      label: t.label,
+      variables: { ...t.variables },
+      codeMirrorThemeId: t.codeMirrorThemeId ?? CODEMIRROR_THEMES[0].id,
+    });
   }
 
   function handleLabelChange(label: string) {
     if (!editing) return;
     setEditing({ ...editing, label });
+  }
+
+  function handleCodeMirrorThemeChange(codeMirrorThemeId: string) {
+    if (!editing) return;
+    setEditing({ ...editing, codeMirrorThemeId });
   }
 
   function handleVariableChange(varName: string, cssValue: string) {
@@ -264,7 +295,12 @@ export default function ThemeEditorPage() {
   function handleSave() {
     if (!editing) return;
     const id = editing.id ?? `custom-${Date.now()}`;
-    const saved: CustomTheme = { id, label: editing.label, variables: editing.variables };
+    const saved: CustomTheme = {
+      id,
+      label: editing.label,
+      variables: editing.variables,
+      codeMirrorThemeId: editing.codeMirrorThemeId,
+    };
     const updated = editing.id
       ? customThemes.map((t) => (t.id === editing.id ? saved : t))
       : [...customThemes, saved];
@@ -327,6 +363,7 @@ export default function ThemeEditorPage() {
           <ThemeEditorForm
             editing={editing}
             onLabelChange={handleLabelChange}
+            onCodeMirrorThemeChange={handleCodeMirrorThemeChange}
             onVariableChange={handleVariableChange}
             onSave={handleSave}
             onExport={handleExport}
@@ -343,12 +380,12 @@ export default function ThemeEditorPage() {
         <title>Theme editor — BytebeatCloud</title>
       </Head>
       <div className="te-page">
-
         <div className="info-panel">
           <b>⚠️ Experimental Feature</b>
           <span>
             This feature is currently experimental and may be modified or removed at any time.
-            Custom themes are stored locally in your browser and may be lost if you clear your cache.
+            Custom themes are stored locally in your browser and may be lost if you clear your
+            cache.
           </span>
         </div>
 
