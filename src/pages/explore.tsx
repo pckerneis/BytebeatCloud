@@ -605,6 +605,7 @@ export default function ExplorePage() {
                   currentUserId={user ? (user as any).id : undefined}
                   onPostClick={handlePostClick}
                   onCommentClick={handleCommentClick}
+                  postMaxHeight={250}
                 />
               </div>
             )}
