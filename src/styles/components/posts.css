@@ -179,6 +179,16 @@ h3 mark {
   flex: 1;
 }
 
+.post-expression-crop-fade {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 80px;
+  background: linear-gradient(to bottom, transparent, var(--post-expression-background-color));
+  pointer-events: none;
+}
+
 .post-expression-overlay {
   position: absolute;
   inset: 0;

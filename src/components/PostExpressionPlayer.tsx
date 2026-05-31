@@ -1,4 +1,4 @@
-import type { MouseEventHandler } from 'react';
+import { useEffect, useRef, useState, type MouseEventHandler } from 'react';
 import { ReadonlyExpression } from './ExpressionEditor';
 
 interface PostExpressionPlayerProps {
@@ -18,6 +18,22 @@ export function PostExpressionPlayer({
   disableCopy,
   skipMinification,
 }: PostExpressionPlayerProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [isCropped, setIsCropped] = useState(false);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el || !height) {
+      setIsCropped(false);
+      return;
+    }
+    const observer = new ResizeObserver(() => {
+      setIsCropped(el.scrollHeight > el.clientHeight);
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [height]);
+
   const handleClick = () => {
     void onTogglePlay();
   };
@@ -29,6 +45,7 @@ export function PostExpressionPlayer({
 
   return (
     <div
+      ref={containerRef}
       className="post-expression"
       onClick={handleClick}
       style={
@@ -45,6 +62,7 @@ export function PostExpressionPlayer({
         disableCopy={disableCopy}
         skipMinification={skipMinification}
       />
+      {isCropped && <div className="post-expression-crop-fade" aria-hidden="true" />}
       {!isActive && (
         <div className="post-expression-overlay" aria-hidden="true">
           <button type="button" className="post-expression-play-button" onClick={handleButtonClick}>
