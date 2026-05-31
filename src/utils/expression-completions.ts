@@ -46,16 +46,16 @@ const STATIC_COMPLETIONS: Completion[] = [
     })),
 ];
 
-// Matches variable/function declarations to find user-defined names
+// Matches declarations and bare assignments (excluding == and =>) to find user-defined names
 const DECL_RE =
-  /(?:(?:let|const|var)\s+([$\w]+))|(?:function\s+([$\w]+))/g;
+  /(?:(?:let|const|var)\s+([$\w]+))|(?:function\s+([$\w]+))|([$\w]+)\s*=(?![>=])/g;
 
 function getUserDefinedCompletions(doc: string, cursorPos: number): Completion[] {
   const names = new Set<string>();
   let match: RegExpExecArray | null;
   DECL_RE.lastIndex = 0;
   while ((match = DECL_RE.exec(doc)) !== null) {
-    const name = match[1] ?? match[2];
+    const name = match[1] ?? match[2] ?? match[3];
     if (name && match.index !== cursorPos) {
       names.add(name);
     }
