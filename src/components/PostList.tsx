@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ComponentProps } from 'react';
 import { createPortal } from 'react-dom';
 import { useBytebeatPlayer } from '../hooks/useBytebeatPlayer';
 import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
@@ -52,6 +52,52 @@ interface PostListProps {
   onCommentClick?: (post: PostRow) => void;
   highlights?: Record<string, PostHighlight>;
   postMaxHeight?: number;
+}
+
+function LazyPostExpressionPlayer(props: ComponentProps<typeof PostExpressionPlayer>) {
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const [isVisible, setIsVisible] = useState(true);
+  const [placeholderHeight, setPlaceholderHeight] = useState<number | null>(null);
+
+  useEffect(() => {
+    const el = wrapperRef.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+        } else {
+          const h = el.offsetHeight;
+          if (h > 0) setPlaceholderHeight(h);
+          setIsVisible(false);
+        }
+      },
+      { rootMargin: '300px 0px' },
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <div ref={wrapperRef}>
+      {isVisible ? (
+        <PostExpressionPlayer {...props} />
+      ) : (
+        <div
+          style={{
+            height:
+              placeholderHeight !== null
+                ? props.height !== undefined
+                  ? Math.min(placeholderHeight, props.height)
+                  : placeholderHeight
+                : undefined,
+          }}
+        />
+      )}
+    </div>
+  );
 }
 
 function getLengthCategoryChip(expression: string): string | null {
@@ -450,7 +496,7 @@ export function PostList({
                   </span>
                 </div>
               </div>
-              <PostExpressionPlayer
+              <LazyPostExpressionPlayer
                 expression={post.expression}
                 isActive={isActive}
                 onTogglePlay={() => handleExpressionClick(post)}
