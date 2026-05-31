@@ -1,11 +1,11 @@
 import { useEffect } from 'react';
 
-export function useCtrlSpacePlayShortcut(onTogglePlay: () => void) {
+export function useCtrlEnterPlayShortcut(onTogglePlay: () => void) {
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
     const onKeyDown = (e: KeyboardEvent) => {
-      if (!e.ctrlKey || e.code !== 'Space') return;
+      if (!e.ctrlKey || e.code !== 'Enter') return;
 
       const target = e.target as HTMLElement | null;
       if (!target?.closest('.cm-editor')) return;

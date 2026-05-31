@@ -7,7 +7,7 @@ import { usePostSaver } from './usePostSaver';
 import { useBytebeatPlayer } from './useBytebeatPlayer';
 import { usePlayerStore } from './usePlayerStore';
 import { useExpressionPlayer } from './useExpressionPlayer';
-import { useCtrlSpacePlayShortcut } from './useCtrlSpacePlayShortcut';
+import { useCtrlEnterPlayShortcut } from './useCtrlEnterPlayShortcut';
 import { useFocusModeShortcut } from './useFocusModeShortcut';
 import { useCurrentUserProfile } from './useCurrentUserProfile';
 
@@ -88,7 +88,7 @@ export function usePostEditor(options: UsePostEditorOptions) {
 
   const handlePlayClick = () => handlePlayClickBase(currentPost);
 
-  useCtrlSpacePlayShortcut(handlePlayClick);
+  useCtrlEnterPlayShortcut(handlePlayClick);
   useFocusModeShortcut();
 
   useEffect(() => {

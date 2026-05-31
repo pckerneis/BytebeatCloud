@@ -383,6 +383,7 @@ export function PostEditorFormFields(props: Readonly<PostEditorFormFieldsProps>)
           className="button primary"
           disabled={!isPlaying && (!expression.trim() || !!validationIssue)}
           onClick={onPlayClick}
+          title="Play / Stop (Ctrl+Enter)"
         >
           {isPlaying ? 'Stop' : 'Play'}
         </button>

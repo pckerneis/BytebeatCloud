@@ -5,8 +5,10 @@ import { keymap } from '@codemirror/view';
 import { linter, type Diagnostic } from '@codemirror/lint';
 import { insertNewline } from '@codemirror/commands';
 import { Prec } from '@codemirror/state';
+import { acceptCompletion } from '@codemirror/autocomplete';
 import { validateExpression, ValidationIssue } from '../utils/expression-validator';
 import { minimizeExpression } from '../utils/minimize-expression';
+import { bytebeatAutocompletion } from '../utils/expression-completions';
 import { memo, useMemo, useState, useCallback } from 'react';
 import { getUiTheme } from '../theme/themes';
 import { useThemeId } from '../theme/ThemeContext';
@@ -47,15 +49,15 @@ const expressionLinter = linter((view): Diagnostic[] => {
 const editorExtensions = [
   Prec.highest(
     keymap.of([
-      {
-        key: 'Enter',
-        run: insertNewline,
-      },
+      { key: 'Enter', run: acceptCompletion },
+      { key: 'Enter', run: insertNewline },
+      { key: 'Mod-Enter', run: () => true },
     ]),
   ),
   javascript(),
   EditorView.lineWrapping,
   expressionLinter,
+  bytebeatAutocompletion,
 ];
 
 const editorBasicSetup = {

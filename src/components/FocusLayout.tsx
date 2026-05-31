@@ -248,6 +248,7 @@ function FocusFooter({
           className={`transport-button play ${isPlaying ? 'playing' : 'pause'}`}
           disabled={!isPlaying && !canPlay}
           onClick={onPlayClick}
+          title="Play / Stop (Ctrl+Enter)"
         >
           {isPlaying ? '❚❚' : '▶'}
         </button>
