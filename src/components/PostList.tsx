@@ -51,6 +51,7 @@ interface PostListProps {
   onPostClick?: (post: PostRow) => void;
   onCommentClick?: (post: PostRow) => void;
   highlights?: Record<string, PostHighlight>;
+  postMaxHeight?: number;
 }
 
 function getLengthCategoryChip(expression: string): string | null {
@@ -72,6 +73,7 @@ export function PostList({
   onPostClick,
   onCommentClick,
   highlights,
+  postMaxHeight,
 }: Readonly<PostListProps>) {
   const { toggle, stop, isPlaying } = useBytebeatPlayer();
   const [activePostId, setActivePostId] = useState<string | null>(null);
@@ -454,6 +456,7 @@ export function PostList({
                 onTogglePlay={() => handleExpressionClick(post)}
                 disableCopy={post.license === 'all-rights-reserved'}
                 skipMinification={skipMinification}
+                height={postMaxHeight}
               />
               <div className="post-actions">
                 <button
