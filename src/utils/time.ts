@@ -11,5 +11,8 @@ export function formatRelativeTime(isoString: string): string {
   if (diffHours < 24) return `${diffHours} hour${diffHours === 1 ? '' : 's'} ago`;
 
   const diffDays = Math.floor(diffHours / 24);
-  return `${diffDays} day${diffDays === 1 ? '' : 's'} ago`;
+  if (diffDays < 30) return `${diffDays} day${diffDays === 1 ? '' : 's'} ago`;
+
+  const diffMonths = Math.floor(diffDays / 30);
+  return `${diffMonths} month${diffMonths === 1 ? '' : 's'} ago`;
 }
