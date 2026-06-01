@@ -23,15 +23,15 @@ export function PostExpressionPlayer({
 
   useEffect(() => {
     const el = containerRef.current;
-    if (!el || !height) {
-      setIsCropped(false);
-      return;
-    }
+    if (!el || !height) return;
     const observer = new ResizeObserver(() => {
       setIsCropped(el.scrollHeight > el.clientHeight);
     });
     observer.observe(el);
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+      setIsCropped(false);
+    };
   }, [height]);
 
   const handleClick = () => {
