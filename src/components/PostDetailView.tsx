@@ -98,6 +98,7 @@ export function PostDetailView({
   const [highlightedCommentId, setHighlightedCommentId] = useState<string | null>(null);
   useRef<HTMLDivElement | null>(null);
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
+  const [byteCount, setByteCount] = useState<number>(0);
 
   const tabs = ['comments', 'playlists', 'lineage'] as const;
 
@@ -392,6 +393,8 @@ export function PostDetailView({
           setPostMap(pMap);
         }
       }
+
+      setByteCount(new TextEncoder().encode(rowWithCount.expression).length);
 
       setPosts([rowWithCount]);
       setLoading(false);
@@ -804,6 +807,12 @@ export function PostDetailView({
                   mentionUserMap,
                   postMap,
                 )}
+              </p>
+            )}
+
+            {byteCount && (
+              <p className="smaller">
+                Size: {byteCount} byte{byteCount > 1 ? 's' : ''}
               </p>
             )}
 

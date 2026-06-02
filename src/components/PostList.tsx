@@ -219,7 +219,12 @@ export function PostList({
 
     await toggle(post.expression, mode, sr);
     setActivePostId(post.id);
-    setPlaylist(posts, post.id);
+    const postsWithFavoriteState = posts.map((p) => {
+      const local = favoriteState[p.id];
+      if (!local) return p;
+      return { ...p, favorites_count: local.count, favorited_by_current_user: local.favorited };
+    });
+    setPlaylist(postsWithFavoriteState, post.id);
     setCurrentPostById(post.id);
     startPlayTracking(post.id);
   };
