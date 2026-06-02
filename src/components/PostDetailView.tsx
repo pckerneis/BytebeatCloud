@@ -811,8 +811,8 @@ export function PostDetailView({
             )}
 
             {byteCount && (
-              <p className="post-description-detail smaller">
-                {byteCount} byte{byteCount > 1 ? "s" : ""}
+              <p className="smaller">
+                Size: {byteCount} byte{byteCount > 1 ? 's' : ''}
               </p>
             )}
 
