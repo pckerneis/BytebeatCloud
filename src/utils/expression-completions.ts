@@ -9,11 +9,41 @@ import {
 const mathNames = Object.getOwnPropertyNames(Math);
 
 const MATH_FUNCTIONS = new Set([
-  'abs', 'acos', 'acosh', 'asin', 'asinh', 'atan', 'atan2', 'atanh',
-  'cbrt', 'ceil', 'clz32', 'cos', 'cosh', 'exp', 'expm1', 'floor',
-  'fround', 'hypot', 'imul', 'log', 'log10', 'log1p', 'log2', 'max',
-  'min', 'pow', 'random', 'round', 'sign', 'sin', 'sinh', 'sqrt',
-  'tan', 'tanh', 'trunc',
+  'abs',
+  'acos',
+  'acosh',
+  'asin',
+  'asinh',
+  'atan',
+  'atan2',
+  'atanh',
+  'cbrt',
+  'ceil',
+  'clz32',
+  'cos',
+  'cosh',
+  'exp',
+  'expm1',
+  'floor',
+  'fround',
+  'hypot',
+  'imul',
+  'log',
+  'log10',
+  'log1p',
+  'log2',
+  'max',
+  'min',
+  'pow',
+  'random',
+  'round',
+  'sign',
+  'sin',
+  'sinh',
+  'sqrt',
+  'tan',
+  'tanh',
+  'trunc',
 ]);
 
 const MATH_CONSTANTS = new Set(['E', 'LN2', 'LN10', 'LOG2E', 'LOG10E', 'PI', 'SQRT1_2', 'SQRT2']);
@@ -24,10 +54,25 @@ const MATH_DETAIL = 'Math alias';
 
 const STATIC_COMPLETIONS: Completion[] = [
   // Bytebeat-specific injected names
-  { label: 't', type: 'variable', detail: BUILTIN_DETAIL, info: 'Current sample index (auto-incremented)' },
-  { label: 'SR', type: 'variable', detail: BUILTIN_DETAIL, info: 'Sample rate in Hz (e.g. 8000, 44100)' },
+  {
+    label: 't',
+    type: 'variable',
+    detail: BUILTIN_DETAIL,
+    info: 'Current sample index (auto-incremented)',
+  },
+  {
+    label: 'SR',
+    type: 'variable',
+    detail: BUILTIN_DETAIL,
+    info: 'Sample rate in Hz (e.g. 8000, 44100)',
+  },
   { label: 'TAU', type: 'variable', detail: BUILTIN_DETAIL, info: '2 * Math.PI (≈6.2832)' },
-  { label: 'int', type: 'function', detail: BUILTIN_DETAIL, info: 'Alias for Math.floor — truncates to integer' },
+  {
+    label: 'int',
+    type: 'function',
+    detail: BUILTIN_DETAIL,
+    info: 'Alias for Math.floor — truncates to integer',
+  },
   // Math functions
   ...mathNames
     .filter((name) => MATH_FUNCTIONS.has(name))
@@ -47,8 +92,7 @@ const STATIC_COMPLETIONS: Completion[] = [
 ];
 
 // Matches declarations and bare assignments (excluding == and =>) to find user-defined names
-const DECL_RE =
-  /(?:(?:let|const|var)\s+([$\w]+))|(?:function\s+([$\w]+))|([$\w]+)\s*=(?![>=])/g;
+const DECL_RE = /(?:(?:let|const|var)\s+([$\w]+))|(?:function\s+([$\w]+))|([$\w]+)\s*=(?![>=])/g;
 
 function getUserDefinedCompletions(doc: string, cursorPos: number): Completion[] {
   const names = new Set<string>();
