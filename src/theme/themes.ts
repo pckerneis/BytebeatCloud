@@ -32,6 +32,7 @@ export type ThemeId =
   | 'mint'
   | 'indigo'
   | 'carmine'
+  | 'princess'
   | 'dark-minimal'
   | 'dark-cyber'
   | 'dark-graphite'
@@ -50,6 +51,7 @@ export const UI_THEMES: UiTheme[] = [
   { id: 'mint', label: 'mint', codeMirrorTheme: aura },
   { id: 'indigo', label: 'indigo', codeMirrorTheme: tomorrowNightBlue },
   { id: 'carmine', label: 'carmine', codeMirrorTheme: monokaiDimmed },
+  { id: 'princess', label: 'princess', codeMirrorTheme: noctisLilac },
   { id: 'dark-graphite', label: 'dark graphite', codeMirrorTheme: basicDark },
   { id: 'dark-minimal', label: 'dark minimal', codeMirrorTheme: aura },
   { id: 'dark-cyber', label: 'dark cyber', codeMirrorTheme: aura },
