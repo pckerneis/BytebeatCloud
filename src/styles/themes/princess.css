@@ -1,0 +1,32 @@
+/* princess theme by princesspriscillapt */
+.theme-princess {
+  --bg-color: #fff;
+  --card-bg-color: #fcfeff;
+  --sidebar-bg-color: #f0e5ff;
+  --sidebar-bg-gradient-color: #ffe5f4;
+  --text-color: #d775ae;
+  --secondary-text-color: #9c75d7;
+  --accent-color-rgb: 255 77 178;
+  --border-color: #ffd6ee;
+  --panel-border-color: #ffd6ee;
+  --chip-border-color: #ffd6ee;
+  --button-bg-color: #fff;
+  --button-secondary-bg-color: #f8f1f5;
+  --button-border-color: #e2d0da;
+  --button-primary-text-color: #fff;
+  --chip-background-color: #fcfcfe;
+  --tab-active-bg-color: #feecf6;
+  --code-bg-color: #520044;
+  --code-text-color: #ffe0f2;
+  --danger-color: #f27678;
+  --danger-background-color: #ffeced;
+  --error-text-color: #b91c1c;
+  --error-bg-color: #fee2e2;
+  --warning-color: #ff9800;
+  --success-color: #48cd4c;
+  --post-expression-background-color: #fcfcfe;
+  --post-expression-playing-background-color: #fff5fb;
+  --post-expression-overlay-color: rgba(255, 179, 223, 0.15);
+  --shadow-soft-color: #00000026;
+  --modal-overlay-color: #00000026;
+}
