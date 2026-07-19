@@ -222,6 +222,30 @@ h3 mark {
   opacity: 0.8;
 }
 
+.textmode-visualizer {
+  position: relative;
+  cursor: pointer;
+  user-select: none;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.textmode-visualizer-frame {
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: 100%;
+  border: none;
+}
+
+.textmode-visualizer-hit-area {
+  position: absolute;
+  inset: 0;
+}
+
 .post-description-detail {
   color: var(--secondary-text-color);
 }

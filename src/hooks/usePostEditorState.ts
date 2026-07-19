@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { ModeOption, DEFAULT_SAMPLE_RATE } from '../model/expression';
 import { LicenseOption, DEFAULT_LICENSE } from '../model/postEditor';
+import { TextmodeProgram } from '../model/textmode';
 
 export interface PostEditorState {
   title: string;
@@ -12,6 +13,7 @@ export interface PostEditorState {
   isDraft: boolean;
   liveUpdateEnabled: boolean;
   autoSkipDuration: number | null;
+  textmodeProgram: TextmodeProgram | null;
 }
 
 export interface PostEditorStateActions {
@@ -24,6 +26,7 @@ export interface PostEditorStateActions {
   setIsDraft: (isDraft: boolean) => void;
   setLiveUpdateEnabled: (enabled: boolean) => void;
   setAutoSkipDuration: (duration: number | null) => void;
+  setTextmodeProgram: (program: TextmodeProgram | null) => void;
   setState: (state: Partial<PostEditorState>) => void;
 }
 
@@ -48,6 +51,7 @@ export function usePostEditorState(
   const [isDraft, setIsDraft] = useState(false);
   const [liveUpdateEnabled, setLiveUpdateEnabled] = useState(options.initialLiveUpdate ?? true);
   const [autoSkipDuration, setAutoSkipDuration] = useState<number | null>(null);
+  const [textmodeProgram, setTextmodeProgram] = useState<TextmodeProgram | null>(null);
 
   const setState = (state: Partial<PostEditorState>) => {
     if (state.title !== undefined) setTitle(state.title);
@@ -59,6 +63,7 @@ export function usePostEditorState(
     if (state.isDraft !== undefined) setIsDraft(state.isDraft);
     if (state.liveUpdateEnabled !== undefined) setLiveUpdateEnabled(state.liveUpdateEnabled);
     if (state.autoSkipDuration !== undefined) setAutoSkipDuration(state.autoSkipDuration);
+    if (state.textmodeProgram !== undefined) setTextmodeProgram(state.textmodeProgram);
   };
 
   return {
@@ -71,6 +76,7 @@ export function usePostEditorState(
     isDraft,
     liveUpdateEnabled,
     autoSkipDuration,
+    textmodeProgram,
     setTitle,
     setDescription,
     setExpression,
@@ -80,6 +86,7 @@ export function usePostEditorState(
     setIsDraft,
     setLiveUpdateEnabled,
     setAutoSkipDuration,
+    setTextmodeProgram,
     setState,
   };
 }

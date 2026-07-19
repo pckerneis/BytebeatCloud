@@ -4,6 +4,7 @@ import { validateExpression } from '../utils/expression-validator';
 import { convertMentionsToIds } from '../utils/mentions';
 import { ModeOption } from '../model/expression';
 import { LicenseOption } from '../model/postEditor';
+import { TextmodeProgram } from '../model/textmode';
 import { ValidationIssue } from '../utils/expression-validator';
 
 export interface PostSaveData {
@@ -15,6 +16,7 @@ export interface PostSaveData {
   license: LicenseOption;
   isDraft: boolean;
   autoSkipDuration: number | null;
+  textmodeProgram: TextmodeProgram | null;
 }
 
 export interface UsePostSaverOptions {
@@ -73,6 +75,7 @@ export function usePostSaver(options: UsePostSaverOptions): UsePostSaverResult {
             mode: data.mode,
             license: data.license,
             auto_skip_duration: data.autoSkipDuration,
+            textmode_program: data.textmodeProgram,
           })
           .select('id')
           .single();
@@ -103,6 +106,7 @@ export function usePostSaver(options: UsePostSaverOptions): UsePostSaverResult {
             mode: data.mode,
             license: data.license,
             auto_skip_duration: data.autoSkipDuration,
+            textmode_program: data.textmodeProgram,
           })
           .eq('id', postId)
           .eq('profile_id', userId);
@@ -134,6 +138,7 @@ export function usePostSaver(options: UsePostSaverOptions): UsePostSaverResult {
             mode: data.mode,
             license: data.license,
             auto_skip_duration: data.autoSkipDuration,
+            textmode_program: data.textmodeProgram,
             fork_of_post_id: postId,
             is_fork: true,
           })

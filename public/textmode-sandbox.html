@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<!--
+  This document is loaded into an iframe with sandbox="allow-scripts" (no
+  allow-same-origin), so it runs with an opaque origin: no access to the
+  parent page's DOM, cookies, or storage, and it can't navigate the top
+  window. The CSP below closes the remaining gap by blocking all network
+  access, mirroring the CLI sandbox in lib/loader.js (no require, no fs,
+  no network) as closely as a browser page can.
+-->
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline' 'unsafe-eval'; style-src 'unsafe-inline'; connect-src 'none'; img-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none';">
+<style>
+  html, body {
+    margin: 0;
+    height: 100%;
+    overflow: hidden;
+    user-select: none;
+  }
+  body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  #grid {
+    font-family: ui-monospace, Menlo, Consolas, 'Liberation Mono', monospace;
+    white-space: pre;
+    color: #d4d4d4;
+    margin: 0;
+  }
+</style>
+</head>
+<body>
+<pre id="grid"></pre>
+<script>
+// Runs shader code the same way lib/loader.js + lib/render.js do on the
+// CLI side: a fresh sandbox per run, the same x/y/width/height/fps/frame
+// globals, the same char()/fg()/bg() and frame(buffer) styles.
+
+var currentTimer = null;
+var currentSeq = 0;
+var lastCols = null;
+var lastRows = null;
+var gridEl = document.getElementById('grid');
+
+function post(type, payload) {
+  var msg = { type: type };
+  for (var k in payload) {
+    if (Object.prototype.hasOwnProperty.call(payload, k)) {
+      msg[k] = payload[k];
+    }
+  }
+  parent.postMessage(msg, '*');
+}
+
+// --- color resolution (browser counterpart to lib/colors.js) ---
+
+var NAMES = {
+  black: '#000000',
+  red: '#cd0000',
+  green: '#00cd00',
+  yellow: '#cdcd00',
+  blue: '#268bd2',
+  magenta: '#cd00cd',
+  cyan: '#00cdcd',
+  white: '#e5e5e5',
+  gray: '#808080',
+  grey: '#808080',
+  brightred: '#ff0000',
+  brightgreen: '#00ff00',
+  brightyellow: '#ffff00',
+  brightblue: '#5c5cff',
+  brightmagenta: '#ff00ff',
+  brightcyan: '#00ffff',
+  brightwhite: '#ffffff'
+};
+
+var NAME_ORDER = [
+  'black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white',
+  'gray', 'brightred', 'brightgreen', 'brightyellow', 'brightblue',
+  'brightmagenta', 'brightcyan', 'brightwhite'
+];
+
+var CUBE_LEVELS = [0, 95, 135, 175, 215, 255];
+
+function toHex(n) {
+  var h = Math.max(0, Math.min(255, Math.round(n))).toString(16);
+  return h.length === 1 ? '0' + h : h;
+}
+
+function indexToHex(index) {
+  var i, r, g, b, level;
+
+  if (index < 16) {
+    return NAMES[NAME_ORDER[index]];
+  }
+
+  if (index < 232) {
+    i = index - 16;
+    r = CUBE_LEVELS[Math.floor(i / 36) % 6];
+    g = CUBE_LEVELS[Math.floor(i / 6) % 6];
+    b = CUBE_LEVELS[i % 6];
+    return '#' + toHex(r) + toHex(g) + toHex(b);
+  }
+
+  level = 8 + (index - 232) * 10;
+  return '#' + toHex(level) + toHex(level) + toHex(level);
+}
+
+function isIndex(value) {
+  return typeof value === 'number' && isFinite(value) && value >= 0 && value <= 255;
+}
+
+function resolveColor(value) {
+  if (value === undefined || value === null || value === '' || value === 'default') {
+    return null;
+  }
+  if (isIndex(value)) {
+    return indexToHex(Math.floor(value));
+  }
+  if (Object.prototype.hasOwnProperty.call(NAMES, value)) {
+    return NAMES[value];
+  }
+  return null;
+}
+
+// --- buffer + drawing ---
+
+function createBuffer(cols, rows) {
+  var buffer = [], x, y, row;
+
+  for (y = 0; y < rows; y++) {
+    row = [];
+    for (x = 0; x < cols; x++) {
+      row.push({ ch: ' ', fg: 'default', bg: 'default' });
+    }
+    buffer.push(row);
+  }
+
+  return buffer;
+}
+
+function escapeChar(ch) {
+  if (ch === '&') return '&amp;';
+  if (ch === '<') return '&lt;';
+  if (ch === '>') return '&gt;';
+  return ch;
+}
+
+function draw(buffer, cols, rows) {
+  var html = '';
+  var x, y, cell, fgCss, bgCss, lastFg, lastBg, open;
+
+  for (y = 0; y < rows; y++) {
+    lastFg = undefined;
+    lastBg = undefined;
+    open = false;
+
+    for (x = 0; x < cols; x++) {
+      cell = buffer[y][x];
+      fgCss = resolveColor(cell.fg);
+      bgCss = resolveColor(cell.bg);
+
+      if (fgCss !== lastFg || bgCss !== lastBg) {
+        if (open) {
+          html += '</span>';
+        }
+        html += '<span style="' + (fgCss ? 'color:' + fgCss + ';' : '') +
+          (bgCss ? 'background:' + bgCss + ';' : '') + '">';
+        open = true;
+        lastFg = fgCss;
+        lastBg = bgCss;
+      }
+
+      html += escapeChar(cell.ch);
+    }
+
+    if (open) {
+      html += '</span>';
+    }
+    if (y < rows - 1) {
+      html += '\n';
+    }
+  }
+
+  gridEl.innerHTML = html;
+}
+
+// --- shader loading ---
+//
+// Shader code sees x/y/width/height/fps/frame as bare identifiers that we
+// mutate between calls (matching the vm.createContext globals the CLI
+// uses) via `with (state) { ... }`. Everything else (window, document,
+// fetch) still resolves through the iframe's real global scope, which is
+// what the sandbox="allow-scripts" + CSP combination locks down.
+
+function loadShader(code) {
+  var exportsObj = {};
+  var moduleObj = { exports: exportsObj };
+  var state = { x: 0, y: 0, width: 0, height: 0, fps: 0, frame: 0 };
+  var sandboxConsole = {
+    log: function () { post('log', { level: 'log', message: Array.prototype.slice.call(arguments).join(' ') }); },
+    error: function () { post('log', { level: 'error', message: Array.prototype.slice.call(arguments).join(' ') }); },
+    warn: function () { post('log', { level: 'warn', message: Array.prototype.slice.call(arguments).join(' ') }); }
+  };
+  var fn = new Function('module', 'exports', 'console', 'state', 'with (state) {\n' + code + '\n}');
+
+  fn(moduleObj, exportsObj, sandboxConsole, state);
+
+  var result = moduleObj.exports;
+
+  return {
+    ch: typeof result.char === 'function' ? result.char : null,
+    fg: typeof result.fg === 'function' ? result.fg : null,
+    bg: typeof result.bg === 'function' ? result.bg : null,
+    frame: typeof result.frame === 'function' ? result.frame : null,
+    state: state
+  };
+}
+
+// --- layout ---
+
+function layout(cols, rows) {
+  var pad = 16;
+  var lineHeight = 1.1;
+  var availW = window.innerWidth - pad;
+  var availH = window.innerHeight - pad;
+  var sizeByWidth = availW / (cols * 0.6);
+  var sizeByHeight = availH / (rows * lineHeight);
+  var fontSize = Math.max(2, Math.floor(Math.min(sizeByWidth, sizeByHeight)));
+
+  gridEl.style.fontSize = fontSize + 'px';
+  gridEl.style.lineHeight = lineHeight;
+}
+
+window.addEventListener('resize', function () {
+  if (lastCols && lastRows) {
+    layout(lastCols, lastRows);
+  }
+});
+
+// --- run loop ---
+
+function stop() {
+  if (currentTimer) {
+    clearInterval(currentTimer);
+    currentTimer = null;
+  }
+  currentSeq++;
+}
+
+function run(code, fps, cols, rows) {
+  var shader, buffer, frameCount, state, mySeq;
+
+  stop();
+  mySeq = currentSeq;
+
+  try {
+    shader = loadShader(code);
+  } catch (e) {
+    post('error', { message: e.message });
+    return;
+  }
+
+  if (!shader.ch && !shader.frame) {
+    post('error', { message: 'Shader must export a "char" function or a "frame" function.' });
+    return;
+  }
+
+  lastCols = cols;
+  lastRows = rows;
+  layout(cols, rows);
+
+  buffer = createBuffer(cols, rows);
+  frameCount = 0;
+  state = shader.state;
+
+  post('running', {});
+
+  currentTimer = setInterval(function () {
+    var x, y, cell, chValue, fgValue, bgValue;
+
+    if (mySeq !== currentSeq) {
+      return;
+    }
+
+    state.width = cols;
+    state.height = rows;
+    state.fps = fps;
+    state.frame = frameCount;
+
+    try {
+      if (shader.frame) {
+        shader.frame(buffer);
+      } else {
+        for (y = 0; y < rows; y++) {
+          for (x = 0; x < cols; x++) {
+            state.x = x;
+            state.y = y;
+            cell = buffer[y][x];
+            chValue = shader.ch();
+            fgValue = shader.fg ? shader.fg() : 'default';
+            bgValue = shader.bg ? shader.bg() : 'default';
+            cell.ch = chValue ? String(chValue).charAt(0) : ' ';
+            cell.fg = (fgValue === undefined || fgValue === null || fgValue === '') ? 'default' : fgValue;
+            cell.bg = (bgValue === undefined || bgValue === null || bgValue === '') ? 'default' : bgValue;
+          }
+        }
+      }
+    } catch (e) {
+      post('error', { message: e.message });
+      stop();
+      return;
+    }
+
+    draw(buffer, cols, rows);
+    frameCount++;
+  }, Math.floor(1000 / fps));
+}
+
+window.addEventListener('message', function (e) {
+  var data = e.data || {};
+
+  if (data.type === 'run') {
+    run(data.code, data.fps, data.cols, data.rows);
+  } else if (data.type === 'stop') {
+    stop();
+    gridEl.innerHTML = '';
+  }
+});
+</script>
+</body>
+</html>

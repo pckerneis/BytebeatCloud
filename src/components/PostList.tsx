@@ -7,9 +7,11 @@ import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
 import { useCurrentWeeklyChallenge } from '../hooks/useCurrentWeeklyChallenge';
 import { favoritePost, unfavoritePost, getFavoritedByUsers } from '../services/favoritesClient';
 import { PostExpressionPlayer } from './PostExpressionPlayer';
+import { TextmodePlayer } from './TextmodePlayer';
 import { usePlayerStore } from '../hooks/usePlayerStore';
 import { formatSampleRate, ModeOption } from '../model/expression';
 import type { LicenseOption } from '../model/postEditor';
+import type { TextmodeProgram } from '../model/textmode';
 import { formatRelativeTime } from '../utils/time';
 import { validateExpression } from '../utils/expression-validator';
 import { formatPostTitle, formatPostByAuthor } from '../utils/post-format';
@@ -37,6 +39,7 @@ export interface PostRow {
   is_weekly_winner?: boolean;
   license?: LicenseOption;
   auto_skip_duration?: number | null;
+  textmode_program?: TextmodeProgram | null;
 }
 
 export interface PostHighlight {
@@ -52,9 +55,10 @@ interface PostListProps {
   onCommentClick?: (post: PostRow) => void;
   highlights?: Record<string, PostHighlight>;
   postMaxHeight?: number;
+  variant?: 'feed' | 'detail';
 }
 
-function LazyPostExpressionPlayer(props: ComponentProps<typeof PostExpressionPlayer>) {
+function useLazyVisibility(rootMargin = '300px 0px') {
   const wrapperRef = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(true);
   const [placeholderHeight, setPlaceholderHeight] = useState<number | null>(null);
@@ -73,17 +77,46 @@ function LazyPostExpressionPlayer(props: ComponentProps<typeof PostExpressionPla
           setIsVisible(false);
         }
       },
-      { rootMargin: '300px 0px' },
+      { rootMargin },
     );
 
     observer.observe(el);
     return () => observer.disconnect();
-  }, []);
+  }, [rootMargin]);
+
+  return { wrapperRef, isVisible, placeholderHeight };
+}
+
+function LazyPostExpressionPlayer(props: ComponentProps<typeof PostExpressionPlayer>) {
+  const { wrapperRef, isVisible, placeholderHeight } = useLazyVisibility();
 
   return (
     <div ref={wrapperRef}>
       {isVisible ? (
         <PostExpressionPlayer {...props} />
+      ) : (
+        <div
+          style={{
+            height:
+              placeholderHeight !== null
+                ? props.height !== undefined
+                  ? Math.min(placeholderHeight, props.height)
+                  : placeholderHeight
+                : undefined,
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+function LazyTextmodePlayer(props: ComponentProps<typeof TextmodePlayer>) {
+  const { wrapperRef, isVisible, placeholderHeight } = useLazyVisibility();
+
+  return (
+    <div ref={wrapperRef}>
+      {isVisible ? (
+        <TextmodePlayer {...props} />
       ) : (
         <div
           style={{
@@ -120,6 +153,7 @@ export function PostList({
   onCommentClick,
   highlights,
   postMaxHeight,
+  variant = 'feed',
 }: Readonly<PostListProps>) {
   const { toggle, stop, isPlaying } = useBytebeatPlayer();
   const [activePostId, setActivePostId] = useState<string | null>(null);
@@ -501,14 +535,24 @@ export function PostList({
                   </span>
                 </div>
               </div>
-              <LazyPostExpressionPlayer
-                expression={post.expression}
-                isActive={isActive}
-                onTogglePlay={() => handleExpressionClick(post)}
-                disableCopy={post.license === 'all-rights-reserved'}
-                skipMinification={skipMinification}
-                height={postMaxHeight}
-              />
+              {post.textmode_program && (
+                <LazyTextmodePlayer
+                  program={post.textmode_program}
+                  isActive={isActive}
+                  onTogglePlay={() => handleExpressionClick(post)}
+                  height={postMaxHeight}
+                />
+              )}
+              {(variant === 'detail' || !post.textmode_program) && (
+                <LazyPostExpressionPlayer
+                  expression={post.expression}
+                  isActive={isActive}
+                  onTogglePlay={() => handleExpressionClick(post)}
+                  disableCopy={post.license === 'all-rights-reserved'}
+                  skipMinification={skipMinification}
+                  height={postMaxHeight}
+                />
+              )}
               <div className="post-actions">
                 <button
                   type="button"

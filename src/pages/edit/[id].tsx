@@ -32,6 +32,7 @@ export default function EditPostPage() {
       license: editor.license,
       isDraft: asDraft,
       autoSkipDuration: editor.autoSkipDuration,
+      textmodeProgram: editor.textmodeProgram,
     });
 
     if (postId && !asDraft) {
@@ -86,6 +87,7 @@ export default function EditPostPage() {
     isDraft: editor.isDraft,
     license: editor.license,
     autoSkipDuration: editor.autoSkipDuration,
+    textmodeProgram: editor.textmodeProgram,
   };
 
   const handleMetaChange = (next: typeof meta) => {
