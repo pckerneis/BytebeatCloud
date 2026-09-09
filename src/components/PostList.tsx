@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { useEffect, useRef, useState, type ComponentProps } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useBytebeatPlayer } from '../hooks/useBytebeatPlayer';
 import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
@@ -87,50 +87,46 @@ function useLazyVisibility(rootMargin = '300px 0px') {
   return { wrapperRef, isVisible, placeholderHeight };
 }
 
-function LazyPostExpressionPlayer(props: ComponentProps<typeof PostExpressionPlayer>) {
-  const { wrapperRef, isVisible, placeholderHeight } = useLazyVisibility();
+function createLazyPlayer<P extends { height?: number }>(
+  Component: React.ComponentType<P>,
+  getPlaceholderStyle: (props: P, measuredHeight: number | null) => React.CSSProperties,
+) {
+  return function LazyPlayer(props: P) {
+    const { wrapperRef, isVisible, placeholderHeight } = useLazyVisibility();
 
-  return (
-    <div ref={wrapperRef}>
-      {isVisible ? (
-        <PostExpressionPlayer {...props} />
-      ) : (
-        <div
-          style={{
-            height:
-              placeholderHeight !== null
-                ? props.height !== undefined
-                  ? Math.min(placeholderHeight, props.height)
-                  : placeholderHeight
-                : undefined,
-          }}
-        />
-      )}
-    </div>
-  );
+    return (
+      <div ref={wrapperRef}>
+        {isVisible ? (
+          <Component {...props} />
+        ) : (
+          <div style={getPlaceholderStyle(props, placeholderHeight)} />
+        )}
+      </div>
+    );
+  };
 }
 
-function LazyTextmodePlayer(props: ComponentProps<typeof TextmodePlayer>) {
-  const { wrapperRef, isVisible } = useLazyVisibility();
+const LazyPostExpressionPlayer = createLazyPlayer(
+  PostExpressionPlayer,
+  (props, measuredHeight) => ({
+    height:
+      measuredHeight !== null
+        ? props.height !== undefined
+          ? Math.min(measuredHeight, props.height)
+          : measuredHeight
+        : undefined,
+  }),
+);
 
-  // Height is derived from the same aspect-ratio/max-height formula the live
-  // player uses, rather than a snapshot of its last rendered height, so the
-  // placeholder is always pixel-identical to the mounted player. That keeps
-  // mount/unmount cycles from shifting page height (and jittering scroll
-  // position) while scrolling.
-  const aspectRatio = getTextmodeAspectRatio(props.program);
-  const maxHeight = props.height ?? TEXTMODE_DEFAULT_MAX_HEIGHT;
-
-  return (
-    <div ref={wrapperRef}>
-      {isVisible ? (
-        <TextmodePlayer {...props} />
-      ) : (
-        <div style={{ aspectRatio, maxHeight }} />
-      )}
-    </div>
-  );
-}
+// Height is derived from the same aspect-ratio/max-height formula the live
+// player uses, rather than a snapshot of its last rendered height, so the
+// placeholder is always pixel-identical to the mounted player. That keeps
+// mount/unmount cycles from shifting page height (and jittering scroll
+// position) while scrolling.
+const LazyTextmodePlayer = createLazyPlayer(TextmodePlayer, (props) => ({
+  aspectRatio: getTextmodeAspectRatio(props.program),
+  maxHeight: props.height ?? TEXTMODE_DEFAULT_MAX_HEIGHT,
+}));
 
 function getLengthCategoryChip(expression: string): string | null {
   const len = new TextEncoder().encode(expression).length;
