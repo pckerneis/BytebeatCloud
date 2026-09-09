@@ -7,7 +7,7 @@ import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
 import { useCurrentWeeklyChallenge } from '../hooks/useCurrentWeeklyChallenge';
 import { favoritePost, unfavoritePost, getFavoritedByUsers } from '../services/favoritesClient';
 import { PostExpressionPlayer } from './PostExpressionPlayer';
-import { TextmodePlayer } from './TextmodePlayer';
+import { TextmodePlayer, TEXTMODE_DEFAULT_MAX_HEIGHT, getTextmodeAspectRatio } from './TextmodePlayer';
 import { usePlayerStore } from '../hooks/usePlayerStore';
 import { formatSampleRate, ModeOption } from '../model/expression';
 import type { LicenseOption } from '../model/postEditor';
@@ -111,23 +111,22 @@ function LazyPostExpressionPlayer(props: ComponentProps<typeof PostExpressionPla
 }
 
 function LazyTextmodePlayer(props: ComponentProps<typeof TextmodePlayer>) {
-  const { wrapperRef, isVisible, placeholderHeight } = useLazyVisibility();
+  const { wrapperRef, isVisible } = useLazyVisibility();
+
+  // Height is derived from the same aspect-ratio/max-height formula the live
+  // player uses, rather than a snapshot of its last rendered height, so the
+  // placeholder is always pixel-identical to the mounted player. That keeps
+  // mount/unmount cycles from shifting page height (and jittering scroll
+  // position) while scrolling.
+  const aspectRatio = getTextmodeAspectRatio(props.program);
+  const maxHeight = props.height ?? TEXTMODE_DEFAULT_MAX_HEIGHT;
 
   return (
     <div ref={wrapperRef}>
       {isVisible ? (
         <TextmodePlayer {...props} />
       ) : (
-        <div
-          style={{
-            height:
-              placeholderHeight !== null
-                ? props.height !== undefined
-                  ? Math.min(placeholderHeight, props.height)
-                  : placeholderHeight
-                : undefined,
-          }}
-        />
+        <div style={{ aspectRatio, maxHeight }} />
       )}
     </div>
   );

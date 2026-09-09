@@ -10,7 +10,11 @@ interface TextmodePlayerProps {
   hideOverlay?: boolean;
 }
 
-const DEFAULT_MAX_HEIGHT = 800;
+export const TEXTMODE_DEFAULT_MAX_HEIGHT = 800;
+
+export function getTextmodeAspectRatio(program: Pick<TextmodeProgram, 'cols' | 'rows'>): number {
+  return (program.cols * 0.6) / (program.rows * 1.15);
+}
 
 function getSandboxSrc(): string {
   const basePath = process.env.NEXT_PUBLIC_BASE_PATH ? `/${process.env.NEXT_PUBLIC_BASE_PATH}` : '';
@@ -31,7 +35,7 @@ export function TextmodePlayer({
   const [iframeLoaded, setIframeLoaded] = useState(false);
   const [containerWidth, setContainerWidth] = useState(0);
   const sandboxSrc = useMemo(() => getSandboxSrc(), []);
-  const aspectRatio = (program.cols * 0.6) / (program.rows * 1.15);
+  const aspectRatio = getTextmodeAspectRatio(program);
 
   useLayoutEffect(() => {
     const el = containerRef.current;
@@ -86,7 +90,7 @@ export function TextmodePlayer({
     void onTogglePlay();
   };
 
-  const maxHeight = height ?? DEFAULT_MAX_HEIGHT;
+  const maxHeight = height ?? TEXTMODE_DEFAULT_MAX_HEIGHT;
   let frameWidth = containerWidth;
   let frameHeight = containerWidth / aspectRatio;
   if (frameHeight > maxHeight) {
