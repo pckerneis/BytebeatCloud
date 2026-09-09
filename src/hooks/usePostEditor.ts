@@ -10,6 +10,7 @@ import { useExpressionPlayer } from './useExpressionPlayer';
 import { useCtrlEnterPlayShortcut } from './useCtrlEnterPlayShortcut';
 import { useFocusModeShortcut } from './useFocusModeShortcut';
 import { useCurrentUserProfile } from './useCurrentUserProfile';
+import { isTextmodeProgram } from '../model/textmode';
 
 export interface UsePostEditorOptions extends UsePostEditorStateOptions {
   mode: 'create' | 'edit' | 'fork';
@@ -114,7 +115,7 @@ export function usePostEditor(options: UsePostEditorOptions) {
         license: draft.license as any,
         liveUpdateEnabled: draft.liveUpdateEnabled,
         autoSkipDuration: draft.autoSkipDuration ?? null,
-        textmodeProgram: draft.textmodeProgram ?? null,
+        textmodeProgram: isTextmodeProgram(draft.textmodeProgram) ? draft.textmodeProgram : null,
       });
     }
     setIsStateLoaded(true);
@@ -136,7 +137,9 @@ export function usePostEditor(options: UsePostEditorOptions) {
       license: (draft?.license as any) ?? postLoader.data.license,
       isDraft: postLoader.data.isDraft,
       autoSkipDuration: draft?.autoSkipDuration ?? postLoader.data.autoSkipDuration,
-      textmodeProgram: draft?.textmodeProgram ?? postLoader.data.textmodeProgram,
+      textmodeProgram: isTextmodeProgram(draft?.textmodeProgram)
+        ? draft.textmodeProgram
+        : postLoader.data.textmodeProgram,
     });
 
     setIsStateLoaded(true);
