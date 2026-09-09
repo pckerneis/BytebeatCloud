@@ -49,6 +49,7 @@ var currentTimer = null;
 var currentSeq = 0;
 var lastCols = null;
 var lastRows = null;
+var lastBuffer = null;
 var gridEl = document.getElementById('grid');
 
 function post(type, payload) {
@@ -268,6 +269,9 @@ function layout(cols, rows) {
 window.addEventListener('resize', function () {
   if (lastCols && lastRows) {
     layout(lastCols, lastRows);
+    if (lastBuffer) {
+      draw(lastBuffer, lastCols, lastRows);
+    }
   }
 });
 
@@ -359,6 +363,7 @@ function run(code, fps, cols, rows) {
     }
 
     draw(buffer, cols, rows);
+    lastBuffer = buffer;
     frameCount++;
   }, Math.floor(1000 / fps));
 }
@@ -392,6 +397,7 @@ function seed(code, fps, cols, rows) {
   }
 
   draw(buffer, cols, rows);
+  lastBuffer = buffer;
 }
 
 window.addEventListener('message', function (e) {
@@ -404,6 +410,7 @@ window.addEventListener('message', function (e) {
   } else if (data.type === 'stop') {
     stop();
     gridEl.innerHTML = '';
+    lastBuffer = null;
   }
 });
 </script>
