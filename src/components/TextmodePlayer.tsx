@@ -13,7 +13,7 @@ interface TextmodePlayerProps {
 export const TEXTMODE_DEFAULT_MAX_HEIGHT = 800;
 
 export function getTextmodeAspectRatio(program: Pick<TextmodeProgram, 'cols' | 'rows'>): number {
-  return (program.cols * 0.6) / (program.rows * 1.15);
+  return (program.cols * 0.6) / (program.rows * 1.1);
 }
 
 function getSandboxSrc(): string {
