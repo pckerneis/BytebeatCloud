@@ -89,18 +89,21 @@ function useLazyVisibility(rootMargin = '300px 0px') {
 
 function createLazyPlayer<P extends { height?: number }>(
   Component: React.ComponentType<P>,
-  getPlaceholderStyle: (props: P, measuredHeight: number | null) => React.CSSProperties,
+  getWrapperStyle: (props: P, measuredHeight: number | null) => React.CSSProperties,
 ) {
   return function LazyPlayer(props: P) {
     const { wrapperRef, isVisible, placeholderHeight } = useLazyVisibility();
 
+    // The sizing is applied to the wrapper whether or not the real player is
+    // mounted (as a min-height, not a fixed height, so a taller player can
+    // still grow past it). That also covers the render right after mount:
+    // PostExpressionPlayer's editor loads via next/dynamic with no loading
+    // fallback, so it renders nothing for a tick before its chunk resolves.
+    // Without a floor here, that tick collapses the item's height and shifts
+    // everything around it while scrolling.
     return (
-      <div ref={wrapperRef}>
-        {isVisible ? (
-          <Component {...props} />
-        ) : (
-          <div style={getPlaceholderStyle(props, placeholderHeight)} />
-        )}
+      <div ref={wrapperRef} style={getWrapperStyle(props, placeholderHeight)}>
+        {isVisible && <Component {...props} />}
       </div>
     );
   };
@@ -109,7 +112,7 @@ function createLazyPlayer<P extends { height?: number }>(
 const LazyPostExpressionPlayer = createLazyPlayer(
   PostExpressionPlayer,
   (props, measuredHeight) => ({
-    height:
+    minHeight:
       measuredHeight !== null
         ? props.height !== undefined
           ? Math.min(measuredHeight, props.height)
