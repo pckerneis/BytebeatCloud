@@ -489,6 +489,16 @@ export function PostEditorFormFields(props: Readonly<PostEditorFormFieldsProps>)
         <details className="textmode-editor-helper" open>
           <summary>Textmode visualizer</summary>
           <div className="textmode-editor-body">
+            <div className="info-panel">
+              <div>
+                This lets you add a{' '}
+                <a href="https://textmode.cloud" target="_blank" rel="noopener noreferrer">
+                  TextModeCloud
+                </a>{' '}
+                visualizer to your post. It&#39;s still an experimental feature — expect it to
+                change, break, or be removed without notice.
+              </div>
+            </div>
             <div className="field-row">
               <input
                 type="text"
@@ -590,7 +600,7 @@ export function PostEditorFormFields(props: Readonly<PostEditorFormFieldsProps>)
           </div>
         </details>
       ) : (
-        <button type="button" className="chip" onClick={handleAddTextmodeProgram}>
+        <button type="button" className="button" onClick={handleAddTextmodeProgram}>
           + Add textmode visualizer
         </button>
       )}
