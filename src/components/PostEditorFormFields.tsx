@@ -24,6 +24,7 @@ import {
   DEFAULT_TEXTMODE_COLS,
   DEFAULT_TEXTMODE_ROWS,
   DEFAULT_TEXTMODE_FPS,
+  TEXTMODE_CODE_MAX,
 } from '../model/textmode';
 import {
   EXPRESSION_MAX,
@@ -121,6 +122,9 @@ export function PostEditorFormFields(props: Readonly<PostEditorFormFieldsProps>)
 
   const expressionLength = new TextEncoder().encode(expression).length;
   const isExpressionTooLong = expressionLength > EXPRESSION_MAX;
+
+  const textmodeCodeLength = new TextEncoder().encode(meta.textmodeProgram?.code ?? '').length;
+  const isTextmodeCodeTooLong = textmodeCodeLength > TEXTMODE_CODE_MAX;
 
   const { title, description, mode, sampleRate, license, autoSkipDuration, textmodeProgram } = meta;
   const [sampleRateModalOpen, setSampleRateModalOpen] = useState(false);
@@ -521,6 +525,11 @@ export function PostEditorFormFields(props: Readonly<PostEditorFormFieldsProps>)
             )}
 
             <SnippetCodeEditor value={textmodeProgram.code} onChange={handleTextmodeCodeChange} />
+            <div className="field-footer">
+              <span className={isTextmodeCodeTooLong ? 'counter error' : 'counter'}>
+                {textmodeCodeLength} / {TEXTMODE_CODE_MAX}
+              </span>
+            </div>
 
             <div className="chips">
               <label className="field-inline">
