@@ -10,6 +10,7 @@ import { useExpressionPlayer } from './useExpressionPlayer';
 import { useCtrlEnterPlayShortcut } from './useCtrlEnterPlayShortcut';
 import { useFocusModeShortcut } from './useFocusModeShortcut';
 import { useCurrentUserProfile } from './useCurrentUserProfile';
+import { isTextmodeProgram } from '../model/textmode';
 
 export interface UsePostEditorOptions extends UsePostEditorStateOptions {
   mode: 'create' | 'edit' | 'fork';
@@ -114,6 +115,7 @@ export function usePostEditor(options: UsePostEditorOptions) {
         license: draft.license as any,
         liveUpdateEnabled: draft.liveUpdateEnabled,
         autoSkipDuration: draft.autoSkipDuration ?? null,
+        textmodeProgram: isTextmodeProgram(draft.textmodeProgram) ? draft.textmodeProgram : null,
       });
     }
     setIsStateLoaded(true);
@@ -135,6 +137,9 @@ export function usePostEditor(options: UsePostEditorOptions) {
       license: (draft?.license as any) ?? postLoader.data.license,
       isDraft: postLoader.data.isDraft,
       autoSkipDuration: draft?.autoSkipDuration ?? postLoader.data.autoSkipDuration,
+      textmodeProgram: isTextmodeProgram(draft?.textmodeProgram)
+        ? draft.textmodeProgram
+        : postLoader.data.textmodeProgram,
     });
 
     setIsStateLoaded(true);
@@ -151,6 +156,7 @@ export function usePostEditor(options: UsePostEditorOptions) {
       license: editorState.license,
       isDraft: false,
       autoSkipDuration: editorState.autoSkipDuration,
+      textmodeProgram: editorState.textmodeProgram,
     });
 
     if (savedPostId) {
@@ -170,6 +176,7 @@ export function usePostEditor(options: UsePostEditorOptions) {
       license: editorState.license,
       isDraft: true,
       autoSkipDuration: editorState.autoSkipDuration,
+      textmodeProgram: editorState.textmodeProgram,
     });
 
     if (savedPostId) {
@@ -191,6 +198,7 @@ export function usePostEditor(options: UsePostEditorOptions) {
       license: editorState.license,
       isDraft: asDraft,
       autoSkipDuration: editorState.autoSkipDuration,
+      textmodeProgram: editorState.textmodeProgram,
     });
 
     if (postId) {
@@ -211,6 +219,7 @@ export function usePostEditor(options: UsePostEditorOptions) {
     isDraft: editorState.isDraft,
     license: editorState.license,
     autoSkipDuration: editorState.autoSkipDuration,
+    textmodeProgram: editorState.textmodeProgram,
   };
 
   const handleMetaChange = (next: typeof meta) => {

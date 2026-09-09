@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { PostEditorState } from './usePostEditorState';
+import { TextmodeProgram } from '../model/textmode';
 
 const DRAFT_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 
@@ -12,6 +13,7 @@ export interface DraftData {
   license?: string;
   liveUpdateEnabled?: boolean;
   autoSkipDuration?: number | null;
+  textmodeProgram?: TextmodeProgram | null;
   timestamp?: number;
 }
 
@@ -39,6 +41,7 @@ export function usePostDraftPersistence(
       license: state.license,
       liveUpdateEnabled: state.liveUpdateEnabled,
       autoSkipDuration: state.autoSkipDuration,
+      textmodeProgram: state.textmodeProgram,
       timestamp: Date.now(),
     };
 
@@ -58,6 +61,7 @@ export function usePostDraftPersistence(
     state.license,
     state.liveUpdateEnabled,
     state.autoSkipDuration,
+    state.textmodeProgram,
   ]);
 
   const loadDraft = (): DraftData | null => {

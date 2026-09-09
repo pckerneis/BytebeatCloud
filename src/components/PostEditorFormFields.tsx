@@ -1,7 +1,8 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { ExpressionEditor, ExpressionErrorSnippet } from './ExpressionEditor';
+import { ExpressionEditor, ExpressionErrorSnippet, SnippetCodeEditor } from './ExpressionEditor';
 import { AutocompleteTextarea } from './AutocompleteTextarea';
 import { AutocompleteInput } from './AutocompleteInput';
+import { TextmodePlayer } from './TextmodePlayer';
 import {
   ModeOption,
   SAMPLE_RATE_PRESETS,
@@ -13,6 +14,19 @@ import { ValidationIssue } from '../utils/expression-validator';
 import type { PostMetadataModel } from '../model/postEditor';
 import { LICENSE_OPTIONS } from '../model/postEditor';
 import {
+  parseTextmodeShareLink,
+  MIN_TEXTMODE_COLS,
+  MAX_TEXTMODE_COLS,
+  MIN_TEXTMODE_ROWS,
+  MAX_TEXTMODE_ROWS,
+  MIN_TEXTMODE_FPS,
+  MAX_TEXTMODE_FPS,
+  DEFAULT_TEXTMODE_COLS,
+  DEFAULT_TEXTMODE_ROWS,
+  DEFAULT_TEXTMODE_FPS,
+  TEXTMODE_CODE_MAX,
+} from '../model/textmode';
+import {
   EXPRESSION_MAX,
   POST_DESCRIPTION_MAX,
   POST_TITLE_MAX,
@@ -20,6 +34,7 @@ import {
   MIN_AUTO_SKIP_DURATION,
   MAX_AUTO_SKIP_DURATION,
   AUTOPLAY_DEFAULT_DURATION,
+  DEBOUNCE_CODE_MS,
 } from '../constants';
 import Link from 'next/link';
 import type { SnippetRow } from '../model/snippet';
@@ -108,7 +123,10 @@ export function PostEditorFormFields(props: Readonly<PostEditorFormFieldsProps>)
   const expressionLength = new TextEncoder().encode(expression).length;
   const isExpressionTooLong = expressionLength > EXPRESSION_MAX;
 
-  const { title, description, mode, sampleRate, license, autoSkipDuration } = meta;
+  const textmodeCodeLength = new TextEncoder().encode(meta.textmodeProgram?.code ?? '').length;
+  const isTextmodeCodeTooLong = textmodeCodeLength > TEXTMODE_CODE_MAX;
+
+  const { title, description, mode, sampleRate, license, autoSkipDuration, textmodeProgram } = meta;
   const [sampleRateModalOpen, setSampleRateModalOpen] = useState(false);
   const [sampleRateInput, setSampleRateInput] = useState(sampleRate.toString());
   const [durationModalOpen, setDurationModalOpen] = useState(false);
@@ -309,6 +327,69 @@ export function PostEditorFormFields(props: Readonly<PostEditorFormFieldsProps>)
     onMetaChange({ ...meta, autoSkipDuration: findNextDurationPreset(autoSkipDuration) });
   };
 
+  const [textmodeShareLinkInput, setTextmodeShareLinkInput] = useState('');
+  const [textmodeShareLinkError, setTextmodeShareLinkError] = useState('');
+  const [textmodePreviewError, setTextmodePreviewError] = useState('');
+  const [textmodePreviewProgram, setTextmodePreviewProgram] = useState(textmodeProgram);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setTextmodePreviewError('');
+      setTextmodePreviewProgram(textmodeProgram);
+    }, DEBOUNCE_CODE_MS);
+    return () => window.clearTimeout(timer);
+  }, [textmodeProgram]);
+
+  const handleAddTextmodeProgram = () => {
+    onMetaChange({
+      ...meta,
+      textmodeProgram: {
+        code: '',
+        cols: DEFAULT_TEXTMODE_COLS,
+        rows: DEFAULT_TEXTMODE_ROWS,
+        fps: DEFAULT_TEXTMODE_FPS,
+      },
+    });
+  };
+
+  const handleRemoveTextmodeProgram = () => {
+    onMetaChange({ ...meta, textmodeProgram: null });
+    setTextmodeShareLinkInput('');
+    setTextmodeShareLinkError('');
+    setTextmodePreviewError('');
+  };
+
+  const handleTextmodeCodeChange = (code: string) => {
+    if (!textmodeProgram) return;
+    onMetaChange({ ...meta, textmodeProgram: { ...textmodeProgram, code } });
+  };
+
+  const handleTextmodeNumberChange = (
+    field: 'cols' | 'rows' | 'fps',
+    min: number,
+    max: number,
+    value: string,
+  ) => {
+    if (!textmodeProgram) return;
+    const parsed = parseInt(value, 10);
+    if (Number.isNaN(parsed)) return;
+    const clamped = Math.min(max, Math.max(min, parsed));
+    onMetaChange({ ...meta, textmodeProgram: { ...textmodeProgram, [field]: clamped } });
+  };
+
+  const handleImportTextmodeShareLink = () => {
+    const parsed = parseTextmodeShareLink(textmodeShareLinkInput);
+    if (!parsed) {
+      setTextmodeShareLinkError('Could not read that share link.');
+      return;
+    }
+    setTextmodeShareLinkError('');
+    setTextmodePreviewError('');
+    onMetaChange({ ...meta, textmodeProgram: parsed });
+  };
+
+  const noopTogglePlay = () => {};
+
   return (
     <>
       <label className="field">
@@ -407,6 +488,131 @@ export function PostEditorFormFields(props: Readonly<PostEditorFormFieldsProps>)
         </div>
       )}
       {lastError ? <p className="error-message">{lastError}</p> : null}
+
+      {textmodeProgram ? (
+        <details className="textmode-editor-helper" open>
+          <summary>Textmode visualizer</summary>
+          <div className="textmode-editor-body">
+            <div className="info-panel">
+              <div>
+                This lets you add a{' '}
+                <a href="https://textmode.cloud" target="_blank" rel="noopener noreferrer">
+                  TextModeCloud
+                </a>{' '}
+                visualizer to your post. It&#39;s still an experimental feature — expect it to
+                change, break, or be removed without notice.
+              </div>
+            </div>
+            <div className="field-row">
+              <input
+                type="text"
+                placeholder="Paste a textmode share link…"
+                value={textmodeShareLinkInput}
+                onChange={(e) => setTextmodeShareLinkInput(e.target.value)}
+                className="border-bottom-accent-focus flex-grow"
+              />
+              <button
+                type="button"
+                className="button secondary small"
+                onClick={handleImportTextmodeShareLink}
+                disabled={!textmodeShareLinkInput.trim()}
+              >
+                Import
+              </button>
+            </div>
+            {textmodeShareLinkError && (
+              <p className="error-message smaller">{textmodeShareLinkError}</p>
+            )}
+
+            <SnippetCodeEditor value={textmodeProgram.code} onChange={handleTextmodeCodeChange} />
+            <div className="field-footer">
+              <span className={isTextmodeCodeTooLong ? 'counter error' : 'counter'}>
+                {textmodeCodeLength} / {TEXTMODE_CODE_MAX}
+              </span>
+            </div>
+
+            <div className="chips">
+              <label className="field-inline">
+                Width
+                <input
+                  type="number"
+                  min={MIN_TEXTMODE_COLS}
+                  max={MAX_TEXTMODE_COLS}
+                  value={textmodeProgram.cols}
+                  onChange={(e) =>
+                    handleTextmodeNumberChange(
+                      'cols',
+                      MIN_TEXTMODE_COLS,
+                      MAX_TEXTMODE_COLS,
+                      e.target.value,
+                    )
+                  }
+                />
+              </label>
+              <label className="field-inline">
+                Height
+                <input
+                  type="number"
+                  min={MIN_TEXTMODE_ROWS}
+                  max={MAX_TEXTMODE_ROWS}
+                  value={textmodeProgram.rows}
+                  onChange={(e) =>
+                    handleTextmodeNumberChange(
+                      'rows',
+                      MIN_TEXTMODE_ROWS,
+                      MAX_TEXTMODE_ROWS,
+                      e.target.value,
+                    )
+                  }
+                />
+              </label>
+              <label className="field-inline">
+                FPS
+                <input
+                  type="number"
+                  min={MIN_TEXTMODE_FPS}
+                  max={MAX_TEXTMODE_FPS}
+                  value={textmodeProgram.fps}
+                  onChange={(e) =>
+                    handleTextmodeNumberChange(
+                      'fps',
+                      MIN_TEXTMODE_FPS,
+                      MAX_TEXTMODE_FPS,
+                      e.target.value,
+                    )
+                  }
+                />
+              </label>
+            </div>
+
+            {textmodePreviewProgram && (
+              <div className="textmode-editor-preview">
+                <TextmodePlayer
+                  program={textmodePreviewProgram}
+                  isActive={true}
+                  onTogglePlay={noopTogglePlay}
+                  onError={setTextmodePreviewError}
+                  hideOverlay
+                  height={240}
+                />
+              </div>
+            )}
+            {textmodePreviewError && <p className="error-message smaller">{textmodePreviewError}</p>}
+
+            <button
+              type="button"
+              className="button secondary small ghost"
+              onClick={handleRemoveTextmodeProgram}
+            >
+              Remove visualizer
+            </button>
+          </div>
+        </details>
+      ) : (
+        <button type="button" className="button" onClick={handleAddTextmodeProgram}>
+          + Add textmode visualizer
+        </button>
+      )}
 
       <label className="field">
         <AutocompleteTextarea

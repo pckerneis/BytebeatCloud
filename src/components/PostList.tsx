@@ -1,15 +1,17 @@
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { useEffect, useRef, useState, type ComponentProps } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useBytebeatPlayer } from '../hooks/useBytebeatPlayer';
 import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
 import { useCurrentWeeklyChallenge } from '../hooks/useCurrentWeeklyChallenge';
 import { favoritePost, unfavoritePost, getFavoritedByUsers } from '../services/favoritesClient';
 import { PostExpressionPlayer } from './PostExpressionPlayer';
+import { TextmodePlayer, TEXTMODE_DEFAULT_MAX_HEIGHT, getTextmodeAspectRatio } from './TextmodePlayer';
 import { usePlayerStore } from '../hooks/usePlayerStore';
 import { formatSampleRate, ModeOption } from '../model/expression';
 import type { LicenseOption } from '../model/postEditor';
+import type { TextmodeProgram } from '../model/textmode';
 import { formatRelativeTime } from '../utils/time';
 import { validateExpression } from '../utils/expression-validator';
 import { formatPostTitle, formatPostByAuthor } from '../utils/post-format';
@@ -37,6 +39,7 @@ export interface PostRow {
   is_weekly_winner?: boolean;
   license?: LicenseOption;
   auto_skip_duration?: number | null;
+  textmode_program?: TextmodeProgram | null;
 }
 
 export interface PostHighlight {
@@ -52,9 +55,10 @@ interface PostListProps {
   onCommentClick?: (post: PostRow) => void;
   highlights?: Record<string, PostHighlight>;
   postMaxHeight?: number;
+  variant?: 'feed' | 'detail';
 }
 
-function LazyPostExpressionPlayer(props: ComponentProps<typeof PostExpressionPlayer>) {
+function useLazyVisibility(rootMargin = '300px 0px') {
   const wrapperRef = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(true);
   const [placeholderHeight, setPlaceholderHeight] = useState<number | null>(null);
@@ -73,32 +77,59 @@ function LazyPostExpressionPlayer(props: ComponentProps<typeof PostExpressionPla
           setIsVisible(false);
         }
       },
-      { rootMargin: '300px 0px' },
+      { rootMargin },
     );
 
     observer.observe(el);
     return () => observer.disconnect();
-  }, []);
+  }, [rootMargin]);
 
-  return (
-    <div ref={wrapperRef}>
-      {isVisible ? (
-        <PostExpressionPlayer {...props} />
-      ) : (
-        <div
-          style={{
-            height:
-              placeholderHeight !== null
-                ? props.height !== undefined
-                  ? Math.min(placeholderHeight, props.height)
-                  : placeholderHeight
-                : undefined,
-          }}
-        />
-      )}
-    </div>
-  );
+  return { wrapperRef, isVisible, placeholderHeight };
 }
+
+function createLazyPlayer<P extends { height?: number }>(
+  Component: React.ComponentType<P>,
+  getWrapperStyle: (props: P, measuredHeight: number | null) => React.CSSProperties,
+) {
+  return function LazyPlayer(props: P) {
+    const { wrapperRef, isVisible, placeholderHeight } = useLazyVisibility();
+
+    // The sizing is applied to the wrapper whether or not the real player is
+    // mounted (as a min-height, not a fixed height, so a taller player can
+    // still grow past it). That also covers the render right after mount:
+    // PostExpressionPlayer's editor loads via next/dynamic with no loading
+    // fallback, so it renders nothing for a tick before its chunk resolves.
+    // Without a floor here, that tick collapses the item's height and shifts
+    // everything around it while scrolling.
+    return (
+      <div ref={wrapperRef} style={getWrapperStyle(props, placeholderHeight)}>
+        {isVisible && <Component {...props} />}
+      </div>
+    );
+  };
+}
+
+const LazyPostExpressionPlayer = createLazyPlayer(
+  PostExpressionPlayer,
+  (props, measuredHeight) => ({
+    minHeight:
+      measuredHeight !== null
+        ? props.height !== undefined
+          ? Math.min(measuredHeight, props.height)
+          : measuredHeight
+        : undefined,
+  }),
+);
+
+// Height is derived from the same aspect-ratio/max-height formula the live
+// player uses, rather than a snapshot of its last rendered height, so the
+// placeholder is always pixel-identical to the mounted player. That keeps
+// mount/unmount cycles from shifting page height (and jittering scroll
+// position) while scrolling.
+const LazyTextmodePlayer = createLazyPlayer(TextmodePlayer, (props) => ({
+  aspectRatio: getTextmodeAspectRatio(props.program),
+  maxHeight: props.height ?? TEXTMODE_DEFAULT_MAX_HEIGHT,
+}));
 
 function getLengthCategoryChip(expression: string): string | null {
   const len = new TextEncoder().encode(expression).length;
@@ -120,6 +151,7 @@ export function PostList({
   onCommentClick,
   highlights,
   postMaxHeight,
+  variant = 'feed',
 }: Readonly<PostListProps>) {
   const { toggle, stop, isPlaying } = useBytebeatPlayer();
   const [activePostId, setActivePostId] = useState<string | null>(null);
@@ -501,14 +533,24 @@ export function PostList({
                   </span>
                 </div>
               </div>
-              <LazyPostExpressionPlayer
-                expression={post.expression}
-                isActive={isActive}
-                onTogglePlay={() => handleExpressionClick(post)}
-                disableCopy={post.license === 'all-rights-reserved'}
-                skipMinification={skipMinification}
-                height={postMaxHeight}
-              />
+              {post.textmode_program && (
+                <LazyTextmodePlayer
+                  program={post.textmode_program}
+                  isActive={isActive}
+                  onTogglePlay={() => handleExpressionClick(post)}
+                  height={postMaxHeight}
+                />
+              )}
+              {(variant === 'detail' || !post.textmode_program) && (
+                <LazyPostExpressionPlayer
+                  expression={post.expression}
+                  isActive={isActive}
+                  onTogglePlay={() => handleExpressionClick(post)}
+                  disableCopy={post.license === 'all-rights-reserved'}
+                  skipMinification={skipMinification}
+                  height={postMaxHeight}
+                />
+              )}
               <div className="post-actions">
                 <button
                   type="button"

@@ -327,6 +327,56 @@ input[type='range']:focus::-moz-range-thumb {
   margin-left: 0.2rem;
 }
 
+/* Textmode program editor */
+.textmode-editor-helper {
+  font-size: 12px;
+  color: var(--secondary-text-color);
+  margin-top: 4px;
+}
+
+.textmode-editor-helper summary {
+  cursor: pointer;
+  user-select: none;
+  opacity: 0.7;
+  transition: opacity 120ms ease-out;
+  margin-bottom: 0.5rem;
+}
+
+.textmode-editor-helper summary:hover {
+  opacity: 1;
+}
+
+.textmode-editor-helper[open] summary {
+  opacity: 1;
+}
+
+.textmode-editor-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.field-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.field-inline {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 11px;
+}
+
+.field-inline input[type='number'] {
+  width: 70px;
+}
+
+.textmode-editor-preview {
+  max-width: 320px;
+}
+
 /* Snippet results in modal */
 
 .snippet-results-list {

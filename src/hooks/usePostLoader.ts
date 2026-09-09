@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { ModeOption, DEFAULT_SAMPLE_RATE } from '../model/expression';
 import { LicenseOption, DEFAULT_LICENSE } from '../model/postEditor';
+import { TextmodeProgram, isTextmodeProgram } from '../model/textmode';
 import { convertMentionsToUsernames } from '../utils/mentions';
 
 export interface LoadedPostData {
@@ -16,6 +17,7 @@ export interface LoadedPostData {
   publishedAt?: string | null;
   originalAuthor?: string | null;
   autoSkipDuration: number | null;
+  textmodeProgram: TextmodeProgram | null;
 }
 
 export interface UsePostLoaderOptions {
@@ -52,8 +54,8 @@ export function usePostLoader(options: UsePostLoaderOptions): UsePostLoaderResul
 
       const selectFields =
         mode === 'edit'
-          ? 'title,description,expression,is_draft,sample_rate,mode,profile_id,license,published_at,auto_skip_duration'
-          : 'title,description,expression,is_draft,sample_rate,mode,license,auto_skip_duration,profiles(username)';
+          ? 'title,description,expression,is_draft,sample_rate,mode,profile_id,license,published_at,auto_skip_duration,textmode_program'
+          : 'title,description,expression,is_draft,sample_rate,mode,license,auto_skip_duration,textmode_program,profiles(username)';
 
       const { data: postData, error: fetchError } = await supabase
         .from('posts')
@@ -112,6 +114,7 @@ export function usePostLoader(options: UsePostLoaderOptions): UsePostLoaderResul
         publishedAt: post.published_at,
         originalAuthor: post.profiles?.username ?? null,
         autoSkipDuration: post.auto_skip_duration ?? null,
+        textmodeProgram: isTextmodeProgram(post.textmode_program) ? post.textmode_program : null,
       };
 
       setData(loadedData);

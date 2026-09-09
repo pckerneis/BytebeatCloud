@@ -798,6 +798,7 @@ export function PostDetailView({
               posts={posts}
               currentUserId={user ? (user as any).id : undefined}
               skipMinification={true}
+              variant="detail"
             />
 
             {posts[0]?.description && (

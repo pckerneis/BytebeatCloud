@@ -1,4 +1,5 @@
 import { ModeOption } from './expression';
+import { TextmodeProgram } from './textmode';
 
 export type LicenseOption = 'all-rights-reserved' | 'cc-by' | 'cc0' | 'cc-by-sa';
 
@@ -44,4 +45,5 @@ export interface PostMetadataModel {
   isDraft: boolean;
   license: LicenseOption;
   autoSkipDuration: number | null;
+  textmodeProgram: TextmodeProgram | null;
 }
