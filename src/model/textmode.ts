@@ -22,6 +22,11 @@ function clamp(value: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, value));
 }
 
+function clampOrDefault(value: unknown, min: number, max: number, defaultValue: number): number {
+  const rounded = Math.round(Number(value));
+  return clamp(Number.isNaN(rounded) ? defaultValue : rounded, min, max);
+}
+
 export function isTextmodeProgram(value: unknown): value is TextmodeProgram {
   if (!value || typeof value !== 'object') return false;
   const v = value as Record<string, unknown>;
@@ -59,21 +64,9 @@ export function parseTextmodeShareLink(input: string): TextmodeProgram | null {
 
     if (typeof parsed.code !== 'string') return null;
 
-    const cols = clamp(
-      Math.round(Number(parsed.cols)) || DEFAULT_TEXTMODE_COLS,
-      MIN_TEXTMODE_COLS,
-      MAX_TEXTMODE_COLS,
-    );
-    const rows = clamp(
-      Math.round(Number(parsed.rows)) || DEFAULT_TEXTMODE_ROWS,
-      MIN_TEXTMODE_ROWS,
-      MAX_TEXTMODE_ROWS,
-    );
-    const fps = clamp(
-      Math.round(Number(parsed.fps)) || DEFAULT_TEXTMODE_FPS,
-      MIN_TEXTMODE_FPS,
-      MAX_TEXTMODE_FPS,
-    );
+    const cols = clampOrDefault(parsed.cols, MIN_TEXTMODE_COLS, MAX_TEXTMODE_COLS, DEFAULT_TEXTMODE_COLS);
+    const rows = clampOrDefault(parsed.rows, MIN_TEXTMODE_ROWS, MAX_TEXTMODE_ROWS, DEFAULT_TEXTMODE_ROWS);
+    const fps = clampOrDefault(parsed.fps, MIN_TEXTMODE_FPS, MAX_TEXTMODE_FPS, DEFAULT_TEXTMODE_FPS);
 
     return {
       code: parsed.code.slice(0, TEXTMODE_CODE_MAX),
