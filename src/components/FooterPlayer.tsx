@@ -10,6 +10,7 @@ import { formatPostTitle } from '../utils/post-format';
 import { favoritePost, unfavoritePost } from '../services/favoritesClient';
 import { VolumeButton } from './VolumeButton';
 import { AUTOPLAY_DEFAULT_DURATION } from '../constants';
+import { useMediaSession } from '../hooks/useMediaSession';
 
 export default function FooterPlayer() {
   const { user } = useSupabaseAuth();
@@ -330,6 +331,8 @@ export default function FooterPlayer() {
         cancelAnimationFrame(progressAnimationRef.current);
         progressAnimationRef.current = null;
       }
+      // Clear the last post ID when not in auto-skip mode
+      lastPostIdRef.current = null;
     }
     // Recreate timers when these change
     // Note: fadeGain is intentionally excluded to prevent timer reset during fade animation
@@ -342,7 +345,7 @@ export default function FooterPlayer() {
     playlist?.length,
   ]);
 
-  const handleFooterPlayPause = async () => {
+  const handleFooterPlayPause = useCallback(async () => {
     if (isPlaying) {
       cancelAutoTransition();
       stopPlayTracking();
@@ -359,17 +362,26 @@ export default function FooterPlayer() {
     if (preview) {
       await toggle(preview.expression, preview.mode, preview.sampleRate);
     }
-  };
+  }, [isPlaying, cancelAutoTransition, stopPlayTracking, stop, currentPost, playPost, preview, toggle]);
 
-  const handleFooterPrev = async () => {
+  const handleFooterPrev = useCallback(async () => {
     cancelAutoTransition();
     await playPost(prev());
-  };
+  }, [cancelAutoTransition, playPost, prev]);
 
-  const handleFooterNext = async () => {
+  const handleFooterNext = useCallback(async () => {
     cancelAutoTransition();
     await playPost(next());
-  };
+  }, [cancelAutoTransition, playPost, next]);
+
+  // Initialize Media Session API
+  useMediaSession({
+    currentPost,
+    isPlaying,
+    onPlayPause: handleFooterPlayPause,
+    onPrevious: handleFooterPrev,
+    onNext: handleFooterNext,
+  });
 
   const handleToggleAuto = () => {
     // Auto maps to looping behavior for continuous play
