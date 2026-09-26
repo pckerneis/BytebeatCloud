@@ -509,9 +509,25 @@ export function PostDetailView({
     };
   }, [postId, posts.length, activeTab, user]);
 
-  // Auto-scroll to comments section when scrollToComments is true
+  // Auto-scroll to comments section when scrollToComments is true.
+  // Guarded by a ref so this only fires once per post: otherwise it would
+  // re-run (and force the tab back to comments) every time the user picks
+  // another tab, since scrollToComments stays true for as long as the
+  // detail view is open.
+  const hasAutoScrolledToCommentsRef = useRef(false);
+
   useEffect(() => {
-    if (scrollToComments && !commentsLoading && posts.length > 0) {
+    hasAutoScrolledToCommentsRef.current = false;
+  }, [postId]);
+
+  useEffect(() => {
+    if (
+      scrollToComments &&
+      !hasAutoScrolledToCommentsRef.current &&
+      !commentsLoading &&
+      posts.length > 0
+    ) {
+      hasAutoScrolledToCommentsRef.current = true;
       // Switch to comments tab first
       if (activeTab !== 'comments') {
         setActiveTab('comments');
