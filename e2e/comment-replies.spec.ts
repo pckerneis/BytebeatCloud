@@ -152,8 +152,6 @@ test.describe('Comment Replies', () => {
       .eq('author_id', testUserId)
       .single();
 
-    console.log(replyComment);
-
     expect(replyComment?.content).toContain(`@[${otherUserId}]`);
     expect(replyComment?.reply_to_comment_id).toBe(originalComment!.id);
   });
