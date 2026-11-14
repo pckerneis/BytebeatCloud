@@ -123,4 +123,15 @@ describe('minimizeExpression', () => {
       expect(typeof result).toBe('string');
     });
   });
+
+  describe('regex literals', () => {
+    it('does not treat // inside a regex literal as a comment', () => {
+      expect(minimizeExpression('/\\//, t * 2')).toBe('/\\//,t*2');
+    });
+
+    it('keeps division working', () => {
+      expect(minimizeExpression('t / 2 / 3')).toBe('t/2/3');
+      expect(minimizeExpression('(t) / 2 // c')).toBe('(t)/2');
+    });
+  });
 });

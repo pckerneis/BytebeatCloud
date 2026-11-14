@@ -23,6 +23,37 @@ const OPERATORS = new Set([
   ']',
 ]);
 
+// A `/` starts a regex (rather than a division) when the previous token can't end an operand.
+function isRegexContext(out: string): boolean {
+  const prev = out.trimEnd().slice(-1);
+  if (prev === '') return true;
+  if (prev === ')' || prev === ']' || prev === '}') return false;
+  return OPERATORS.has(prev);
+}
+
+// Returns the index just past the regex literal (including flags) starting at `start`, or -1.
+function findRegexEnd(expr: string, start: number): number {
+  let i = start + 1;
+  let inClass = false;
+  while (i < expr.length) {
+    const c = expr[i] as string;
+    if (c === '\n') return -1;
+    if (c === '\\') {
+      i += 2;
+      continue;
+    }
+    if (c === '[') inClass = true;
+    else if (c === ']') inClass = false;
+    else if (c === '/' && !inClass) {
+      i += 1;
+      while (i < expr.length && /[a-z]/i.test(expr[i] as string)) i += 1;
+      return i;
+    }
+    i += 1;
+  }
+  return -1;
+}
+
 export function minimizeExpression(expr: string): string {
   try {
     let out = '';
@@ -52,6 +83,16 @@ export function minimizeExpression(expr: string): string {
         }
         i += 1;
         continue;
+      }
+
+      // Regex literals: preserve as-is so `//` or `/*` inside them aren't taken for comments
+      if (ch === '/' && next !== '/' && next !== '*' && isRegexContext(out)) {
+        const end = findRegexEnd(expr, i);
+        if (end !== -1) {
+          out += expr.slice(i, end);
+          i = end;
+          continue;
+        }
       }
 
       // Skip single-line comments
