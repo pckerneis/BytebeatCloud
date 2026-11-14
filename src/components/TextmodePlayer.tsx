@@ -1,5 +1,6 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, type MouseEventHandler } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type MouseEventHandler } from 'react';
 import type { TextmodeProgram } from '../model/textmode';
+import { TEXTMODE_SANDBOX_HTML } from '../lib/textmodeSandboxHtml';
 
 interface TextmodePlayerProps {
   program: TextmodeProgram;
@@ -16,12 +17,6 @@ export function getTextmodeAspectRatio(program: Pick<TextmodeProgram, 'cols' | '
   return (program.cols * 0.6) / (program.rows * 1.1);
 }
 
-function getSandboxSrc(): string {
-  const basePath = process.env.NEXT_PUBLIC_BASE_PATH ? `/${process.env.NEXT_PUBLIC_BASE_PATH}` : '';
-  const version = process.env.NEXT_PUBLIC_APP_VERSION ?? '';
-  return `${basePath}/textmode-sandbox.html${version ? `?v=${version}` : ''}`;
-}
-
 export function TextmodePlayer({
   program,
   isActive,
@@ -34,7 +29,6 @@ export function TextmodePlayer({
   const containerRef = useRef<HTMLDivElement>(null);
   const [iframeLoaded, setIframeLoaded] = useState(false);
   const [containerWidth, setContainerWidth] = useState(0);
-  const sandboxSrc = useMemo(() => getSandboxSrc(), []);
   const aspectRatio = getTextmodeAspectRatio(program);
 
   useLayoutEffect(() => {
@@ -103,7 +97,7 @@ export function TextmodePlayer({
       <iframe
         ref={iframeRef}
         title="Textmode visualizer"
-        src={sandboxSrc}
+        srcDoc={TEXTMODE_SANDBOX_HTML}
         sandbox="allow-scripts"
         className="textmode-visualizer-frame"
         style={containerWidth ? { width: frameWidth, height: frameHeight } : undefined}

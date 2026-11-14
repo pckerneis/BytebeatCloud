@@ -1,4 +1,8 @@
-<!DOCTYPE html>
+// HTML document for the textmode visualizer iframe, injected via srcdoc so
+// no network request is needed. Must be rendered in an iframe with
+// sandbox="allow-scripts" (no allow-same-origin): it then runs with an
+// opaque ("null") origin and talks to the parent only through postMessage.
+export const TEXTMODE_SANDBOX_HTML = `<!DOCTYPE html>
 <html>
 <head>
 <meta charset="utf-8">
@@ -188,7 +192,7 @@ function draw(buffer, cols, rows) {
       html += '</span>';
     }
     if (y < rows - 1) {
-      html += '\n';
+      html += '\\n';
     }
   }
 
@@ -199,7 +203,7 @@ function draw(buffer, cols, rows) {
 //
 // Shader code sees x/y/width/height/fps/frame as bare identifiers that we
 // mutate between calls (matching the vm.createContext globals the CLI
-// uses) via `with (state) { ... }`. Everything else (window, document,
+// uses) via \`with (state) { ... }\`. Everything else (window, document,
 // fetch) still resolves through the iframe's real global scope, which is
 // what the sandbox="allow-scripts" + CSP combination locks down.
 
@@ -212,7 +216,7 @@ function loadShader(code) {
     error: function () { post('log', { level: 'error', message: Array.prototype.slice.call(arguments).join(' ') }); },
     warn: function () { post('log', { level: 'warn', message: Array.prototype.slice.call(arguments).join(' ') }); }
   };
-  var fn = new Function('module', 'exports', 'console', 'state', 'with (state) {\n' + code + '\n}');
+  var fn = new Function('module', 'exports', 'console', 'state', 'with (state) {\\n' + code + '\\n}');
 
   fn(moduleObj, exportsObj, sandboxConsole, state);
 
@@ -251,7 +255,7 @@ function layout(cols, rows) {
   gridEl.style.transform = 'none';
   gridEl.style.fontSize = BASE_FONT_SIZE + 'px';
   gridEl.style.lineHeight = lineHeight;
-  gridEl.textContent = placeholderLines.join('\n');
+  gridEl.textContent = placeholderLines.join('\\n');
 
   var rect = gridEl.getBoundingClientRect();
   var naturalWidth = rect.width || 1;
@@ -416,3 +420,4 @@ window.addEventListener('message', function (e) {
 </script>
 </body>
 </html>
+`;

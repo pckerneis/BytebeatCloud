@@ -51,7 +51,8 @@ jobs:
     name: E2E Tests (${{ matrix.group }})
     needs: [lint, unit]
     if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
+    # Pinned: Playwright 1.57 cannot install browsers on ubuntu-latest (26.04)
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
